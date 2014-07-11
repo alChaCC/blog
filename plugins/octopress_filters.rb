@@ -24,10 +24,14 @@ module Jekyll
   class ContentFilters < PostFilter
     include OctopressFilters
     def pre_render(post)
-      post.content = pre_filter(post.content)
+      if post.ext.match('html|textile|markdown|md|haml|slim|xml')
+        post.content = pre_filter(post.content)
+      end
     end
     def post_render(post)
-      post.content = post_filter(post.content)
+      if post.ext.match('html|textile|markdown|md|haml|slim|xml')
+        post.content = post_filter(post.content)
+      end
     end
   end
 end
@@ -77,6 +81,33 @@ module OctopressLiquidFilters
     input.gsub /(\s+(href|src)\s*=\s*["|']{1})(\/[^\"'>]*)/ do
       $1+url+$3
     end
+  end
+
+  # Improved version of Liquid's truncate:
+  # - Doesn't cut in the middle of a word.
+  # - Uses typographically correct ellipsis (…) insted of '...'
+  def truncate(input, length)
+    if input.length > length && input[0..(length-1)] =~ /(.+)\b.+$/im
+      $1.strip + ' &hellip;'
+    else
+      input
+    end
+  end
+
+  # Improved version of Liquid's truncatewords:
+  # - Uses typographically correct ellipsis (…) insted of '...'
+  def truncatewords(input, length)
+    truncate = input.split(' ')
+    if truncate.length > length
+      truncate[0..length-1].join(' ').strip + ' &hellip;'
+    else
+      input
+    end
+  end
+
+  # Condenses multiple spaces and tabs into a single space
+  def condense_spaces(input)
+    input.gsub(/\s{2,}/, ' ')
   end
 
   # Removes trailing forward slash from a string for easily appending url segments

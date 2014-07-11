@@ -1,0 +1,391 @@
+---
+layout: post
+title: "[HowTo] Using Facebook Graph API (Flash - GraphAPI_Web) post message to your FaceBook"
+date: 2012-07-06 14:20
+comments: true
+categories: [AS3,Facebook]
+---
+
+> 這個教學，是基於網站架立在Amazon Web Service (Using Suse)
+
+> 然後用Flash Developer 建立一個Flash的網頁版應用
+
+他的功能是：
+
+> 取得使用者的允許後，可以直接發文章到Facebook 
+
+> (可自行延伸其他應用)
+
+<!--more--> 
+
+主要流程：
+
+1. 首先你要申請好Facebook app！
+	取得 APP_ID 
+	
+	幾個主要的設定是：
+	
+	基本 => 
+		
+	 Website with Facebook Login -> 請輸入你的網站的網址
+	 
+	進階 =>
+		
+	App 類型 -> 選擇 "網站"
+	 
+	
+2. 下載[GraphAPI_Web_1_8_1.swc](http://code.google.com/p/facebook-actionscript-api/)
+
+	(ps.可以一起下載GraphAPI_Examples_1_8_1.zip)
+	
+	(因為我的code都是從那邊來的XD)
+	
+3.  開啓好一個AS3專案，並把swc檔，設成資料庫
+	
+4.  只需要一個檔案(當然你也可以把這些東東猜開來，不過因為我是用來測試，所以沒有做重構)
+	
+	我就把檔名叫做FacebookTester.as
+	
+	程式碼如下：
+	
+		package
+		{
+		import com.adobe.serialization.json.JSON;
+		import com.facebook.graph.Facebook;
+		import com.facebook.graph.data.FacebookSession;
+		import com.facebook.graph.net.FacebookRequest;
+		
+		import flash.display.GradientType;
+		import flash.display.Graphics;
+		import flash.display.Sprite;
+		import flash.events.Event;
+		import flash.events.MouseEvent;
+		import flash.geom.Matrix;
+		import flash.text.TextField;
+		import flash.text.TextFieldAutoSize;
+		import flash.text.TextFieldType;
+		import flash.text.TextFormat;
+		
+		
+		public class FacebookTester extends Sprite
+		{
+			public var loginBtn:Sprite ;
+			public var loginBtnLabel:TextField;
+			public var postBtn:Sprite;
+			public var postBtnLabel:TextField;
+			public var postInputText:TextField;
+			public var outputText:TextField;
+			public var methodText:TextField;
+			public var methodInputText:TextField;
+			public var outputNoteText:TextField;
+			public var postNoteText:TextField;
+		
+		protected static const APP_ID:String = "你的APP_ID";
+		protected var isLoggedIn:Boolean = false;
+		
+		// 這邊就是告訴FB，程式所需要用到的權限有哪些 
+		// 也就是說如果你有其他想加的應用可以加到這邊
+		// 可參考Permissions Reference: 
+		// https://developers.facebook.com/docs/authentication/permissions/
+		
+		protected var permissions_opts:Object = {perms:"publish_actions,publish_stream"};
+		
+		public function FacebookTester()
+		{	
+			// 畫出需要的按鈕，和textfield
+			configUI();
+			// 初始化 Facebook 
+			Facebook.init(APP_ID,onInit);
+		}
+		
+		protected function configUI():void{
+			loginBtn = new Sprite();
+			setBtnState(loginBtn, "up");
+			loginBtnLabel = new TextField();
+			setupTextField(loginBtnLabel);
+			setBtnLabelText(loginBtn, loginBtnLabel, "登入");
+			loginBtn.addChild(loginBtnLabel);
+			loginBtn.x = 10;
+			loginBtn.y = 10;
+			loginBtn.addEventListener(MouseEvent.MOUSE_DOWN, handleLoginBtnMouseDown, false, 0, true);
+			loginBtn.addEventListener(MouseEvent.CLICK, handleLoginBtnClick, false, 0, true);
+			addChild(loginBtn);
+			
+			methodText = new TextField();
+			setupTextField(methodText);
+			methodText.text = "method:";
+			methodText.x = 10;
+			methodText.y = loginBtn.y + loginBtn.height + 20;
+			addChild(methodText);
+			
+			methodInputText = new TextField();
+			methodInputText.type = TextFieldType.INPUT;
+			methodInputText.defaultTextFormat = new TextFormat("_sans", 14);
+			methodInputText.border = true;
+			methodInputText.text = "/me";
+			methodInputText.width = 260;
+			methodInputText.height = methodInputText.textHeight + 5;
+			methodInputText.x = methodText.x + methodText.width + 10;
+			methodInputText.y = methodText.y;
+			addChild(methodInputText);
+			
+			postBtn = new Sprite();
+			setBtnState(postBtn, "up");
+			postBtnLabel = new TextField();
+			setupTextField(postBtnLabel);
+			setBtnLabelText(postBtn, postBtnLabel, "發文");
+			postBtn.addChild(postBtnLabel);
+			postBtn.x =  methodInputText.x + methodInputText.width + 10;
+			postBtn.y = methodInputText.y;
+			postBtn.addEventListener(MouseEvent.MOUSE_DOWN, handlePostBtnMouseDown, false, 0, true);
+			postBtn.addEventListener(MouseEvent.CLICK, handlePostBtnClick, false, 0, true);
+			addChild(postBtn);
+			
+			postNoteText = new TextField();
+			setupTextField(postNoteText);
+			postNoteText.wordWrap = true;
+			postNoteText.multiline = true;
+			postNoteText.text = "這邊要使用JSON方式撰寫，舉例來說，上面那個可以寫/me/feed，下面可以寫\n{ \"message\" : \"I am a message!\" }"
+			postNoteText.width = 500;
+			postNoteText.x = 10;
+			postNoteText.y = methodText.y + methodText.height + 10;
+			addChild(postNoteText);
+			
+			postInputText = new TextField();
+			postInputText.type = TextFieldType.INPUT;
+			postInputText.defaultTextFormat = new TextFormat("_sans", 14);
+			postInputText.border = true;
+			postInputText.wordWrap = true;
+			postInputText.multiline = true;
+			postInputText.width = 630;
+			postInputText.height = 90;
+			postInputText.x = 10;
+			postInputText.y = postNoteText.y + postNoteText.height + 10;
+			addChild(postInputText);
+			
+			outputNoteText = new TextField();
+			setupTextField(outputNoteText);
+			outputNoteText.text = "API回覆結果"
+			outputNoteText.x = 10;
+			outputNoteText.y = postInputText.y + postInputText.height + 20;
+			addChild(outputNoteText);
+			
+			outputText = new TextField();
+			outputText.defaultTextFormat = new TextFormat("_sans", 14);
+			outputText.x = 10;
+			outputText.y = outputNoteText.y + outputNoteText.height + 10;
+			outputText.border = true;
+			outputText.wordWrap = true;
+			outputText.multiline = true;
+			outputText.width = 630;
+			outputText.height = stage.stageHeight - outputText.y - 10;
+			addChild(outputText);
+			
+		}
+		
+		protected function onInit(result:Object, fail:Object):void {
+			if (result) { // User is already logged in.
+				setBtnLabelText(loginBtn, loginBtnLabel, "登出");
+				isLoggedIn = true;
+			} else { // User hasn't logged in.
+			//setBtnLabelText(loginBtn, loginBtnLabel, "please try to login");
+			}
+		}
+		
+		protected function setupTextField(textField:TextField):void {
+			textField.autoSize = TextFieldAutoSize.LEFT;
+			textField.selectable = false;
+			textField.defaultTextFormat = new TextFormat("_sans", 14);
+		}
+		
+		protected function setBtnLabelText(button:Sprite, label:TextField, text:String):void {
+			label.text = text;
+			label.x = (button.width >> 1) - (label.width >> 1);
+			label.y = (button.height >> 1) - (label.height >> 1);
+		}
+		// 用來畫Button
+		protected function setBtnState(button:Sprite, state:String):void {
+			var g:Graphics = button.graphics;
+			g.clear();
+			var matr:Matrix = new Matrix();
+			matr.createGradientBox(30, 21, Math.PI * 0.5, 0, 0);
+			switch (state) {
+				case "up":
+					button.x -= 1;
+					button.y -= 1;
+					g.lineStyle(1, 0x333333, 1, true);
+					g.beginGradientFill(GradientType.LINEAR, [0xffffff, 0xcccccc], [1, 1], [0, 255], matr);
+					break;
+				case "down":
+					button.x += 1;
+					button.y += 1;
+					g.lineStyle(1, 0x000000, 1, true);
+					g.beginGradientFill(GradientType.LINEAR, [0xffffff, 0xaaaaaa], [1, 1], [0, 255], matr);
+					break;
+			}
+			g.drawRoundRect(0, 0, 100, 21, 10, 10);
+			g.endFill();
+		}
+		
+		protected function handleInit(result:Object, fail:Object):void {
+			if (result) { // User is already logged in.
+				setBtnLabelText(loginBtn, loginBtnLabel, "Logout");
+				isLoggedIn = true;
+			} else { // User hasn't logged in.
+				
+			}
+		}
+		
+		protected function handleLogin(result:Object, fail:Object):void {
+			if (result) { // User successfully logged in.
+				setBtnLabelText(loginBtn, loginBtnLabel, "Logout");
+				isLoggedIn = true;
+			} else { // User unsuccessfully logged in.
+				
+			}
+		}
+		
+		// 關鍵一：登入！ 就是在這邊告訴FB你要用到哪些權限
+		protected function handleLoginBtnClick(event:MouseEvent):void {
+			if (isLoggedIn) {
+				Facebook.logout(handleLogout);
+			} else {
+				Facebook.login(handleLogin, permissions_opts);
+			}
+		}
+		
+		protected function handleLogout(success:Boolean):void {
+			setBtnLabelText(loginBtn, loginBtnLabel, "Login");
+			isLoggedIn = false;
+		}
+		
+		protected function handleLoginBtnMouseDown(event:MouseEvent):void {
+			setBtnState(loginBtn, "down");
+			stage.addEventListener(MouseEvent.MOUSE_UP, handleLoginBtnStageMouseUp, false, 0, true);
+		}
+		
+		protected function handleLoginBtnStageMouseUp(event:MouseEvent):void {
+			setBtnState(loginBtn, "up");
+			stage.removeEventListener(MouseEvent.MOUSE_UP, handleLoginBtnStageMouseUp);
+		}
+		
+		//	關鍵二：發文按鈕，透過api去發文章！
+		protected function handlePostBtnClick(event:MouseEvent):void {
+			if (isLoggedIn) {
+				var params:Object = null;
+				try {
+					params = JSON.decode(postInputText.text);
+				} catch (e:Error) {
+					outputText.appendText("\n\nERROR DECODING JSON: " + e.message);
+				}
+				Facebook.api(methodInputText.text, handleAPICall, params, "POST");
+			}
+		}
+		
+		protected function handleAPICall(result:Object, fail:Object):void {
+			if (result) {
+				outputText.appendText("\n\nRESULT:\n" + JSON.encode(result)); 
+			} else {
+				outputText.appendText("\n\nFAIL:\n" + JSON.encode(fail)); 
+			}
+		}
+		
+		protected function handlePostBtnMouseDown(event:MouseEvent):void {
+			if (isLoggedIn) {
+				setBtnState(postBtn, "down");
+				stage.addEventListener(MouseEvent.MOUSE_UP, handlePostBtnStageMouseUp, false, 0, true);
+			}
+		}
+		
+		protected function handlePostBtnStageMouseUp(event:MouseEvent):void {
+			setBtnState(postBtn, "up");
+			stage.removeEventListener(MouseEvent.MOUSE_UP, handlePostBtnStageMouseUp);
+		}
+		}
+		}
+
+5.  恭喜各位！完成了～(基本上算完成了！)
+	
+	但是你一定會發現....奇怪，按login怎麼沒有反應
+	
+	那是因為你還沒去改預設的Html檔！
+	
+	檔案裡頭不會幫你包入一個重要的include!
+	
+	那就是…
+	
+		<script type="text/javascript" src="http://connect.facebook.net/en_US/all.js"></script>	
+	
+	你只要在\<head>標籤裡頭加入即可！
+	
+	
+
+6. 之後，將剛剛compile出來的swf和改過後的html檔上傳到AWS server上(我是使用Filezilla上傳)，然後把他cp到網頁資料夾下(這邊我有建立一個資料夾叫做FacebookTest，專門放這些東東)
+
+		cp /home/XXX/FacebookTester.swf /srv/www/htdocs/FacebookTest/
+
+
+7. 這時候你興高採烈地打開時…發現居然
+
+	access error !!!
+	
+	  
+	所以這邊
+	有幾個設定要注意！
+	
+	a. vim /etc/apache2/httpd.conf 
+	
+	新增一筆
+		
+		<Directory "/srv/www/htdocs/FacebookTest">
+		    AllowOverride None
+		    Options None
+		    Order allow,deny
+		    Allow from all
+		</Directory>
+	
+	
+	b. 增加可執行權限
+	
+		chmod 755 FacebookTest	
+	
+	
+	c. 重啓apache2 server
+		
+		/etc/init.d/apache2 restart
+
+8.   那要如何使用呢？
+
+	可以參考這邊https://developers.facebook.com/docs/reference/api/
+	
+	如果你要post的到自己塗鴉強，寫法是這樣的
+	
+		/me/feed
+	
+	然後底下輸入JSON格式的資料
+	
+		{"message":"hello world"};
+		
+	以此類推～
+	
+	如果要發佈到社團
+	
+		/社團名稱或ID/feed
+		
+	底下一樣輸入JSON格式！
+	
+
+這幾天初步玩的結果～ 還不錯！ 
+
+我覺得比較麻煩的是....沒辦法在local端trace東西～
+
+不過我有試桌面版！ 桌面版可以！
+
+但是注意 要建立 Adobe Air 才可以！
+
+
+
+
+
+
+

@@ -1,0 +1,57 @@
+---
+layout: post
+title: "20130422-murmur"
+date: 2013-04-22 23:25
+comments: true
+categories: 
+---
+
+好久沒有寫blog了
+
+從碩士開始
+
+每年年初，我都會訂一個年度計劃
+
+今年就是- 出國闖闖
+
+In fact, 這是五年～十年的計劃
+
+目前計畫兩條路-唸書、工作
+
+<!--more--> 
+
+不管是唸書還是工作
+
+英文都非常重要(這不是廢話...)
+
+所以綜觀來看，我決定還是要準備 **托福以及GRE**
+
+所以，這就說明了我為什麼好久沒打網誌，玩玩新玩意了
+
+嘖嘖
+
+只怪自己以前不努力阿
+
+前鎮子才剛被ETS洗臉…
+
+整個就慘不忍賭
+
+總之，我還是會經營我的blog，可以的話，拿來練一下寫作XD
+
+BTW, 今天聽到一場演講，讓我有了一些想玩的東東
+
+[puppet](https://puppetlabs.com/)
+
+1. Auto Deploy -> 這是他最outstanding的功能，雖然我目前只有一臺server，不過我想試看看，架一個小小的Cloud= KVM + Storage ?!
+
+2. Status Checking -> 感覺應該可以用在工作上
+
+3. Self-repair -> 我覺得應該也可以做到
+
+4. Auto Bug-Log Mapping Tool -> 這是我還滿想要做的東東，不知道用這個好不好實現
+
+
+Cooooool , 準備好英文再來玩玩
+
+
+
