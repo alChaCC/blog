@@ -1,0 +1,4878 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[AlohaCC]]></title>
+  <link href="http://ccaloha.cc/atom.xml" rel="self"/>
+  <link href="http://ccaloha.cc/"/>
+  <updated>2014-07-11T19:53:39+08:00</updated>
+  <id>http://ccaloha.cc/</id>
+  <author>
+    <name><![CDATA[Aloha]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[如何動態管理權限-使用cancan]]></title>
+    <link href="http://ccaloha.cc/blog/2014/06/30/dynamic-roles-and-permissions-management-using-cancan/"/>
+    <updated>2014-06-30T15:27:55+08:00</updated>
+    <id>http://ccaloha.cc/blog/2014/06/30/dynamic-roles-and-permissions-management-using-cancan</id>
+    <content type="html"><![CDATA[<p>這篇是參考自<a href="http://blog.joshsoftware.com/2012/10/23/dynamic-roles-and-permissions-using-cancan/">Dynamic roles and permissions using cancan</a></p>
+
+<p>大概分成幾個流程：</p>
+
+<ol>
+<li>建立Gemfile</li>
+<li>建立需要的Model</li>
+<li>寫rake爬controller的action(懶惰專用，不想要資料庫一個一個建權限)</li>
+<li>設定Ability => 這邊是關鍵，他會去抓user的role底下的權限</li>
+<li>設定Controller => 用來擋權限,設定權限</li>
+<li>設定route</li>
+<li>建立View</li>
+</ol>
+
+
+<h1>前言</h1>
+
+<p>網站後台往往可能有多個員工進去作業，但是有些功能並不希望開放給低層級的員工使用，</p>
+
+<p>所以後台也需要做權限管理～</p>
+
+<p>但是人員進進出出，陞遷、轉職相對應的職務也會調整，總不能每次都要去改hard code吧～～</p>
+
+<p>所以才有動態權限設定的需求！</p>
+
+<h1>Step 1. Gemfile</h1>
+
+<p>因為我們要使用Railscast網站開發者兼Boss Ryanb寫的<a href="https://github.com/ryanb/cancan">cancan</a>，提供權限管理的服務</p>
+
+<p><strong>[手做]</strong> 所以，要在Gemfile寫入</p>
+
+<pre><code>gem 'cancan'
+</code></pre>
+
+<p><strong>[手做]</strong> 在terminal執行</p>
+
+<pre><code>bundle install
+</code></pre>
+
+<!-- more -->
+
+
+<h1>Step 2. 建立Model</h1>
+
+<p>由於後台的管理員，</p>
+
+<p>在建立model之前，先來看一下Model的架構，</p>
+
+<p><img src="https://dl.dropboxusercontent.com/u/22307926/Blog%20Image/%28Blog%E4%BD%BF%E7%94%A8%29%E5%8B%95%E6%85%8B%E6%AC%8A%E9%99%90%E7%AE%A1%E7%90%86%20%E8%B3%87%E6%96%99%E5%BA%AB%E8%A8%AD%E8%A8%88.jpg" alt="cancan dynamic database design"></p>
+
+<p>讓我們開始動手吧</p>
+
+<h3>Step 2-1. 建立Model: Role</h3>
+
+<p>Role 的資料表要有：</p>
+
+<pre><code># == Schema Information
+#
+# Table name: roles
+#
+#  id         :integer          not null, primary key
+#  name       :string(255)
+#  created_at :datetime
+#  updated_at :datetime
+#
+</code></pre>
+
+<p><strong>[手做]</strong> 在terminal</p>
+
+<pre><code>rails g model role
+</code></pre>
+
+<p><strong>[手做]</strong> 在檔案db/migrate/時間戳記_create_roles.rb</p>
+
+<pre><code>class CreateRoles &lt; ActiveRecord::Migration
+  def change
+    create_table :roles do |t|
+      t.string :name
+      t.timestamps
+    end
+  end
+end
+</code></pre>
+
+<p><strong>[手做]</strong> 在檔案app/models/role.rb</p>
+
+<pre><code>class Role &lt; ActiveRecord::Base
+  has_many :admin_users         
+  has_many :role_permissionships
+  has_many :permissions , :through =&gt; :role_permissionships
+
+  def set_permissions(permissions)
+    permissions.each do |id|
+      permission = Permission.find(id)
+      self.permissions &lt;&lt; permission
+    end
+  end
+
+end
+</code></pre>
+
+<p>其中set_permissions就是設定這個role底下的權限</p>
+
+<h3>Step 2-2. 建立Model: Permission</h3>
+
+<p>Permission 的資料表要有：</p>
+
+<pre><code># == Schema Information
+#
+# Table name: permissions
+#
+#  id            :integer          not null, primary key
+#  name          :string(255)
+#  subject_class :string(255)
+#  action        :string(255)
+#  created_at    :datetime
+#  updated_at    :datetime
+#
+</code></pre>
+
+<p><strong>[手做]</strong> 在terminal</p>
+
+<pre><code>rails g model permission
+</code></pre>
+
+<p><strong>[手做]</strong> 在檔案db/migrate/時間戳記_create_permissions.rb</p>
+
+<pre><code>class CreatePermissions &lt; ActiveRecord::Migration
+  def change
+    create_table :permissions do |t|
+      t.string :name
+      t.string :subject_class
+      t.string :action
+      t.timestamps
+    end
+  end
+end
+</code></pre>
+
+<p><strong>[手做]</strong> 在檔案app/models/permission.rb</p>
+
+<p>ps. 其實，permision好像不需要知道role有哪些，不過我還是保留這個關聯</p>
+
+<pre><code>class Permission &lt; ActiveRecord::Base
+  has_many :role_permissionships
+  has_many :roles , :through =&gt; :role_permissionships
+end
+</code></pre>
+
+<h3>Step 2-3. 建立Model: Role Permissionship</h3>
+
+<p>主要是想要連結Role和Permission</p>
+
+<p>RolePermissionship 的資料表要有：</p>
+
+<pre><code># == Schema Information
+#
+# Table name: role_permissionships
+#
+#  id            :integer          not null, primary key
+#  role_id       :integer
+#  permission_id :integer
+#  created_at    :datetime
+#  updated_at    :datetime
+#
+</code></pre>
+
+<p><strong>[手做]</strong> 在terminal</p>
+
+<pre><code>rails g model role_permissionship
+</code></pre>
+
+<p><strong>[手做]</strong> 在檔案db/migrate/時間戳記_create_role_permissionships.rb</p>
+
+<pre><code>class CreateRolePermissionships &lt; ActiveRecord::Migration
+  def change
+    create_table :role_permissionships do |t|
+      t.belongs_to :role
+      t.belongs_to :permission
+      t.timestamps
+    end
+  end
+end
+</code></pre>
+
+<p><strong>[手做]</strong> 在檔案app/models/role_permissionship.rb</p>
+
+<pre><code>class RolePermissionship &lt; ActiveRecord::Base
+  belongs_to :role
+  belongs_to :permission
+end
+</code></pre>
+
+<h3>Step 2-4. 補上role_id: AdminUser</h3>
+
+<p>Adminuser資料表要有：</p>
+
+<pre><code># == Schema Information
+#
+# Table name: admin_users
+#
+#  id                     :integer          not null, primary key
+#  email                  :string(255)      default(""), not null
+#  encrypted_password     :string(255)      default(""), not null
+#  reset_password_token   :string(255)
+#  reset_password_sent_at :datetime
+#  remember_created_at    :datetime
+#  sign_in_count          :integer          default(0)
+#  current_sign_in_at     :datetime
+#  last_sign_in_at        :datetime
+#  current_sign_in_ip     :string(255)
+#  last_sign_in_ip        :string(255)
+#  old_data               :text
+#  created_at             :datetime
+#  updated_at             :datetime
+#  role_id                :integer
+#
+</code></pre>
+
+<p>ps. 這是本來的admin_user (透過devise建立的)，這邊我就跳過了，主要是要加入<strong>role_id</strong></p>
+
+<p><strong>[手做]</strong> 在terminal</p>
+
+<pre><code>rails g migration add_role_id_to_admin_user
+</code></pre>
+
+<p><strong>[手做]</strong> 在檔案db/migrate/時間戳記_add_role_id_to_admin_user.rb</p>
+
+<pre><code>class AddRoleIdToAdminUser &lt; ActiveRecord::Migration
+  def change
+    add_column :admin_users, :role_id , :integer
+  end
+end
+</code></pre>
+
+<p><strong>[手做]</strong> 在檔案app/models/admin_user.rb</p>
+
+<pre><code>class AdminUser &lt; ActiveRecord::Base
+  devise :database_authenticatable, :rememberable, :trackable, :validatable,
+         :recoverable
+  serialize :old_data, Hash
+  belongs_to :role
+
+  def super_admin?
+    self.role.name == "Super Admin"
+  end
+end
+</code></pre>
+
+<h1>Step 3 寫rake 去爬 所有controller資料</h1>
+
+<p>原始程式可參考：<a href="http://blog.joshsoftware.com/2012/10/23/dynamic-roles-and-permissions-using-cancan/">Dynamic roles and permissions using cancan</a></p>
+
+<p><strong>[手做]</strong> 新增檔案permissions.rake在 lib/tasks/底下</p>
+
+<p><strong>[手做]</strong> 在檔案lib/tasks/permissions.rake</p>
+
+<p>簡單來說，就是去爬controllers/admin底下的controller的所有action然後把它建立到permission 資料表</p>
+
+<pre><code>namespace 'permissions' do 
+
+  desc "Loading all models and their related controller methods inpermissions table."
+  task(:permissions =&gt; :environment) do 
+    arr = []
+    # Load all the admin controllers
+    controllers = Dir.new("#{Rails.root}/app/controllers/admin").entries
+    controllers.each do |entry|
+      if entry =~ /_controller/
+        arr &lt;&lt; "Admin::#{entry.camelize.gsub('.rb','')}".constantize #namescoped controllers
+      end
+    end
+
+    arr.each do |controller|
+      # only that controller which represents a model
+      if controller.permission
+        # create a universal permission for that model. eg: "manage User" will allow all actions on User model.
+        write_permission(controller.permission,"manage","manage") # add permission to do CRUD for every model.
+        controller.action_methods.each do |method|
+          if method =~ /^([A-Za-z\d*]+)+([\w]*)+([A-Za-z\d*]+)$/ #add_user , add_user_info, Add_user, add_User
+            name, cancan_action = eval_cancan_action(method)
+            write_permission(controller.permission,cancan_action,name)
+          end
+        end
+      end
+    end
+  end
+end
+
+# this method returns the cancan action for the action passed.
+def eval_cancan_action(action)
+  case action.to_s
+  when "index"
+    name = 'list'
+    cancan_action = "index" #let the cancan action be the actual method name
+    action_desc = I18n.t :list
+  when "new", "create"
+    name = 'create and update'
+    cancan_action = "create"
+    action_desc = I18n.t :create
+  when "show"
+    name = "view"
+    cancan_action = "view"
+    action_desc = I18n.t :view
+  when "edit","update"
+    name = "create and update"
+    cancan_action = "update"
+    action_desc = I18n.t :update
+  when "delete", "destroy"
+    name = 'delete'
+    cancan_action = 'destroy'
+    action_desc = I18n.t :destroy
+  else
+    name = action.to_s
+    cancan_action = action.to_s
+    action_desc = "Other: " &lt; cancan_action
+  end
+  return name, cancan_action 
+end
+
+# check if the permission is present else add a new one.
+def write_permission(model, cancan_action, name)
+  permission = Permission.find(:first, :conditions =&gt; ["subject_class = ? and action = ? ", model, cancan_action])
+  unless permission
+    permission = Permission.new
+    permission.name = name
+    permission.subject_class = model
+    permission.action = cancan_action
+    permission.save    
+  end
+end
+</code></pre>
+
+<p><strong>[手做]</strong> 在terminal</p>
+
+<pre><code>rake -T #查看所有可執行的rake
+rake permissions:permissions #做剛剛那個rake file的事
+</code></pre>
+
+<h1>Step 4. 設定Ability</h1>
+
+<p><strong>[手做]</strong> 在terminal</p>
+
+<pre><code>rails g cancan:ability
+</code></pre>
+
+<p><strong>[手做]</strong> 在檔案app/models/ability.rb</p>
+
+<pre><code>class Ability
+  include CanCan::Ability
+
+  def initialize(user)
+    user.role.permissions.each do |permission|
+        if permission.subject_class == 'all'
+            can permission.action.to_sym, permission.subject_class.to_sym
+        else
+            can permission.action.to_sym, permission.subject_class.constantize
+        end
+    end
+  end
+end
+</code></pre>
+
+<p><strong>這邊就是關鍵</strong></p>
+
+<p>他會動態去load使用者，然後看他權限</p>
+
+<pre><code>user.role.permissions.each do |permission|
+      if permission.subject_class == 'all'
+          can permission.action.to_sym, permission.subject_class.to_sym
+      else
+          can permission.action.to_sym, permission.subject_class.constantize
+      end
+  end
+</code></pre>
+
+<h1>Step 5. 建立管理者、員工並給權限</h1>
+
+<p><strong>[手做]</strong> 在檔案db/seeds.rb</p>
+
+<pre><code># the highest role with all the permissions.
+Role.create!(:name =&gt; "Super Admin")
+
+# other role
+Role.create!(:name =&gt; "Staff")
+
+#create universal permission
+Permission.create!(:subject_class =&gt; "all", :action =&gt; "manage")
+
+#assign super admin the permission to manage all the models and controllers
+role = Role.find_by_name('Super Admin')
+role.permissions &lt;&lt; Permission.find_by(:subject_class =&gt; 'all', :action =&gt; "manage")
+
+user = AdminUser.new(email: 'aloha@aloha.aloha', password: '12345678')
+user.role = role
+user.save
+
+AdminUser.create(email: 'staff@staff.staff', password: '12345678', :role_id =&gt; Role.find_by_name('Staff').id)
+</code></pre>
+
+<p><strong>[手做]</strong> 在terminal</p>
+
+<pre><code>rake db:seed
+</code></pre>
+
+<p>所以等一下你可以使用aloha@aloha.aloha登入最高權限，使用staff@staff.staff登入測試</p>
+
+<h1>Step 6. 設定Controller</h1>
+
+<p>因為我是希望後台有權限管理，所以這邊我是使用admin_controller</p>
+
+<p><strong>[手做]</strong> 在檔案app/controllers/admin_controller.rb</p>
+
+<pre><code>class AdminController &lt; ApplicationController
+  rescue_from CanCan::AccessDenied do |exception|
+    flash[:alert] = "存取失敗，你沒有權限做這個動作"
+    redirect_to admin_root_path 
+  end
+  # 下面不做的話，會有CanCan ActiveModel::ForbiddenAttributesError 的問題
+  # As load_resource will only load if resource is not there. 
+  # 下面那個步驟就是要用，就是這邊resource_params 貌似要使用 send(params.require(:role).permit(:name)) 才會work
+  # def build_resource
+  #       resource = resource_base.new(resource_params || {})
+  #         .....
+  # end
+  before_filter do
+    resource = controller_path.singularize.gsub('admin/', '').to_sym
+    method = "#{resource}_params"
+    params[resource] &amp;&amp;= send(method) if respond_to?(method, true)
+  end
+  before_action :authenticate_admin_user!
+  load_and_authorize_resource
+  before_filter :load_permissions # call this after load_and_authorize else it gives a cancan error.
+  layout 'admin'
+
+  protected
+
+  # Derive the model name from the controller. EX: UsersController will return User
+  def self.permission
+    return name = self.name.gsub('Controller','').singularize.split('::').last.constantize.name rescue nil
+  end
+
+  def current_ability
+    @current_ability ||= Ability.new(current_admin_user)
+  end
+
+  # load the permissions for the current admin user so that UI can be manipulated.
+  def load_permissions 
+    @current_permissions = current_admin_user.role.permissions.collect{|i| [i.subject_class, i.action]}
+  end
+
+end
+</code></pre>
+
+<p>如果需要在後台可以編輯的話，我們當然需要role controller</p>
+
+<p><strong>[手做]</strong> 在檔案app/controllers/admin/roles_controller.rb</p>
+
+<pre><code>class Admin::RolesController &lt; AdminController
+
+  #only user with super admin role can access
+  before_filter :is_super_admin?
+
+  def index
+    #you dont want to set the permissions for Super Admin.
+    @roles = Role.all.keep_if{|i| i.name != "Super Admin"}
+  end
+
+  def show
+    @role = Role.find(params[:id])
+    @permissions = @role.permissions
+  end
+
+  def edit
+    @role = Role.find(params[:id])
+    @permissions = Permission.all
+    @role_permissions = @role.permissions.collect{|p| p.id}
+  end
+
+  def update
+    @role = Role.find(params[:id])
+    @role.permissions = []
+    @role.set_permissions(params[:permissions]) if params[:permissions]
+    if @role.save
+      redirect_to admin_roles_path and return
+    end
+    @permissions = Permission.all
+    render 'edit'
+  end
+
+  def new
+    @role = Role.new
+  end
+
+  def create
+    @role = Role.new(permitted_params.role)
+    if @role.save
+      redirect_to admin_roles_path, flash: { notice: "成功建立角色#{@role.name}" }
+    else
+      render :new
+    end
+  end
+
+  def role_params
+    params.require(:role).permit(:name)
+  end
+
+  private
+
+  def is_super_admin?
+    redirect_to admin_root_path and return unless current_admin_user.super_admin?
+  end
+end
+</code></pre>
+
+<h1>Step 7. 建立routes</h1>
+
+<p><strong>[手做]</strong> config/routes.rb</p>
+
+<p>在admin裏面新增</p>
+
+<pre><code> namespace :admin do
+  ...
+  resources :roles
+  ...
+ end
+</code></pre>
+
+<h1>Step 8. 建立View</h1>
+
+<p>首先，當然是要new，但是這邊我很單純，我就是讓他先建立角色，之後再編輯權限</p>
+
+<p>所以&#8221;建立&#8221;的地方很簡單</p>
+
+<p><strong>[手做]</strong> app/views/admin/roles/new.html.slim</p>
+
+<pre><code>= simple_form_for [:admin, @role], wrapper: :admin, html: { class: 'form-horizontal' } do |f|
+  = f.input :name, label: '角色名稱'
+  .form-actions
+    = f.submit '送出', disabled_with: '送出中', class: 'btn btn-primary'
+</code></pre>
+
+<p><strong>[手做]</strong> app/views/admin/roles/edit.html.slim</p>
+
+<p>&#8220;編輯&#8221;的部分，可以用打勾的方式選取權限</p>
+
+<pre><code>.span12
+  = form_for @role , :url =&gt; admin_role_path, :method =&gt; :put do |f|
+    .fieldset
+      legend 
+        | Role： 
+        = @role.name
+      br 權限管理
+      br
+      table.table.table-bordered.table-striped.table-hover
+        thead 
+          tr 
+            th Class
+            th Action
+            th 是否有權限
+            - @permissions.each do |permission|
+              tr 
+                td= permission.subject_class
+                td= permission.action
+                td= check_box_tag 'permissions[]', permission.id, @role_permissions.include?(permission.id), {array: true, class: "check_box"}
+      .span16.offset2
+        .clearfix
+          = f.submit "更新", :class =&gt; 'btn btn-primary'
+          = link_to '取消', admin_roles_path  
+</code></pre>
+
+<p>大概會像這樣</p>
+
+<p><img src="https://dl.dropboxusercontent.com/u/22307926/Blog%20Image/Role_edit_sample.png" alt="cancan dynamic database design"></p>
+
+<p><strong>[手做]</strong> app/views/admin/roles/index.html.slim</p>
+
+<pre><code>h1 角色清單
+- content_for :btns do
+  = link_to '新增角色', new_admin_role_path, class: 'btn btn-primary'
+table.table.table-bordered.table-striped.table-hover
+  thead
+    tr
+      th Name
+      th
+      th
+  tbody
+    - @roles.each do |role|
+      tr
+        td= role.name
+        td= link_to 'Show', admin_role_path(role)
+        td= link_to 'Edit', edit_admin_role_path(role)
+br
+</code></pre>
+
+<p>大概會像這樣</p>
+
+<p><img src="https://dl.dropboxusercontent.com/u/22307926/Blog%20Image/Role_index_sample.png" alt="cancan dynamic database design"></p>
+
+<p>ps 若是你像我一樣，有一個後台的管理頁面</p>
+
+<p>你可能需要加上，在你的menu裏面</p>
+
+<pre><code>li
+  = link_to "權限管理", admin_roles_path
+</code></pre>
+
+<p>以上！大功告成</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[CSV匯入中文編碼問題]]></title>
+    <link href="http://ccaloha.cc/blog/2014/05/14/fight-invalid-utf-8-bytes-when-csv-importing/"/>
+    <updated>2014-05-14T11:17:11+08:00</updated>
+    <id>http://ccaloha.cc/blog/2014/05/14/fight-invalid-utf-8-bytes-when-csv-importing</id>
+    <content type="html"><![CDATA[<blockquote><p>情境ㄧ：若是使用者(window平台)先從自己系統download資料，之後要再匯入</p></blockquote>
+
+<p>對於CSV檔案本身解決方法&#8230;.</p>
+
+<h3>=>  請他先用google drive 上傳他的CSV檔，再從google抓下來</h3>
+
+<p>程式端醜陋的解法</p>
+
+<pre><code>def import(file)
+  csv_text = File.read(file.csv_textpath)
+  begin  
+    csv_text_new = Iconv.conv('utf-8','big5',csv_text) #若是使用者使用自己excel轉csv匯入
+  rescue  
+    #do nothing just keep going
+    csv_text_new = csv_text #使用者使用google線上轉換下來的csv
+  end 
+  csv = CSV.parse(csv_text_new, headers: false, quote_char: "\x00", col_sep: "\t")
+  header = csv.first.first.split(',')
+  counter = 0
+  csv.each do |row|
+    unless counter == 0
+      row = Hash[[header,row.first.split(',',header.count)].transpose]
+      order = where(order_no: row["order_no"]).first
+      if order.present?
+        order.attributes = row.to_hash
+        order.save!
+      else
+        Order.create!(row.to_hash)
+      end
+    end
+      counter+=1
+  end
+end
+</code></pre>
+
+<blockquote><p>情境二 若是使用者直接拿外部產生的csv要匯入的話</p></blockquote>
+
+<pre><code>def importingrt(file)
+  CSV.foreach(file.path, :headers =&gt; true, :col_sep =&gt; ',',encoding:'Big5:utf-8') do |row|
+      order = where(order_no: rescueow["系統訂單編號"]).first
+      if order.present?
+               if row["訂單狀態"] == '已出貨'
+          order.ship!
+            end
+      else
+        #do what you want
+      end
+    end
+</code></pre>
+
+<p>附錄：Ruby 的編碼清單</p>
+
+<pre><code>Encoding.list.map {|a| a.name}
+</code></pre>
+
+<p>=> [&#8220;ASCII-8BIT&#8221;, &#8220;UTF-8&#8221;, &#8220;US-ASCII&#8221;, &#8220;Big5&#8221;, &#8220;Big5-HKSCS&#8221;, &#8220;Big5-UAO&#8221;,
+ &#8220;CP949&#8221;, &#8220;Emacs-Mule&#8221;, &#8220;EUC-JP&#8221;, &#8220;EUC-KR&#8221;, &#8220;EUC-TW&#8221;, &#8220;GB18030&#8221;,
+ &#8220;GBK&#8221;, &#8220;ISO-8859-1&#8221;, &#8220;ISO-8859-2&#8221;, &#8220;ISO-8859-3&#8221;, &#8220;ISO-8859-4&#8221;,
+ &#8220;ISO-8859-5&#8221;, &#8220;ISO-8859-6&#8221;, &#8220;ISO-8859-7&#8221;, &#8220;ISO-8859-8&#8221;, &#8220;ISO-8859-9&#8221;,
+ &#8220;ISO-8859-10&#8221;, &#8220;ISO-8859-11&#8221;,
+ &#8220;ISO-8859-13&#8221;,
+ &#8220;ISO-8859-14&#8221;,
+ &#8220;ISO-8859-15&#8221;,
+ &#8220;ISO-8859-16&#8221;,
+ &#8220;KOI8-R&#8221;,
+ &#8220;KOI8-U&#8221;,
+ &#8220;Shift_JIS&#8221;,
+ &#8220;UTF-16BE&#8221;,
+ &#8220;UTF-16LE&#8221;,
+ &#8220;UTF-32BE&#8221;,
+ &#8220;UTF-32LE&#8221;,
+ &#8220;Windows-31J&#8221;,
+ &#8220;Windows-1251&#8221;,
+ &#8220;IBM437&#8221;,
+ &#8220;IBM737&#8221;,
+ &#8220;IBM775&#8221;,
+ &#8220;CP850&#8221;,
+ &#8220;IBM852&#8221;,
+ &#8220;CP852&#8221;,
+ &#8220;IBM855&#8221;,
+ &#8220;CP855&#8221;,
+ &#8220;IBM857&#8221;,
+ &#8220;IBM860&#8221;,
+ &#8220;IBM861&#8221;,
+ &#8220;IBM862&#8221;,
+ &#8220;IBM863&#8221;,
+ &#8220;IBM864&#8221;,
+ &#8220;IBM865&#8221;,
+ &#8220;IBM866&#8221;,
+ &#8220;IBM869&#8221;,
+ &#8220;Windows-1258&#8221;,
+ &#8220;GB1988&#8221;,
+ &#8220;macCentEuro&#8221;,
+ &#8220;macCroatian&#8221;,
+ &#8220;macCyrillic&#8221;,
+ &#8220;macGreek&#8221;,
+ &#8220;macIceland&#8221;,
+ &#8220;macRoman&#8221;,
+ &#8220;macRomania&#8221;,
+ &#8220;macThai&#8221;,
+ &#8220;macTurkish&#8221;,
+ &#8220;macUkraine&#8221;,
+ &#8220;CP950&#8221;,
+ &#8220;CP951&#8221;,
+ &#8220;stateless-ISO-2022-JP&#8221;,
+ &#8220;eucJP-ms&#8221;,
+ &#8220;CP51932&#8221;,
+ &#8220;EUC-JP-2004&#8221;,
+ &#8220;GB2312&#8221;,
+ &#8220;GB12345&#8221;,
+ &#8220;ISO-2022-JP&#8221;,
+ &#8220;ISO-2022-JP-2&#8221;,
+ &#8220;CP50220&#8221;,
+ &#8220;CP50221&#8221;,
+ &#8220;Windows-1252&#8221;,
+ &#8220;Windows-1250&#8221;,
+ &#8220;Windows-1256&#8221;,
+ &#8220;Windows-1253&#8221;,
+ &#8220;Windows-1255&#8221;,
+ &#8220;Windows-1254&#8221;,
+ &#8220;TIS-620&#8221;,
+ &#8220;Windows-874&#8221;,
+ &#8220;Windows-1257&#8221;,
+ &#8220;MacJapanese&#8221;,
+ &#8220;UTF-7&#8221;,
+ &#8220;UTF8-MAC&#8221;,
+ &#8220;UTF-16&#8221;,
+ &#8220;UTF-32&#8221;,
+ &#8220;UTF8-DoCoMo&#8221;,
+ &#8220;SJIS-DoCoMo&#8221;,
+ &#8220;UTF8-KDDI&#8221;,
+ &#8220;SJIS-KDDI&#8221;,
+ &#8220;ISO-2022-JP-KDDI&#8221;,
+ &#8220;stateless-ISO-2022-JP-KDDI&#8221;,
+ &#8220;UTF8-SoftBank&#8221;,
+ &#8220;SJIS-SoftBank&#8221;</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[[HowTo] Setup Sunspot in Rails 4 and Deploy to Ubuntu12.04 using Capistrano 3]]></title>
+    <link href="http://ccaloha.cc/blog/2014/04/30/howto-setup-sunspot-in-rails4-and-deploy-to-ubuntu12-dot-04-using-capistrano/"/>
+    <updated>2014-04-30T10:26:44+08:00</updated>
+    <id>http://ccaloha.cc/blog/2014/04/30/howto-setup-sunspot-in-rails4-and-deploy-to-ubuntu12-dot-04-using-capistrano</id>
+    <content type="html"><![CDATA[<h1>[HOWTO] Setup Sunspot in Rails 4 and Deploy to Ubuntu 12.04 using</h1>
+
+<p>Capistrano3.</p>
+
+<p>最近利用空閒時間，練習自己架設一個購物網站，其中，我想說一般網站都會有搜尋的功能，</p>
+
+<p>如果在後台，可以使用Ransack來實作，但是那是給管理者搜尋某些表相關欄位所使用，</p>
+
+<p>換句話說，在訂單的table中，你可以使用Ransack搜尋，建立每一個獨立欄位搜尋input，或是建立和這訂單table相關的每個獨立欄位的搜尋input</p>
+
+<p>但是，如果想要在網站建立一個搜尋引擎，該要怎麼做？</p>
+
+<p>搜尋引擎是只要輸入一個資料，你就可以搜尋到搜尋不同欄位，</p>
+
+<p>我查了The Ruby toolbox，第一名被使用的就是Sunspot:
+<a href="https://github.com/outoftime/sunspot">https://github.com/outoftime/sunspot</a> !</p>
+
+<p>於是乎，就來try and error吧</p>
+
+<!--more-->
+
+
+<h2>Part1 - Local Machine testing</h2>
+
+<h3>1. In your Gemfile</h3>
+
+<pre><code>gem 'sunspot_rails'
+</code></pre>
+
+<h3>2. Bundle it.</h3>
+
+<pre><code>bundle install
+</code></pre>
+
+<h3>3. Generate a default configuration file</h3>
+
+<pre><code>rails g sunspot_rails:fileinstall
+</code></pre>
+
+<h3>4. Model where you want to be searched</h3>
+
+<p>假設是你的Product 要給大家搜尋</p>
+
+<p>請在 <em>app/models/product.rb</em></p>
+
+<p>假設你有欄位, name, content, html_block, slug(產品好看的url用) ,is_added(上架與否)加入</p>
+
+<pre><code>searchable do 
+  text :name, :content, :html_block, :slug
+  time :commentsreated_at
+  boolean :is_added
+end
+</code></pre>
+
+<h3>5. Routing</h3>
+
+<p>到<em>route.rb</em>上，這樣你的localhost:3000/search就是搜尋在用的link</p>
+
+<pre><code>get '/search', to: 'pages#search'
+</code></pre>
+
+<h3>6. View (search bar)</h3>
+
+<p>因為我想要把搜尋bar一直放在網頁右上角，和使用者基本操作放在一起(例如登入&#8230;等)</p>
+
+<p>所以我在我的<em>_user_nav.html.slim</em> 加上</p>
+
+<pre><code>= form_tag search_path, :method =&gt; :get , class: 'search-bar' do
+  = toext_field_tag :search, params[:search]
+  = submit_tag "Search", :namee =&gt; nil
+</code></pre>
+
+<h3>7. Controller</h3>
+
+<p>最後，當form 做get動作後，就交給 pages_controller.rb</p>
+
+<pre><code>def search
+  @search = Product.solr_search do
+  fulltext Part1arams[:search]
+  with(:is_added, true)
+  with(:created_at).less_than(searchTime.zone.now)
+  end
+  @related_products = @search.results
+end
+</code></pre>
+
+<p> ps.這邊有個小關卡，那就是如果你和我一樣有使用ransack</p>
+
+<p> 如果<strong>Product.solr_search</strong> 這邊你是寫Product.search會報錯</p>
+
+<p> solution，也就是我上面寫的那種，是參考自：
+<a href="https://github.com/sunspot/sunspot/blob/master/sunspot_rails/lib/sunspot/rails/searchable.rb#L124">https://github.com/sunspot/sunspot/blob/master/sunspot_rails/lib/sunspot/rails/searchable.rb#L124</a></p>
+
+<h3>8. View</h3>
+
+<p> controller完之後，當然要有一個view去接，<em>serach.html.slim</em></p>
+
+<pre><code>.home-block
+  h2 class="home-block-heading"
+    span 搜尋結果
+  .row.clearfix
+    - @related_products.each do |product|
+      .col-sm-4 style="padding-bottom:0"
+        figure
+          figcaption
+            strong #{product.name}
+            span   #{product.content}
+            em   #{product.selling_price}figure 
+</code></pre>
+
+<h3>9. Using commend line run Sunspot service</h3>
+
+<p>在Local machine測試</p>
+
+<pre><code>rake sunspot:solr:start
+rake sunspot:reindex
+</code></pre>
+
+<p>這樣基本上，就是搜尋在用的可以開始搜尋了！ (中文也會通歐～～)</p>
+
+<p>ps. 在code commit上，</p>
+
+<p>I didn&#8217;t add folder *solr/**  into code tracking.</p>
+
+<p>I only add <em>sunspot.yml</em> into my github.</p>
+
+<h2>Part2 - Deployment</h2>
+
+<h3>1. Make sure that your server installed JAVA.</h3>
+
+<p>if not do this</p>
+
+<pre><code>sudo apt-get install openjdk-7-jre
+</code></pre>
+
+<p>or you will got &#8230;</p>
+
+<pre><code>You need a Java Runtime Environment to run the Solr server
+Sunspot:the:Solr::Server::JavaMissing
+</code></pre>
+
+<h3>2. Cap</h3>
+
+<p>thanks to <a href="https://gist.github.com/muscardinus/8884801">https://gist.github.com/muscardinus/8884801</a></p>
+
+<p>create sunspot.cap under <em>lib/capistrano/tasks/sunspot.cap</em></p>
+
+<script src="https://gist.github.com/muscardinus/8884801.js"></script>
+
+
+<h3>3. Config sunspot.yml</h3>
+
+<pre><code>production:
+  solr:
+    hostname: loca    port: 8983
+    log_level: WARNING
+    path: /solr/default
+    # read_timeout: 2
+    # open_timeout: 0.5
+
+development:
+  solr:
+    hostname: localhost
+    port: 8982
+    log_level: INFO
+    path: /solr/development
+
+test:
+  solr:
+    hostname: localhost
+    port: 8981
+    log_level: WARNING
+    path: /solr/thisest
+</code></pre>
+
+<h4>IMPORTANT:</h4>
+
+<p><em>path: /solr/default</em> instead of path: <em>/solr/productionon</em></p>
+
+<h3>3. Done</h3>
+
+<pre><code>cap production deploy
+</code></pre>
+
+<h3>Part3- Troubleshotting</h3>
+
+<p>if you got error message like I did,</p>
+
+<pre><code>F, [2014-04-29T23:47:44.848055 #23803] FATAL -- : 
+RSolr::Error::Http (RSolr::Error::Http - 4404 Not Found
+Error:     Not Found
+
+Request Data:
+"fq=type%3AProduct&amp;fqfq=is_added_b%3Atrue&amp;fq=created_at_d%3A%7B%2A+TO+2014%5C-04%5C-29T15%5C%3A47%5C%3A44Z%7D&amp;q=%E4%B8%8A%E8%A1%A3&amp;fl=%2A+score&amp;qf=name_text+content_text+html_block_text+slug_text&amp;defType=edismax&amp;start=0&amp;rows=30"
+
+Backtrace:
+/home/Deploymenty/ectest/shared/bundle/ruby/2.0.0/gems/rsolr-1.0.10/lib/rsolr/client.rb:283:in
+`adapt_response'
+/home/deploy/ectest/shared/bundle/ruby/2.0.0/gems/rsolr-1.0.10/lib/rsolr/client.rb:190:in
+`execute'
+/home/deploy/ectest/shared/bundlee/ruby/2.0.0/gems/rsolr-1.0.10/lib/rsolr/client.rb:176:in
+`send_and_receive'
+/home/deploy/ectest/shared/bundle/ruby/2.0.0/gems/sunspot_rails-2.1.0/lib/sunspot_railsot/rails/solr_instrumentation.rb:16:in
+`block in send_and_receive_with_as_instrumentation'
+/home/deploy/ectest/shared/bundle/ruby/2.0.0/gems/activesupport-4.0.2/lib/active_support/notifications.rb:159:in
+`block in instrument'
+/home/deploy/ectestest/shared/bundle/ruby/2.0.0/gems/activesupport-4.0.2/lib/active_support/notifications/instrumenter.rb:20:in
+`instrument'
+/home/deploy/ectest/shared/bundlendle/ruby/2.0.0/gems/activesupport-4.0.2/lib/active_support/notifications.rb:159:in
+`instrument'
+</code></pre>
+
+<p>Solution:</p>
+
+<pre><code>1. ps aux | grep solr to get solr process ID
+2. sudo kill &lt;ID&gt;, &lt;ID&gt; is the ID you found from 1
+3. rm -r &lt;path/to/solr&gt;, remove the solr directory inside your
+   project to remove all of previous indexes
+4. RAILS_ENV=production bundle exec rake sunspot:solr:start
+5. Change the path to /solr/default inside config/sunspot.yml
+6. RAILS_ENV=production bundle exec rake sunspot:solr:reindex
+</code></pre>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Setup both SSH and SFTP are able to login at same time in Ubuntu]]></title>
+    <link href="http://ccaloha.cc/blog/2014/04/11/setup-both-ssh-and-sftp-are-able-to-login-at-same-time-in-ubuntu/"/>
+    <updated>2014-04-11T12:24:15+08:00</updated>
+    <id>http://ccaloha.cc/blog/2014/04/11/setup-both-ssh-and-sftp-are-able-to-login-at-same-time-in-ubuntu</id>
+    <content type="html"><![CDATA[<p>這篇文章主要是參考自
+<a href="http://blog.srmklive.com/2013/04/24/how-to-setup-sftp-server-ftp-over-ssh-in-ubuntu/">http://blog.srmklive.com/2013/04/24/how-to-setup-sftp-server-ftp-over-ssh-in-ubuntu/</a>
+但是，我沒辦法同時使用ssh和sftp</p>
+
+<!--more-->
+
+
+<h1>Edit ssh config</h1>
+
+<pre><code>sudo vim /etc/ssh/sshd_config
+</code></pre>
+
+<h1>將底下那行貼上</h1>
+
+<pre><code>PasswordAuthentication no
+Subsystem sftp internal-sftp -f AUTH -1 VERBOSE
+AllowGroups newuser 
+AllowTCPForwarding no
+X11Forwarding no
+</code></pre>
+
+<h1>Configure IPtable(讓ssh可以通過)</h1>
+
+<pre><code>sudo iptables -A INPUT -p tcp --dport 22 -j ACCEPT
+</code></pre>
+
+<h2>新增User</h2>
+
+<pre><code>sudo adduser newuser
+</code></pre>
+
+<h2>將你要用來ssh或SFTP的電腦public key輸入到&#8230;</h2>
+
+<p>In local machine(我是用Mac)</p>
+
+<pre><code>scp ~/.ssh/id_rsa.pub newuser@ip:~/
+</code></pre>
+
+<p>In server</p>
+
+<pre><code>mkdir .ssh
+cat ~/id_rsa.pub &gt;&gt; ~/.ssh/authorized_keys
+</code></pre>
+
+<p>這樣就可以了！</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[[HOWTO] Transfer Capistrano 2 to Capistrano 3 using Ruby on Rails]]></title>
+    <link href="http://ccaloha.cc/blog/2014/03/27/howto-transfer-capistrano-2-to-capistrano-3-using-ruby-on-rails/"/>
+    <updated>2014-03-27T11:13:09+08:00</updated>
+    <id>http://ccaloha.cc/blog/2014/03/27/howto-transfer-capistrano-2-to-capistrano-3-using-ruby-on-rails</id>
+    <content type="html"><![CDATA[<p>At First, Why I want to transfer from Capistrano2 to Capistrano3?</p>
+
+<ol>
+<li>Stability</li>
+<li>Performance</li>
+</ol>
+
+
+<p>In Capistrano2,</p>
+
+<p>First, I often stuck at precompile&#8230;</p>
+
+<p>and sometimes I get <strong>[deploy:update_code] exception while rolling back:
+Net::SSH::Disconnect, connection closed by remote host&#8221;</strong></p>
+
+<p>Third, every deployments take about 10~15 minuates.</p>
+
+<p>So&#8230;. that&#8217;s why I want to change to capistrano 3.</p>
+
+<!--more-->
+
+
+<p>this post is inspired by
+<a href="https://semaphoreapp.com/blog/2013/11/26/capistrano-3-upgrade-guide.html">https://semaphoreapp.com/blog/2013/11/26/capistrano-3-upgrade-guide.html</a></p>
+
+<p>But I still have some problems. Here I demo source code from my project
+and show how I fix these problems.</p>
+
+<h2>Just move your old &#8220;cap&#8221; files to a folder</h2>
+
+<pre><code>cd YOUR_PROJECT
+mkdir old_cap
+mv Capfile old_cap
+mv config/deploy.rb old_cap
+mv config/deploy/mv old_cap    
+</code></pre>
+
+<h2>1. Gemfile</h2>
+
+<h3>Original</h3>
+
+<script src="https://gist.github.com/alChaCC/9799086.js"></script>
+
+
+<h3>New</h3>
+
+<script src="https://gist.github.com/alChaCC/9799076.js"></script>
+
+
+<p><strong>gem &#8220;capistrano-rails&#8221;</strong>  = <em>gem &#8216;capistrano&#8217;</em> + <em>gem
+&#8216;capistrano-ext&#8217;</em> + <em>gem &#8216;capistrano_colors&#8217;</em></p>
+
+<h2>2. Capfilee</h2>
+
+<h3>Original</h3>
+
+<script src="https://gist.github.com/alChaCC/9799039.js"></script>
+
+
+<h3>New</h3>
+
+<p>If you want to know what is the deploy flow if you require these files</p>
+
+<p>check this <a href="http://capistranorb.com/documentation/getting-started/flow/">http://capistranorb.com/documentation/getting-started/flow/</a></p>
+
+<script src="https://gist.github.com/alChaCC/9799057.js"></script>
+
+
+<h2>3. config/deploy.rb</h2>
+
+<h3>Original</h3>
+
+<script src="https://gist.github.com/alChaCC/9799134.js"></script>
+
+
+<h3>New</h3>
+
+<script src="https://gist.github.com/alChaCC/9799113.js"></script>
+
+
+<h2>4. config/deploy/staging.rb</h2>
+
+<h3>Original</h3>
+
+<script src="https://gist.github.com/alChaCC/9799148.js"></script>
+
+
+<h3>New</h3>
+
+<script src="https://gist.github.com/alChaCC/9799161.js"></script>
+
+
+<h2>5. lib/capistrano/tasks/restart.cap</h2>
+
+<script src="https://gist.github.com/alChaCC/9799192.js"></script>
+
+
+<h2>6. lib/capistrano/tasks/sync_to_S3.cap</h2>
+
+<p>I use <strong>asset_sync</strong> to sync assets to S3.</p>
+
+<p><a href="https://github.com/rumblelabs/asset_sync">https://github.com/rumblelabs/asset_sync</a></p>
+
+<p><strong>Notice:</strong> within must inside roles or you will get no method problem.</p>
+
+<p>more details <a href="https://github.com/capistrano/sshkit">https://github.com/capistrano/sshkit</a></p>
+
+<script src="https://gist.github.com/alChaCC/9799214.js"></script>
+
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[HOWTO- 公司需要CEO, Blog也需要SEO！- using octopress]]></title>
+    <link href="http://ccaloha.cc/blog/2014/03/07/howto-seo-for-octopress/"/>
+    <updated>2014-03-07T10:32:20+08:00</updated>
+    <id>http://ccaloha.cc/blog/2014/03/07/howto-seo-for-octopress</id>
+    <content type="html"><![CDATA[<p>這篇其實是學習(翻譯)自
+<a href="http://xit0.org/2013/05/seo-for-octopress-websites">http://xit0.org/2013/05/seo-for-octopress-websites</a></p>
+
+<h2>第一步- 文章SEO: 更改你Octopress產生文章引擎的 Rakefile</h2>
+
+<pre><code>desc "Begin a new post in #{source_dir}/#{posts_dir}"
+task :new_post, :title do |t, args|
+  if args.title
+    title = args.title
+  else
+    title = get_stdin("Enter a title for your post: ")
+  end
+  raise "### You haven't set anything up yet. First run `rake install` to set up an Octopress theme." unless File.directory?(source_dir)
+  mkdir_p "#{source_dir}/#{posts_dir}"
+  filename = "#{source_dir}/#{posts_dir}/#{Time.now.strftime('%Y-%m-%d')}-#{title.to_url}.#{new_post_ext}"
+  if File.exist?(filename)
+    abort("rake aborted!") if ask("#{filename} already exists. Do you want to overwrite?", ['y', 'n']) == 'n'
+  end
+  puts "Creating new post: #{filename}"
+  open(filename, 'w') do |post|
+    post.puts "---"
+    post.puts "layout: post"
+    post.puts "title: \"#{title.gsub(/&amp;/,'&amp;amp;')}\""
+    post.puts "date: #{Time.now.strftime('%Y-%m-%d %H:%M')}"
+    post.puts "comments: true"
+    post.puts "categories: "
+    post.puts "keywords: "      # 加在這邊
+    post.puts "description: "   # 加在這邊
+    post.puts "---"
+  end
+end
+</code></pre>
+
+<!-- more -->
+
+
+<p>所以每篇文章那邊，你就可以這樣寫</p>
+
+<pre><code>---
+layout: post
+title: "SEO for Octopress Websites"
+date: 2014-03-07 12:00
+comments: true
+categories: ["octopress", "seo"]
+keywords: "keyword, for, this, post"
+description: "Description for this post"
+---
+</code></pre>
+
+<h2>第二步 - 網站SEO:  編輯你的_config.yml檔</h2>
+
+<pre><code>url: http://yoursite.com
+title: My Octopress Blog
+subtitle: A blogging framework for hackers.
+author: Your Name
+simple_search: http://google.com/search
+
+description: "Description for the website"   #加在這邊
+keywords: "keywords, for, the, website"      #加在這邊
+</code></pre>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[[HOWTO]- Build a Step-By-Step Website Introduction using crumble.js instead of intro.js]]></title>
+    <link href="http://ccaloha.cc/blog/2014/03/06/howto-build-step-by-step-introduction-javascript-using-crumble-instead-of-intro-dot-js/"/>
+    <updated>2014-03-06T22:16:01+08:00</updated>
+    <id>http://ccaloha.cc/blog/2014/03/06/howto-build-step-by-step-introduction-javascript-using-crumble-instead-of-intro-dot-js</id>
+    <content type="html"><![CDATA[<h2>Intro</h2>
+
+<p>Crumble.js is a interactive step-by-step tour based on grumble.js</p>
+
+<p>you might want to check the demo site.</p>
+
+<p>Please check this out => <a href="http://blog.tommoor.com/crumble">http://blog.tommoor.com/crumble</a></p>
+
+<p>You can learn from this tutorial how to use crumble.js in your Ruby on
+Rails project.</p>
+
+<p>In advance, I will show you how to deploy to AWS EC2 without pain~~~</p>
+
+<!--more-->
+
+
+<h2>Step1. Download resource file from Github</h2>
+
+<p>You can download file from</p>
+
+<pre><code>git clone https://github.com/tommoor/crumble.git 
+
+git clone https://github.com/jamescryer/grumble.js.git
+</code></pre>
+
+<p>Or&#8230;..</p>
+
+<p>Download it via Github GUI.</p>
+
+<h2>Step2. Put all required files in vender</h2>
+
+<p>Below is how I vendor folder looks like</p>
+
+<pre><code>vender
+|
+|-- images
+|   |
+|   |-- crumble
+|       |
+|       |-- bubble-sprite.png
+|
+|-- javascripts
+|   |
+|   |-- crumble
+|       |
+|       |-- Bubble.js
+|       |-- jquery.crumble.min.js
+|       |-- jquery.grumble.js
+|
+|-- stylesheets
+    |
+    |-- crumble
+        |
+        |-- crumble.css
+        |-- grumble.min.css
+</code></pre>
+
+<h2>Step3. Add require to you application</h2>
+
+<p>app/assets/javascripts/application.coffee</p>
+
+<pre><code>#= require crumble/Bubble
+#= require crumble/jquery.grumble
+#= require crumble/jquery.crumble.min
+</code></pre>
+
+<p>ps. grumble must be above the crumble</p>
+
+<p>app/assets/stylesheets/application.css.scss</p>
+
+<pre><code>*= require crumble/grumble.min
+*= require crumble/crumble
+</code></pre>
+
+<h2>Step4. Add Step-By-Step tour using html code</h2>
+
+<p>app/views/shared/_guide.html.slim</p>
+
+<pre><code>ol id = "tour"
+  li  data-target= '.root-1' data-angle= '0' data-options= 'distance: 0'
+    | Step1
+  li data-target= '.root-2' data-angle= '30' data-options= 'distance: 50'
+    | Step2
+  li data-target= '.root-3' data-angle= '0' data-options= 'distance: 0'
+    | Step3
+</code></pre>
+
+<p>ps. .root-1, .root-2, .root-3  are html tag class which you can change
+to your own</p>
+
+<p>app/views/pages/home.html.slim</p>
+
+<pre><code>/! Add where you want
+= render 'shared/guide'
+</code></pre>
+
+<h2>Step5. Add another custom setting in javascript and css file</h2>
+
+<p>app/assets/javascripts/application.coffee</p>
+
+<pre><code>$('#tour').crumble()
+</code></pre>
+
+<p>or you can customize your setting such as</p>
+
+<pre><code>$('#tour').crumble grumble: {showAfter: 1000, hideAfter: 2000}
+</code></pre>
+
+<p>app/assets/stylesheets/application.css.scss</p>
+
+<pre><code>#tour {
+  display: none;
+}
+</code></pre>
+
+<p>After you finish step5, You are able to see the awesome introduction
+tour.</p>
+
+<p>Now, you might want to deploy to your VPS. In my case, I will deploy to
+AWS EC2.</p>
+
+<h2>Step6. Deploy to AWS EC2</h2>
+
+<p>Here I want to mention the problem I met, please check
+<a href="http://stackoverflow.com/questions/22222516/rake-aborted-no-such-file-or-directory-after-write-admin-css">http://stackoverflow.com/questions/22222516/rake-aborted-no-such-file-or-directory-after-write-admin-css</a></p>
+
+<p>The solution is that you have to make sure that your project have <strong>gem
+&#8220;non-stupid-digest-assets, &#8216;1.0.3&#8217;&#8221;</strong> in your gemfile</p>
+
+<p>and</p>
+
+<pre><code>bundle install
+</code></pre>
+
+<p>Secondly, the problem is I can&#8217;t see the bubble image in my staging
+machine.</p>
+
+<p>Since my assets will be uploaded to S3, my solution is</p>
+
+<p>change <strong>grumble.min.css</strong> to <strong>grumble.min.css.scss</strong></p>
+
+<p>and update the image part in the code</p>
+
+<pre><code>.grumble{
+....
+background-image: image-url('crumble/bubble-sprite.png') 
+....
+}
+</code></pre>
+
+<p>In my opinion, since our images are uploaded to AWS S3 after
+assets:precompile.</p>
+
+<p>And procompile action will generate url automatically refer to S3 link.</p>
+
+<p>However, using &#8220;background-image: url(&#8216;XXXX&#8217;)&#8221; in your css, the compiler
+will not convert the link to S3, therefore, server will looking for the
+image in local http folder.</p>
+
+<p>So, I use <strong>image-url</strong> method in scss to fix this problem.</p>
+
+<h2>Congratulation !</h2>
+
+<p>In a nutshell, in order to lower the effort, I try to build my first
+gem. If finish, I will update in my blog.</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[[HowTo]- Create youtube link in Ruby on Rails(using slim)]]></title>
+    <link href="http://ccaloha.cc/blog/2014/03/03/howto-create-youtube-link-in-ruby-on-rails/"/>
+    <updated>2014-03-03T23:52:08+08:00</updated>
+    <id>http://ccaloha.cc/blog/2014/03/03/howto-create-youtube-link-in-ruby-on-rails</id>
+    <content type="html"><![CDATA[<h2>In your view where you want to show youtube link</h2>
+
+<p>ex: app/views/products/show.html.slim</p>
+
+<pre><code>- if @product.youtube_url.present?
+  = video_iframe @product.youtube_url
+</code></pre>
+
+<h2>Create a helper</h2>
+
+<p>ex: I created in application_helper.rb</p>
+
+<pre><code>def video_iframeideo_iframe(src)
+  content_tag("iframe","", {:width =&gt; 'XXX', :height =XXX&gt; 'YYY', :src =&gt;"#{src}"} )
+end
+</code></pre>
+
+<p> <!--more--></p>
+
+<p> That&#8217;s it ~</p>
+
+<p> Good Luck</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[[HowTo] 讓使用者登入網站後，才允許Facebook留言 - ROR + Coffeescript + CSS + Devise]]></title>
+    <link href="http://ccaloha.cc/blog/2014/02/05/howto-users-can-only-post-comments-on-fb-after-login/"/>
+    <updated>2014-02-05T21:49:45+08:00</updated>
+    <id>http://ccaloha.cc/blog/2014/02/05/howto-users-can-only-post-comments-on-fb-after-login</id>
+    <content type="html"><![CDATA[<h3>1.在Html page加上</h3>
+
+<pre><code>    &lt;div class="fb_comment_container"&gt;
+    &lt;div class="event_fb_blur"&gt;
+        &lt;p&gt;&lt;a href="javascript:;" onclick="App.check_login_status();"&gt;請登入會員先&lt;/a&gt;&lt;/p&gt;
+    &lt;/div&gt;
+    &lt;div class="fb-comments" data-colorscheme="light" data-href="http://XXX.OOO" data-numposts="50" data-width="600"&gt;&lt;/div&gt;
+    &lt;/div&gt;
+</code></pre>
+
+<p>App.check_login_status() => <em>寫在application.coffee裏</em></p>
+
+<h3>2.加上CSS</h3>
+
+<p>目的：加上遮罩讓使用者無法點入留言</p>
+
+<pre><code>    .fb_comment_container {
+      text-align: center;
+      -webkit-border-radius: 10px;
+      -moz-border-radius: 10px;
+      border-radius: 10px;
+    }
+
+    .event_fb_blur {
+      width: 800px;
+      height: 95px;
+      background: rgba(0, 0, 0, 0.8);
+      margin: 0 auto;
+      position: absolute;
+      z-index: 100;
+      left: 230px;
+      padding: 0 14px;
+      }
+
+    .event_fb_blur p{
+    position: relative;
+    margin: 0 auto;
+    color: white;
+    font-size: 30px;
+    cursor:pointer;
+    line-height: 104px;
+    text-decoration: underline
+    }
+</code></pre>
+
+<h3>3.在config/initializers/devise.rb 加上</h3>
+
+<p>目的：使得devise在登入成功或登出時，寫出session讓javascript可以知道是否有登入成功</p>
+
+<pre><code>      Warden::Manager.after_set_user do |user,auth,opts|
+        auth.cookies[:signed_in] = 1
+      end
+
+      Warden::Manager.before_logout do |user,auth,opts|
+        auth.cookies.delete :signed_in
+      end
+</code></pre>
+
+<h3>4.在app/controllers/application_controller.rb加上</h3>
+
+<p>目的：儲存之前瀏覽的位置，並且在登入成功後，導向回去</p>
+
+<pre><code>      after_filter :store_location
+
+      def store_location 
+        if (
+          request.fullpath != "/account/sign_in" &amp;&amp;
+          request.fullpath != "/account/sign_up" &amp;&amp;
+          request.fullpath != "/account/password" &amp;&amp;
+          request.fullpath != "/account/sign_out" &amp;&amp;
+          !request.xhr?) # don't store ajax calls
+        session[:previous_url] = request.fullpath 
+        end
+
+        if request.fullpath == "/admin_users/sign_in"
+          session[:previous_url] = "/admin"
+        end
+
+      end
+
+    def after_sign_in_path_for(resource)
+       session[:previous_url] || root_path
+    end
+</code></pre>
+
+<h3>5.在app/assets/javascripts/application.coffee加上</h3>
+
+<p>目的：使用js來達成功能</p>
+
+<pre><code>    getCookie: (match) -&gt;
+        key = match + "="
+        for c in document.cookie.split(';')
+          c.substring(1, c.length) while c.charAt(0) is ''
+          return c.substring(key.length, c.length) if c.indexOf(key) &gt;= 0 
+        return null
+
+    check_login_status: () -&gt;
+        window.open('/account/sign_in','_self',width=600,height=300,
+        toolbar=0,menubar=0,location=1,status=1,scrollbars=1,
+        resizable=1,left=0,top=0)
+
+    init: () -&gt;
+        is_signed = window.App.getCookie("signed_in")
+        if is_signed is '=1' or  is_signed is '1' #剛登入成功時，is_signed的值是1，但是之後就會變成=1，顆顆～
+            $(".event_fb_blur").css({"display":"none"})
+
+    $(document).ready -&gt;
+        App.init()
+</code></pre>
+
+<h3>完成!</h3>
+
+<p>Bug:</p>
+
+<ol>
+<li>當頁面縮放時，遮罩不會隨著變動</li>
+<li>尚未整合使用者留言後，可以直接記錄到user model</li>
+</ol>
+
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[[HowTo] 在Mac 設定Chrome Default 打開為無痕模式]]></title>
+    <link href="http://ccaloha.cc/blog/2014/01/16/how-to-setup-google-chrome-incognito-as-default-setting-in-mac-osx/"/>
+    <updated>2014-01-16T20:37:43+08:00</updated>
+    <id>http://ccaloha.cc/blog/2014/01/16/how-to-setup-google-chrome-incognito-as-default-setting-in-mac-osx</id>
+    <content type="html"><![CDATA[<p>主要是參考至 <a href="http://myquickfix.co.uk/2011/10/launch-google-chrome-in-incognito-from-terminal-or-a-shortcut-in-os-x/">Launch Google Chrome Incognito from the terminal or a shortcut in OSX</a></p>
+
+<h3>首先，到Launchpad</h3>
+
+<iframe src="https://www.flickr.com/photos/alohacc/11979759324/player/c3cd572418" height="166" width="129"  frameborder="0" allowfullscreen webkitallowfullscreen mozallowfullscreen oallowfullscreen msallowfullscreen></iframe>
+
+
+<h3>找到<strong>&#8220;AppleScript編寫程式&#8221;</strong></h3>
+
+<iframe src="https://www.flickr.com/photos/alohacc/11979650303/player/b026cc0b9b" height="106" width="141"  frameborder="0" allowfullscreen webkitallowfullscreen mozallowfullscreen oallowfullscreen msallowfullscreen></iframe>
+
+
+<h3>貼上</h3>
+
+<pre><code>    tell application "Terminal"
+        activate
+        do script "open -a /Applications/Google\\ Chrome.app --args --incognito;"
+        delay 1
+        quit
+    end tell
+</code></pre>
+
+<h3>點選<strong>&#8220;編譯&#8221;</strong></h3>
+
+<iframe src="https://www.flickr.com/photos/alohacc/11979353075/player/a02a18cd9d" height="206" width="504"  frameborder="0" allowfullscreen webkitallowfullscreen mozallowfullscreen oallowfullscreen msallowfullscreen></iframe>
+
+
+<h3>選取<strong>&#8220;檔案&#8221;</strong>, 選取<strong>&#8220;輸出&#8221;</strong></h3>
+
+<iframe src="https://www.flickr.com/photos/alohacc/11979650263/player/513656276c" height="334" width="275"  frameborder="0" allowfullscreen webkitallowfullscreen mozallowfullscreen oallowfullscreen msallowfullscreen></iframe>
+
+
+<h3>檔名<strong>&#8220;Google Incognito&#8221;</strong>, 檔案格式選擇<strong>&#8220;應用程式&#8221;</strong></h3>
+
+<iframe src="https://www.flickr.com/photos/alohacc/11979759234/player/9c1fc81b96" height="438" width="450"  frameborder="0" allowfullscreen webkitallowfullscreen mozallowfullscreen oallowfullscreen msallowfullscreen></iframe>
+
+
+<h3>下載<a href="http://myquickfix.co.uk/wp-content/uploads/2011/10/chrome-incog-icon-512-150x150.png">圖片</a></h3>
+
+<h3>把圖片點開，點選顯示編輯工具列</h3>
+
+<iframe src="https://www.flickr.com/photos/alohacc/11979759064/player/b667a73f60" height="361" width="595"  frameborder="0" allowfullscreen webkitallowfullscreen mozallowfullscreen oallowfullscreen msallowfullscreen></iframe>
+
+
+<h3>找到<strong>&#8220;選取工具&#8221;</strong>，把圖片框起來</h3>
+
+<iframe src="https://www.flickr.com/photos/alohacc/11979758984/player/389afc6a6c" height="71" width="90"  frameborder="0" allowfullscreen webkitallowfullscreen mozallowfullscreen oallowfullscreen msallowfullscreen></iframe>
+
+
+<p>並用鍵盤按&#8221;command+c&#8221;(複製)</p>
+
+<iframe src="https://www.flickr.com/photos/alohacc/11979650083/player/23d67e566f" height="187" width="223"  frameborder="0" allowfullscreen webkitallowfullscreen mozallowfullscreen oallowfullscreen msallowfullscreen></iframe>
+
+
+<h3>找到<strong>Google Incognito</strong>儲存位置</h3>
+
+<iframe src="https://www.flickr.com/photos/alohacc/11979352755/player/a4182b1fb2" height="32" width="269"  frameborder="0" allowfullscreen webkitallowfullscreen mozallowfullscreen oallowfullscreen msallowfullscreen></iframe>
+
+
+<p>點選右鍵，選擇<strong>&#8220;簡介&#8221;</strong></p>
+
+<iframe src="https://www.flickr.com/photos/alohacc/11979352735/player/48bfde3138" height="200" width="287"  frameborder="0" allowfullscreen webkitallowfullscreen mozallowfullscreen oallowfullscreen msallowfullscreen></iframe>
+
+
+<h3>點選<strong>左上角</strong>的圖，鍵盤按&#8221;command+v&#8221;(貼上)</h3>
+
+<iframe src="https://www.flickr.com/photos/alohacc/11979649923/player/8f1336be25" height="75" width="103"  frameborder="0" allowfullscreen webkitallowfullscreen mozallowfullscreen oallowfullscreen msallowfullscreen></iframe>
+
+
+<h3>完成！</h3>
+
+<iframe src="https://www.flickr.com/photos/alohacc/11979649853/player/94ee9748ba" height="78" width="83"  frameborder="0" allowfullscreen webkitallowfullscreen mozallowfullscreen oallowfullscreen msallowfullscreen></iframe>
+
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[[Update] Introducing myself]]></title>
+    <link href="http://ccaloha.cc/blog/2013/12/13/update-introducing-myself/"/>
+    <updated>2013-12-13T19:47:28+08:00</updated>
+    <id>http://ccaloha.cc/blog/2013/12/13/update-introducing-myself</id>
+    <content type="html"><![CDATA[<p>Every years, I will review my works.</p>
+
+<p>By doing this, I am able to understand myself more deeply.</p>
+
+<!--more-->
+
+
+<p>I made an introduction of myself in 2010 in Prezi.</p>
+
+<p>Now, I add some new information including my working experience, special experience.</p>
+
+<p>If you want to know me deeply, you must check this</p>
+
+<iframe src="http://prezi.com/embed/0pcpwnx3gvxv/?bgcolor=ffffff&amp;lock_to_path=0&amp;autoplay=0&amp;autohide_ctrls=0&amp;features=undefined&amp;disabled_features=undefined" width="800" height="600" frameBorder="0"></iframe>
+
+
+<p></p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Virtual Fire]]></title>
+    <link href="http://ccaloha.cc/blog/2013/11/15/virtual-fire/"/>
+    <updated>2013-11-15T19:00:15+08:00</updated>
+    <id>http://ccaloha.cc/blog/2013/11/15/virtual-fire</id>
+    <content type="html"><![CDATA[<h2>Virtual Fire</h2>
+
+<blockquote><p>Virtual Fire was a mobile speedball game.</p></blockquote>
+
+<p>We were trying to use infrared technology as emitter via Arduino, allowing users to play in any space.</p>
+
+<blockquote><p>Virtual Fire is not only a safe game but also easy to access. Players are able to play paintball games with their nearby friends on the street or in the campus.</p></blockquote>
+
+<p>see the introduction video filmed by <em>Aloha Chen, Jeff Hung, Dr. Chang, Wuderis Wu.</em></p>
+
+<!--more-->
+
+
+
+
+<iframe width="640" height="360" src="http://ccaloha.cc//www.youtube.com/embed/_EvVpT9qfno" frameborder="0" allowfullscreen></iframe>
+
+
+
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Learning English from useful tools]]></title>
+    <link href="http://ccaloha.cc/blog/2013/04/22/learning-english-from-useful-tools/"/>
+    <updated>2013-04-22T23:46:00+08:00</updated>
+    <id>http://ccaloha.cc/blog/2013/04/22/learning-english-from-useful-tools</id>
+    <content type="html"><![CDATA[<h1>Resource</h1>
+
+<h2>Website</h2>
+
+<p><a href="http://www.scientificamerican.com/podcast/podcasts.cfm?type=60-second-science">60 Second Science </a></p>
+
+<p><em>適合練聽寫</em></p>
+
+<p><a href="http://edition.cnn.com/studentnews/">CNN Student News</a></p>
+
+<p><em>平日每天一則新聞，補充時事，隔天還會提供transcript</em></p>
+
+<p><a href="http://www.learnersdictionary.com/">Merrian-Webster</a></p>
+
+<p><em>英英字典，加入會員後，登入即可記錄你查過的單字</em></p>
+
+<p><a href="http://tw.dictionary.search.yahoo.com/">奇摩字典搜尋</a></p>
+
+<p><em>其實我覺得這個還滿好用的，有時會有同反意詞</em></p>
+
+<h2>APP</h2>
+
+<p><a href="http://www.brainpop.com/">BrainPop</a></p>
+
+<p><em>也有網站版，每天睡覺都會聽！每天一篇免費，對於托福很有幫助</em></p>
+
+<p><a href="https://play.google.com/store/apps/details?id=com.egloos.scienart.tedict">TEDICT</a></p>
+
+<p><em>坐公車，搭火車的好遊戲！XD，也是練聽寫我超推的app</em></p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[20130422-murmur]]></title>
+    <link href="http://ccaloha.cc/blog/2013/04/22/2013-0422-murmur/"/>
+    <updated>2013-04-22T23:25:00+08:00</updated>
+    <id>http://ccaloha.cc/blog/2013/04/22/2013-0422-murmur</id>
+    <content type="html"><![CDATA[<p>好久沒有寫blog了</p>
+
+<p>從碩士開始</p>
+
+<p>每年年初，我都會訂一個年度計劃</p>
+
+<p>今年就是- 出國闖闖</p>
+
+<p>In fact, 這是五年～十年的計劃</p>
+
+<p>目前計畫兩條路-唸書、工作</p>
+
+<!--more-->
+
+
+<p></p>
+
+<p>不管是唸書還是工作</p>
+
+<p>英文都非常重要(這不是廢話&#8230;)</p>
+
+<p>所以綜觀來看，我決定還是要準備 <strong>托福以及GRE</strong></p>
+
+<p>所以，這就說明了我為什麼好久沒打網誌，玩玩新玩意了</p>
+
+<p>嘖嘖</p>
+
+<p>只怪自己以前不努力阿</p>
+
+<p>前鎮子才剛被ETS洗臉…</p>
+
+<p>整個就慘不忍賭</p>
+
+<p>總之，我還是會經營我的blog，可以的話，拿來練一下寫作XD</p>
+
+<p>BTW, 今天聽到一場演講，讓我有了一些想玩的東東</p>
+
+<p><a href="https://puppetlabs.com/">puppet</a></p>
+
+<ol>
+<li><p>Auto Deploy -> 這是他最outstanding的功能，雖然我目前只有一臺server，不過我想試看看，架一個小小的Cloud= KVM + Storage ?!</p></li>
+<li><p>Status Checking -> 感覺應該可以用在工作上</p></li>
+<li><p>Self-repair -> 我覺得應該也可以做到</p></li>
+<li><p>Auto Bug-Log Mapping Tool -> 這是我還滿想要做的東東，不知道用這個好不好實現</p></li>
+</ol>
+
+
+<p>Cooooool , 準備好英文再來玩玩</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[HOWTO-Setup-Ubuntu-from-0-to-1]]></title>
+    <link href="http://ccaloha.cc/blog/2013/04/22/howto-setup-ubuntu-from-0-to-1/"/>
+    <updated>2013-04-22T15:11:00+08:00</updated>
+    <id>http://ccaloha.cc/blog/2013/04/22/howto-setup-ubuntu-from-0-to-1</id>
+    <content type="html"><![CDATA[<h3>先升級</h3>
+
+<pre><code>sudo apt-get update
+sudo apt-get upgrade
+</code></pre>
+
+<p>ps. 如果update失敗的話，請到</p>
+
+<p>Ubuntu Software Center -> Edit -> Software Sources</p>
+
+<p>把Download from 改成其他國家(我是把它改成Server for United States)</p>
+
+<p>在試一次</p>
+
+<h3>安裝vim</h3>
+
+<pre><code>sudo apt-get install vim
+</code></pre>
+
+<h3>安裝Chrome</h3>
+
+<pre><code>連到google 網址點選下載再安裝
+</code></pre>
+
+<!--more-->
+
+
+<p></p>
+
+<h3>安裝virtualbox</h3>
+
+<pre><code>到Ubuntu Software Center 搜尋並安裝
+</code></pre>
+
+<h3>安裝vmplayer</h3>
+
+<pre><code>sudo apt-get install build-essential linux-headers-$(uname -r)
+
+Download the latest VMware player e.g. VMware-Player-3.1.4-385536.i386.bundle 
+
+gksudo bash ./Downloads/VMware-Player-3.1.4-385536.i386.bundle
+
+*如果需要解除安裝* vmware-installer -u vmware-player
+</code></pre>
+
+<h3>安裝顯示卡驅動程式</h3>
+
+<pre><code>sudo apt-get install nvidia-current
+</code></pre>
+
+<p>ps. 之後，我螢幕就變得很漂亮了XD 我沒有做任設定</p>
+
+<h3>安裝svn</h3>
+
+<pre><code>sudo apt-get intsall subversion
+</code></pre>
+
+<h3>安裝pidgin</h3>
+
+<p>聊天室功能 要有oc功能</p>
+
+<pre><code>sido apt-get install pidgin  pidgin-sipe
+</code></pre>
+
+<p>ps. 因為現在lync 有bug , 所以在執行pidgin時，要先執行</p>
+
+<pre><code>export NSS_SSL_CBC_RANDOM_IV=0
+</code></pre>
+
+<h3>安裝vnc server</h3>
+
+<pre><code>sudo apt-get install vnc4server
+</code></pre>
+
+<h3>安裝vsftp</h3>
+
+<pre><code>sudo apt-get install vsftp
+</code></pre>
+
+<h3>安裝retext</h3>
+
+<pre><code>sudo apt-get install retext
+</code></pre>
+
+<h3>安裝foxitReader</h3>
+
+<pre><code>請參考[How to Make Foxit Reader Work in Ubuntu 12.04 &amp; 11.10 Oneiric Ocelot?](http://www.hecticgeek.com/2012/02/foxit-reader-work-ubuntu-linux/)
+
+PS.注意你是不是跟我一樣 用64 Bit
+</code></pre>
+
+<h3>安裝RoR</h3>
+
+<p><a href="https://www.digitalocean.com/community/articles/how-to-install-ruby-on-rails-on-ubuntu-12-04-lts-precise-pangolin-with-rvm">How to Install Ruby on Rails on Ubuntu 12.04 LTS (Precise Pangolin) with RVM</a></p>
+
+<pre><code>echo "source ~/.rvm/scripts/rvm" &gt;&gt; ~/.bashrc 
+</code></pre>
+
+<p>ps. 之後可能用到<a href="https://www.digitalocean.com/community/articles/how-to-install-rails-apache-and-mysql-on-ubuntu-with-passenger">How to Install Rails, Apache, and MySQL on Ubuntu with Passenger</a></p>
+
+<p>如果bundle install時,遇到An error occured while installing pg (0.12.2)</p>
+
+<pre><code>sudo apt-get install libpq-dev
+</code></pre>
+
+<h3>安裝TextMate-liked</h3>
+
+<p><a href="http://blog.sudobits.com/2011/04/02/textmate-for-ubuntu-linux/">TextMate for Ubuntu Linux</a></p>
+
+<p><a href="http://blog.sudobits.com/2012/03/06/top-10-gedit-plugins-for-programmers/">Top 10 gedit plugins for Programmers</a></p>
+
+<h3>如果突然網路不通</h3>
+
+<pre><code>sudo ifup -a
+</code></pre>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[2012-12-09 ~ 2012-12-13 五天四夜之好爽，我是贏家，關西我來了 - 行程規劃篇]]></title>
+    <link href="http://ccaloha.cc/blog/2012/12/02/2012-12-09-%7E-2012-12-13-kansai-travel-i-am-a-winner/"/>
+    <updated>2012-12-02T23:29:00+08:00</updated>
+    <id>http://ccaloha.cc/blog/2012/12/02/2012-12-09-~-2012-12-13-kansai-travel-i-am-a-winner</id>
+    <content type="html"><![CDATA[<blockquote><p>特別感謝，小氣大，沒有你的話，沒有這次行程</p></blockquote>
+
+<p>第二版</p>
+
+<h2>Day 1 , 12/9 週日 : 台灣 -> 心齋橋</h2>
+
+<blockquote><p>地圖：</p>
+
+<p><a href="http://nicklee.tw/index.php?load=read&amp;id=1127">大阪觀光地圖-南區道頓崛</a></p>
+
+<p>觀光所拿<a href="http://www.flickr.com/photos/alohacc/8234218528/">大阪南區城區地圖11-12年版</a></p>
+
+<p>觀光所拿<a href="http://www.flickr.com/photos/alohacc/8234218528/">走遍大阪</a></p>
+
+<p>預估花費： [交通] 關空套票 980 円 ; 奈良斑鳩卷 1600円 ; 嵐山車票 600円</p></blockquote>
+
+<ol>
+<li>4:00  新竹 - 金陵包子</li>
+</ol>
+
+
+<!--more-->
+
+
+<p></p>
+
+<ol>
+<li><p>6:00  桃園機場，第二航廈</p></li>
+<li><p>8:40  搭乘日航出發</p></li>
+<li><p>11:10 抵達關西 , 過海關，填寫入境卡及申告單</p></li>
+<li><p>前往關西空港車站</p>
+
+<p> 購買関空ちかトクきっぷ (<a href="http://nicklee.tw/index.php?load=read&amp;id=1189">關空(大阪市)地鐵套票</a>)
+980円</p>
+
+<p>  購買嵐山小火車的車票於關西空港車站JR綠色窗口 600円</p></li>
+<li><p><strong>關西空港車站</strong> <em>搭乘南海地鐵-空港急行</em> 抵達 <strong>難波</strong> (約50分)</p>
+
+<p> 購買：奈良．斑鳩一日券介紹 大阪市交通局 （1600円）於市營交通指引處-難波(原文：市営交通アクセスガイド（なんば）)、紀念品販售處-難波(原文：グッズセンターなんば)、</p></li>
+<li><p><strong>南海難波站</strong> <em>搭乘御堂筋線(Midosuji Line)</em> 前往 <strong>心齋橋站</strong></p></li>
+<li><p><strong>心斎橋駅8番出口</strong> <em>走路</em> 飯店<strong>ニューオーサカホテル心斎橋【公式】サイト</strong></p></li>
+<li><p>飯店 -> 北極星蛋包飯 -> 道頓崛(大阪燒（美津or千房）、金龍拉麵、神座拉麵) -> 法善寺橫町(吃夫妻善哉) -> 難波</p></li>
+<li><p><strong>南海難波站</strong> <em>搭乘御堂筋線(Midosuji Line)</em> 前往 <strong>心齋橋站</strong></p></li>
+</ol>
+
+
+<iframe width="425" height="350" frameborder="0" scrolling="no" marginheight="0" marginwidth="0" src="https://maps.google.com.tw/maps/ms?msa=0&amp;msid=218082230280132328960.0004cf60afdfaf016c1ab&amp;brcurrent=3,0x0:0x0,0&amp;ie=UTF8&amp;ll=34.555168,135.372687&amp;spn=0.238493,0.258415&amp;t=m&amp;output=embed"></iframe>
+
+
+<br /><small>在較大的地圖上查看<a href="https://maps.google.com.tw/maps/ms?msa=0&amp;msid=218082230280132328960.0004cf60afdfaf016c1ab&amp;brcurrent=3,0x0:0x0,0&amp;ie=UTF8&amp;ll=34.555168,135.372687&amp;spn=0.238493,0.258415&amp;t=m&amp;source=embed" style="color:#0000FF;text-align:left">2012-12-09 日本關西旅遊Day1</a></small>
+
+
+<h2>Day 2 , 12/10 週一 : 京都 - 清水寺、祇園</h2>
+
+<blockquote><p>地圖：<a href="http://www.city.kyoto.lg.jp/kotsu/cmsfiles/contents/0000019/19770/nihongorosen.pdf">市バス観光マップ「バスなび」</a></p>
+
+<p>預估花費： [交通]  1440 円</p>
+
+<pre><code>     [參觀費] 三十三間堂 : 600円 ; 清水寺:300円  
+</code></pre></blockquote>
+
+<p><strong>南海心齋橋站</strong> <em>搭乘御堂筋線,200円,5 分</em> 前往<strong>淀屋橋駅(Yodoyabashi Station)</strong></p>
+
+<p><strong>淀屋橋駅</strong> <em>搭乘京阪電車特急（Keihan Main Line，400円 , 48 mins）</em> <strong>七条駅(Shichijo Station)</strong></p>
+
+<p><strong>七条駅</strong> <em>走路</em> 前往 <strong>三十三間堂</strong></p>
+
+<p><strong>博物館三十三間堂前</strong>   <em>搭乘市營206公車,220円</em> 抵達<strong>清水道</strong> ，沿著松原通走到<strong>清水寺</strong></p>
+
+<p>以下均為走路</p>
+
+<p><strong>清水寺</strong> -> <strong>地主神社</strong> -> <strong>二、三年坂</strong>  -> <strong>寧寧之道</strong></p>
+
+<p>-> <strong>八坂神社</strong> -> <strong>祇園</strong> -> <strong>花見小路</strong> -> <strong>阪急河原町駅(Kawaramachi Station)‎</strong></p>
+
+<p><strong>阪急河原町駅</strong> <em>搭乘阪急京都本線(Hankyu Kyoto Line , 390円,48 分)</em> 到 <strong>梅田</strong></p>
+
+<p><strong>梅田出站</strong> <em>步行</em> 到<strong>大阪市地鐵-御堂筋線-梅田站(M16)</strong></p>
+
+<p><strong>大阪市地鐵-御堂筋線-梅田站</strong> <em>搭乘御堂筋線,230円,7分</em> <strong>心齋橋站</strong> 回飯店</p>
+
+<iframe width="425" height="350" frameborder="0" scrolling="no" marginheight="0" marginwidth="0" src="https://maps.google.com.tw/maps/ms?msa=0&amp;msid=218082230280132328960.0004cf63a1e8a84a42175&amp;brcurrent=3,0x0:0x0,0&amp;ie=UTF8&amp;t=m&amp;ll=34.99582,135.777213&amp;spn=0.015913,0.015481&amp;output=embed"></iframe>
+
+
+<br /><small>在較大的地圖上查看<a href="https://maps.google.com.tw/maps/ms?msa=0&amp;msid=218082230280132328960.0004cf63a1e8a84a42175&amp;brcurrent=3,0x0:0x0,0&amp;ie=UTF8&amp;t=m&amp;ll=34.99582,135.777213&amp;spn=0.015913,0.015481&amp;source=embed" style="color:#0000FF;text-align:left">2012-12-10 日本關西旅遊Day2</a></small>
+
+
+<h2>Day 3 , 12/11 週二 : 京都 - 嵐山</h2>
+
+<blockquote><p>預估花費：[交通] 1880 円
+[參觀費]金閣寺 : 400円 ; 常寂光寺:400円 ; 天龍寺 : 500円</p></blockquote>
+
+<h4>飯店 -> 金閣寺</h4>
+
+<p><strong>心齋橋站</strong> <em>搭乘御堂筋線,230円</em> <strong>西中島南方駅（大阪）Nishinakajimaminamikata Station</strong> <em>走到</em> <strong>南方駅（大阪）Minamikata Station</strong><em>搭乘阪急京都線北千里行(Hankyu Kyoto Line,360円)</em>  <strong>阪急西院駅（HANKYU SAIIN Station）</strong> <em>走到</em> <strong>西大路四条</strong> <em>搭乘市営204公車,220円</em> <strong>金閣寺道（バス）</strong></p>
+
+<p><a href="http://www.flickr.com/photos/alohacc/8225870503/" title="Flickr 上 aloooooooooooha 的 Day3-HOTEL_金閣寺"><img src="http://farm9.staticflickr.com/8346/8225870503_805c2f4c88_b.jpg" width="363" height="657" alt="Day3-HOTEL_金閣寺"></a></p>
+
+<h4>金閣寺 -> 嵐山</h4>
+
+<p><strong>金閣寺道（バス）</strong> <em>搭乘市営２０５ 220円 開往九条車庫前行</em> <strong>西ノ京円町</strong> <em>走到</em> <strong>円町駅（京都）Enmachi Station</strong> <em>搭乘ＪＲ山陰本線 - 亀岡行JR Sanin Main Line(230円)</em> <strong>
+馬堀駅（京都）Umahori Station</strong> 約41分</p>
+
+<p><a href="http://www.flickr.com/photos/alohacc/8225870575/" title="Flickr 上 aloooooooooooha 的 Day3-金閣寺_馬掘站"><img src="http://farm9.staticflickr.com/8068/8225870575_6b83f0496b.jpg" width="325" height="500" alt="Day3-金閣寺_馬掘站"></a></p>
+
+<p><strong>馬堀Umahori Station</strong> <em>走到</em> <strong>トロッコ亀岡 Torokko Kameoka Station</strong></p>
+
+<p><strong>トロッコ亀岡 Torokko Kameoka Station</strong> <em>搭乘嵯蛾野Torokko小火車</em></p>
+
+<h4>嵐山花燈路</h4>
+
+<p>以下為步行行程(基本上就是走<a href="http://www.hanatouro.jp/arashiyama/index.html">花燈路</a>)</p>
+
+<p><strong>常寂光寺</strong> -> <strong>嵯峨野竹林</strong> 與 <strong>野宮神社</strong> -> <strong>天龍寺</strong> -> <strong>中/島 公園</strong>-> <strong>嵐山渡月橋</strong></p>
+
+<p>[吃] Arinco</p>
+
+<h4>嵐山 -> 飯店</h4>
+
+<p><strong>嵐山駅（阪急）Arashiyama Station‎</strong> <em>搭乘阪急嵐山線 , Hankyu Arashiyama Line,390円</em> <strong>桂駅（京都）Katsura Station</strong>  <em>轉乘阪急京都線Hankyu Kyoto Line</em> <strong>梅田駅（阪急）Umeda Station</strong> 走到 <strong>梅田駅（大阪市営）</strong> <em>搭乘御堂筋線Midosuji Line,230円</em> <strong>心齋橋站</strong> 約65 mins</p>
+
+<p><a href="http://www.flickr.com/photos/alohacc/8226941960/" title="Flickr 上 aloooooooooooha 的 Day3_嵐山_飯店"><img src="http://farm9.staticflickr.com/8059/8226941960_e4a130a4c1_q.jpg" width="150" height="150" alt="Day3_嵐山_飯店"></a></p>
+
+<iframe width="425" height="350" frameborder="0" scrolling="no" marginheight="0" marginwidth="0" src="https://maps.google.com.tw/maps/ms?msa=0&amp;msid=218082230280132328960.0004cf710c817d9593560&amp;brcurrent=3,0x0:0x0,0&amp;ie=UTF8&amp;t=m&amp;ll=35.026243,135.66804&amp;spn=0.026224,0.122573&amp;output=embed"></iframe>
+
+
+<br /><small>在較大的地圖上查看<a href="https://maps.google.com.tw/maps/ms?msa=0&amp;msid=218082230280132328960.0004cf710c817d9593560&amp;brcurrent=3,0x0:0x0,0&amp;ie=UTF8&amp;t=m&amp;ll=35.026243,135.66804&amp;spn=0.026224,0.122573&amp;source=embed" style="color:#0000FF;text-align:left">2012-12-11 日本關西旅遊Day3</a></small>
+
+
+<h2>Day 4 , 12/12 週三 : 奈良</h2>
+
+<blockquote><p>交通票券：奈良．斑鳩一日券</p>
+
+<p>[參觀費] 東大寺 ： 500 円  ; 春日大社 ： 500 円 ; 法隆寺 ：1000 円
+ [JR來回 420円]
+地圖：奈良公園散步地圖</p></blockquote>
+
+<h4>飯店 -> 近鐵奈良站</h4>
+
+<p><strong>心齋橋站</strong> <em>搭乘御堂筋線</em> <strong>なんば駅（大阪）namba</strong> 走到 <strong>大阪難波駅（大阪）</strong> <em>搭乘近鐵奈良線Kintetsu Nara Line快速急行</em> <strong>近鉄奈良駅（奈良）Kintetsunara Station</strong> 約47分</p>
+
+<p><a href="http://www.flickr.com/photos/alohacc/8226942030/" title="Flickr 上 aloooooooooooha 的 Day 4 心齋橋_近鐵奈良"><img src="http://farm9.staticflickr.com/8065/8226942030_27a5c7c359.jpg" width="358" height="403" alt="Day 4 心齋橋_近鐵奈良"></a></p>
+
+<h4>近鐵奈良站 -> 春日大社</h4>
+
+<p>近鉄奈良駅 <em>搭乘公車</em> 春日大社表參道 -> 春日大社</p>
+
+<p><a href="http://www.flickr.com/photos/alohacc/8225870775/" title="Flickr 上 aloooooooooooha 的 Day4近鐵奈良_春日大社表參道"><img src="http://farm9.staticflickr.com/8343/8225870775_717f654a6e.jpg" width="500" height="400" alt="Day4近鐵奈良_春日大社表參道"></a></p>
+
+<h4>春日大社 -> 東大寺</h4>
+
+<p>春日大社本殿 <em>搭乘公車(16或46號公車)</em> 東大寺大佛殿</p>
+
+<h4>東大寺 -> JR奈良站 -> 法隆寺 -> 逛進鐵奈良</h4>
+
+<p>東大寺 <em>搭乘公車(8 18 28 38 48 58公車)</em> -> JR奈良站 <em>ＪＲ関西本線区間快速,210円</em> 法隆寺駅（奈良）<em>走路</em> 法隆寺 <em>沿原路,走到</em> -> 近鐵奈良站 -> 奈良町</p>
+
+<p><a href="http://www.flickr.com/photos/alohacc/8226942470/" title="Flickr 上 aloooooooooooha 的 Day4_東大寺_JR奈良"><img src="http://farm9.staticflickr.com/8347/8226942470_f6609c2de5_q.jpg" width="150" height="150" alt="Day4_東大寺_JR奈良"></a></p>
+
+<p><a href="http://www.flickr.com/photos/alohacc/8225870989/" title="Flickr 上 aloooooooooooha 的 Day4_法隆寺_近鐵奈良站"><img src="http://farm9.staticflickr.com/8202/8225870989_bdc8b871e1.jpg" width="355" height="362" alt="Day4_法隆寺_近鐵奈良站"></a></p>
+
+<h4>近鐵奈良站 -> 飯店</h4>
+
+<p>沿原路回心齋橋</p>
+
+<iframe width="425" height="350" frameborder="0" scrolling="no" marginheight="0" marginwidth="0" src="https://maps.google.com.tw/maps/ms?msa=0&amp;msid=218082230280132328960.0004cf7b284b448e3d4fb&amp;brcurrent=3,0x0:0x0,0&amp;ie=UTF8&amp;t=m&amp;ll=34.649596,135.791027&amp;spn=0.073778,0.114573&amp;output=embed"></iframe>
+
+
+<br /><small>在較大的地圖上查看<a href="https://maps.google.com.tw/maps/ms?msa=0&amp;msid=218082230280132328960.0004cf7b284b448e3d4fb&amp;brcurrent=3,0x0:0x0,0&amp;ie=UTF8&amp;t=m&amp;ll=34.649596,135.791027&amp;spn=0.073778,0.114573&amp;source=embed" style="color:#0000FF;text-align:left">2012-12-11 日本關西旅遊Day4</a></small>
+
+
+<h3>Day 5 , 12/13 週四</h3>
+
+<blockquote><p>交通票券：大阪市交通局的地鐵．巴士共通一日券 (800円)
+【發售場所】 地下鐵及新電車的各車站裡面的自動售票機 , 大阪市的交通案內所(新大阪・梅田・天王寺
+[預估費用]： 大阪城500円 , 通天閣 500円 , 難波-關空 890円</p>
+
+<h4>飯店 -> 大阪城</h4></blockquote>
+
+<p><a href="http://www.flickr.com/photos/alohacc/8225871197/" title="Flickr 上 aloooooooooooha 的 Day5_心齋橋_大阪城"><img src="http://farm9.staticflickr.com/8344/8225871197_4b87c24b01.jpg" width="360" height="410" alt="Day5_心齋橋_大阪城"></a></p>
+
+<h4>大阪城 -> 通天閣 -> 新世界,吃串炸</h4>
+
+<p><a href="http://www.flickr.com/photos/alohacc/8226942602/" title="Flickr 上 aloooooooooooha 的 Day5_大阪城_通天閣"><img src="http://farm9.staticflickr.com/8482/8226942602_0a6dce07fd.jpg" width="355" height="396" alt="Day5_大阪城_通天閣"></a></p>
+
+<h4>新世界 -> 黑門市場</h4>
+
+<p><a href="http://www.flickr.com/photos/alohacc/8226942686/" title="Flickr 上 aloooooooooooha 的 Day5_新世界_黑門市場_"><img src="http://farm9.staticflickr.com/8350/8226942686_7da061c3cb.jpg" width="353" height="373" alt="Day5_新世界_黑門市場_"></a></p>
+
+<h4>黑門市場 -> 地鐵難波站 -> 關西空港</h4>
+
+<p>地鐵難波站 -> <a href="http://nicklee.tw/index.php?load=read&amp;id=904">南海-難波車站搭乘南海電鐵-空港急行列車</a> ,890円</p>
+
+<h4>關西空港 -> 桃園機場</h4>
+
+<p>18:50 日航</p>
+
+<p>[吃]老爺爺起司蛋糕</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[How to Setup Jenkins Slave VM(WinXP) which support Sikuli Testing]]></title>
+    <link href="http://ccaloha.cc/blog/2012/11/07/how-to-setup-jenkins-slave-vm-winxp-which-support-sikuli-testing/"/>
+    <updated>2012-11-07T18:28:00+08:00</updated>
+    <id>http://ccaloha.cc/blog/2012/11/07/how-to-setup-jenkins-slave-vm-winxp-which-support-sikuli-testing</id>
+    <content type="html"><![CDATA[<p>Reference Topics:</p>
+
+<p><a href="http://technicaltesting.wordpress.com/2012/05/07/setting-up-a-jenkins-slave-for-sikuli-based-tests/">Setting up a Jenkins slave for Sikuli based tests</a></p>
+
+<p>作者環境是win7，我按造上面的設定修改</p>
+
+<h3>1.設定User 永遠不會被logout</h3>
+
+<p><strong>點選執行</strong>
+<a href="http://www.flickr.com/photos/alohacc/8163442105/" title="Flickr 上 aloooooooooooha 的 sikuli_vm_setup_step1"><img src="http://farm8.staticflickr.com/7129/8163442105_a1dabc5168.jpg" width="374" height="500" alt="sikuli_vm_setup_step1"></a></p>
+
+<p><strong>輸入regedit</strong></p>
+
+<p><a href="http://www.flickr.com/photos/alohacc/8163442169/" title="Flickr 上 aloooooooooooha 的 sikuli_vm_setup_step2"><img src="http://farm9.staticflickr.com/8061/8163442169_ea1e39d3c4.jpg" width="337" height="167" alt="sikuli_vm_setup_step2"></a></p>
+
+<!--more-->
+
+
+<p></p>
+
+<p><strong>點到HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Policies\System</strong></p>
+
+<p><a href="http://www.flickr.com/photos/alohacc/8163475730/" title="Flickr 上 aloooooooooooha 的 sikuli_vm_setup_step3"><img src="http://farm8.staticflickr.com/7106/8163475730_07772dc6b9_m.jpg" width="204" height="189" alt="sikuli_vm_setup_step3"></a></p>
+
+<p><a href="http://www.flickr.com/photos/alohacc/8163475788/" title="Flickr 上 aloooooooooooha 的 sikuli_vm_setup_step4"><img src="http://farm9.staticflickr.com/8479/8163475788_7b21b7497b.jpg" width="500" height="275" alt="sikuli_vm_setup_step4"></a></p>
+
+<p><strong>新增DWORD值</strong></p>
+
+<p><a href="http://www.flickr.com/photos/alohacc/8163442301/" title="Flickr 上 aloooooooooooha 的 sikuli_vm_setup_step5"><img src="http://farm9.staticflickr.com/8484/8163442301_7d7ce36f38.jpg" width="345" height="209" alt="sikuli_vm_setup_step5"></a></p>
+
+<p><strong>新增DisableLockWorkstation，設定為1</strong></p>
+
+<p><a href="http://www.flickr.com/photos/alohacc/8163475866/" title="Flickr 上 aloooooooooooha 的 sikuli_vm_setup_step6"><img src="http://farm8.staticflickr.com/7111/8163475866_f210b0fba8.jpg" width="322" height="184" alt="sikuli_vm_setup_step6"></a></p>
+
+<p>因為有查到這篇文章<a href="http://superuser.com/questions/96228/disabling-lock-workstation-in-windows-xp">Disabling Lock Workstation in Windows XP</a>,所以還要在設定一個參數</p>
+
+<p><strong>用尋找功能</strong></p>
+
+<p><a href="http://www.flickr.com/photos/alohacc/8163442715/" title="Flickr 上 aloooooooooooha 的 sikuli_vm_setup_step13"><img src="http://farm9.staticflickr.com/8479/8163442715_7693c918ba_m.jpg" width="211" height="210" alt="sikuli_vm_setup_step13"></a></p>
+
+<p><strong>尋找AllowMultipleTSSessions，並修改成0</strong></p>
+
+<p>ps.他在HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon裡面</p>
+
+<p><a href="http://www.flickr.com/photos/alohacc/8163476260/" title="Flickr 上 aloooooooooooha 的 sikuli_vm_setup_step14"><img src="http://farm8.staticflickr.com/7246/8163476260_266a58d497_m.jpg" width="240" height="104" alt="sikuli_vm_setup_step14"></a></p>
+
+<h3>2.設定使用者，重開機時，可以自行登入</h3>
+
+<p><strong>點到HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon</strong></p>
+
+<p><a href="http://www.flickr.com/photos/alohacc/8163475918/" title="Flickr 上 aloooooooooooha 的 sikuli_vm_setup_step7"><img src="http://farm9.staticflickr.com/8066/8163475918_009161e433.jpg"
+width="500" height="261" alt="sikuli_vm_setup_step7"></a></p>
+
+<p><strong>新增字串</strong></p>
+
+<p><a href="http://www.flickr.com/photos/alohacc/8163475960/" title="Flickr 上 aloooooooooooha 的 sikuli_vm_setup_step7-5"><img src="http://farm8.staticflickr.com/7272/8163475960_74bdb0b74a.jpg" width="342" height="234" alt="sikuli_vm_setup_step7-5"></a></p>
+
+<p><strong>新增DefaultPassword，輸入你的密碼</strong></p>
+
+<p><a href="http://www.flickr.com/photos/alohacc/8163475998/" title="Flickr 上 aloooooooooooha 的 sikuli_vm_setup_step8"><img src="http://farm8.staticflickr.com/7274/8163475998_c98a8c4c0f.jpg" width="379" height="146" alt="sikuli_vm_setup_step8"></a></p>
+
+<p><strong>修改DefaultUsername</strong></p>
+
+<p><a href="http://www.flickr.com/photos/alohacc/8163476034/" title="Flickr 上 aloooooooooooha 的 sikuli_vm_setup_step9"><img src="http://farm9.staticflickr.com/8487/8163476034_736554f892.jpg" width="383" height="154" alt="sikuli_vm_setup_step9"></a></p>
+
+<p><strong>修改AutoAdminLogon，設定為1</strong></p>
+
+<p><a href="http://www.flickr.com/photos/alohacc/8163476080/" title="Flickr 上 aloooooooooooha 的 sikuli_vm_setup_step10"><img src="http://farm9.staticflickr.com/8204/8163476080_fc059350a4.jpg" width="378" height="154" alt="sikuli_vm_setup_step10"></a></p>
+
+<h3>3.取消螢幕保護</h3>
+
+<p><strong>點到HKEY_CURRENT_USER\Control Panel\Desktop</strong></p>
+
+<p><a href="http://www.flickr.com/photos/alohacc/8163476112/" title="Flickr 上 aloooooooooooha 的 sikuli_vm_setup_step11"><img src="http://farm9.staticflickr.com/8489/8163476112_121e07519d.jpg" width="355" height="499" alt="sikuli_vm_setup_step11"></a></p>
+
+<p><strong>修改ScreenSaveActive為0</strong></p>
+
+<p><a href="http://www.flickr.com/photos/alohacc/8163476166/" title="Flickr 上 aloooooooooooha 的 sikuli_vm_setup_step12"><img src="http://farm8.staticflickr.com/7271/8163476166_021f20ef99.jpg" width="381" height="159" alt="sikuli_vm_setup_step12"></a></p>
+
+<h3>4. 重開機</h3>
+
+<h3>5. 最後也是最重要的一步！！清掉上次RDP所鎖定的畫面，在Jenkins Script加上</h3>
+
+<pre><code>    tscon.exe 0 /dest:console
+</code></pre>
+
+<p><strong>thanks to Mac support</strong></p>
+
+<p><a href="http://www.flickr.com/photos/alohacc/8163451817/" title="Flickr 上 aloooooooooooha 的 sikuli_vm_setup_step15"><img src="http://farm8.staticflickr.com/7260/8163451817_16141e0d28_b.jpg" width="1024" height="86" alt="sikuli_vm_setup_step15"></a></p>
+
+<p>Reference</p>
+
+<p><a href="http://www.pctools.com/guides/registry/detail/973/">參數: AllowMultipleTSSessions</a></p>
+
+<p><a href="http://www.pctools.com/guides/registry/detail/264/">參數: DisableLockWorkstation</a></p>
+
+<p><a href="http://www.pctools.com/guides/registry/detail/1190/">參數: ScreenSaveActive</a></p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[[Installation Guide] RobotFramework 2.7.4 + Sikuli + DatabaseLibrary +SSHLibrary + Seleniumlibrary (jybot and pybot)in Ubuntu 12.04]]></title>
+    <link href="http://ccaloha.cc/blog/2012/10/16/installation-guide-robotframework-2-dot-7-4-plus-sikuli-plus-databaselibrary-plus-sshlibrary-plus-seleniumlibrary-jybot-and-pybot-in-ubuntu-12-dot-04/"/>
+    <updated>2012-10-16T11:39:00+08:00</updated>
+    <id>http://ccaloha.cc/blog/2012/10/16/installation-guide-robotframework-2-dot-7-4-plus-sikuli-plus-databaselibrary-plus-sshlibrary-plus-seleniumlibrary-jybot-and-pybot-in-ubuntu-12-dot-04</id>
+    <content type="html"><![CDATA[<h2>Prepare</h2>
+
+<ol>
+<li>ubuntu-12.04.1-desktop-i386</li>
+<li>VirtualBox</li>
+</ol>
+
+
+<h2>Installation Ubuntu in VirtualBox</h2>
+
+<p>流程請參考</p>
+
+<p><a href="http://www.deltalounge.net/wpress/2012/06/virtualbox-install-ubuntu-12-04/">VirtualBox - Install Ubuntu 12.4</a></p>
+
+<p><a href="http://blog.xuite.net/yh96301/blog/60374490-VirtualBox+4.1%E5%AE%89%E8%A3%9DUbuntu+12.04">VirtualBox 4.1安裝Ubuntu 12.04</a></p>
+
+<!--more-->
+
+
+<h2>Update / Upgrade apt-get</h2>
+
+<pre><code>$ sudo apt-get update
+$ sudo apt-get -f upgrade
+</code></pre>
+
+<h2>Install VIM</h2>
+
+<pre><code>$ sudo apt-get install vim
+</code></pre>
+
+<h2>Install Python</h2>
+
+<pre><code>$ python --version
+</code></pre>
+
+<p>Ubuntu 已經幫你安裝好了</p>
+
+<!--more-->
+
+
+<p></p>
+
+<h2>Install Java</h2>
+
+<p>（http://maketecheasier.com/install-java-runtime-in-ubuntu/2012/05/14）</p>
+
+<pre><code>$ sudo apt-get install openjdk-7-jre
+$ java -version
+</code></pre>
+
+<h2>Install Jython</h2>
+
+<pre><code>$ sudo apt-get install jython  
+</code></pre>
+
+<h2>Install Robotframework</h2>
+
+<p>Download <em>robotframework-2.7.4.tar.gz</em></p>
+
+<pre><code>$ cd Downloads
+$ tar -zxv -f robotframework-2.7.4.tar.gz
+$ cd robotframework-2.7.4
+$ sudo python setup.py install
+$ sudo jython setup.py install
+$ pybot --version
+$ jybot --version
+</code></pre>
+
+<h4>2012/10/16補充</h4>
+
+<pre><code>if you get "jybot: command not found"
+
+$ ln -s  /usr/local/bin/jybot /usr/share/jython/bin/jybot 
+</code></pre>
+
+<h2>Intall ez_install</h2>
+
+<pre><code>$ wget http://peak.telecommunity.com/dist/ez_setup.py
+$ python ez_setup.py
+</code></pre>
+
+<h2>Install Database Library (pybot only)</h2>
+
+<pre><code>$ easy_install robotframework-databaselibrary
+$ sudo apt-get install python-mysqldb
+</code></pre>
+
+<h2>Install paramiko</h2>
+
+<pre><code>$ sudo apt-get install python-paramiko
+</code></pre>
+
+<h2>Install SSH Library</h2>
+
+<pre><code>$ tar -zxv -f robotframework-sshlibrary-1.1.tar.gz 
+$ cd robotframework-sshlibrary-1.1
+$ sudo python setup.py install
+$ sudo jython setup.py install
+</code></pre>
+
+<h2>Install Seleniumlibrary</h2>
+
+<pre><code>$ tar -zxv -f robotframework-sshlibrary-1.1.tar.gz 
+$ cd robotframework-sshlibrary-1.1
+$ sudo python setup.py install
+$ sudo jython setup.py install
+</code></pre>
+
+<h2>Install SVN</h2>
+
+<pre><code>$ sudo apt-get install subversion
+</code></pre>
+
+<h2>Install Sikuli related package</h2>
+
+<pre><code>$ sudo apt-get install wmctrl
+$ sudo apt-get install libopencv-*
+$ sudo apt-get isntall python-opencv
+$ sudo apt-get install build-essential libgtk2.0-dev libjpeg-dev libtiff4-dev libjasper-dev libopenexr-dev cmake python-dev python-numpy python-tk libtbb-dev libeigen2-dev yasm libfaac-dev libopencore-amrnb-dev libopencore-amrwb-dev libtheora-dev libvorbis-dev libxvidcore-dev libx264-dev libqt4-dev libqt4-opengl-dev sphinx-common texlive-latex-extra libv4l-dev libdc1394-22-dev libavcodec-dev libavformat-dev libswscale-dev
+</code></pre>
+
+<p>上面是參考<a href="http://www.samontab.com/web/2012/06/installing-opencv-2-4-1-ubuntu-12-04-lts/">Installing OpenCV 2.4.1 in Ubuntu 12.04 LTS</a></p>
+
+<h4>2012/10/16補充</h4>
+
+<pre><code>$ echo "deb http://us.archive.ubuntu.com/ubuntu/ oneiric universe"  &gt;&gt; /etc/apt/sources.list
+$ echo "deb http://us.archive.ubuntu.com/ubuntu/ oneiric-updates universe" &gt;&gt; /etc/apt/sources.list
+$ sudo apt-get update
+$ sudo apt-get install libcv2.1 libcvaux2.1 libhighgui2.1
+</code></pre>
+
+<h2>Install Rdesktop for Windows Login (Sikuli Used)</h2>
+
+<pre><code># sudo apt-get install rdesktop
+</code></pre>
+
+<h2>Prepare Related jar for Jybot</h2>
+
+<p>你必須要下載，我是把它放在我的test folder裡面 ex: resource/keyword/LinuxEnvirement</p>
+
+<pre><code>sikuli-script.jar
+trilead-ssh2-build213.jar
+dblibrary-2.0.jar
+mysql-connector-java-5.1.18-bin.jar
+</code></pre>
+
+<h2>Ubuntu Run Script Sample</h2>
+
+<blockquote><p>PATH is very IMPORTANT</p></blockquote>
+
+<pre><code>#!/bin/bash
+
+if [ $# -lt 4 ]; then
+        echo "usage : sh run_tests.sh "Test_IP" "Database_IP" "BriefTest/FullTest" "Revison"
+        exit 1
+fi
+
+#===========================================================
+# 這一段是把我的Sikuli所要使用的圖片路徑加進AddImagePath.py裡面
+# Absolute path to this script
+SCRIPT=`readlink -f $0`
+# Absolute path this script is in
+SCRIPTPATH=`dirname $SCRIPT`
+CONFIG_FILE=$SCRIPTPATH/resource/keyword/AddImagePath.py
+echo $SCRIPTPATH
+#sed -i 's/Winbasic=.*/Winbasic=""/g' $CONFIG_FILE
+sed -i -e "s@Winbasic=.*@Winbasic=\"$SCRIPTPATH/..\/Lib\/keyword\/Others\/Sikuli\/Windows_Operating.sikuli\/ImagesOfWindowsBasicOperation\"@g" $CONFIG_FILE
+sed -i -e "s@Shutdown=.*@Shutdown=\"$SCRIPTPATH/..\/Lib\/keyword\/Others\/Sikuli\/Windows_Operating.sikuli\/ImagesOfShutdown\"@g" $CONFIG_FILE
+sed -i -e "s@CreateFile=.*@CreateFile=\"$SCRIPTPATH/..\/Lib\/keyword\/Others\/Sikuli\/Windows_Operating.sikuli\/ImagesOfCreateFile\"@g" $CONFIG_FILE
+sed -i -e "s@Format=.*@Format=\"$SCRIPTPATH/..\/Lib\/keyword\/Others\/Sikuli\/Windows_Operating.sikuli\/ImagesOfFormat\"@g" $CONFIG_FILE
+sed -i -e "s@WinRDP=.*@WinRDP=\"$SCRIPTPATH/..\/Lib\/keyword\/Others\/Sikuli\/Windows_Operating.sikuli\/ImagesOfWinRDP\"@g" $CONFIG_FILE
+#===========================================================
+
+MYDIRPATH=../Lib/keyword/Others/Sikuli/Windows_Operating.sikuli:resource/keyword
+LOCALPATH=resource/keyword/LinuxEnvirement
+
+VERSION=$4
+TESTSCALE=$3
+Test_IP=$1
+Database_IP=$2
+
+export CLASSPATH=$LOCALPATH/sikuli-script.jar:$LOCALPATH/trilead-ssh2-build213.jar:$LOCALPATH/dblibrary-2.0.jar:$LOCALPATH/mysql-connector-java-5.1.18-bin.jar
+export JYTHONPATH=/usr/share/jython/Lib:$LOCALPATH/sikuli-script.jar/Lib 
+
+
+jybot --pythonpath $MYDIRPATH  --outputdir test --exclude no_run --include $TESTSCALE --loglevel TRACE -l Windows_log_$TESTSCALE\_$VERSION -r Windows_report_$TESTSCALE\_$VERSION -o Windows_output_$TESTSCALE\_$VERSION --variable Database_IP:$Database_IP --variable Test_IP:$Test_IP Windows_TestCase.txt
+</code></pre>
+
+<p>最重要就是要告訴JYTHONPATH</p>
+
+<p>大概是這樣！</p>
+
+<p>有些lib是為了可以跑sikuli裝的 沒有時間一一去驗證是否真的需要&#8230;.</p>
+
+<blockquote><p>特別感謝 EJ 和 林旺 提供強大支援！</p></blockquote>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Learning on Ruby on Rails Tutorial-CH10 User microposts]]></title>
+    <link href="http://ccaloha.cc/blog/2012/08/10/learning-on-ruby-on-rails-tutorial-ch10-user-microposts/"/>
+    <updated>2012-08-10T11:09:00+08:00</updated>
+    <id>http://ccaloha.cc/blog/2012/08/10/learning-on-ruby-on-rails-tutorial-ch10-user-microposts</id>
+    <content type="html"><![CDATA[<p>這一章節，我們會完成User的微網誌！使用<strong>has_many</strong>和<strong>belongs_to</strong>的資料庫關聯性，來看每個user的po文</p>
+
+<p>一開始，我都會先這樣</p>
+
+<pre><code>$ cd /你的路徑/
+
+# 先用mate指令打開專案
+$ mate sample_app   
+
+$ cd sample_app
+
+# 看看目前有哪些gemset
+$ rvm gemset list 
+$ rvm gemset use rails3tutorial2ndEd
+</code></pre>
+
+<p>OK來開始第十章吧！</p>
+
+<!--more-->
+
+
+<p></p>
+
+<pre><code>$ git checkout -b user-microposts
+</code></pre>
+
+<h2>A Micropost model</h2>
+
+<h3>The basic model</h3>
+
+<p>先到model的部份，這個model很簡單，先把需要用的東東(發文內容和是哪個user)建起來，</p>
+
+<pre><code>$ rails generate model Micropost content:string user_id:integer
+</code></pre>
+
+<p>看一下剛剛gem出來的檔案，並且加上我們需要的功能</p>
+
+<p><strong>db/migrate/[timestamp]_create_microposts.rb</strong></p>
+
+<pre><code>class CreateMicroposts &lt; ActiveRecord::Migration
+  def change
+    create_table :microposts do |t|
+      t.string :content
+      t.integer :user_id
+
+      t.timestamps
+    end
+    add_index :microposts, [:user_id, :created_at]
+  end
+end
+</code></pre>
+
+<p>因為我們希望可以透過user_id取得所有microposts，並且可以依照時間排序，所以才多加一個<strong>add_index :microposts, [:user_id, :created_at]</strong></p>
+
+<p>寫測試摟</p>
+
+<p><strong>spec/models/micropost_spec.rb</strong></p>
+
+<pre><code>require 'spec_helper'
+
+describe Micropost do
+  let(:user) { FactoryGirl.create(:user) }
+   before do
+     # This code is wrong!
+     @micropost = Micropost.new(content: "Lorem ipsum", user_id: user.id)
+   end
+
+   subject { @micropost }
+
+   it { should respond_to(:content) }
+   it { should respond_to(:user_id) }
+
+end
+</code></pre>
+
+<p>跑指令，這樣應該是可以work的！</p>
+
+<pre><code>$ bundle exec rake db:migrate
+$ bundle exec rake db:test:prepare
+$ bundle exec rspec spec/models/micropost_spec.rb
+</code></pre>
+
+<p>雖然會pass不過有段程式 有問題！ 會在下章解答why</p>
+
+<h3>Accessible attributes and the first validation</h3>
+
+<p>為了要知道為甚麼這些有錯</p>
+
+<p>我們來繼續寫測試！</p>
+
+<p><strong>spec/models/micropost_spec.rb</strong></p>
+
+<p>補上</p>
+
+<pre><code>it { should be_valid }
+
+  describe "when user_id is not present" do
+    before { @micropost.user_id = nil }
+    it { should_not be_valid }
+  end
+</code></pre>
+
+<p>這段程式碼，要求micropost必須有效，而且<strong>user_id</strong>也必須要存在！</p>
+
+<p>我們可以在<strong>app/models/micropost.rb</strong>加上一些話就可以確保測試會通過</p>
+
+<pre><code>class Micropost &lt; ActiveRecord::Base
+  attr_accessible :content, :user_id  
+  validates :user_id, presence: true
+end
+</code></pre>
+
+<p>現在我們來看為什麼這句話是錯的！</p>
+
+<pre><code>@micropost = Micropost.new(content: "Lorem ipsum", user_id: user.id)
+</code></pre>
+
+<p>其實是因為預設所有的Micropost的屬性都是accessible</p>
+
+<p>也就是說所有人都可以使用CLI發出不合法的要求，去改值，所以如果我故意改了文章的user_id他就會指錯使用者！ 也就是說，如果當我們把<strong>attr_accessible :user_id</strong>拿掉，剛剛的測試就會出現錯誤！！ 我們會在下一章解決這問題！</p>
+
+<h3>User/Micropost associations</h3>
+
+<p>先來說一下狀況，基本上 micropost <strong>belongs_to</strong> user</p>
+
+<p>另外，user <strong>has_many</strong> microposts</p>
+
+<p>因為這個關聯性，我們可以整理出一張表格！</p>
+
+<p>Method
+&nbsp;
+&nbsp;
+&nbsp;
+&nbsp;
+&nbsp;
+&nbsp;
+&nbsp;
+&nbsp;
+&nbsp;
+Purpose</p>
+
+<p>===========================================================</p>
+
+<p>micropost.user
+&nbsp;
+&nbsp;
+&nbsp;
+&nbsp;
+&nbsp;
+&nbsp;
+&nbsp;
+&nbsp;
+&nbsp;
+Return the User object associated with the micropost.</p>
+
+<p>user.microposts
+&nbsp;
+&nbsp;
+&nbsp;
+&nbsp;
+&nbsp;
+&nbsp;
+&nbsp;
+&nbsp;
+&nbsp;
+Return an array of the user’s microposts.</p>
+
+<p>user.microposts.create(arg)  <br/>
+&nbsp;
+&nbsp;
+&nbsp;
+&nbsp;
+&nbsp;
+&nbsp;
+&nbsp;
+&nbsp;
+&nbsp;
+Create a micropost (user_id = user.id).</p>
+
+<p>user.microposts.create!(arg)  <br/>
+&nbsp;
+&nbsp;
+&nbsp;
+&nbsp;
+&nbsp;
+&nbsp;
+&nbsp;
+&nbsp;
+&nbsp;
+Create a micropost (exception on failure).</p>
+
+<p>user.microposts.build(arg)
+&nbsp;
+&nbsp;
+&nbsp;
+&nbsp;
+&nbsp;
+&nbsp;
+&nbsp;
+&nbsp;
+&nbsp;
+Return a new Micropost object (user_id = user.id).</p>
+
+<p>注意歐！這邊我們沒有</p>
+
+<pre><code>Micropost.create
+Micropost.create!
+Micropost.new
+</code></pre>
+
+<p>而是</p>
+
+<pre><code>user.microposts.create
+user.microposts.create!
+user.microposts.build
+</code></pre>
+
+<p>這個才是合法的寫法，因為關聯性，所以我們在建立micropost時，是會自動幫你把user_id帶入！所以測試可以改成這樣</p>
+
+<pre><code>let(:user) { FactoryGirl.create(:user) }
+before { @micropost = user.microposts.build(content: "Lorem ipsum") }
+</code></pre>
+
+<p>透過關聯性建立micropost，並沒有解決user_id可以被accessible的安全性問題！</p>
+
+<p>所以…我們先來寫個測試！加到<strong>describe Micropost do</strong>區塊內</p>
+
+<pre><code> describe "accessible attributes" do
+       it "should not allow access to user_id" do
+         expect do
+           Micropost.new(user_id: user.id)
+         end.should raise_error(ActiveModel::MassAssignmentSecurity::Error)
+       end    
+  end
+</code></pre>
+
+<p>這個測試可以發出error訊息！</p>
+
+<p>但是在Rails 3.2.3預設是有開啓的！但是其它舊版本並沒有，所以為了確保這是可用的！</p>
+
+<p><strong>config/application.rb</strong>把下面那串un-mark掉</p>
+
+<pre><code> config.active_record.whitelist_attributes = true
+</code></pre>
+
+<p>在網頁上，實際能編輯的只有<strong>content</strong>屬性而已！所以我們應該要把<strong>attr_accessible :user_id</strong>拿掉！</p>
+
+<p>變成</p>
+
+<pre><code>class Micropost &lt; ActiveRecord::Base
+    attr_accessible :content
+    validates :user_id, presence: true
+end
+</code></pre>
+
+<p>再來我們來寫測試micropost的關聯性的測試！</p>
+
+<p>整體來說是這樣</p>
+
+<p><strong>spec/models/micropost_spec.rb</strong></p>
+
+<pre><code>require 'spec_helper'
+
+describe Micropost do
+
+  let(:user) { FactoryGirl.create(:user) }
+  before { @micropost = user.microposts.build(content: "Lorem ipsum") }
+
+  subject { @micropost }
+
+  it { should respond_to(:content) }
+  it { should respond_to(:user_id) }
+  it { should respond_to(:user) }
+  its(:user) { should == user }
+
+  it { should be_valid }
+
+  describe "accessible attributes" do
+    it "should not allow access to user_id" do
+      expect do
+        Micropost.new(user_id: user.id)
+      end.should raise_error(ActiveModel::MassAssignmentSecurity::Error)
+    end    
+  end
+
+  describe "when user_id is not present" do
+    before { @micropost.user_id = nil }
+    it { should_not be_valid }
+  end
+end
+</code></pre>
+
+<p>別忘了我們user這邊也要測試！</p>
+
+<p>首先user必須要有<strong>microposts</strong></p>
+
+<p><strong>spec/models/user_spec.rb</strong> 加上一句話</p>
+
+<pre><code>it { should respond_to(:microposts) }
+</code></pre>
+
+<p>完成後！ 剩下最後一步驟！在兩個model加上關聯性！</p>
+
+<p><strong>app/models/micropost.rb</strong></p>
+
+<pre><code>class Micropost &lt; ActiveRecord::Base
+  attr_accessible :content
+  belongs_to :user
+
+  validates :user_id, presence: true  
+end
+</code></pre>
+
+<p><strong>app/models/user.rb</strong></p>
+
+<pre><code>class User &lt; ActiveRecord::Base
+  attr_accessible :name, :email, :password, :password_confirmation
+  has_secure_password
+  has_many :microposts
+  .
+  .
+  .
+end
+</code></pre>
+
+<p>執行測試吧</p>
+
+<pre><code>$ bundle exec rspec spec/models
+</code></pre>
+
+<h3>Micropost refinements</h3>
+
+<p>此章節，我們必須要驗證到microposts的排序以及相依性</p>
+
+<p>在這之前要先產生一堆資料</p>
+
+<p>先定義好在<strong>spec/factories.rb</strong>，然後再呼叫…</p>
+
+<pre><code>FactoryGirl.define do
+  factory :user do
+    sequence(:name)  { |n| "Person #{n}" }
+    sequence(:email) { |n| "person_#{n}@example.com"}   
+    password "foobar"
+    password_confirmation "foobar"
+
+    factory :admin do
+      admin true
+    end
+  end
+
+  factory :micropost do
+    content "Aloha is so handsome"
+    user
+  end
+end
+</code></pre>
+
+<p>有一個地方要注意，因為那個<strong>user</strong>所以FactoryGirl知道這個micropost是屬於user的！</p>
+
+<p>所以等一下要用可以這樣用</p>
+
+<pre><code>FactoryGirl.create(:micropost, user: @user, created_at: 1.day.ago)
+</code></pre>
+
+<p>為了要讓資料有先後順序，我們打算以create時間來做排序，但是大多是資料庫，取資料時，都是以id為排序依據，所以在測試時，我們會改<strong>let</strong>變成<strong>lets</strong></p>
+
+<p>let!:   讓變數立即產生</p>
+
+<p>let:    只有在refecence時，才會使變數存在</p>
+
+<p><strong>spec/models/user_spec.rb</strong> 加在<strong>describe User do</strong>區塊內</p>
+
+<pre><code>describe "micropost associations" do
+
+    before { @user.save }
+    let!(:older_micropost) do 
+      FactoryGirl.create(:micropost, user: @user, created_at: 1.day.ago)
+    end
+    let!(:newer_micropost) do
+      FactoryGirl.create(:micropost, user: @user, created_at: 1.hour.ago)
+    end
+
+    it "should have the right microposts in the right order" do
+      @user.microposts.should == [newer_micropost, older_micropost]
+    end
+end
+</code></pre>
+
+<p>最關鍵的一行就是</p>
+
+<pre><code>@user.microposts.should == [newer_micropost, older_micropost]
+</code></pre>
+
+<p>為了讓測試通過其實很簡單，只要在<strong>app/models/micropost.rb</strong>加上一個東東！</p>
+
+<pre><code>default_scope order: 'microposts.created_at DESC'
+</code></pre>
+
+<p>DESC在SQL就是&#8221;descending&#8221;</p>
+
+<p>接著來看相依性的問題：<strong>刪除</strong></p>
+
+<p>admin有權限可以刪除使用者，照理說使用者被刪除後，他的micropost應該都要被刪除才是，我們可以這樣寫測試來驗證，當我們刪除文章的user時，相對應的文章都應該不會在資料庫內</p>
+
+<p><strong>spec/models/user_spec.rb</strong>在<strong>describe &#8220;micropost associations&#8221; do</strong>區塊加入</p>
+
+<pre><code>it "should destroy associated microposts" do
+   microposts = @user.microposts
+   @user.destroy
+   microposts.each do |micropost|
+   Micropost.find_by_id(micropost.id).should be_nil
+ end
+end
+</code></pre>
+
+<p>要認這測試通過很簡單，只要告訴他的相依性有哪些</p>
+
+<p><strong>app/models/user.rb</strong></p>
+
+<pre><code>has_many :microposts, dependent: :destroy
+</code></pre>
+
+<p>測試一下吧～應該要可以通過</p>
+
+<pre><code>$ bundle exec rspec spec/   
+</code></pre>
+
+<p>在跳到下一節之前，我們來看看內容驗證的部分！</p>
+
+<p>廢話不多說，看一下要驗證哪些東西</p>
+
+<p><strong>spec/models/micropost_spec.rb</strong></p>
+
+<pre><code>describe "when user_id is not present" do
+    before { @micropost.user_id = nil }
+    it { should_not be_valid }
+  end
+
+  describe "with blank content" do
+    before { @micropost.content = " " }
+    it { should_not be_valid }
+  end
+
+  describe "with content that is too long" do
+    before { @micropost.content = "a" * 141 }
+    it { should_not be_valid }
+  end
+</code></pre>
+
+<p> 為了要限制字數，還記得要加什麼嗎?</p>
+
+<p> 沒錯，就是</p>
+
+<pre><code>validates :content, presence: true, length: { maximum: 140 }
+</code></pre>
+
+<h2>Showing microposts</h2>
+
+<p>依照Twitter的設計，我們可以在個人頁面看到他發的post，而不需要到micropost的index頁面，所以來開始吧！</p>
+
+<h3>Augmenting the user show page</h3>
+
+<p>我們希望能夠建立兩個文章在一個user上，然後驗證show 頁面，包含文章的內容 ，因為我們希望文章和人可以馬上出現連結一起，所以我們不是用let而是使用let!</p>
+
+<p><strong>spec/requests/user_pages_spec.rb</strong> 加在<strong>describe &#8220;User pages&#8221; do</strong>程式區塊內</p>
+
+<pre><code>describe "profile page" do
+        let(:user) { FactoryGirl.create(:user) }
+        let!(:m1) { FactoryGirl.create(:micropost, user: user, content: "Aloha ") }
+        let!(:m2) { FactoryGirl.create(:micropost, user: user, content: "Cool") }
+
+        before { visit user_path(user) }
+
+        it { should have_selector('h1',    text: user.name) }
+        it { should have_selector('title', text: user.name) }
+
+        describe "microposts" do
+          it { should have_content(m1.content) }
+          it { should have_content(m2.content) }
+          it { should have_content(user.microposts.count) }
+        end
+  end
+</code></pre>
+
+<p>OK~來看一下 <strong>app/views/users/show.html.erb</strong> 在 <strong><aside></aside></strong>之後加入</p>
+
+<pre><code>&lt;div class="span8"&gt;
+    &lt;% if @user.microposts.any? %&gt;
+      &lt;h3&gt;Microposts (&lt;%= @user.microposts.count %&gt;)&lt;/h3&gt;
+      &lt;ol class="microposts"&gt;
+        &lt;%= render @microposts %&gt;
+      &lt;/ol&gt;
+      &lt;%= will_paginate @microposts %&gt;
+    &lt;% end %&gt;
+  &lt;/div&gt;
+</code></pre>
+
+<p>注意一些細節，我們加了 換頁的東東， 這邊其實可以只用</p>
+
+<pre><code>&lt;%= will_paginate %&gt;
+</code></pre>
+
+<p>為什麼要加上@microposts是因為在User controller底下，<strong>will_paginate</strong>是假設呼叫的值是@users，但是因為我們雖然在user controller之下，</p>
+
+<p>但是我們是要show 文章！所以才要丟參數給他</p>
+
+<p>還有一個特別的地方</p>
+
+<pre><code>&lt;ol class="microposts"&gt;
+   &lt;%= render @microposts %&gt;
+&lt;/ol&gt;
+</code></pre>
+
+<p>這是使用經排序的list標籤<strong>ol</strong>，另外那個render他會去找&#8230;..找什麼？</p>
+
+<p>如果是之前使用<strong>render @users</strong>他會去找<strong>_user.html.erb</strong></p>
+
+<p>So ?</p>
+
+<p>這邊他就會去找<strong>_micropost.html.erb</strong>，當然我們沒有要建立一個給他</p>
+
+<p><strong>app/views/microposts/_micropost.html.erb</strong></p>
+
+<pre><code>&lt;li&gt;
+  &lt;span class="content"&gt;&lt;%= micropost.content %&gt;&lt;/span&gt;
+  &lt;span class="timestamp"&gt;
+    Posted &lt;%= time_ago_in_words(micropost.created_at) %&gt; ago.
+  &lt;/span&gt;
+&lt;/li&gt;
+</code></pre>
+
+<p>這邊使用到一個很酷的方法<strong>time_ago_in_words</strong>，我們等一下會介紹這個helper</p>
+
+<p>接著我們趕緊來編輯，<strong>app/controllers/users_controller.rb</strong></p>
+
+<p>因為那些View都需要@microposts這個東東</p>
+
+<p>把show改成</p>
+
+<pre><code> def show
+    @user = User.find(params[:id])
+    $title = @user.name
+    @microposts = @user.microposts.paginate(page: params[:page])
+ end
+</code></pre>
+
+<p>yap~~不過到了這階段，目前還是沒有辦法看到一些東西～所以我們到下一小節，新增micropost吧！</p>
+
+<h3>Sample microposts</h3>
+
+<p>使用<strong>lib/tasks/sample_data.rake</strong>來建置大量使用者micropost吧！</p>
+
+<p>加到<strong>task populate: :environment do</strong>裡面</p>
+
+<pre><code>users = User.all(limit: 6)
+50.times do
+  content = Faker::Lorem.sentence(5)
+  users.each { |user| user.microposts.create!(content: content) }
+end
+</code></pre>
+
+<p>這邊我們只選擇前六個使用者，然後用<strong>Faker::Lorem.sentence</strong>這個方法隨機建立文字</p>
+
+<p>OK 建到資料庫吧！</p>
+
+<pre><code>$ bundle exec rake db:reset
+$ bundle exec rake db:populate
+$ bundle exec rake db:test:prepare
+</code></pre>
+
+<p>但是看起來好醜&#8230;.所以我們來加一些css</p>
+
+<p><strong>app/assets/stylesheets/custom.css.scss</strong></p>
+
+<pre><code>/* microposts */
+
+.microposts {
+  list-style: none;
+  margin: 10px 0 0 0;
+
+  li {
+    padding: 10px 0;
+    border-top: 1px solid #e8e8e8;
+  }
+}
+.content {
+  display: block;
+}
+.timestamp {
+  color: $grayLight;
+}
+.gravatar {
+  float: left;
+  margin-right: 10px;
+}
+aside {
+  textarea {
+    height: 100px;
+    margin-bottom: 5px;
+  }
+}
+</code></pre>
+
+<p>yap~好看多了！</p>
+
+<h2>Manipulating microposts</h2>
+
+<p>完成data  的model和micropost的view，現在把重點放在micropost操作上，這個Micropost的操作會密集在User和static頁面controller之間，</p>
+
+<p>也就是說…這不簡單&#8230;.OK！要操作Micropost之前，我們要先讓他有RestFul</p>
+
+<p>REST有主要有兩個核心精神：1. 使用Resource來當做識別的資源，也就是使用一個URL網址來代表一個Resource 2. 同一個Resource則可以有不同的Representations格式變化。</p>
+
+<p>所以我們要在<strong>config/routes.rb</strong>加上</p>
+
+<pre><code>resources :microposts, only: [:create, :destroy]
+</code></pre>
+
+<p>這也代表了他會有兩個url可以用！</p>
+
+<p>HTTP request
+&nbsp;
+&nbsp;
+&nbsp;
+&nbsp;URI
+&nbsp;
+&nbsp;
+&nbsp;
+&nbsp;Action
+&nbsp;
+&nbsp;
+&nbsp;
+&nbsp;Purpose</p>
+
+<p>POST
+&nbsp;
+&nbsp;
+&nbsp;
+&nbsp;
+/microposts
+&nbsp;
+&nbsp;
+&nbsp;
+&nbsp;
+create
+&nbsp;
+&nbsp;
+&nbsp;
+&nbsp;
+create a new micropost</p>
+
+<p>DELETE
+&nbsp;
+&nbsp;
+&nbsp;
+&nbsp;
+/microposts/1
+&nbsp;
+&nbsp;
+&nbsp;
+&nbsp;
+destroy
+&nbsp;
+&nbsp;
+&nbsp;
+&nbsp;
+delete micropost with id</p>
+
+<h3>Access control</h3>
+
+<p>當然要有登入的使用者才可以創建或刪除文章，所以我們的測試可以這樣寫</p>
+
+<p><strong>spec/requests/authentication_pages_spec.rb</strong>在<strong>describe &#8220;for non-signed-in users&#8221; do</strong>區塊加入</p>
+
+<pre><code>describe "in the Microposts controller" do
+
+    describe "submitting to the create action" do
+      before { post microposts_path }
+      specify { response.should redirect_to(signin_path) }
+    end
+
+    describe "submitting to the destroy action" do
+      before { delete micropost_path(FactoryGirl.create(:micropost)) }
+      specify { response.should redirect_to(signin_path) }
+    end
+  end
+</code></pre>
+
+<p>注意歐～這邊<strong>post microposts_path</strong>就是使用<strong>create</strong>動作; <strong>delete micropost_path(micropost)</strong>就會使用<strong>destroy</strong>動作！</p>
+
+<p>為了要讓測試通過，我們必須要小小的重構程式碼，我們在User controller的地方，使用了<strong>signed_in_user</strong>判斷使用者是否登入</p>
+
+<p>我們發現說原來在micropost也需要用到！所以我們把這段程式碼搬到<strong>app/helpers/sessions_helper.rb</strong></p>
+
+<p>加上</p>
+
+<pre><code>def signed_in_user
+  unless signed_in?
+    store_location
+    redirect_to signin_path, notice: "Please sign in." 
+  end
+end
+</code></pre>
+
+<p>耶～所以現在就可以在<strong>app/controllers/microposts_controller.rb</strong>使用啦～</p>
+
+<pre><code>class MicropostsController &lt; ApplicationController
+  before_filter :signed_in_user , only: [:create , :destroy]
+
+  def create
+  end
+
+  def destroy
+  end
+
+  def index
+  end
+
+end
+</code></pre>
+
+<p>跑測試吧～</p>
+
+<pre><code>$ bundle exec rspec spec/requests/authentication_pages_spec.rb
+</code></pre>
+
+<h3>Creating microposts</h3>
+
+<p>這邊有一個地方很不一樣，因為在發文的時候一定會是已登入的使用者，所以要建一個新的頁面專門給micropost使用的！</p>
+
+<p>在這之前，我們先來建立測試吧！</p>
+
+<pre><code>$ rails generate integration_test micropost_pages
+</code></pre>
+
+<p>編輯測試程式</p>
+
+<p><strong>spec/requests/micropost_pages_spec.rb</strong></p>
+
+<pre><code>require 'spec_helper'
+
+describe "Micropost pages" do
+
+  subject { page }
+
+  let(:user) { FactoryGirl.create(:user) }
+  before { sign_in user }
+
+  describe "micropost creation" do
+    before { visit root_path }
+
+    describe "with invalid information" do
+
+      it "should not create a micropost" do
+        expect { click_button "Post" }.should_not change(Micropost, :count)
+      end
+
+      describe "error messages" do
+        before { click_button "Post" }
+        it { should have_content('error') } 
+      end
+    end
+
+    describe "with valid information" do
+
+      before { fill_in 'micropost_content', with: "Lorem ipsum" }
+      it "should create a micropost" do
+        expect { click_button "Post" }.should change(Micropost, :count).by(1)
+      end
+    end
+  end
+end
+</code></pre>
+
+<p>在來編輯
+<strong>app/controllers/microposts_controller.rb</strong></p>
+
+<pre><code>class MicropostsController &lt; ApplicationController
+  before_filter :signed_in_user
+
+  def create
+    @micropost = current_user.microposts.build(params[:micropost])
+    if @micropost.save
+      flash[:success] = "Micropost created!"
+      redirect_to root_path
+    else
+      render 'static_pages/home'
+    end
+  end
+
+  def destroy
+  end
+end
+</code></pre>
+
+<p>Control 完 換View</p>
+
+<p><strong>app/views/static_pages/home.html.erb</strong></p>
+
+<p>其實就是多加了判斷user是不是登入！</p>
+
+<pre><code>&lt;% if signed_in? %&gt;
+  &lt;div class="row"&gt;
+    &lt;aside class="span4"&gt;
+      &lt;section&gt;
+        &lt;%= render 'shared/user_info' %&gt;
+      &lt;/section&gt;
+      &lt;section&gt;
+        &lt;%= render 'shared/micropost_form' %&gt;
+      &lt;/section&gt;
+    &lt;/aside&gt;
+  &lt;/div&gt;  
+&lt;% else %&gt;
+  &lt;div class="center hero-unit"&gt;
+    &lt;h1&gt;Welcome to the Sample App&lt;/h1&gt;
+
+    &lt;h2&gt;
+      This is the home page for the
+      &lt;a href="http://railstutorial.org/"&gt;Ruby on Rails Tutorial&lt;/a&gt;
+      sample application.
+    &lt;/h2&gt;
+
+    &lt;%= link_to "Sign up now!", signup_path, 
+                                class: "btn btn-large btn-primary" %&gt;
+  &lt;/div&gt;
+
+  &lt;%= link_to image_tag("rails.png", alt: "Rails"), 'http://rubyonrails.org/' %&gt;
+&lt;% end %&gt; 
+</code></pre>
+
+<p>注意歐！因為有些東西是可以拉出來寫的例如<strong>&lt;%= render &#8216;shared/user_info&#8217; %></strong></p>
+
+<p>就是</p>
+
+<p><strong>app/views/shared/_user_info.html.erb</strong></p>
+
+<pre><code>&lt;a href="&lt;%= user_path(current_user) %&gt;"&gt;
+  &lt;%= gravatar_for current_user, size: 52 %&gt;
+&lt;/a&gt;
+&lt;h1&gt;
+  &lt;%= current_user.name %&gt;
+&lt;/h1&gt;
+&lt;span&gt;
+  &lt;%= link_to "view my profile", current_user %&gt;
+&lt;/span&gt;
+&lt;span&gt;
+  &lt;%= pluralize(current_user.microposts.count, "micropost") %&gt;
+&lt;/span&gt;
+</code></pre>
+
+<p>這些之前都有講過了～所以就不再提了～</p>
+
+<p>因為還有一個也是被拉出來寫<strong>&lt;%= render &#8216;shared/micropost_form&#8217; %></strong></p>
+
+<pre><code>&lt;%= form_for(@micropost) do |f| %&gt;
+  &lt;%= render 'shared/error_messages', object: f.object %&gt;
+  &lt;div class="field"&gt;
+    &lt;%= f.text_area :content, placeholder: "Compose new micropost..." %&gt;
+  &lt;/div&gt;
+  &lt;%= f.submit "Post", class: "btn btn-large btn-primary" %&gt;
+&lt;% end %&gt;
+</code></pre>
+
+<p>那個@micropost是我們在controller用<strong>current_user.microposts.build</strong>建出來的</p>
+
+<p>另外還要加上micropost的變數實例在<strong>app/controllers/static_pages_controller.rb</strong></p>
+
+<pre><code>def home
+    @micropost = current_user.microposts.build if signed_in?
+end
+</code></pre>
+
+<p>還有一個很詭異的東東那就是</p>
+
+<pre><code>&lt;%= render 'shared/error_messages', object: f.object %&gt;
+</code></pre>
+
+<p>舉個例來說明，form_for(@user) do |f|</p>
+
+<p>那個f.object 就是 @user,</p>
+
+<p>同理可得form_for(@micropost) do |f|</p>
+
+<p>他的f.object 就是 @micropost</p>
+
+<p>換句話說， 那個object: f.object 會在<strong>error_messsages</strong>建立一個變數叫做<strong>object</strong></p>
+
+<p>因為這樣，所以要update一下<strong>app/views/shared/_error_messages.html.erb</strong></p>
+
+<pre><code>&lt;% if object.errors.any? %&gt;
+  &lt;div id="error_explanation"&gt;
+    &lt;div class="alert alert-error"&gt;
+      The form contains &lt;%= pluralize(object.errors.count, "error") %&gt;.
+    &lt;/div&gt;
+    &lt;ul&gt;
+    &lt;% object.errors.full_messages.each do |msg| %&gt;
+      &lt;li&gt;* &lt;%= msg %&gt;&lt;/li&gt;
+    &lt;% end %&gt;
+    &lt;/ul&gt;
+  &lt;/div&gt;
+&lt;% end %&gt;
+</code></pre>
+
+<p>執行測試看有沒有哪裡改錯</p>
+
+<pre><code>$  bundle exec rspec spec/requests/micropost_pages_spec.rb
+</code></pre>
+
+<p>注意看上面範例～ yap~沒錯！</p>
+
+<p>接著我們來更新<strong>app/views/users/new.html.erb</strong></p>
+
+<p>只有一個地方要改<strong>object: f.object</strong></p>
+
+<p>變成這樣</p>
+
+<pre><code>&lt;%= render 'shared/error_messages' , object: f.object %&gt;
+</code></pre>
+
+<p>當然那個<strong>app/views/users/edit.html.erb</strong>也要改</p>
+
+<pre><code>&lt;% provide(:title, "Edit user") %&gt; 
+    &lt;h1&gt;Update your profile&lt;/h1&gt;
+
+    &lt;div class="row"&gt;
+      &lt;div class="span6 offset3"&gt;
+      &lt;%= form_for(@user) do |f| %&gt;
+          &lt;%= render 'shared/error_messages', object: f.object %&gt;
+
+          &lt;%= f.label :name %&gt;
+          &lt;%= f.text_field :name %&gt;
+
+          &lt;%= f.label :email %&gt;
+          &lt;%= f.text_field :email %&gt;
+
+          &lt;%= f.label :password %&gt;
+          &lt;%= f.password_field :password %&gt;
+
+          &lt;%= f.label :password_confirmation, "Confirm Password" %&gt;
+          &lt;%= f.password_field :password_confirmation %&gt;
+
+          &lt;%= f.submit "Save changes", class: "btn btn-large btn-primary" %&gt;
+        &lt;% end %&gt;
+
+        &lt;%= gravatar_for @user %&gt;
+        &lt;a href="http://gravatar.com/emails"&gt;change&lt;/a&gt;
+      &lt;/div&gt;
+    &lt;/div&gt;
+</code></pre>
+
+<h3>A proto-feed</h3>
+
+<p>因為每個人都有feed，所以勢必要加一個<strong>feed</strong>的函式在User model裡面，先寫測試<strong>feed</strong>函式包含了現在使用者的micropost，
+但是沒有其他user的程式</p>
+
+<p><strong>spec/models/user_spec.rb</strong></p>
+
+<pre><code>require 'spec_helper'
+
+describe User do
+  .
+  .
+  .
+  it { should respond_to(:microposts) }
+  it { should respond_to(:feed) }
+  .
+  .
+  .
+  describe "micropost associations" do
+
+    before { @user.save }
+    let!(:older_micropost) do 
+      FactoryGirl.create(:micropost, user: @user, created_at: 1.day.ago)
+    end
+    let!(:newer_micropost) do
+      FactoryGirl.create(:micropost, user: @user, created_at: 1.hour.ago)
+    end
+    .
+    .
+    .
+    describe "status" do
+      let(:unfollowed_post) do
+        FactoryGirl.create(:micropost, user: FactoryGirl.create(:user))
+      end
+
+      its(:feed) { should include(newer_micropost) }
+      its(:feed) { should include(older_micropost) }
+      its(:feed) { should_not include(unfollowed_post) }
+    end
+  end
+end
+</code></pre>
+
+<p>這次的測試多了一個新的夥伴！<strong>include?</strong> 他主要的工作就是檢查array裡面，有沒有包含我們要找的值</p>
+
+<p>RSpec很聰明得知道我們要測試是否元素在陣列裡</p>
+
+<p>來到<strong>app/models/user.rb</strong></p>
+
+<pre><code> def feed
+    # This is preliminary. See "Following users" for the full implementation.
+    Micropost.where("user_id = ?", id)
+  end
+</code></pre>
+
+<p>這邊我有個問題，那就是那個<strong>Micropost.where(&#8220;user_id = ?&#8221;, id)</strong>是怎麼一回事</p>
+
+<p>文章是說<strong>id</strong>最好不要在SQL指令出現，這是因為會有<strong>SQL injection</strong>攻擊，但是對於我們這個
+例子，這個id是整數，所以沒有危險～  這一行其實等於下面</p>
+
+<pre><code>def feed
+ microposts
+end
+</code></pre>
+
+<p>再寫一個測試</p>
+
+<p><strong>spec/requests/static_pages_spec.rb</strong></p>
+
+<pre><code>describe "for signed-in users" do
+      let(:user) { FactoryGirl.create(:user) }
+      before do
+        FactoryGirl.create(:micropost, user: user, content: "Lorem ipsum")
+        FactoryGirl.create(:micropost, user: user, content: "Dolor sit amet")
+        sign_in user
+        visit root_path
+      end
+
+      it "should render the user's feed" do
+        user.feed.each do |item|
+          page.should have_selector("li##{item.id}", text: item.content)
+        end
+      end
+    end
+</code></pre>
+
+<p>注意一下</p>
+
+<pre><code> page.should have_selector("li##{item.id}", text: item.content)
+</code></pre>
+
+<p>有兩個#其中一個是要給CSS看得ID，另外一個#{}是一起的～是Ruby的字串包含程式碼</p>
+
+<p>為了要在程式使用到<strong>feed</strong>，我們會加上一個<strong>@feed_items</strong>實例變數(instance variable：宣告在 class 內，method 之外，且未使用 static 修飾的變數)，</p>
+
+<p>給現在使用者的feed.</p>
+
+<p><strong>app/controllers/static_pages_controller.rb</strong></p>
+
+<pre><code>def home
+    if signed_in?
+      @micropost  = current_user.microposts.build
+      @feed_items = current_user.feed.paginate(page: params[:page])
+    end
+  end
+</code></pre>
+
+<p>另外要作partial view 給feed 和 feed_item本身</p>
+
+<p><strong>app/views/shared/_feed.html.erb</strong></p>
+
+<pre><code>&lt;% if @feed_items.any? %&gt;
+  &lt;ol class="microposts"&gt;
+    &lt;%= render partial: 'shared/feed_item', collection: @feed_items %&gt;
+  &lt;/ol&gt;
+  &lt;%= will_paginate @feed_items %&gt;
+&lt;% end %&gt;
+</code></pre>
+
+<p><strong>app/views/shared/_feed_item.html.erb</strong></p>
+
+<pre><code>&lt;li id="&lt;%= feed_item.id %&gt;"&gt;
+  &lt;%= link_to gravatar_for(feed_item.user), feed_item.user %&gt;
+  &lt;span class="user"&gt;
+    &lt;%= link_to feed_item.user.name, feed_item.user %&gt;
+  &lt;/span&gt;
+  &lt;span class="content"&gt;&lt;%= feed_item.content %&gt;&lt;/span&gt;
+  &lt;span class="timestamp"&gt;
+    Posted &lt;%= time_ago_in_words(feed_item.created_at) %&gt; ago.
+  &lt;/span&gt;
+&lt;/li&gt;
+</code></pre>
+
+<p>yap~現在來看user登入後的view</p>
+
+<p><strong>app/views/static_pages/home.html.erb</strong></p>
+
+<pre><code>&lt;% if signed_in? %&gt;
+  &lt;div class="row"&gt;
+    &lt;aside class="span4"&gt;
+      &lt;section&gt;
+        &lt;%= render 'shared/user_info' %&gt;
+      &lt;/section&gt;
+      &lt;section&gt;
+        &lt;%= render 'shared/micropost_form' %&gt;
+      &lt;/section&gt;
+    &lt;/aside&gt;
+
+    &lt;div class="span8"&gt;
+          &lt;h3&gt;Micropost Feed&lt;/h3&gt;
+          &lt;%= render 'shared/feed' %&gt;
+    &lt;/div&gt;
+  &lt;/div&gt;  
+&lt;% else %&gt;
+  &lt;div class="center hero-unit"&gt;
+    &lt;h1&gt;Welcome to the Sample App&lt;/h1&gt;
+
+    &lt;h2&gt;
+      This is the home page for the
+      &lt;a href="http://railstutorial.org/"&gt;Ruby on Rails Tutorial&lt;/a&gt;
+      sample application.
+    &lt;/h2&gt;
+
+    &lt;%= link_to "Sign up now!", signup_path, 
+                                class: "btn btn-large btn-primary" %&gt;
+  &lt;/div&gt;
+
+  &lt;%= link_to image_tag("rails.png", alt: "Rails"), 'http://rubyonrails.org/' %&gt;
+&lt;% end %&gt;
+</code></pre>
+
+<p>耶～可以看一下網頁！看起來不錯歐！也可以發表成功！</p>
+
+<p>咦&#8230;.不過如果我不打字串按發表的話，要跳出error</p>
+
+<p>解法暫時如下：</p>
+
+<p><strong>app/controllers/microposts_controller.rb</strong></p>
+
+<p>當使用者沒有輸入值時，先給他空的array</p>
+
+<pre><code>def create
+    @micropost = current_user.microposts.build(params[:micropost])
+    if @micropost.save
+      flash[:success] = "Micropost created!"
+      redirect_to root_path
+    else
+      @feed_items = []
+      render 'static_pages/home'
+    end
+  end
+</code></pre>
+
+<p>來跑測試吧！</p>
+
+<pre><code>$ bundle exec rspec spec/
+</code></pre>
+
+<h3>Destroying microposts</h3>
+
+<p>最後，加上一個可以刪除micropost的東東～</p>
+
+<p>大概就是加上</p>
+
+<pre><code>&lt;% if current_user?(micropost.user) %&gt;
+        &lt;%= link_to "delete", micropost, method:  :delete,
+                                         confirm: "You sure?",
+                                         title:   micropost.content %&gt;
+&lt;% end %&gt;
+</code></pre>
+
+<p><strong>app/views/microposts/_micropost.html.erb</strong></p>
+
+<pre><code>&lt;li&gt;
+  &lt;span class="content"&gt;&lt;%= micropost.content %&gt;&lt;/span&gt;
+  &lt;span class="timestamp"&gt;
+    Posted &lt;%= time_ago_in_words(micropost.created_at) %&gt; ago.
+  &lt;/span&gt;
+  &lt;% if current_user?(micropost.user) %&gt;
+    &lt;%= link_to "delete", micropost, method:  :delete,
+                                     confirm: "You sure?",
+                                     title:   micropost.content %&gt;
+  &lt;% end %&gt;
+&lt;/li&gt;
+</code></pre>
+
+<p><strong>app/views/shared/_feed_item.html.erb</strong></p>
+
+<pre><code>&lt;li id="&lt;%= feed_item.id %&gt;"&gt;
+  &lt;%= link_to gravatar_for(feed_item.user), feed_item.user %&gt;
+    &lt;span class="user"&gt;
+      &lt;%= link_to feed_item.user.name, feed_item.user %&gt;
+    &lt;/span&gt;
+    &lt;span class="content"&gt;&lt;%= feed_item.content %&gt;&lt;/span&gt;
+    &lt;span class="timestamp"&gt;
+      Posted &lt;%= time_ago_in_words(feed_item.created_at) %&gt; ago.
+    &lt;/span&gt;
+  &lt;% if current_user?(feed_item.user) %&gt;
+    &lt;%= link_to "delete", feed_item, method:  :delete,
+                                     confirm: "You sure?",
+                                     title:   feed_item.content %&gt;
+  &lt;% end %&gt;
+&lt;/li&gt;
+</code></pre>
+
+<p>在寫controller刪除功能之前，先來寫測試</p>
+
+<p><strong>spec/requests/micropost_pages_spec.rb</strong></p>
+
+<p>在<strong>describe &#8220;Micropost pages&#8221; do</strong>區塊加上</p>
+
+<pre><code>describe "micropost destruction" do
+    before { FactoryGirl.create(:micropost, user: user) }
+
+    describe "as correct user" do
+      before { visit root_path }
+
+      it "should delete a micropost" do
+        expect { click_link "delete" }.should change(Micropost, :count).by(-1)
+      end
+    end
+  end
+</code></pre>
+
+<p>刪除的地方在之前user的地方有做過！主要差別在於只要是user本人即可刪除訊息，所以我們用</p>
+
+<p><strong>correct_user</strong>來檢查</p>
+
+<p><strong>app/controllers/microposts_controller.rb</strong></p>
+
+<pre><code>before_filter :correct_user,   only: :destroy
+
+def destroy
+    @micropost.destroy
+    redirect_to root_path
+end
+
+private
+
+def correct_user
+  @micropost = current_user.microposts.find_by_id(params[:id])
+  redirect_to root_path if @micropost.nil?
+end
+</code></pre>
+
+<p>這個寫法主要是可以確保現在的user 他的文章裡頭可以找到這個id的文章！</p>
+
+<p>其實也是可以這樣寫！</p>
+
+<pre><code>@micropost = Micropost.find_by_id(params[:id])
+redirect_to root_path unless current_user?(@micropost.user)
+</code></pre>
+
+<p>不過根據高手的文章表示，</p>
+
+<blockquote><p>for security purposes it is a good practice always to run lookups through the association.</p></blockquote>
+
+<p>ＯＫ～確保一下程式都沒問題</p>
+
+<pre><code>$ bundle exec rspec spec/
+</code></pre>
+
+<h2>Conclusion</h2>
+
+<pre><code>$ git add .
+$ git commit -m "Add user microposts"
+$ git checkout master
+$ git merge user-microposts
+$ git push
+</code></pre>
+
+<p>You can also push the app up to Heroku at this point. Because the data model has changed through the addition of the microposts table, you will also need to migrate the production database:</p>
+
+<p>$ git push heroku
+$ heroku pg:reset SHARED_DATABASE &#8211;confirm &lt;name-heroku-gave-to-your-app>
+$ heroku run rake db:migrate
+$ heroku run rake db:populate</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Learning on Ruby on Rails Tutorial-CH9 Updating , Showing , and deleting users]]></title>
+    <link href="http://ccaloha.cc/blog/2012/08/10/learning-on-ruby-on-rails-tutorial-ch9-updating/"/>
+    <updated>2012-08-10T11:07:00+08:00</updated>
+    <id>http://ccaloha.cc/blog/2012/08/10/learning-on-ruby-on-rails-tutorial-ch9-updating</id>
+    <content type="html"><![CDATA[<p> 這章會完成Users的REST動作，<strong>edit</strong>、<strong>update</strong>、<strong>index</strong>、<strong>destroy</strong></p>
+
+<p> 廢話不多說，從做中學！</p>
+
+<pre><code>$ git checkout -b updating-users
+</code></pre>
+
+<h2>修改使用者</h2>
+
+<p>修改其實很像新增，和新增不同的地方在於</p>
+
+<p>new是對server提出POST的要求，但是update這個動作是提出PUT這個要求</p>
+
+<p>還有一個最大的差別，就是所有人都可以註冊，但是update動作，只能給已經登入的user使用！</p>
+
+<!--more-->
+
+
+<p></p>
+
+<h2>Edit 表格</h2>
+
+<p>直接來看測試！把它加到<strong>describe &#8220;User pages&#8221; do</strong>區塊內</p>
+
+<p><strong>spec/requests/user_pages_spec.rb</strong></p>
+
+<pre><code>describe "edit" do
+    let(:user) { FactoryGirl.create(:user) }
+    before { visit edit_user_path(user) }
+
+    describe "page" do
+      it { should have_selector('h1',    text: "Update your profile") }
+      it { should have_selector('title', text: "Edit user") }
+      it { should have_link('change', href: 'http://gravatar.com/emails') }
+    end
+
+    describe "with invalid information" do
+      before { click_button "Save changes" }
+
+      it { should have_content('error') }
+    end
+  end
+</code></pre>
+
+<p>要編輯使用者之前一定要知道誰是使用者</p>
+
+<p>別忘了可以使用params[:id]</p>
+
+<p>所以我們在controller的地方可以加上這句話，<strong>app/controller/users_controller.rb</strong></p>
+
+<pre><code>def edit
+    @user = User.find(params[:id])
+end
+</code></pre>
+
+<p>再來新增view</p>
+
+<p><strong>app/views/users/edit.html.erb</strong></p>
+
+<pre><code>&lt;% provide(:title, "Edit user") %&gt; 
+&lt;h1&gt;Update your profile&lt;/h1&gt;
+
+&lt;div class="row"&gt;
+  &lt;div class="span6 offset3"&gt;
+  &lt;%= form_for(@user) do |f| %&gt;
+      &lt;%= render 'shared/error_messages', object: f.object %&gt;
+
+      &lt;%= f.label :name %&gt;
+      &lt;%= f.text_field :name %&gt;
+
+      &lt;%= f.label :email %&gt;
+      &lt;%= f.text_field :email %&gt;
+
+      &lt;%= f.label :password %&gt;
+      &lt;%= f.password_field :password %&gt;
+
+      &lt;%= f.label :password_confirmation, "Confirm Password" %&gt;
+      &lt;%= f.password_field :password_confirmation %&gt;
+
+      &lt;%= f.submit "Save changes", class: "btn btn-large btn-primary" %&gt;
+    &lt;% end %&gt;
+
+    &lt;%= gravatar_for @user %&gt;
+    &lt;a href="http://gravatar.com/emails"&gt;change&lt;/a&gt;
+  &lt;/div&gt;
+&lt;/div&gt;
+</code></pre>
+
+<p>跑看看測試吧～</p>
+
+<pre><code>$ bundle exec rspec spec/requests/user_pages_spec.rb -e "edit page"
+</code></pre>
+
+<p>嘿嘿～ 你一定會好奇…奇怪&#8230;.他跟new幾乎長得一模一樣</p>
+
+<p>那Rails怎麼知道他是要用<strong>POST</strong>還是<strong>PUT</strong>?</p>
+
+<p>其實他是用Active Record的一個方法：<strong>new_record?</strong></p>
+
+<p>很簡單的驗證方法</p>
+
+<pre><code>$ rails console
+&gt;&gt; User.new.new_record?
+=&gt; true
+&gt;&gt; User.first.new_record?
+=&gt; false
+</code></pre>
+
+<p>接著我們來新加另外一個測試的東西，在<strong>spec/requests/authentication_pages_spec.rb</strong></p>
+
+<p>加上使用者用正確資料登入時，會有一個新的<strong>Setting</strong>的鏈結可以選</p>
+
+<pre><code>it { should have_link('Settings', href: edit_user_path(user)) }
+</code></pre>
+
+<p>在下面那些底下</p>
+
+<pre><code> it { should have_selector('title', text: user.name) }
+ it { should have_link('Profile', href: user_path(user)) }
+ it { should have_link('Sign out', href: signout_path) }
+ it { should_not have_link('Sign in', href: signin_path) }  
+</code></pre>
+
+<p>還有一個地方要改～請把</p>
+
+<pre><code>before do
+  fill_in "Email",    with: user.email
+  fill_in "Password", with: user.password
+  click_button "Sign in"
+end
+</code></pre>
+
+<p>改成一句話！</p>
+
+<pre><code>before { sign_in user }
+</code></pre>
+
+<p>用一個helper來取代！把這個helper寫在<strong>spec/support/utilities.rb</strong></p>
+
+<pre><code>def sign_in(user)
+  visit signin_path
+  fill_in "Email",    with: user.email
+  fill_in "Password", with: user.password
+  click_button "Sign in"
+  # Sign in when not using Capybara as well.
+  cookies[:remember_token] = user.remember_token
+end
+</code></pre>
+
+<p>為了要確保Capybara有work</p>
+
+<p>所以才加上</p>
+
+<pre><code>cookies[:remember_token] = user.remember_token
+</code></pre>
+
+<p>還要把<strong>Setting</strong>的連結加到<strong>header</strong>上面</p>
+
+<p>也就是要改<strong>app/views/layouts/_header.html.erb</strong></p>
+
+<p>把</p>
+
+<pre><code>&lt;li&gt;&lt;%= link_to "Settings", '#' %&gt;&lt;/li&gt;
+</code></pre>
+
+<p>改成</p>
+
+<pre><code>&lt;li&gt;&lt;%= link_to "Settings", edit_user_path(current_user) %&gt;&lt;/li&gt;
+</code></pre>
+
+<h2>不成功的編輯</h2>
+
+<p>當使用者編輯好，按下submit，會到controller的<strong>update</strong>動作執行，</p>
+
+<p>所以User會使用他的update_attributes方法更新內容！</p>
+
+<p>所以我們就用這個特性！</p>
+
+<p>如果使用者編輯不成功的話，我們要在重新render給他<strong>edit</strong>頁面</p>
+
+<p>所以來改<strong>app/controllers/users_controller.rb</strong></p>
+
+<pre><code>def update
+    @user = User.find(params[:id])
+    if @user.update_attributes(params[:user])
+      # Handle a successful update.
+    else
+      render 'edit'
+    end
+  end
+</code></pre>
+
+<h2>成功的編輯</h2>
+
+<p>接著我們要來寫編輯的測試！</p>
+
+<p>在<strong>spec/requests/user_pages_spec.rb</strong>的<strong>describe &#8220;edit&#8221; do</strong>區塊內加上</p>
+
+<pre><code> describe "with valid information" do
+      let(:new_name)  { "New Name" }
+      let(:new_email) { "new@example.com" }
+      before do
+        fill_in "Name",             with: new_name
+        fill_in "Email",            with: new_email
+        fill_in "Password",         with: user.password
+        fill_in "Confirm Password", with: user.password
+        click_button "Save changes"
+      end
+
+      it { should have_selector('title', text: new_name) }
+      it { should have_selector('div.alert.alert-success') }
+      it { should have_link('Sign out', href: signout_path) }
+      specify { user.reload.name.should  == new_name }
+      specify { user.reload.email.should == new_email }
+    end
+</code></pre>
+
+<p>那個比較特別的就是</p>
+
+<pre><code>specify { user.reload.name.should  == new_name }
+specify { user.reload.email.should == new_email }
+</code></pre>
+
+<p>利用<strong>user.reload</strong>去重新讀取user的資料</p>
+
+<p>OK 來寫其他東東</p>
+
+<p>先來補上<strong>app/controllers/users_controller.rb</strong></p>
+
+<pre><code>if @user.update_attributes(params[:user])
+        flash[:success] = "Profile updated"
+        sign_in @user
+        redirect_to @user
+</code></pre>
+
+<p>sign_in再一次是因為當使用者儲存時，紀錄的token被重新設定，(<strong>before_save :create_remember_token</strong>)</p>
+
+<p>所以我們要在重啓一次sesion！這是很好的安全設計～</p>
+
+<p>跑一次測試～確保都有pass!</p>
+
+<h2>授權 (注意！不是認證歐XD)</h2>
+
+<p>我們在CH8已經寫過認證了！現在來實作授權，認證(<em>authentication</em>)是讓我們驗證使用者是可以使用網站的！授權(<em>authorization</em>)是讓我們控制使用者可以做什麼事情！</p>
+
+<h3>要求使用者必須登入</h3>
+
+<p>編輯測試先，主要是edit和update動作，必須要在登入時才可以用！測試寫在認證那邊就ＯＫ了，直接加到<strong>describe &#8220;Authentication do&#8221;</strong>裡面</p>
+
+<p><strong>spec/requests/authentication_pages_spec.rb</strong></p>
+
+<pre><code>describe "authorization" do
+
+    describe "for non-signed-in users" do
+      let(:user) { FactoryGirl.create(:user) }
+
+      describe "in the Users controller" do
+
+        describe "visiting the edit page" do
+          before { visit edit_user_path(user) }
+          it { should have_selector('title', text: 'Sign in') }
+        end
+
+        describe "submitting to the update action" do
+          before { put user_path(user) }
+          specify { response.should redirect_to(signin_path) }
+        end
+      end
+    end
+</code></pre>
+
+<p>這邊比較特別的就是，不使用<strong>Capybara</strong>的visit方法存取controller！ 而是直接使用HTTP 要求！ 所以這邊是使用<strong>put</strong></p>
+
+<p>put會要求直接到<strong>/users/1</strong>並且是update的動作，這是必要的因為沒有方法讓瀏覽器，直接visit <strong>update</strong>動作！只能透過提交edit 表格(Capybara也無法做到)，但是這樣是為了測edit的動作！並沒有針對update來測！所以才需要使用<strong>put</strong></p>
+
+<p>所以～因為我們使用<strong>put</strong>這個動作！所以底下那個</p>
+
+<pre><code>specify { response.should redirect_to(signin_path) }
+</code></pre>
+
+<p>也是特別的！是使用response物件！不像Capybara的page物件！response讓我們測試伺服器的回應！</p>
+
+<p>那所以要授權的程式碼，我們會使用<strong>before_filter</strong>這個callback，就是當使用者操作時，會讓某些特定的方法被呼叫</p>
+
+<p><strong>app/controllers/users_controller.rb</strong></p>
+
+<pre><code>class UsersController &lt; ApplicationController
+  before_filter :signed_in_user, only: [:edit, :update]
+  .
+  .
+  .
+  private
+
+    def signed_in_user
+      redirect_to signin_path, notice: "Please sign in." unless signed_in?
+    end
+end
+</code></pre>
+
+<p>預設before_filter 是會用在所有動作的！但是我們可以用<strong>only</strong>這個來限制！</p>
+
+<p>另外那個<strong>notice: &#8220;Please sign in.&#8221;</strong> 他相當於會丟一個hash給<strong>redirect_to</strong>這個函式</p>
+
+<p>相當於</p>
+
+<pre><code>flash[:notice] = "Please sign in."
+redirect_to signin_path
+</code></pre>
+
+<p>注意歐！ 這邊用的是<strong>:notice</strong>，所以我們總共有<strong>:success</strong>和<strong>:error</strong>以及<strong>:notice</strong></p>
+
+<p>這些Bootstrap CSS都支援！</p>
+
+<p>這邊跑一下測試！</p>
+
+<pre><code>bundle exec rspec spec/
+</code></pre>
+
+<p>囧&#8230;.怎麼錯誤變多，有9個錯誤！</p>
+
+<p>原來是因為我們加了限制</p>
+
+<p>在<strong>spec/requests/user_pages_spec.rb</strong>的</p>
+
+<pre><code>describe "edit" do
+  let(:user) { FactoryGirl.create(:user) }
+  before { visit edit_user_path(user) }
+</code></pre>
+
+<p>我們還沒有登入 就開始visit編輯畫面&#8230;.所以會有問題！</p>
+
+<p>所以我們可以使用helper裡面的<strong>sign_in</strong>，改成這樣！</p>
+
+<pre><code>let(:user) { FactoryGirl.create(:user) }
+    before do
+      sign_in user
+      visit edit_user_path(user)
+    end
+</code></pre>
+
+<p>再執行一下 測試！ 恭喜！完成！</p>
+
+<h3>要求正確的使用者</h3>
+
+<p>當然我們只要求使用者登入這樣是不夠的！我們還需要是正當的使用者，所以來設計測試，當使用者用錯誤email登入時，然後點<strong>edit</strong>或是<strong>update</strong>，因為這個使用者也不行嘗試去編輯別人的頁面，使用者若嘗試去編輯別人的頁面，我們就將它導到root URL</p>
+
+<p><strong>spec/requests/authentication_pages_spec.rb</strong></p>
+
+<p>寫在<strong>describe &#8220;authorization&#8221; do</strong>區塊裡面</p>
+
+<pre><code>describe "as wrong user" do
+      let(:user) { FactoryGirl.create(:user) }
+      let(:wrong_user) { FactoryGirl.create(:user, email: "wrong@example.com") }
+      before { sign_in user }
+
+      describe "visiting Users#edit page" do
+        before { visit edit_user_path(wrong_user) }
+        it { should_not have_selector('title', text: full_title('Edit user')) }
+      end
+
+      describe "submitting a PUT request to the Users#update action" do
+        before { put user_path(wrong_user) }
+        specify { response.should redirect_to(root_path) }
+      end
+    end
+</code></pre>
+
+<p>所以我先來修改<strong>/app/controllers/users_controller.rb</strong></p>
+
+<pre><code>before_filter :correct_user, only: [:edit , :update]
+
+private
+
+def signed_in_user
+  redirect_to signin_path, notice: "Please sign in." unless signed_in?
+end
+
+def correct_user
+  @user = User.find(params[:id])
+  redirect_to(root_path) unless current_user?(@user)
+end
+</code></pre>
+
+<p>那個<strong>current_user?</strong>是寫在<strong>app/helpers/session_helper.rb</strong></p>
+
+<p>記得補上歐！</p>
+
+<pre><code>def current_user?(user)
+  user == current_user
+end
+</code></pre>
+
+<h3>友善的轉址</h3>
+
+<p>雖然一切看是完美～但是，其實有一個問題，那就是當user每次要使用保護的頁面時，他完成登入後，他都會被導向他的個人頁面～而且不是他想要去的頁面！所以我們要來改善這問題</p>
+
+<p>所以先來寫測試！我一開始會先到user的編輯頁面，然後理論上他會幫我導向登入畫面，當我完成登入之後，必須幫我導到編輯的頁面</p>
+
+<p><strong>spec/requests/authentication_pages_spec.rb</strong></p>
+
+<p>加在<strong>describe &#8220;for non-signed-in users&#8221; do</strong>裡面！</p>
+
+<pre><code>describe "when attempting to visit a protected page" do
+                before do
+                  visit edit_user_path(user)
+                  fill_in "Email",    with: user.email
+                  fill_in "Password", with: user.password
+                  click_button "Sign in"
+                end
+
+                describe "after signing in" do
+
+                  it "should render the desired protected page" do
+                    page.should have_selector('title', text: 'Edit user')
+                  end
+                end
+        end
+</code></pre>
+
+<p>為了要完成這件事情！ 我們要使用兩個function！</p>
+
+<p>把它寫在session helper裡面</p>
+
+<p><strong>app/helpers/sessions_helper.rb</strong></p>
+
+<pre><code>def redirect_back_or(default)
+    redirect_to(session[:return_to] || default)
+    session.delete(:return_to)
+end
+
+def store_location
+    session[:return_to] = request.fullpath
+end
+</code></pre>
+
+<p>Rails有提供<strong>session</strong>儲存的機制，(你就把它想成cookie物件)，另外我們也使用<strong>request</strong>物件，取得完整連結路徑(URI)，<strong>store_location</strong>就是把要求的完整路徑傳給<strong>session</strong>變數，他的key就是<strong>:return_to</strong></p>
+
+<p>所以要把<strong>store_location</strong>加到<strong>signed_in_user</strong>裡面，因為加在函式裡面，如果使用者不是登入狀態時，就要先把他想去的路徑先存起來，然後再把它導到登入畫面</p>
+
+<p>那就來修改</p>
+
+<p><strong>app/controllers/users_controller.rb</strong></p>
+
+<pre><code>def signed_in_user
+  unless signed_in?
+    store_location
+    redirect_to signin_path, notice: "Please sign in."
+  end
+end
+</code></pre>
+
+<p>最後再來加個<strong>app/controllers/sessions_controller.rb</strong></p>
+
+<pre><code>def create
+    user = User.find_by_email(params[:session][:email])
+    if user &amp;&amp; user.authenticate(params[:session][:password])
+      sign_in user
+      redirect_back_or user
+    else
+      flash.now[:error] = 'Invalid email/password combination'
+      render 'new'
+    end
+end
+</code></pre>
+
+<p>就是當使用者按下登入，並且也登入成功時，就會在<strong>session</strong>這邊create一個token</p>
+
+<p>所以我們在create這邊加上剛剛寫的<strong>redirect_back_or</strong>所以如果有記錄之前要去的url，他</p>
+
+<p>就會前往那邊～不然的話，就是連到user的頁面</p>
+
+<p>跑一下測試確認可以work</p>
+
+<pre><code>$  bundle exec rspec spec/
+</code></pre>
+
+<h2>Show出所有使用者</h2>
+
+<p>簡單來說，希望可以看到每個user的資料(還附上連結)，最後還要加上換頁的東西！</p>
+
+<h3>User Index</h3>
+
+<p>可以看到所有使用者這功能，必須限定是登入使用者，另外，要可以使用<strong>users_path</strong>這個連結看到所有使用者！</p>
+
+<p>So…開始寫測試吧！</p>
+
+<p><strong>spec/requests/authentication_pages_spec.rb</strong> 寫在 <strong>describe &#8220;in the Users controller&#8221; do</strong>裡面</p>
+
+<pre><code>describe "visiting the user index" do
+      before { visit users_path }
+      it { should have_selector('title', text: 'Sign in') }
+end
+</code></pre>
+
+<p>因為我們要限定登入成功使用者才可以用！所以在<strong>app/controllers/users_controller.rb</strong>請補上</p>
+
+<pre><code>before_filter :signed_in_user, only: [:index, :edit, :update]
+
+def index
+end
+</code></pre>
+
+<p>既然寫到了user controller當然要寫一下<strong>spec/requests/user_pages_spec.rb</strong></p>
+
+<p>加在 <strong>describe &#8220;User pages&#8221; do</strong>底下</p>
+
+<pre><code>describe "index" do
+    before do
+      sign_in FactoryGirl.create(:user) 
+      FactoryGirl.create(:user, name: "Derek" , email: "Derek@example.com")
+      FactoryGirl.create(:user, name: "Edison" , email: "Edison@example.com")
+      visit users_path
+    end
+
+    it { should have_selector('title',text: 'All users') }
+    it "should list each user" do 
+      User.all.each do |user|
+        page.should have_selector('li', text: user.name)
+      end
+    end
+end
+</code></pre>
+
+<p>為了要通過測試！讓我們開始補程式碼吧！</p>
+
+<p><strong>app/controllers/users_controller.rb</strong>的<strong>index</strong>請補上</p>
+
+<pre><code>def index
+    @users = User.all
+end
+</code></pre>
+
+<p>換到view的地方，先新增<strong>app/views/users/index.html.erb</strong></p>
+
+<pre><code>&lt;%= provide(:title, 'All users') %&gt;
+&lt;h1&gt;All users&lt;/h1&gt;
+
+&lt;ul class="users"&gt;
+  &lt;% @users.each do |user| %&gt;
+    &lt;li&gt;
+      &lt;%= gravatar_for user, size: 52 %&gt;
+      &lt;%= link_to user.name, user %&gt;
+    &lt;/li&gt;
+  &lt;% end %&gt;
+&lt;/ul&gt;
+</code></pre>
+
+<p>再來為user index加上一些CSS效果</p>
+
+<p><strong>app/assets/stylesheets/custom.css.scss</strong></p>
+
+<pre><code>/* users index */
+
+.users {
+  list-style: none;
+  margin: 0;
+  li {
+    overflow: auto;
+    padding: 10px 0;
+    border-top: 1px solid $grayLighter;
+    &amp;:last-child {
+      border-bottom: 1px solid $grayLighter;
+    }
+  }
+}
+</code></pre>
+
+<p>那我們在認證的地方也要加上一個測試！確保Users這個link可以用</p>
+
+<p><strong>spec/requests/authentication_pages_spec.rb</strong>的<strong>describe &#8220;with valid information&#8221; do</strong>底下</p>
+
+<pre><code>it { should have_link('Users',    href: users_path) }
+</code></pre>
+
+<p>補上URI到<strong>app/views/layouts/_header.html.erb</strong></p>
+
+<pre><code>&lt;li&gt;&lt;%= link_to "Users", '#' %&gt;&lt;/li&gt;
+</code></pre>
+
+<p>改成</p>
+
+<pre><code>&lt;li&gt;&lt;%= link_to "Users", users_path %&gt;&lt;/li&gt;
+</code></pre>
+
+<p>耶～測試吧</p>
+
+<pre><code>$ bundle exec rspec spec/
+</code></pre>
+
+<p>囧…有錯…奇怪..他說…gravatar_for 預設輸入參數只有一個，結果我給她兩個&#8230;.</p>
+
+<p>原來…是因為我沒有做CH7的練習，補上</p>
+
+<p>讓我們可以改變顯圖的大小！</p>
+
+<p><strong>app/helpers/users_helper.rb</strong></p>
+
+<pre><code>def gravatar_for(user, options = { size: 50 })
+    gravatar_id = Digest::MD5::hexdigest(user.email.downcase)
+    size = options[:size]
+    gravatar_url = "http://gravatar.com/avatar/#{gravatar_id}?s=#{size}"
+    image_tag(gravatar_url, alt: user.name, class: "gravatar")
+end
+</code></pre>
+
+<p>再跑一次！恭喜～通過～</p>
+
+<p>其實可以開網頁來看！ 你會發現&#8230;.東西好少&#8230;.好乾歐！</p>
+
+<p>所以&#8230;.</p>
+
+<h3>User 樣本</h3>
+
+<p>我們要安裝並使用一個叫做是<strong>faker</strong>的gem</p>
+
+<p>所以先在<strong>Gemfile</strong>加上</p>
+
+<pre><code>gem 'faker', '1.0.1'
+</code></pre>
+
+<p>別忘了</p>
+
+<pre><code>$ bundle install
+</code></pre>
+
+<p>要如何使用呢？</p>
+
+<p>我們必須要加一個<strong>Rake task</strong>的東東去建樣本使用者！</p>
+
+<p>Rake task通常被放在<strong>lib/tasks</strong>資料夾下</p>
+
+<p>所以我們新增一個檔案吧！<strong>lib/tasks/sample_data.rake</strong></p>
+
+<pre><code>namespace :db do
+  desc "Fill database with sample data"
+  task populate: :environment do
+    User.create!(name: "Example User",
+                 email: "example@railstutorial.org",
+                 password: "foobar",
+                 password_confirmation: "foobar")
+    99.times do |n|
+      name  = Faker::Name.name
+      email = "example-#{n+1}@railstutorial.org"
+      password  = "password"
+      User.create!(name: name,
+                   email: email,
+                   password: password,
+                   password_confirmation: password)
+    end
+  end
+end
+</code></pre>
+
+<p>所以定義了一個任務 <strong>db:populate</strong>，透過<strong>db:reset</strong>會重設development資料庫！</p>
+
+<p>然後會建置99個資料</p>
+
+<p>這一行</p>
+
+<pre><code>task populate: :environment do
+</code></pre>
+
+<p>確保Rake task 會被本地端的Rails環境存取(包含User model)，另外那個<strong>create!</strong>和<strong>create</strong>差在他會丟出例外原因，而不是只告訴你False</p>
+
+<p>所以我們可以透過什麼方式調用(invoke)這個Rake task呢？</p>
+
+<pre><code>$ bundle exec rake db:reset
+$ bundle exec rake db:populate
+$ bundle exec rake db:test:prepare
+</code></pre>
+
+<p>OK~我們就可以看到一堆user了！</p>
+
+<h3>分頁功能</h3>
+
+<p>看到那麼多user當然我們要加上分頁功能，這個之前在我另外的自我學習已經有練過了～所以我就快速帶過～</p>
+
+<p>在<strong>Gemfile</strong>加上</p>
+
+<pre><code>gem 'will_paginate', '3.0.3'
+gem 'bootstrap-will_paginate', '0.0.5'
+</code></pre>
+
+<p>別忘了</p>
+
+<pre><code>$ bundle install
+</code></pre>
+
+<p>OK! 當然我們也要寫測試！</p>
+
+<p>但是寫測試之前&#8230;.有個問題，因為要測翻頁功能有work!</p>
+
+<p>所以&#8230;.是必我要寫像下面那樣一百遍嗎～歐不～～</p>
+
+<pre><code>FactoryGirl.define do
+  factory :user do
+    name     "Michael Hartl"
+    email    "michael@example.com"
+    password "foobar"
+    password_confirmation "foobar"
+  end
+end
+</code></pre>
+
+<p>好佳在！</p>
+
+<p>FactoryGirl有提供<strong>sequence</strong>的功能！</p>
+
+<p>我們可以這樣用！</p>
+
+<pre><code>factory :user do
+    sequence(:name)  { |n| "Person #{n}" }
+    sequence(:email) { |n| "person_#{n}@example.com"}   
+</code></pre>
+
+<p>它就會建出這樣的東東</p>
+
+<pre><code>“Person 1”  “person_1@example.com”
+“Person 2”  “person_2@example.com”
+“Person 3”  “person_3@example.com”
+….等
+</code></pre>
+
+<p>所以我們可以定義FactoryGirl為<strong>sequence</strong>版本，把它改在</p>
+
+<p><strong>spec/factories.rb</strong></p>
+
+<pre><code>FactoryGirl.define do
+  factory :user do
+    sequence(:name)  { |n| "Person #{n}" }
+    sequence(:email) { |n| "person_#{n}@example.com"}   
+    password "foobar"
+    password_confirmation "foobar"
+  end
+end
+</code></pre>
+
+<p>然後開始寫測試摟～</p>
+
+<p><strong>spec/requests/user_pages_spec.rb</strong></p>
+
+<p>把</p>
+
+<pre><code>describe "index" do
+    before do
+      sign_in FactoryGirl.create(:user) 
+      FactoryGirl.create(:user, name: "Derek" , email: "Derek@example.com")
+      FactoryGirl.create(:user, name: "Edison" , email: "Edison@example.com")
+      visit users_path
+    end
+
+    it { should have_selector('title',text: 'All users') }
+    it "should list each user" do 
+      User.all.each do |user|
+        page.should have_selector('li', text: user.name)
+      end
+    end
+  end
+</code></pre>
+
+<p>改成</p>
+
+<pre><code>describe "index" do
+
+    let(:user) { FactoryGirl.create(:user) }
+
+    before do
+      sign_in user
+      visit users_path
+    end
+
+    it { should have_selector('title', text: 'All users') }
+
+    describe "pagination" do
+      before(:all) { 30.times { FactoryGirl.create(:user) } }
+      after(:all)  { User.delete_all }
+
+      it { should have_link('Next') }
+      its(:html) { should match('&gt;2&lt;/a&gt;') }
+
+      it "should list each user" do
+        User.all[0..2].each do |user|
+          page.should have_selector('li', text: user.name)
+        end
+      end
+    end
+  end
+</code></pre>
+
+<p>這裡面有些相當特別的code！</p>
+
+<pre><code>its(:html) { should match('&gt;2&lt;/a&gt;') }
+</code></pre>
+
+<p>他的意思是 測試頁面有包含2…就這樣</p>
+
+<p>ok要讓<strong>pagination</strong>可以用，我們來改<strong>app/views/users/index.html.erb</strong></p>
+
+<pre><code>&lt;%= provide(:title, 'All users') %&gt;
+&lt;h1&gt;All users&lt;/h1&gt;
+
+&lt;%= will_paginate %&gt;
+
+&lt;ul class="users"&gt;
+  &lt;% @users.each do |user| %&gt;
+    &lt;li&gt;
+      &lt;%= gravatar_for user, size: 52 %&gt;
+      &lt;%= link_to user.name, user %&gt;
+    &lt;/li&gt;
+  &lt;% end %&gt;
+&lt;/ul&gt;
+
+&lt;%= will_paginate %&gt;
+</code></pre>
+
+<p>主要是因為加上<strong>will_paginate</strong></p>
+
+<p>他會自動找尋@users這個物件，然後秀出換頁的連結</p>
+
+<p>但是目前這個view是不work的！</p>
+
+<p>因為<strong>@users</strong>是來自<strong>User.all</strong>，它是一個Array類別，但是<strong>will_paginate</strong>是預期物件是一個<strong>ActiveRecord::Relation</strong></p>
+
+<p>但是好佳在，我們可以使用<strong>will_paginate</strong>提供的<strong>paginate</strong>方法轉成<strong>ActiveRecord::Relation</strong></p>
+
+<pre><code>$ rails console
+&gt;&gt; User.all.class
+=&gt; Array
+&gt;&gt; User.paginate(page: 1).class
+=&gt; ActiveRecord::Relation
+</code></pre>
+
+<p>注意！那個paginate使用<strong>:page</strong>當成其hash的key，所以<strong>User.paginate</strong>從資料庫撈出的筆數就是依據<strong>:page</strong>這個值！</p>
+
+<p>所以我們可以來改寫一下我controller</p>
+
+<p>把 <strong>@users = User.all</strong>改成</p>
+
+<pre><code>def index
+  @users = User.paginate(page: params[:page])
+end
+</code></pre>
+
+<p>yap!執行一下測試！</p>
+
+<pre><code>$ bundle exec rspec spec/
+</code></pre>
+
+<h3>Partial refactoring</h3>
+
+<p>因為我們測試已經完成～我們可以來改寫一下程式碼</p>
+
+<p>善用Rails的一些特性！</p>
+
+<p>先來改寫<strong>app/views/users/index.html.erb</strong></p>
+
+<pre><code>&lt;% provide(:title, 'All users') %&gt;
+&lt;h1&gt;All users&lt;/h1&gt;
+
+&lt;%= will_paginate %&gt;
+
+&lt;ul class="users"&gt;
+  &lt;% @users.each do |user| %&gt;
+    &lt;%= render user %&gt;
+  &lt;% end %&gt;
+&lt;/ul&gt;
+
+&lt;%= will_paginate %&gt;
+</code></pre>
+
+<p>因為把它改寫成<strong>render</strong></p>
+
+<p>Rails會自動去搜尋<strong>_user.html.erb</strong></p>
+
+<p>所以要新建這個檔案<strong>app/views/users/_user.html.erb</strong>(注意歐！不是在layout底下歐)並加上</p>
+
+<pre><code>&lt;li&gt;
+  &lt;%= gravatar_for user, size: 52 %&gt;
+  &lt;%= link_to user.name, user %&gt;
+&lt;/li&gt;
+</code></pre>
+
+<p>但是更酷的是！ 你以為這樣就結束了？</p>
+
+<p>其實可以再改寫<strong>app/views/users/index.html.erb</strong></p>
+
+<p>把這一句</p>
+
+<pre><code>&lt;% @users.each do |user| %&gt;
+    &lt;%= render user %&gt;
+&lt;% end %&gt;
+</code></pre>
+
+<p>改成這一句就好！</p>
+
+<pre><code>&lt;%= render @users %&gt;
+</code></pre>
+
+<p>因為Rails它會發現<strong>@users</strong>是<strong>User</strong>物件的list，當呼叫出users的collection時，Rails會自動幫你做迭代！當你每個值都丟到<strong>_user.html.erb</strong>裡面酷吧！</p>
+
+<p>改完code，當然要跑測試～看有沒有改錯！</p>
+
+<pre><code>$ bundle exec rspec spec/
+</code></pre>
+
+<h2>刪除使用者</h2>
+
+<p>必須要是Administrator才可以刪除使用者</p>
+
+<p>當然測試要驗證一下！</p>
+
+<p><strong>spec/models/user_spec.rb</strong></p>
+
+<p>在最前面補上</p>
+
+<pre><code>it { should respond_to(:admin) }
+
+it { should_not be_admin }
+
+describe "with admin attribute set to 'true'" do
+    before { @user.toggle!(:admin) }
+
+    it { should be_admin }
+  end
+</code></pre>
+
+<p>這邊有個很酷的東西！</p>
+
+<p>使用<strong>toggle!</strong>方法切換<strong>admin</strong>的屬性，不是true就是false，還有一個要注意！</p>
+
+<pre><code>it { should be_admin }
+</code></pre>
+
+<p>這代表了我們必須有<strong>admin?</strong>這個回傳True或是False的函式！</p>
+
+<p>如同往常！</p>
+
+<p>我們必須先加上<strong>admin</strong>這個屬性！然後他是boolean類型</p>
+
+<pre><code>$ rails generate migration add_admin_to_users admin:boolean
+</code></pre>
+
+<p>跑完之後~ 補上一些東西！</p>
+
+<pre><code>class AddAdminToUsers &lt; ActiveRecord::Migration
+  def change
+    add_column :users, :admin, :boolean, default: false
+  end
+end
+</code></pre>
+
+<p>加完要記得</p>
+
+<pre><code>$ bundle exec rake db:migrate
+$ bundle exec rake db:test:prepare
+</code></pre>
+
+<p>然後我們用console把其中一個user改成admin來看看我們剛剛寫的那些東東work不work～</p>
+
+<pre><code>$ rails console --sandbox
+&gt;&gt; user = User.first
+&gt;&gt; user.admin?
+=&gt; false
+&gt;&gt; user.toggle!(:admin)
+=&gt; true
+&gt;&gt; user.admin?
+=&gt; true
+</code></pre>
+
+<p>最後一步驟，我們要改一下我們自動產生user的</p>
+
+<p><strong>lib/tasks/sample_data.rake</strong></p>
+
+<pre><code>namespace :db do
+  desc "Fill database with sample data"
+  task populate: :environment do
+    admin = User.create!(name: "Example User",
+                         email: "example@railstutorial.org",
+                         password: "foobar",
+                         password_confirmation: "foobar")
+    admin.toggle!(:admin)
+    .
+    .
+    .
+  end
+end
+</code></pre>
+
+<p>改了這個之後，我們要重跑一下資料庫！還記得哪些步驟嗎？</p>
+
+<pre><code>$ bundle exec rake db:reset
+$ bundle exec rake db:populate
+$ bundle exec rake db:test:prepare
+</code></pre>
+
+<h3>重新看attr_accessible</h3>
+
+<p>你可能有注意到，利用<strong>toggle!(:admin)</strong>，把使用者改成admin，那為甚麼我們不直接使用<strong>admin: true</strong>來初始化hash?</p>
+
+<p>答案是這是不對的！</p>
+
+<p>只有<strong>attr_accessible</strong>屬性可以被大量指派值(丟一個hash，Rails會自動幫你把值對應進去)，然而<strong>admin</strong>屬性，並非accessible</p>
+
+<p>(我們在app/models/user.rb並沒有在attr_accessible加入:admin)</p>
+
+<p>明確的定義accessible對網站資安相當有助益！</p>
+
+<p>假設我們使用<strong>attr_accessible</strong>把admin加進去的話，駭客就可使用這樣的方式來改你的資料庫！</p>
+
+<pre><code>put /users/17?admin=1
+</code></pre>
+
+<p>所以…可以嘗試測試，把所有model的屬性，就像<strong>:admin</strong>，測試並沒有被加到accessible</p>
+
+<h3>刪除動作</h3>
+
+<p>為了要寫刪除函數的測試，我們可以使用factorygirl建立管理者，請看下面</p>
+
+<p><strong>spec/factories.rb</strong></p>
+
+<pre><code>FactoryGirl.define do
+  factory :user do
+    sequence(:name)  { |n| "Person #{n}" }
+    sequence(:email) { |n| "person_#{n}@example.com"}   
+    password "foobar"
+    password_confirmation "foobar"
+
+    factory :admin do
+      admin true 
+    end
+
+  end
+end
+</code></pre>
+
+<p>沒錯！就是加上</p>
+
+<pre><code>factory :admin do
+   admin true 
+end
+</code></pre>
+
+<p>OK~先來寫測試！ 等一下再說為什麼要這樣寫</p>
+
+<p><strong>spec/requests/user_pages_spec.rb</strong></p>
+
+<p>在<strong>describe &#8220;index&#8221; do</strong>區塊加上</p>
+
+<pre><code>describe "delete links" do
+
+          it { should_not have_link('delete') }
+
+          describe "as an admin user" do
+            let(:admin) { FactoryGirl.create(:admin) }
+            before do
+              sign_in admin
+              visit users_path
+            end
+
+            it { should have_link('delete', href: user_path(User.first)) }
+            it "should be able to delete another user" do
+              expect { click_link('delete') }.to change(User, :count).by(-1)
+            end
+            it { should_not have_link('delete', href: user_path(admin)) }
+          end
+ end
+</code></pre>
+
+<p>為什麼要這樣寫，一般使用者是看不到delete這個選項的！</p>
+
+<pre><code>it { should_not have_link('delete') }
+</code></pre>
+
+<p>再來，Admin是可以刪除的！所以才有那面那些行</p>
+
+<pre><code>it { should have_link('delete', href: user_path(User.first)) }
+it "should be able to delete another user" do
+  expect { click_link('delete') }.to change(User, :count).by(-1)
+end
+it { should_not have_link('delete', href: user_path(admin)) }
+</code></pre>
+
+<p>再來寫code通過測試吧！</p>
+
+<p><strong>app/views/users/_user.html.erb</strong></p>
+
+<pre><code>&lt;li&gt;
+  &lt;%= gravatar_for user, size: 52 %&gt;
+  &lt;%= link_to user.name, user %&gt;
+  &lt;% if current_user.admin? &amp;&amp; !current_user?(user) %&gt;
+    | &lt;%= link_to "delete" , user , method: :delete , confirm: "Are you sure?" %&gt;
+&lt;% end %&gt;
+&lt;/li&gt;
+</code></pre>
+
+<p>因為瀏覽器無法送出DELETE的要求，所以Rails是利用javaScript來假</p>
+
+<p>再來，為了要讓Delele連結work! 來寫</p>
+
+<p><strong>app/controllers/users_controller.rb</strong></p>
+
+<pre><code>def destroy
+    User.find(params[:id]).destroy
+    flash[:success] = "User destroyed."
+    redirect_to users_path
+end
+</code></pre>
+
+<p>這邊有個資安的漏洞，經驗豐富的駭客～可以簡單的使用CLI來送出DELETE要求，來刪除使用者！所以我們必須對detroy作存取控制！</p>
+
+<p>先來寫測試！</p>
+
+<p><strong>spec/requests/authentication_pages_spec.rb</strong></p>
+
+<p>在<strong>describe &#8220;authorization&#8221; do</strong>加上</p>
+
+<pre><code>describe "as non-admin user" do
+  let(:user) { FactoryGirl.create(:user) }
+  let(:non_admin) { FactoryGirl.create(:user) }
+
+  before { sign_in non_admin }
+
+  describe "submitting a DELETE request to the Users#destroy action" do
+    before { delete user_path(user) }
+    specify { response.should redirect_to(root_path) }        
+  end
+end
+</code></pre>
+
+<p>這邊還是有些小的資安漏洞，那就是管理者可以刪除自己XD，可以寫看看摟～不過就先跳過，繼續下去啦！</p>
+
+<p>改<strong>app/controllers/users_controller.rb</strong></p>
+
+<p>在前頭加上</p>
+
+<pre><code>before_filter :admin_user,     only: :destroy
+</code></pre>
+
+<p>在<strong>private</strong>後面加上</p>
+
+<pre><code>def admin_user
+  redirect_to(root_path) unless current_user.admin?
+end
+</code></pre>
+
+<p>跑測試！</p>
+
+<pre><code>$ bundle exec rspec spec/
+</code></pre>
+
+<p>yap~~All pass!</p>
+
+<p>耶～終於完成CH9</p>
+
+<pre><code>$ git add .
+$ git commit -m "Finish user edit, update, index, and destroy actions"
+$ git checkout master
+$ git merge updating-users
+</code></pre>
+]]></content>
+  </entry>
+  
+</feed>

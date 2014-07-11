@@ -1,0 +1,319 @@
+
+<!DOCTYPE HTML>
+<html>
+<head>
+	<script data-cfasync="false" type="text/javascript" src="//use.typekit.net/axj3cfp.js"></script>
+	<script data-cfasync="false" type="text/javascript">try{Typekit.load();}catch(e){}</script>
+	<meta charset="utf-8">
+	<title>我的RoR學習專案-終篇-Part 9 加上Google map  | AlohaCC</title>
+
+<meta name="author" content="Aloha"> 
+
+<meta name="description" content="Share Ruby on Rail and all about 'Chun Yu, Chen AlohaCC'"> <meta name="keywords" content="Aloha, Ruby on Rails, Blog, Web Developer, Taiwan, Chun-Yu Chen, Design Pattern, Action Scripts, Robotframework, Sikuli">
+
+	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+	<link href="http://feeds.feedburner.com/Alohacc" rel="alternate" title="AlohaCC" type="application/atom+xml">
+	<link rel="canonical" href="">
+	<link href="/favicon.png" rel="shortcut icon">
+	<link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+	<!--[if lt IE 9]><script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
+	<script src="//ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
+	<script type="text/javascript" src="/javascripts/jquery.fancybox.pack.js"></script>
+
+<script language="Javascript" type="text/javascript">
+$(document).ready(
+  function() {
+    (function($) {
+      $(".fancybox[data-content-id]").each(function() {
+        this.href = $(this).data('content-id');
+      });
+      $(".fancybox").fancybox({
+        beforeLoad: function() {
+          var el, 
+              id = $(this.element).data('title-id');
+
+          if (id) {
+            el = $('#' + id);
+
+            if (el.length) {
+              this.title = el.html();
+            }
+          }
+          if ($(this).data('content')) {
+            this.content = $(this).data('content');
+          }
+        },
+        helpers: {
+          title: {
+            type: 'inside'
+          }
+        }
+      });
+    })(jQuery);
+  }
+);
+</script>
+
+	
+</head>
+
+
+
+<body>
+	<header id="header" class="inner"><h1><a href="/">AlohaCC</a></h1>
+<h4>Try to Make Something Diff | Just For Fun |</h4>
+<nav id="main-nav"><ul>
+	<li><a href="/">Blog</a></li>
+	<li><a href="/About">About</a></li>
+	<li><a href="/presentation">Presentation</a></li>
+  	<li><a href="/RoR">Ruby on Rails</a></li>
+  	<li><a href="/ActionScript">Action Scripts</a></li>
+  	<li><a href="/DesignPattern">Design Pattern</a></li>
+	<li><a href="/archives">Archive</a></li>
+</ul>
+</nav>
+<nav id="mobile-nav">
+	<div class="alignleft menu">
+		<a class="button">Menu</a>
+		<div class="container"><ul>
+	<li><a href="/">Blog</a></li>
+	<li><a href="/About">About</a></li>
+	<li><a href="/presentation">Presentation</a></li>
+  	<li><a href="/RoR">Ruby on Rails</a></li>
+  	<li><a href="/ActionScript">Action Scripts</a></li>
+  	<li><a href="/DesignPattern">Design Pattern</a></li>
+	<li><a href="/archives">Archive</a></li>
+</ul>
+</div>
+	</div>
+	<div class="alignright search">
+		<a class="button"></a>
+		<div class="container">
+			<form action="http://google.com/search" method="get">
+				<input type="text" name="q" results="0">
+				<input type="hidden" name="q" value="site:ccaloha.cc">
+			</form>
+		</div>
+	</div>
+</nav>
+
+
+</header>
+
+	<div id="content" class="inner"><article class="post">
+	<h2 class="title">我的RoR學習專案-終篇-Part 9 加上Google Map</h2>
+	<div class="entry-content"><p><a href="https://github.com/apneadiving/Google-Maps-for-Rails">Google Map for Rails</a></p>
+
+<p>在開發之前一定要！</p>
+
+<pre><code>git flow feature start  add_google_map
+</code></pre>
+
+<p>加入 <strong>gem &#8216;gmaps4rails&#8217; 到Gemfile</strong></p>
+
+<pre><code>$ bundle install
+
+$ rails generate gmaps4rails:install
+</code></pre>
+
+<!--more-->
+
+
+<p>另外我希望能夠讓使用者發佈訊息時，是可以設定地點
+所以我想要在post這邊加入地點的資訊！
+所以我在<strong>app/modal/post.rb</strong> 加上</p>
+
+<pre><code>acts_as_gmappable
+
+def gmaps4rails_address
+ "#{self.street}, #{self.city}, #{self.country}" 
+end
+</code></pre>
+
+<p>之後 要在post加入東西～</p>
+
+<pre><code>$ rails g migration add_map_info_to_posts
+</code></pre>
+
+<p>加了這些</p>
+
+<pre><code>class AddMapInfoToPosts &lt; ActiveRecord::Migration
+  def self.up
+    add_column ("posts", "latitude", :float)        
+    add_column ("posts", "longitude", :float) 
+  end
+
+  def self.down
+    remove_column ("posts", "latitude")
+    remove_column ("posts", "longitude")
+
+  end
+end
+</code></pre>
+
+<p>在終端機：</p>
+
+<pre><code>$ rake db:migrate
+</code></pre>
+
+<p>在<strong>view/posts/_form.html.erb</strong>加入</p>
+
+<pre><code>&lt;div class="group"&gt;
+    &lt;%= f.label :latitude,t("activerecord.attributes.post.latitude", :default =&gt; "緯度"), :class =&gt; :label%&gt;
+    &lt;%= f.text_field :latitude %&gt;
+    &lt;/div&gt;
+    &lt;div class="group"&gt;
+&lt;%= f.label :longitude,t("activerecord.attributes.post.longitude", :default =&gt; "經度"), :class =&gt; :label%&gt;
+        &lt;%= f.text_field :longitude %&gt;
+        &lt;/div&gt;
+</code></pre>
+
+<p>在<strong>controller/posts</strong>加入</p>
+
+<pre><code>def show
+  @post = Post.find(params[:id])
+  @json = Post.find(params[:id]).to_gmaps4rails
+end
+</code></pre>
+
+<p>好像少加到一個屬性!!!</p>
+
+<p>所以要在終端機下</p>
+
+<pre><code>$ rake db:rollback STEP=1
+</code></pre>
+
+<p>在剛剛那個migration檔案 加上</p>
+
+<pre><code>class AddMapInfoToPosts &lt; ActiveRecord::Migration
+  def self.up
+    add_column ("posts", "latitude", :float)     
+    add_column ("posts", "longitude", :float)     
+    add_column ("posts", "gmaps", :boolean)
+  end
+
+  def self.down
+    remove_column ("posts", "latitude")
+    remove_column ("posts", "longitude")
+    remove_column ("posts","gmaps")
+  end
+end
+</code></pre>
+
+<p>真的ＯＫ了～～酷耶～～</p>
+
+<pre><code>git add . 
+git commit -a
+git push origin feature/add_google_map
+git flow feature finish  add_google_map
+</code></pre>
+</div>
+
+
+<div class="meta">
+	<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2012-05-12T11:07:00+08:00" pubdate data-updated="true">May 12<span>th</span>, 2012</time></div>
+	
+
+<div class="tags">
+
+	<a class='category' href='/blog/categories/ruby-on-rails/'>Ruby_on_Rails</a>
+
+</div>
+
+
+	
+		<span class="comments"><a href="/blog/2012/05/12/my-learning-ror-project-day-9-add-google-map/#disqus_thread">Comments</a></span>
+	
+</div></article>
+
+	<div class="share">
+	<div class="addthis_toolbox addthis_default_style ">
+	
+	<a class="addthis_button_facebook_like" fb:like:layout="button_count"></a>
+	
+	
+	<a class="addthis_button_tweet"></a>
+	
+	
+	<a class="addthis_button_google_plusone" g:plusone:size="medium"></a>
+	
+<!---	<a class="addthis_counter addthis_pill_style"></a> --->
+	</div>
+  <script type="text/javascript" src="http://s7.addthis.com/js/250/addthis_widget.js#pubid="></script>
+</div>
+
+
+
+<section id="comment">
+    <h2 class="title">Comments</h2>
+    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+</section>
+</div>
+	<footer id="footer" class="inner">Copyright &copy; 2014
+
+    Aloha
+
+<br>
+Powered by Octopress.
+</footer>
+	<script src="/javascripts/slash.js"></script>
+<script src="/javascripts/jquery.fancybox.pack.js"></script>
+<script type="text/javascript">
+(function($){
+	$('.fancybox').fancybox();
+})(jQuery);
+</script> <!-- Delete or comment this line to disable Fancybox -->
+
+
+<script type="text/javascript">
+      var disqus_shortname = 'ccaloha';
+      
+        
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://ccaloha.cc/blog/2012/05/12/my-learning-ror-project-day-9-add-google-map/';
+        var disqus_url = 'http://ccaloha.cc/blog/2012/05/12/my-learning-ror-project-day-9-add-google-map/';
+        var disqus_script = 'embed.js';
+      
+    (function () {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/' + disqus_script;
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script>
+
+
+
+	<script type="text/javascript">
+		var _gaq = _gaq || [];
+		_gaq.push(['_setAccount', 'UA-29608372-1']);
+		_gaq.push(['_trackPageview']);
+
+		(function() {
+			var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+			ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+			var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+		})();
+	</script>
+
+
+<a title="Google Analytics Alternative" href="http://clicky.com/100753071"><img alt="Google Analytics Alternative" src="//static.getclicky.com/media/links/badge.gif" border="0" /></a>
+<script src="//static.getclicky.com/js" type="text/javascript"></script>
+<script type="text/javascript">try{ clicky.init(100753071); }catch(e){}</script>
+<noscript><p><img alt="Clicky" width="1" height="1" src="//in.getclicky.com/100753071ns.gif" /></p></noscript>
+
+</body>
+</html>

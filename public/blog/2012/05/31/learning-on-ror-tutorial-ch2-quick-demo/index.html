@@ -1,0 +1,332 @@
+
+<!DOCTYPE HTML>
+<html>
+<head>
+	<script data-cfasync="false" type="text/javascript" src="//use.typekit.net/axj3cfp.js"></script>
+	<script data-cfasync="false" type="text/javascript">try{Typekit.load();}catch(e){}</script>
+	<meta charset="utf-8">
+	<title>Learning on RoR Tutorial - CH2 - Quick Demo  | AlohaCC</title>
+
+<meta name="author" content="Aloha"> 
+
+<meta name="description" content="Share Ruby on Rail and all about 'Chun Yu, Chen AlohaCC'"> <meta name="keywords" content="Aloha, Ruby on Rails, Blog, Web Developer, Taiwan, Chun-Yu Chen, Design Pattern, Action Scripts, Robotframework, Sikuli">
+
+	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+	<link href="http://feeds.feedburner.com/Alohacc" rel="alternate" title="AlohaCC" type="application/atom+xml">
+	<link rel="canonical" href="">
+	<link href="/favicon.png" rel="shortcut icon">
+	<link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+	<!--[if lt IE 9]><script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
+	<script src="//ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
+	<script type="text/javascript" src="/javascripts/jquery.fancybox.pack.js"></script>
+
+<script language="Javascript" type="text/javascript">
+$(document).ready(
+  function() {
+    (function($) {
+      $(".fancybox[data-content-id]").each(function() {
+        this.href = $(this).data('content-id');
+      });
+      $(".fancybox").fancybox({
+        beforeLoad: function() {
+          var el, 
+              id = $(this.element).data('title-id');
+
+          if (id) {
+            el = $('#' + id);
+
+            if (el.length) {
+              this.title = el.html();
+            }
+          }
+          if ($(this).data('content')) {
+            this.content = $(this).data('content');
+          }
+        },
+        helpers: {
+          title: {
+            type: 'inside'
+          }
+        }
+      });
+    })(jQuery);
+  }
+);
+</script>
+
+	
+</head>
+
+
+
+<body>
+	<header id="header" class="inner"><h1><a href="/">AlohaCC</a></h1>
+<h4>Try to Make Something Diff | Just For Fun |</h4>
+<nav id="main-nav"><ul>
+	<li><a href="/">Blog</a></li>
+	<li><a href="/About">About</a></li>
+	<li><a href="/presentation">Presentation</a></li>
+  	<li><a href="/RoR">Ruby on Rails</a></li>
+  	<li><a href="/ActionScript">Action Scripts</a></li>
+  	<li><a href="/DesignPattern">Design Pattern</a></li>
+	<li><a href="/archives">Archive</a></li>
+</ul>
+</nav>
+<nav id="mobile-nav">
+	<div class="alignleft menu">
+		<a class="button">Menu</a>
+		<div class="container"><ul>
+	<li><a href="/">Blog</a></li>
+	<li><a href="/About">About</a></li>
+	<li><a href="/presentation">Presentation</a></li>
+  	<li><a href="/RoR">Ruby on Rails</a></li>
+  	<li><a href="/ActionScript">Action Scripts</a></li>
+  	<li><a href="/DesignPattern">Design Pattern</a></li>
+	<li><a href="/archives">Archive</a></li>
+</ul>
+</div>
+	</div>
+	<div class="alignright search">
+		<a class="button"></a>
+		<div class="container">
+			<form action="http://google.com/search" method="get">
+				<input type="text" name="q" results="0">
+				<input type="hidden" name="q" value="site:ccaloha.cc">
+			</form>
+		</div>
+	</div>
+</nav>
+
+
+</header>
+
+	<div id="content" class="inner"><article class="post">
+	<h2 class="title">Learning on RoR Tutorial - CH2 - Quick Demo</h2>
+	<div class="entry-content"><p>新增專案二demo_app</p>
+
+<pre><code>$ cd ~/rails_projects
+$ rails new demo_app
+$ mate demo_app
+</code></pre>
+
+<!--more-->
+
+
+<p>編輯Gemfile</p>
+
+<pre><code>source 'https://rubygems.org'
+
+gem 'rails', '3.2.2'
+
+group :development do
+    gem 'sqlite3', '1.3.5'
+end
+
+# Gems used only for assets and not required
+# in production environments by default.
+group :assets do
+    gem 'sass-rails',   '3.2.4'
+    gem 'coffee-rails', '3.2.2'
+    gem 'uglifier', '1.2.3'
+end
+
+gem 'jquery-rails', '2.0.0'
+
+group :production do
+    gem 'pg', '0.12.2'
+end
+</code></pre>
+
+<p>這次新增了一個gem 叫做pg 因為這是因為在Heroku要變成production 才需要的！</p>
+
+<p>但是在這次bundle install時，先不需要安裝production的部份</p>
+
+<pre><code>$bundle install --without production
+</code></pre>
+
+<p>一樣，先做版本控制</p>
+
+<pre><code>$ git init
+$ git add .
+$ git commit -m "Initial commit"
+</code></pre>
+
+<p>當你你也可以放到github上，不過記得在申請一個專案</p>
+
+<pre><code>$git remote add origin git@github.com:&lt;username&gt;/demo_app.git
+$git push origin master
+</code></pre>
+
+<p>OK! 開始來玩玩，因為希望可以建立使用者發佈消息的功能！先來建立user的部份</p>
+
+<pre><code>$rails generate scaffold User name:string email:string
+</code></pre>
+
+<p>因為我們是用scaffold建置的！ 所以他已經幫我們在controller/model/helper/model/view建好了和user相關的東東了！</p>
+
+<p>這時候我們要來做資料庫的遷移！ 將你在db/migrate底下的[timestamp]_create_uusers.rb 的設定，寫到資料庫裡面！</p>
+
+<pre><code>$bundle exec rake db:migrate
+#為了確保指令會使用Rake的版本對應到我們的Gemfile所以我們使用bundle exec 這個指令
+</code></pre>
+
+<p>剛剛建出來的東西就不特別說明了～我慢慢回復了XD</p>
+
+<p>再來建訊息的部分，因為每個訊息都會depend on 一個user!
+所以我們需要帶有user id的欄位</p>
+
+<pre><code> $rails generate scaffold Micropost content:string user_id:integer
+
+$bundle exec rake db:migrate
+</code></pre>
+
+<p>OK! 現在可以跑起來了</p>
+
+<pre><code>rails s 
+</code></pre>
+
+<p>輸入http:localhost:3000/users 或 http://localhost:3000/microposts 就可以開始建東西了！</p>
+
+<p>不過目前什麼都沒有！例如一些防護機制，layout…etc</p>
+
+<p>所以…</p>
+
+<p>先來加個字數限制，既然是micropost所以字數當然不能多拉！</p>
+
+<p>所以我們在寫進資料庫的時候做檢查！加在app/models/micropost.rb</p>
+
+<pre><code>class Micropost &lt; ActiveRecord::Base
+    validates :content, :length =&gt; { :maximum =&gt; 140 }
+end
+</code></pre>
+
+<p>接下來，寫關聯性在app/models/user.rb</p>
+
+<pre><code>class User &lt; ActiveRecord::Base
+    has_many :microposts
+end
+</code></pre>
+
+<p>同樣也要寫關聯性到app/models/micropost.rb</p>
+
+<pre><code>class Micropost &lt; ActiveRecord::Base
+    belongs_to :user
+    validates :content, :length =&gt; { :maximum =&gt; 140 }
+end
+</code></pre>
+
+<p>OK!大致完成！ 最後作版本控制以及放到heroku上吧</p>
+
+<pre><code>$ heroku create --stack cedar
+$ git push heroku master
+$ heroku rename dempappaloha
+</code></pre>
+
+<p>還有一個很重要的！</p>
+
+<pre><code>$ heroku run rake db:migrate
+</code></pre>
+</div>
+
+
+<div class="meta">
+	<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2012-05-31T15:18:00+08:00" pubdate data-updated="true">May 31<span>st</span>, 2012</time></div>
+	
+
+
+	
+		<span class="comments"><a href="/blog/2012/05/31/learning-on-ror-tutorial-ch2-quick-demo/#disqus_thread">Comments</a></span>
+	
+</div></article>
+
+	<div class="share">
+	<div class="addthis_toolbox addthis_default_style ">
+	
+	<a class="addthis_button_facebook_like" fb:like:layout="button_count"></a>
+	
+	
+	<a class="addthis_button_tweet"></a>
+	
+	
+	<a class="addthis_button_google_plusone" g:plusone:size="medium"></a>
+	
+<!---	<a class="addthis_counter addthis_pill_style"></a> --->
+	</div>
+  <script type="text/javascript" src="http://s7.addthis.com/js/250/addthis_widget.js#pubid="></script>
+</div>
+
+
+
+<section id="comment">
+    <h2 class="title">Comments</h2>
+    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+</section>
+</div>
+	<footer id="footer" class="inner">Copyright &copy; 2014
+
+    Aloha
+
+<br>
+Powered by Octopress.
+</footer>
+	<script src="/javascripts/slash.js"></script>
+<script src="/javascripts/jquery.fancybox.pack.js"></script>
+<script type="text/javascript">
+(function($){
+	$('.fancybox').fancybox();
+})(jQuery);
+</script> <!-- Delete or comment this line to disable Fancybox -->
+
+
+<script type="text/javascript">
+      var disqus_shortname = 'ccaloha';
+      
+        
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://ccaloha.cc/blog/2012/05/31/learning-on-ror-tutorial-ch2-quick-demo/';
+        var disqus_url = 'http://ccaloha.cc/blog/2012/05/31/learning-on-ror-tutorial-ch2-quick-demo/';
+        var disqus_script = 'embed.js';
+      
+    (function () {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/' + disqus_script;
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script>
+
+
+
+	<script type="text/javascript">
+		var _gaq = _gaq || [];
+		_gaq.push(['_setAccount', 'UA-29608372-1']);
+		_gaq.push(['_trackPageview']);
+
+		(function() {
+			var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+			ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+			var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+		})();
+	</script>
+
+
+<a title="Google Analytics Alternative" href="http://clicky.com/100753071"><img alt="Google Analytics Alternative" src="//static.getclicky.com/media/links/badge.gif" border="0" /></a>
+<script src="//static.getclicky.com/js" type="text/javascript"></script>
+<script type="text/javascript">try{ clicky.init(100753071); }catch(e){}</script>
+<noscript><p><img alt="Clicky" width="1" height="1" src="//in.getclicky.com/100753071ns.gif" /></p></noscript>
+
+</body>
+</html>

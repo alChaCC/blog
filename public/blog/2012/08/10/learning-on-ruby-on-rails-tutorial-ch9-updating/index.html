@@ -1,0 +1,1373 @@
+
+<!DOCTYPE HTML>
+<html>
+<head>
+	<script data-cfasync="false" type="text/javascript" src="//use.typekit.net/axj3cfp.js"></script>
+	<script data-cfasync="false" type="text/javascript">try{Typekit.load();}catch(e){}</script>
+	<meta charset="utf-8">
+	<title>Learning on Ruby on Rails Tutorial-CH9 Updating , Showing , and deleting users  | AlohaCC</title>
+
+<meta name="author" content="Aloha"> 
+
+<meta name="description" content="Share Ruby on Rail and all about 'Chun Yu, Chen AlohaCC'"> <meta name="keywords" content="Aloha, Ruby on Rails, Blog, Web Developer, Taiwan, Chun-Yu Chen, Design Pattern, Action Scripts, Robotframework, Sikuli">
+
+	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+	<link href="http://feeds.feedburner.com/Alohacc" rel="alternate" title="AlohaCC" type="application/atom+xml">
+	<link rel="canonical" href="">
+	<link href="/favicon.png" rel="shortcut icon">
+	<link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+	<!--[if lt IE 9]><script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
+	<script src="//ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
+	<script type="text/javascript" src="/javascripts/jquery.fancybox.pack.js"></script>
+
+<script language="Javascript" type="text/javascript">
+$(document).ready(
+  function() {
+    (function($) {
+      $(".fancybox[data-content-id]").each(function() {
+        this.href = $(this).data('content-id');
+      });
+      $(".fancybox").fancybox({
+        beforeLoad: function() {
+          var el, 
+              id = $(this.element).data('title-id');
+
+          if (id) {
+            el = $('#' + id);
+
+            if (el.length) {
+              this.title = el.html();
+            }
+          }
+          if ($(this).data('content')) {
+            this.content = $(this).data('content');
+          }
+        },
+        helpers: {
+          title: {
+            type: 'inside'
+          }
+        }
+      });
+    })(jQuery);
+  }
+);
+</script>
+
+	
+</head>
+
+
+
+<body>
+	<header id="header" class="inner"><h1><a href="/">AlohaCC</a></h1>
+<h4>Try to Make Something Diff | Just For Fun |</h4>
+<nav id="main-nav"><ul>
+	<li><a href="/">Blog</a></li>
+	<li><a href="/About">About</a></li>
+	<li><a href="/presentation">Presentation</a></li>
+  	<li><a href="/RoR">Ruby on Rails</a></li>
+  	<li><a href="/ActionScript">Action Scripts</a></li>
+  	<li><a href="/DesignPattern">Design Pattern</a></li>
+	<li><a href="/archives">Archive</a></li>
+</ul>
+</nav>
+<nav id="mobile-nav">
+	<div class="alignleft menu">
+		<a class="button">Menu</a>
+		<div class="container"><ul>
+	<li><a href="/">Blog</a></li>
+	<li><a href="/About">About</a></li>
+	<li><a href="/presentation">Presentation</a></li>
+  	<li><a href="/RoR">Ruby on Rails</a></li>
+  	<li><a href="/ActionScript">Action Scripts</a></li>
+  	<li><a href="/DesignPattern">Design Pattern</a></li>
+	<li><a href="/archives">Archive</a></li>
+</ul>
+</div>
+	</div>
+	<div class="alignright search">
+		<a class="button"></a>
+		<div class="container">
+			<form action="http://google.com/search" method="get">
+				<input type="text" name="q" results="0">
+				<input type="hidden" name="q" value="site:ccaloha.cc">
+			</form>
+		</div>
+	</div>
+</nav>
+
+
+</header>
+
+	<div id="content" class="inner"><article class="post">
+	<h2 class="title">Learning on Ruby on Rails Tutorial-CH9 Updating , Showing , and Deleting Users</h2>
+	<div class="entry-content"><p> 這章會完成Users的REST動作，<strong>edit</strong>、<strong>update</strong>、<strong>index</strong>、<strong>destroy</strong></p>
+
+<p> 廢話不多說，從做中學！</p>
+
+<pre><code>$ git checkout -b updating-users
+</code></pre>
+
+<h2>修改使用者</h2>
+
+<p>修改其實很像新增，和新增不同的地方在於</p>
+
+<p>new是對server提出POST的要求，但是update這個動作是提出PUT這個要求</p>
+
+<p>還有一個最大的差別，就是所有人都可以註冊，但是update動作，只能給已經登入的user使用！</p>
+
+<!--more-->
+
+
+<p></p>
+
+<h2>Edit 表格</h2>
+
+<p>直接來看測試！把它加到<strong>describe &#8220;User pages&#8221; do</strong>區塊內</p>
+
+<p><strong>spec/requests/user_pages_spec.rb</strong></p>
+
+<pre><code>describe "edit" do
+    let(:user) { FactoryGirl.create(:user) }
+    before { visit edit_user_path(user) }
+
+    describe "page" do
+      it { should have_selector('h1',    text: "Update your profile") }
+      it { should have_selector('title', text: "Edit user") }
+      it { should have_link('change', href: 'http://gravatar.com/emails') }
+    end
+
+    describe "with invalid information" do
+      before { click_button "Save changes" }
+
+      it { should have_content('error') }
+    end
+  end
+</code></pre>
+
+<p>要編輯使用者之前一定要知道誰是使用者</p>
+
+<p>別忘了可以使用params[:id]</p>
+
+<p>所以我們在controller的地方可以加上這句話，<strong>app/controller/users_controller.rb</strong></p>
+
+<pre><code>def edit
+    @user = User.find(params[:id])
+end
+</code></pre>
+
+<p>再來新增view</p>
+
+<p><strong>app/views/users/edit.html.erb</strong></p>
+
+<pre><code>&lt;% provide(:title, "Edit user") %&gt; 
+&lt;h1&gt;Update your profile&lt;/h1&gt;
+
+&lt;div class="row"&gt;
+  &lt;div class="span6 offset3"&gt;
+  &lt;%= form_for(@user) do |f| %&gt;
+      &lt;%= render 'shared/error_messages', object: f.object %&gt;
+
+      &lt;%= f.label :name %&gt;
+      &lt;%= f.text_field :name %&gt;
+
+      &lt;%= f.label :email %&gt;
+      &lt;%= f.text_field :email %&gt;
+
+      &lt;%= f.label :password %&gt;
+      &lt;%= f.password_field :password %&gt;
+
+      &lt;%= f.label :password_confirmation, "Confirm Password" %&gt;
+      &lt;%= f.password_field :password_confirmation %&gt;
+
+      &lt;%= f.submit "Save changes", class: "btn btn-large btn-primary" %&gt;
+    &lt;% end %&gt;
+
+    &lt;%= gravatar_for @user %&gt;
+    &lt;a href="http://gravatar.com/emails"&gt;change&lt;/a&gt;
+  &lt;/div&gt;
+&lt;/div&gt;
+</code></pre>
+
+<p>跑看看測試吧～</p>
+
+<pre><code>$ bundle exec rspec spec/requests/user_pages_spec.rb -e "edit page"
+</code></pre>
+
+<p>嘿嘿～ 你一定會好奇…奇怪&#8230;.他跟new幾乎長得一模一樣</p>
+
+<p>那Rails怎麼知道他是要用<strong>POST</strong>還是<strong>PUT</strong>?</p>
+
+<p>其實他是用Active Record的一個方法：<strong>new_record?</strong></p>
+
+<p>很簡單的驗證方法</p>
+
+<pre><code>$ rails console
+&gt;&gt; User.new.new_record?
+=&gt; true
+&gt;&gt; User.first.new_record?
+=&gt; false
+</code></pre>
+
+<p>接著我們來新加另外一個測試的東西，在<strong>spec/requests/authentication_pages_spec.rb</strong></p>
+
+<p>加上使用者用正確資料登入時，會有一個新的<strong>Setting</strong>的鏈結可以選</p>
+
+<pre><code>it { should have_link('Settings', href: edit_user_path(user)) }
+</code></pre>
+
+<p>在下面那些底下</p>
+
+<pre><code> it { should have_selector('title', text: user.name) }
+ it { should have_link('Profile', href: user_path(user)) }
+ it { should have_link('Sign out', href: signout_path) }
+ it { should_not have_link('Sign in', href: signin_path) }  
+</code></pre>
+
+<p>還有一個地方要改～請把</p>
+
+<pre><code>before do
+  fill_in "Email",    with: user.email
+  fill_in "Password", with: user.password
+  click_button "Sign in"
+end
+</code></pre>
+
+<p>改成一句話！</p>
+
+<pre><code>before { sign_in user }
+</code></pre>
+
+<p>用一個helper來取代！把這個helper寫在<strong>spec/support/utilities.rb</strong></p>
+
+<pre><code>def sign_in(user)
+  visit signin_path
+  fill_in "Email",    with: user.email
+  fill_in "Password", with: user.password
+  click_button "Sign in"
+  # Sign in when not using Capybara as well.
+  cookies[:remember_token] = user.remember_token
+end
+</code></pre>
+
+<p>為了要確保Capybara有work</p>
+
+<p>所以才加上</p>
+
+<pre><code>cookies[:remember_token] = user.remember_token
+</code></pre>
+
+<p>還要把<strong>Setting</strong>的連結加到<strong>header</strong>上面</p>
+
+<p>也就是要改<strong>app/views/layouts/_header.html.erb</strong></p>
+
+<p>把</p>
+
+<pre><code>&lt;li&gt;&lt;%= link_to "Settings", '#' %&gt;&lt;/li&gt;
+</code></pre>
+
+<p>改成</p>
+
+<pre><code>&lt;li&gt;&lt;%= link_to "Settings", edit_user_path(current_user) %&gt;&lt;/li&gt;
+</code></pre>
+
+<h2>不成功的編輯</h2>
+
+<p>當使用者編輯好，按下submit，會到controller的<strong>update</strong>動作執行，</p>
+
+<p>所以User會使用他的update_attributes方法更新內容！</p>
+
+<p>所以我們就用這個特性！</p>
+
+<p>如果使用者編輯不成功的話，我們要在重新render給他<strong>edit</strong>頁面</p>
+
+<p>所以來改<strong>app/controllers/users_controller.rb</strong></p>
+
+<pre><code>def update
+    @user = User.find(params[:id])
+    if @user.update_attributes(params[:user])
+      # Handle a successful update.
+    else
+      render 'edit'
+    end
+  end
+</code></pre>
+
+<h2>成功的編輯</h2>
+
+<p>接著我們要來寫編輯的測試！</p>
+
+<p>在<strong>spec/requests/user_pages_spec.rb</strong>的<strong>describe &#8220;edit&#8221; do</strong>區塊內加上</p>
+
+<pre><code> describe "with valid information" do
+      let(:new_name)  { "New Name" }
+      let(:new_email) { "new@example.com" }
+      before do
+        fill_in "Name",             with: new_name
+        fill_in "Email",            with: new_email
+        fill_in "Password",         with: user.password
+        fill_in "Confirm Password", with: user.password
+        click_button "Save changes"
+      end
+
+      it { should have_selector('title', text: new_name) }
+      it { should have_selector('div.alert.alert-success') }
+      it { should have_link('Sign out', href: signout_path) }
+      specify { user.reload.name.should  == new_name }
+      specify { user.reload.email.should == new_email }
+    end
+</code></pre>
+
+<p>那個比較特別的就是</p>
+
+<pre><code>specify { user.reload.name.should  == new_name }
+specify { user.reload.email.should == new_email }
+</code></pre>
+
+<p>利用<strong>user.reload</strong>去重新讀取user的資料</p>
+
+<p>OK 來寫其他東東</p>
+
+<p>先來補上<strong>app/controllers/users_controller.rb</strong></p>
+
+<pre><code>if @user.update_attributes(params[:user])
+        flash[:success] = "Profile updated"
+        sign_in @user
+        redirect_to @user
+</code></pre>
+
+<p>sign_in再一次是因為當使用者儲存時，紀錄的token被重新設定，(<strong>before_save :create_remember_token</strong>)</p>
+
+<p>所以我們要在重啓一次sesion！這是很好的安全設計～</p>
+
+<p>跑一次測試～確保都有pass!</p>
+
+<h2>授權 (注意！不是認證歐XD)</h2>
+
+<p>我們在CH8已經寫過認證了！現在來實作授權，認證(<em>authentication</em>)是讓我們驗證使用者是可以使用網站的！授權(<em>authorization</em>)是讓我們控制使用者可以做什麼事情！</p>
+
+<h3>要求使用者必須登入</h3>
+
+<p>編輯測試先，主要是edit和update動作，必須要在登入時才可以用！測試寫在認證那邊就ＯＫ了，直接加到<strong>describe &#8220;Authentication do&#8221;</strong>裡面</p>
+
+<p><strong>spec/requests/authentication_pages_spec.rb</strong></p>
+
+<pre><code>describe "authorization" do
+
+    describe "for non-signed-in users" do
+      let(:user) { FactoryGirl.create(:user) }
+
+      describe "in the Users controller" do
+
+        describe "visiting the edit page" do
+          before { visit edit_user_path(user) }
+          it { should have_selector('title', text: 'Sign in') }
+        end
+
+        describe "submitting to the update action" do
+          before { put user_path(user) }
+          specify { response.should redirect_to(signin_path) }
+        end
+      end
+    end
+</code></pre>
+
+<p>這邊比較特別的就是，不使用<strong>Capybara</strong>的visit方法存取controller！ 而是直接使用HTTP 要求！ 所以這邊是使用<strong>put</strong></p>
+
+<p>put會要求直接到<strong>/users/1</strong>並且是update的動作，這是必要的因為沒有方法讓瀏覽器，直接visit <strong>update</strong>動作！只能透過提交edit 表格(Capybara也無法做到)，但是這樣是為了測edit的動作！並沒有針對update來測！所以才需要使用<strong>put</strong></p>
+
+<p>所以～因為我們使用<strong>put</strong>這個動作！所以底下那個</p>
+
+<pre><code>specify { response.should redirect_to(signin_path) }
+</code></pre>
+
+<p>也是特別的！是使用response物件！不像Capybara的page物件！response讓我們測試伺服器的回應！</p>
+
+<p>那所以要授權的程式碼，我們會使用<strong>before_filter</strong>這個callback，就是當使用者操作時，會讓某些特定的方法被呼叫</p>
+
+<p><strong>app/controllers/users_controller.rb</strong></p>
+
+<pre><code>class UsersController &lt; ApplicationController
+  before_filter :signed_in_user, only: [:edit, :update]
+  .
+  .
+  .
+  private
+
+    def signed_in_user
+      redirect_to signin_path, notice: "Please sign in." unless signed_in?
+    end
+end
+</code></pre>
+
+<p>預設before_filter 是會用在所有動作的！但是我們可以用<strong>only</strong>這個來限制！</p>
+
+<p>另外那個<strong>notice: &#8220;Please sign in.&#8221;</strong> 他相當於會丟一個hash給<strong>redirect_to</strong>這個函式</p>
+
+<p>相當於</p>
+
+<pre><code>flash[:notice] = "Please sign in."
+redirect_to signin_path
+</code></pre>
+
+<p>注意歐！ 這邊用的是<strong>:notice</strong>，所以我們總共有<strong>:success</strong>和<strong>:error</strong>以及<strong>:notice</strong></p>
+
+<p>這些Bootstrap CSS都支援！</p>
+
+<p>這邊跑一下測試！</p>
+
+<pre><code>bundle exec rspec spec/
+</code></pre>
+
+<p>囧&#8230;.怎麼錯誤變多，有9個錯誤！</p>
+
+<p>原來是因為我們加了限制</p>
+
+<p>在<strong>spec/requests/user_pages_spec.rb</strong>的</p>
+
+<pre><code>describe "edit" do
+  let(:user) { FactoryGirl.create(:user) }
+  before { visit edit_user_path(user) }
+</code></pre>
+
+<p>我們還沒有登入 就開始visit編輯畫面&#8230;.所以會有問題！</p>
+
+<p>所以我們可以使用helper裡面的<strong>sign_in</strong>，改成這樣！</p>
+
+<pre><code>let(:user) { FactoryGirl.create(:user) }
+    before do
+      sign_in user
+      visit edit_user_path(user)
+    end
+</code></pre>
+
+<p>再執行一下 測試！ 恭喜！完成！</p>
+
+<h3>要求正確的使用者</h3>
+
+<p>當然我們只要求使用者登入這樣是不夠的！我們還需要是正當的使用者，所以來設計測試，當使用者用錯誤email登入時，然後點<strong>edit</strong>或是<strong>update</strong>，因為這個使用者也不行嘗試去編輯別人的頁面，使用者若嘗試去編輯別人的頁面，我們就將它導到root URL</p>
+
+<p><strong>spec/requests/authentication_pages_spec.rb</strong></p>
+
+<p>寫在<strong>describe &#8220;authorization&#8221; do</strong>區塊裡面</p>
+
+<pre><code>describe "as wrong user" do
+      let(:user) { FactoryGirl.create(:user) }
+      let(:wrong_user) { FactoryGirl.create(:user, email: "wrong@example.com") }
+      before { sign_in user }
+
+      describe "visiting Users#edit page" do
+        before { visit edit_user_path(wrong_user) }
+        it { should_not have_selector('title', text: full_title('Edit user')) }
+      end
+
+      describe "submitting a PUT request to the Users#update action" do
+        before { put user_path(wrong_user) }
+        specify { response.should redirect_to(root_path) }
+      end
+    end
+</code></pre>
+
+<p>所以我先來修改<strong>/app/controllers/users_controller.rb</strong></p>
+
+<pre><code>before_filter :correct_user, only: [:edit , :update]
+
+private
+
+def signed_in_user
+  redirect_to signin_path, notice: "Please sign in." unless signed_in?
+end
+
+def correct_user
+  @user = User.find(params[:id])
+  redirect_to(root_path) unless current_user?(@user)
+end
+</code></pre>
+
+<p>那個<strong>current_user?</strong>是寫在<strong>app/helpers/session_helper.rb</strong></p>
+
+<p>記得補上歐！</p>
+
+<pre><code>def current_user?(user)
+  user == current_user
+end
+</code></pre>
+
+<h3>友善的轉址</h3>
+
+<p>雖然一切看是完美～但是，其實有一個問題，那就是當user每次要使用保護的頁面時，他完成登入後，他都會被導向他的個人頁面～而且不是他想要去的頁面！所以我們要來改善這問題</p>
+
+<p>所以先來寫測試！我一開始會先到user的編輯頁面，然後理論上他會幫我導向登入畫面，當我完成登入之後，必須幫我導到編輯的頁面</p>
+
+<p><strong>spec/requests/authentication_pages_spec.rb</strong></p>
+
+<p>加在<strong>describe &#8220;for non-signed-in users&#8221; do</strong>裡面！</p>
+
+<pre><code>describe "when attempting to visit a protected page" do
+                before do
+                  visit edit_user_path(user)
+                  fill_in "Email",    with: user.email
+                  fill_in "Password", with: user.password
+                  click_button "Sign in"
+                end
+
+                describe "after signing in" do
+
+                  it "should render the desired protected page" do
+                    page.should have_selector('title', text: 'Edit user')
+                  end
+                end
+        end
+</code></pre>
+
+<p>為了要完成這件事情！ 我們要使用兩個function！</p>
+
+<p>把它寫在session helper裡面</p>
+
+<p><strong>app/helpers/sessions_helper.rb</strong></p>
+
+<pre><code>def redirect_back_or(default)
+    redirect_to(session[:return_to] || default)
+    session.delete(:return_to)
+end
+
+def store_location
+    session[:return_to] = request.fullpath
+end
+</code></pre>
+
+<p>Rails有提供<strong>session</strong>儲存的機制，(你就把它想成cookie物件)，另外我們也使用<strong>request</strong>物件，取得完整連結路徑(URI)，<strong>store_location</strong>就是把要求的完整路徑傳給<strong>session</strong>變數，他的key就是<strong>:return_to</strong></p>
+
+<p>所以要把<strong>store_location</strong>加到<strong>signed_in_user</strong>裡面，因為加在函式裡面，如果使用者不是登入狀態時，就要先把他想去的路徑先存起來，然後再把它導到登入畫面</p>
+
+<p>那就來修改</p>
+
+<p><strong>app/controllers/users_controller.rb</strong></p>
+
+<pre><code>def signed_in_user
+  unless signed_in?
+    store_location
+    redirect_to signin_path, notice: "Please sign in."
+  end
+end
+</code></pre>
+
+<p>最後再來加個<strong>app/controllers/sessions_controller.rb</strong></p>
+
+<pre><code>def create
+    user = User.find_by_email(params[:session][:email])
+    if user &amp;&amp; user.authenticate(params[:session][:password])
+      sign_in user
+      redirect_back_or user
+    else
+      flash.now[:error] = 'Invalid email/password combination'
+      render 'new'
+    end
+end
+</code></pre>
+
+<p>就是當使用者按下登入，並且也登入成功時，就會在<strong>session</strong>這邊create一個token</p>
+
+<p>所以我們在create這邊加上剛剛寫的<strong>redirect_back_or</strong>所以如果有記錄之前要去的url，他</p>
+
+<p>就會前往那邊～不然的話，就是連到user的頁面</p>
+
+<p>跑一下測試確認可以work</p>
+
+<pre><code>$  bundle exec rspec spec/
+</code></pre>
+
+<h2>Show出所有使用者</h2>
+
+<p>簡單來說，希望可以看到每個user的資料(還附上連結)，最後還要加上換頁的東西！</p>
+
+<h3>User Index</h3>
+
+<p>可以看到所有使用者這功能，必須限定是登入使用者，另外，要可以使用<strong>users_path</strong>這個連結看到所有使用者！</p>
+
+<p>So…開始寫測試吧！</p>
+
+<p><strong>spec/requests/authentication_pages_spec.rb</strong> 寫在 <strong>describe &#8220;in the Users controller&#8221; do</strong>裡面</p>
+
+<pre><code>describe "visiting the user index" do
+      before { visit users_path }
+      it { should have_selector('title', text: 'Sign in') }
+end
+</code></pre>
+
+<p>因為我們要限定登入成功使用者才可以用！所以在<strong>app/controllers/users_controller.rb</strong>請補上</p>
+
+<pre><code>before_filter :signed_in_user, only: [:index, :edit, :update]
+
+def index
+end
+</code></pre>
+
+<p>既然寫到了user controller當然要寫一下<strong>spec/requests/user_pages_spec.rb</strong></p>
+
+<p>加在 <strong>describe &#8220;User pages&#8221; do</strong>底下</p>
+
+<pre><code>describe "index" do
+    before do
+      sign_in FactoryGirl.create(:user) 
+      FactoryGirl.create(:user, name: "Derek" , email: "Derek@example.com")
+      FactoryGirl.create(:user, name: "Edison" , email: "Edison@example.com")
+      visit users_path
+    end
+
+    it { should have_selector('title',text: 'All users') }
+    it "should list each user" do 
+      User.all.each do |user|
+        page.should have_selector('li', text: user.name)
+      end
+    end
+end
+</code></pre>
+
+<p>為了要通過測試！讓我們開始補程式碼吧！</p>
+
+<p><strong>app/controllers/users_controller.rb</strong>的<strong>index</strong>請補上</p>
+
+<pre><code>def index
+    @users = User.all
+end
+</code></pre>
+
+<p>換到view的地方，先新增<strong>app/views/users/index.html.erb</strong></p>
+
+<pre><code>&lt;%= provide(:title, 'All users') %&gt;
+&lt;h1&gt;All users&lt;/h1&gt;
+
+&lt;ul class="users"&gt;
+  &lt;% @users.each do |user| %&gt;
+    &lt;li&gt;
+      &lt;%= gravatar_for user, size: 52 %&gt;
+      &lt;%= link_to user.name, user %&gt;
+    &lt;/li&gt;
+  &lt;% end %&gt;
+&lt;/ul&gt;
+</code></pre>
+
+<p>再來為user index加上一些CSS效果</p>
+
+<p><strong>app/assets/stylesheets/custom.css.scss</strong></p>
+
+<pre><code>/* users index */
+
+.users {
+  list-style: none;
+  margin: 0;
+  li {
+    overflow: auto;
+    padding: 10px 0;
+    border-top: 1px solid $grayLighter;
+    &amp;:last-child {
+      border-bottom: 1px solid $grayLighter;
+    }
+  }
+}
+</code></pre>
+
+<p>那我們在認證的地方也要加上一個測試！確保Users這個link可以用</p>
+
+<p><strong>spec/requests/authentication_pages_spec.rb</strong>的<strong>describe &#8220;with valid information&#8221; do</strong>底下</p>
+
+<pre><code>it { should have_link('Users',    href: users_path) }
+</code></pre>
+
+<p>補上URI到<strong>app/views/layouts/_header.html.erb</strong></p>
+
+<pre><code>&lt;li&gt;&lt;%= link_to "Users", '#' %&gt;&lt;/li&gt;
+</code></pre>
+
+<p>改成</p>
+
+<pre><code>&lt;li&gt;&lt;%= link_to "Users", users_path %&gt;&lt;/li&gt;
+</code></pre>
+
+<p>耶～測試吧</p>
+
+<pre><code>$ bundle exec rspec spec/
+</code></pre>
+
+<p>囧…有錯…奇怪..他說…gravatar_for 預設輸入參數只有一個，結果我給她兩個&#8230;.</p>
+
+<p>原來…是因為我沒有做CH7的練習，補上</p>
+
+<p>讓我們可以改變顯圖的大小！</p>
+
+<p><strong>app/helpers/users_helper.rb</strong></p>
+
+<pre><code>def gravatar_for(user, options = { size: 50 })
+    gravatar_id = Digest::MD5::hexdigest(user.email.downcase)
+    size = options[:size]
+    gravatar_url = "http://gravatar.com/avatar/#{gravatar_id}?s=#{size}"
+    image_tag(gravatar_url, alt: user.name, class: "gravatar")
+end
+</code></pre>
+
+<p>再跑一次！恭喜～通過～</p>
+
+<p>其實可以開網頁來看！ 你會發現&#8230;.東西好少&#8230;.好乾歐！</p>
+
+<p>所以&#8230;.</p>
+
+<h3>User 樣本</h3>
+
+<p>我們要安裝並使用一個叫做是<strong>faker</strong>的gem</p>
+
+<p>所以先在<strong>Gemfile</strong>加上</p>
+
+<pre><code>gem 'faker', '1.0.1'
+</code></pre>
+
+<p>別忘了</p>
+
+<pre><code>$ bundle install
+</code></pre>
+
+<p>要如何使用呢？</p>
+
+<p>我們必須要加一個<strong>Rake task</strong>的東東去建樣本使用者！</p>
+
+<p>Rake task通常被放在<strong>lib/tasks</strong>資料夾下</p>
+
+<p>所以我們新增一個檔案吧！<strong>lib/tasks/sample_data.rake</strong></p>
+
+<pre><code>namespace :db do
+  desc "Fill database with sample data"
+  task populate: :environment do
+    User.create!(name: "Example User",
+                 email: "example@railstutorial.org",
+                 password: "foobar",
+                 password_confirmation: "foobar")
+    99.times do |n|
+      name  = Faker::Name.name
+      email = "example-#{n+1}@railstutorial.org"
+      password  = "password"
+      User.create!(name: name,
+                   email: email,
+                   password: password,
+                   password_confirmation: password)
+    end
+  end
+end
+</code></pre>
+
+<p>所以定義了一個任務 <strong>db:populate</strong>，透過<strong>db:reset</strong>會重設development資料庫！</p>
+
+<p>然後會建置99個資料</p>
+
+<p>這一行</p>
+
+<pre><code>task populate: :environment do
+</code></pre>
+
+<p>確保Rake task 會被本地端的Rails環境存取(包含User model)，另外那個<strong>create!</strong>和<strong>create</strong>差在他會丟出例外原因，而不是只告訴你False</p>
+
+<p>所以我們可以透過什麼方式調用(invoke)這個Rake task呢？</p>
+
+<pre><code>$ bundle exec rake db:reset
+$ bundle exec rake db:populate
+$ bundle exec rake db:test:prepare
+</code></pre>
+
+<p>OK~我們就可以看到一堆user了！</p>
+
+<h3>分頁功能</h3>
+
+<p>看到那麼多user當然我們要加上分頁功能，這個之前在我另外的自我學習已經有練過了～所以我就快速帶過～</p>
+
+<p>在<strong>Gemfile</strong>加上</p>
+
+<pre><code>gem 'will_paginate', '3.0.3'
+gem 'bootstrap-will_paginate', '0.0.5'
+</code></pre>
+
+<p>別忘了</p>
+
+<pre><code>$ bundle install
+</code></pre>
+
+<p>OK! 當然我們也要寫測試！</p>
+
+<p>但是寫測試之前&#8230;.有個問題，因為要測翻頁功能有work!</p>
+
+<p>所以&#8230;.是必我要寫像下面那樣一百遍嗎～歐不～～</p>
+
+<pre><code>FactoryGirl.define do
+  factory :user do
+    name     "Michael Hartl"
+    email    "michael@example.com"
+    password "foobar"
+    password_confirmation "foobar"
+  end
+end
+</code></pre>
+
+<p>好佳在！</p>
+
+<p>FactoryGirl有提供<strong>sequence</strong>的功能！</p>
+
+<p>我們可以這樣用！</p>
+
+<pre><code>factory :user do
+    sequence(:name)  { |n| "Person #{n}" }
+    sequence(:email) { |n| "person_#{n}@example.com"}   
+</code></pre>
+
+<p>它就會建出這樣的東東</p>
+
+<pre><code>“Person 1”  “person_1@example.com”
+“Person 2”  “person_2@example.com”
+“Person 3”  “person_3@example.com”
+….等
+</code></pre>
+
+<p>所以我們可以定義FactoryGirl為<strong>sequence</strong>版本，把它改在</p>
+
+<p><strong>spec/factories.rb</strong></p>
+
+<pre><code>FactoryGirl.define do
+  factory :user do
+    sequence(:name)  { |n| "Person #{n}" }
+    sequence(:email) { |n| "person_#{n}@example.com"}   
+    password "foobar"
+    password_confirmation "foobar"
+  end
+end
+</code></pre>
+
+<p>然後開始寫測試摟～</p>
+
+<p><strong>spec/requests/user_pages_spec.rb</strong></p>
+
+<p>把</p>
+
+<pre><code>describe "index" do
+    before do
+      sign_in FactoryGirl.create(:user) 
+      FactoryGirl.create(:user, name: "Derek" , email: "Derek@example.com")
+      FactoryGirl.create(:user, name: "Edison" , email: "Edison@example.com")
+      visit users_path
+    end
+
+    it { should have_selector('title',text: 'All users') }
+    it "should list each user" do 
+      User.all.each do |user|
+        page.should have_selector('li', text: user.name)
+      end
+    end
+  end
+</code></pre>
+
+<p>改成</p>
+
+<pre><code>describe "index" do
+
+    let(:user) { FactoryGirl.create(:user) }
+
+    before do
+      sign_in user
+      visit users_path
+    end
+
+    it { should have_selector('title', text: 'All users') }
+
+    describe "pagination" do
+      before(:all) { 30.times { FactoryGirl.create(:user) } }
+      after(:all)  { User.delete_all }
+
+      it { should have_link('Next') }
+      its(:html) { should match('&gt;2&lt;/a&gt;') }
+
+      it "should list each user" do
+        User.all[0..2].each do |user|
+          page.should have_selector('li', text: user.name)
+        end
+      end
+    end
+  end
+</code></pre>
+
+<p>這裡面有些相當特別的code！</p>
+
+<pre><code>its(:html) { should match('&gt;2&lt;/a&gt;') }
+</code></pre>
+
+<p>他的意思是 測試頁面有包含2…就這樣</p>
+
+<p>ok要讓<strong>pagination</strong>可以用，我們來改<strong>app/views/users/index.html.erb</strong></p>
+
+<pre><code>&lt;%= provide(:title, 'All users') %&gt;
+&lt;h1&gt;All users&lt;/h1&gt;
+
+&lt;%= will_paginate %&gt;
+
+&lt;ul class="users"&gt;
+  &lt;% @users.each do |user| %&gt;
+    &lt;li&gt;
+      &lt;%= gravatar_for user, size: 52 %&gt;
+      &lt;%= link_to user.name, user %&gt;
+    &lt;/li&gt;
+  &lt;% end %&gt;
+&lt;/ul&gt;
+
+&lt;%= will_paginate %&gt;
+</code></pre>
+
+<p>主要是因為加上<strong>will_paginate</strong></p>
+
+<p>他會自動找尋@users這個物件，然後秀出換頁的連結</p>
+
+<p>但是目前這個view是不work的！</p>
+
+<p>因為<strong>@users</strong>是來自<strong>User.all</strong>，它是一個Array類別，但是<strong>will_paginate</strong>是預期物件是一個<strong>ActiveRecord::Relation</strong></p>
+
+<p>但是好佳在，我們可以使用<strong>will_paginate</strong>提供的<strong>paginate</strong>方法轉成<strong>ActiveRecord::Relation</strong></p>
+
+<pre><code>$ rails console
+&gt;&gt; User.all.class
+=&gt; Array
+&gt;&gt; User.paginate(page: 1).class
+=&gt; ActiveRecord::Relation
+</code></pre>
+
+<p>注意！那個paginate使用<strong>:page</strong>當成其hash的key，所以<strong>User.paginate</strong>從資料庫撈出的筆數就是依據<strong>:page</strong>這個值！</p>
+
+<p>所以我們可以來改寫一下我controller</p>
+
+<p>把 <strong>@users = User.all</strong>改成</p>
+
+<pre><code>def index
+  @users = User.paginate(page: params[:page])
+end
+</code></pre>
+
+<p>yap!執行一下測試！</p>
+
+<pre><code>$ bundle exec rspec spec/
+</code></pre>
+
+<h3>Partial refactoring</h3>
+
+<p>因為我們測試已經完成～我們可以來改寫一下程式碼</p>
+
+<p>善用Rails的一些特性！</p>
+
+<p>先來改寫<strong>app/views/users/index.html.erb</strong></p>
+
+<pre><code>&lt;% provide(:title, 'All users') %&gt;
+&lt;h1&gt;All users&lt;/h1&gt;
+
+&lt;%= will_paginate %&gt;
+
+&lt;ul class="users"&gt;
+  &lt;% @users.each do |user| %&gt;
+    &lt;%= render user %&gt;
+  &lt;% end %&gt;
+&lt;/ul&gt;
+
+&lt;%= will_paginate %&gt;
+</code></pre>
+
+<p>因為把它改寫成<strong>render</strong></p>
+
+<p>Rails會自動去搜尋<strong>_user.html.erb</strong></p>
+
+<p>所以要新建這個檔案<strong>app/views/users/_user.html.erb</strong>(注意歐！不是在layout底下歐)並加上</p>
+
+<pre><code>&lt;li&gt;
+  &lt;%= gravatar_for user, size: 52 %&gt;
+  &lt;%= link_to user.name, user %&gt;
+&lt;/li&gt;
+</code></pre>
+
+<p>但是更酷的是！ 你以為這樣就結束了？</p>
+
+<p>其實可以再改寫<strong>app/views/users/index.html.erb</strong></p>
+
+<p>把這一句</p>
+
+<pre><code>&lt;% @users.each do |user| %&gt;
+    &lt;%= render user %&gt;
+&lt;% end %&gt;
+</code></pre>
+
+<p>改成這一句就好！</p>
+
+<pre><code>&lt;%= render @users %&gt;
+</code></pre>
+
+<p>因為Rails它會發現<strong>@users</strong>是<strong>User</strong>物件的list，當呼叫出users的collection時，Rails會自動幫你做迭代！當你每個值都丟到<strong>_user.html.erb</strong>裡面酷吧！</p>
+
+<p>改完code，當然要跑測試～看有沒有改錯！</p>
+
+<pre><code>$ bundle exec rspec spec/
+</code></pre>
+
+<h2>刪除使用者</h2>
+
+<p>必須要是Administrator才可以刪除使用者</p>
+
+<p>當然測試要驗證一下！</p>
+
+<p><strong>spec/models/user_spec.rb</strong></p>
+
+<p>在最前面補上</p>
+
+<pre><code>it { should respond_to(:admin) }
+
+it { should_not be_admin }
+
+describe "with admin attribute set to 'true'" do
+    before { @user.toggle!(:admin) }
+
+    it { should be_admin }
+  end
+</code></pre>
+
+<p>這邊有個很酷的東西！</p>
+
+<p>使用<strong>toggle!</strong>方法切換<strong>admin</strong>的屬性，不是true就是false，還有一個要注意！</p>
+
+<pre><code>it { should be_admin }
+</code></pre>
+
+<p>這代表了我們必須有<strong>admin?</strong>這個回傳True或是False的函式！</p>
+
+<p>如同往常！</p>
+
+<p>我們必須先加上<strong>admin</strong>這個屬性！然後他是boolean類型</p>
+
+<pre><code>$ rails generate migration add_admin_to_users admin:boolean
+</code></pre>
+
+<p>跑完之後~ 補上一些東西！</p>
+
+<pre><code>class AddAdminToUsers &lt; ActiveRecord::Migration
+  def change
+    add_column :users, :admin, :boolean, default: false
+  end
+end
+</code></pre>
+
+<p>加完要記得</p>
+
+<pre><code>$ bundle exec rake db:migrate
+$ bundle exec rake db:test:prepare
+</code></pre>
+
+<p>然後我們用console把其中一個user改成admin來看看我們剛剛寫的那些東東work不work～</p>
+
+<pre><code>$ rails console --sandbox
+&gt;&gt; user = User.first
+&gt;&gt; user.admin?
+=&gt; false
+&gt;&gt; user.toggle!(:admin)
+=&gt; true
+&gt;&gt; user.admin?
+=&gt; true
+</code></pre>
+
+<p>最後一步驟，我們要改一下我們自動產生user的</p>
+
+<p><strong>lib/tasks/sample_data.rake</strong></p>
+
+<pre><code>namespace :db do
+  desc "Fill database with sample data"
+  task populate: :environment do
+    admin = User.create!(name: "Example User",
+                         email: "example@railstutorial.org",
+                         password: "foobar",
+                         password_confirmation: "foobar")
+    admin.toggle!(:admin)
+    .
+    .
+    .
+  end
+end
+</code></pre>
+
+<p>改了這個之後，我們要重跑一下資料庫！還記得哪些步驟嗎？</p>
+
+<pre><code>$ bundle exec rake db:reset
+$ bundle exec rake db:populate
+$ bundle exec rake db:test:prepare
+</code></pre>
+
+<h3>重新看attr_accessible</h3>
+
+<p>你可能有注意到，利用<strong>toggle!(:admin)</strong>，把使用者改成admin，那為甚麼我們不直接使用<strong>admin: true</strong>來初始化hash?</p>
+
+<p>答案是這是不對的！</p>
+
+<p>只有<strong>attr_accessible</strong>屬性可以被大量指派值(丟一個hash，Rails會自動幫你把值對應進去)，然而<strong>admin</strong>屬性，並非accessible</p>
+
+<p>(我們在app/models/user.rb並沒有在attr_accessible加入:admin)</p>
+
+<p>明確的定義accessible對網站資安相當有助益！</p>
+
+<p>假設我們使用<strong>attr_accessible</strong>把admin加進去的話，駭客就可使用這樣的方式來改你的資料庫！</p>
+
+<pre><code>put /users/17?admin=1
+</code></pre>
+
+<p>所以…可以嘗試測試，把所有model的屬性，就像<strong>:admin</strong>，測試並沒有被加到accessible</p>
+
+<h3>刪除動作</h3>
+
+<p>為了要寫刪除函數的測試，我們可以使用factorygirl建立管理者，請看下面</p>
+
+<p><strong>spec/factories.rb</strong></p>
+
+<pre><code>FactoryGirl.define do
+  factory :user do
+    sequence(:name)  { |n| "Person #{n}" }
+    sequence(:email) { |n| "person_#{n}@example.com"}   
+    password "foobar"
+    password_confirmation "foobar"
+
+    factory :admin do
+      admin true 
+    end
+
+  end
+end
+</code></pre>
+
+<p>沒錯！就是加上</p>
+
+<pre><code>factory :admin do
+   admin true 
+end
+</code></pre>
+
+<p>OK~先來寫測試！ 等一下再說為什麼要這樣寫</p>
+
+<p><strong>spec/requests/user_pages_spec.rb</strong></p>
+
+<p>在<strong>describe &#8220;index&#8221; do</strong>區塊加上</p>
+
+<pre><code>describe "delete links" do
+
+          it { should_not have_link('delete') }
+
+          describe "as an admin user" do
+            let(:admin) { FactoryGirl.create(:admin) }
+            before do
+              sign_in admin
+              visit users_path
+            end
+
+            it { should have_link('delete', href: user_path(User.first)) }
+            it "should be able to delete another user" do
+              expect { click_link('delete') }.to change(User, :count).by(-1)
+            end
+            it { should_not have_link('delete', href: user_path(admin)) }
+          end
+ end
+</code></pre>
+
+<p>為什麼要這樣寫，一般使用者是看不到delete這個選項的！</p>
+
+<pre><code>it { should_not have_link('delete') }
+</code></pre>
+
+<p>再來，Admin是可以刪除的！所以才有那面那些行</p>
+
+<pre><code>it { should have_link('delete', href: user_path(User.first)) }
+it "should be able to delete another user" do
+  expect { click_link('delete') }.to change(User, :count).by(-1)
+end
+it { should_not have_link('delete', href: user_path(admin)) }
+</code></pre>
+
+<p>再來寫code通過測試吧！</p>
+
+<p><strong>app/views/users/_user.html.erb</strong></p>
+
+<pre><code>&lt;li&gt;
+  &lt;%= gravatar_for user, size: 52 %&gt;
+  &lt;%= link_to user.name, user %&gt;
+  &lt;% if current_user.admin? &amp;&amp; !current_user?(user) %&gt;
+    | &lt;%= link_to "delete" , user , method: :delete , confirm: "Are you sure?" %&gt;
+&lt;% end %&gt;
+&lt;/li&gt;
+</code></pre>
+
+<p>因為瀏覽器無法送出DELETE的要求，所以Rails是利用javaScript來假</p>
+
+<p>再來，為了要讓Delele連結work! 來寫</p>
+
+<p><strong>app/controllers/users_controller.rb</strong></p>
+
+<pre><code>def destroy
+    User.find(params[:id]).destroy
+    flash[:success] = "User destroyed."
+    redirect_to users_path
+end
+</code></pre>
+
+<p>這邊有個資安的漏洞，經驗豐富的駭客～可以簡單的使用CLI來送出DELETE要求，來刪除使用者！所以我們必須對detroy作存取控制！</p>
+
+<p>先來寫測試！</p>
+
+<p><strong>spec/requests/authentication_pages_spec.rb</strong></p>
+
+<p>在<strong>describe &#8220;authorization&#8221; do</strong>加上</p>
+
+<pre><code>describe "as non-admin user" do
+  let(:user) { FactoryGirl.create(:user) }
+  let(:non_admin) { FactoryGirl.create(:user) }
+
+  before { sign_in non_admin }
+
+  describe "submitting a DELETE request to the Users#destroy action" do
+    before { delete user_path(user) }
+    specify { response.should redirect_to(root_path) }        
+  end
+end
+</code></pre>
+
+<p>這邊還是有些小的資安漏洞，那就是管理者可以刪除自己XD，可以寫看看摟～不過就先跳過，繼續下去啦！</p>
+
+<p>改<strong>app/controllers/users_controller.rb</strong></p>
+
+<p>在前頭加上</p>
+
+<pre><code>before_filter :admin_user,     only: :destroy
+</code></pre>
+
+<p>在<strong>private</strong>後面加上</p>
+
+<pre><code>def admin_user
+  redirect_to(root_path) unless current_user.admin?
+end
+</code></pre>
+
+<p>跑測試！</p>
+
+<pre><code>$ bundle exec rspec spec/
+</code></pre>
+
+<p>yap~~All pass!</p>
+
+<p>耶～終於完成CH9</p>
+
+<pre><code>$ git add .
+$ git commit -m "Finish user edit, update, index, and destroy actions"
+$ git checkout master
+$ git merge updating-users
+</code></pre>
+</div>
+
+
+<div class="meta">
+	<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2012-08-10T11:07:00+08:00" pubdate data-updated="true">Aug 10<span>th</span>, 2012</time></div>
+	
+
+<div class="tags">
+
+	<a class='category' href='/blog/categories/reading/'>Reading</a>, <a class='category' href='/blog/categories/ruby-on-rails/'>Ruby_on_Rails</a>
+
+</div>
+
+
+	
+		<span class="comments"><a href="/blog/2012/08/10/learning-on-ruby-on-rails-tutorial-ch9-updating/#disqus_thread">Comments</a></span>
+	
+</div></article>
+
+	<div class="share">
+	<div class="addthis_toolbox addthis_default_style ">
+	
+	<a class="addthis_button_facebook_like" fb:like:layout="button_count"></a>
+	
+	
+	<a class="addthis_button_tweet"></a>
+	
+	
+	<a class="addthis_button_google_plusone" g:plusone:size="medium"></a>
+	
+<!---	<a class="addthis_counter addthis_pill_style"></a> --->
+	</div>
+  <script type="text/javascript" src="http://s7.addthis.com/js/250/addthis_widget.js#pubid="></script>
+</div>
+
+
+
+<section id="comment">
+    <h2 class="title">Comments</h2>
+    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+</section>
+</div>
+	<footer id="footer" class="inner">Copyright &copy; 2014
+
+    Aloha
+
+<br>
+Powered by Octopress.
+</footer>
+	<script src="/javascripts/slash.js"></script>
+<script src="/javascripts/jquery.fancybox.pack.js"></script>
+<script type="text/javascript">
+(function($){
+	$('.fancybox').fancybox();
+})(jQuery);
+</script> <!-- Delete or comment this line to disable Fancybox -->
+
+
+<script type="text/javascript">
+      var disqus_shortname = 'ccaloha';
+      
+        
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://ccaloha.cc/blog/2012/08/10/learning-on-ruby-on-rails-tutorial-ch9-updating/';
+        var disqus_url = 'http://ccaloha.cc/blog/2012/08/10/learning-on-ruby-on-rails-tutorial-ch9-updating/';
+        var disqus_script = 'embed.js';
+      
+    (function () {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/' + disqus_script;
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script>
+
+
+
+	<script type="text/javascript">
+		var _gaq = _gaq || [];
+		_gaq.push(['_setAccount', 'UA-29608372-1']);
+		_gaq.push(['_trackPageview']);
+
+		(function() {
+			var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+			ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+			var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+		})();
+	</script>
+
+
+<a title="Google Analytics Alternative" href="http://clicky.com/100753071"><img alt="Google Analytics Alternative" src="//static.getclicky.com/media/links/badge.gif" border="0" /></a>
+<script src="//static.getclicky.com/js" type="text/javascript"></script>
+<script type="text/javascript">try{ clicky.init(100753071); }catch(e){}</script>
+<noscript><p><img alt="Clicky" width="1" height="1" src="//in.getclicky.com/100753071ns.gif" /></p></noscript>
+
+</body>
+</html>

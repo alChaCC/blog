@@ -1,0 +1,319 @@
+
+<!DOCTYPE HTML>
+<html>
+<head>
+	<script data-cfasync="false" type="text/javascript" src="//use.typekit.net/axj3cfp.js"></script>
+	<script data-cfasync="false" type="text/javascript">try{Typekit.load();}catch(e){}</script>
+	<meta charset="utf-8">
+	<title>搞搞 Sikuli 在你的 Ubuntu  | AlohaCC</title>
+
+<meta name="author" content="Aloha"> 
+
+<meta name="description" content="Share Ruby on Rail and all about 'Chun Yu, Chen AlohaCC'"> <meta name="keywords" content="Aloha, Ruby on Rails, Blog, Web Developer, Taiwan, Chun-Yu Chen, Design Pattern, Action Scripts, Robotframework, Sikuli">
+
+	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+	<link href="http://feeds.feedburner.com/Alohacc" rel="alternate" title="AlohaCC" type="application/atom+xml">
+	<link rel="canonical" href="">
+	<link href="/favicon.png" rel="shortcut icon">
+	<link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+	<!--[if lt IE 9]><script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
+	<script src="//ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
+	<script type="text/javascript" src="/javascripts/jquery.fancybox.pack.js"></script>
+
+<script language="Javascript" type="text/javascript">
+$(document).ready(
+  function() {
+    (function($) {
+      $(".fancybox[data-content-id]").each(function() {
+        this.href = $(this).data('content-id');
+      });
+      $(".fancybox").fancybox({
+        beforeLoad: function() {
+          var el, 
+              id = $(this.element).data('title-id');
+
+          if (id) {
+            el = $('#' + id);
+
+            if (el.length) {
+              this.title = el.html();
+            }
+          }
+          if ($(this).data('content')) {
+            this.content = $(this).data('content');
+          }
+        },
+        helpers: {
+          title: {
+            type: 'inside'
+          }
+        }
+      });
+    })(jQuery);
+  }
+);
+</script>
+
+	
+</head>
+
+
+
+<body>
+	<header id="header" class="inner"><h1><a href="/">AlohaCC</a></h1>
+<h4>Try to Make Something Diff | Just For Fun |</h4>
+<nav id="main-nav"><ul>
+	<li><a href="/">Blog</a></li>
+	<li><a href="/About">About</a></li>
+	<li><a href="/presentation">Presentation</a></li>
+  	<li><a href="/RoR">Ruby on Rails</a></li>
+  	<li><a href="/ActionScript">Action Scripts</a></li>
+  	<li><a href="/DesignPattern">Design Pattern</a></li>
+	<li><a href="/archives">Archive</a></li>
+</ul>
+</nav>
+<nav id="mobile-nav">
+	<div class="alignleft menu">
+		<a class="button">Menu</a>
+		<div class="container"><ul>
+	<li><a href="/">Blog</a></li>
+	<li><a href="/About">About</a></li>
+	<li><a href="/presentation">Presentation</a></li>
+  	<li><a href="/RoR">Ruby on Rails</a></li>
+  	<li><a href="/ActionScript">Action Scripts</a></li>
+  	<li><a href="/DesignPattern">Design Pattern</a></li>
+	<li><a href="/archives">Archive</a></li>
+</ul>
+</div>
+	</div>
+	<div class="alignright search">
+		<a class="button"></a>
+		<div class="container">
+			<form action="http://google.com/search" method="get">
+				<input type="text" name="q" results="0">
+				<input type="hidden" name="q" value="site:ccaloha.cc">
+			</form>
+		</div>
+	</div>
+</nav>
+
+
+</header>
+
+	<div id="content" class="inner"><article class="post">
+	<h2 class="title">搞搞 Sikuli 在你的 Ubuntu</h2>
+	<div class="entry-content"><p><strong>安裝</strong>
+一開始我看官網，我以為只要一行指令碼就ＯＫ了～</p>
+
+<p>誰知道…試了超久，問題還是沒有解決，例如要灌openCV啦、python版本太舊啦…等等</p>
+
+<p>但是我想如果之後有更新的話，下面那行應該就灌好了～(所以我還是保留一下)</p>
+
+<pre><code>apt-get install sikuli-ide  
+</code></pre>
+
+<p>另外一個方法，也是我現在在用的方法！</p>
+
+<!--more-->
+
+
+<p></p>
+
+<p>其實只要先安裝</p>
+
+<pre><code>sudo apt-get wmctrl
+
+sudo apt-get xdotool
+</code></pre>
+
+<p><strong>直接來操作</strong></p>
+
+<p>之後下載source code (Sikuli X-1.0rc3(r905))來用</p>
+
+<pre><code>wget http://launchpad.net/sikuli/sikuli-x/x1.0-rc3/+download/Sikuli-X-1.0rc3%20%28r905%29-linux-x86_64.zip
+
+unzip XXX.zip
+</code></pre>
+
+<p>可以先用下面的指令開啓ide來編寫程式</p>
+
+<pre><code>PATH-TO-SIKULI-FOLDER/sikuli-ide.sh 
+</code></pre>
+
+<p>要執行的話，指令這樣下</p>
+
+<pre><code>PATH-TO-SIKULI-FOLDER/sikuli-ide.sh -r 你的sikuli程式資料夾
+</code></pre>
+
+<p>恭喜你～踏出自動化的一步～</p>
+
+<p>TODO: Link to RobotFrameWork</p>
+
+<blockquote><p>=================參考，說不定有用================</p></blockquote>
+
+<p>我因為參考下面的東東 我在東試西試時，下過這些指令</p>
+
+<pre><code>apt-get install build-essential
+
+apt-get install cmake
+
+apt-get install pkg-config
+
+apt-get install libpng12-0 libpng12-dev libpng++-dev libpng3
+
+apt-get install libpnglite-dev libpngwriter0-dev libpngwriter0c2
+
+apt-get install zlib1g-dbg zlib1g zlib1g-dev
+
+apt-get install libjasper-dev libjasper-runtime libjasper1
+
+apt-get install pngtools libtiff4-dev libtiff4 libtiffxx0c2 libtiff-tools
+
+apt-get install libjpeg8 libjpeg8-dev libjpeg8-dbg libjpeg-prog
+
+apt-get install ffmpeg libavcodec-dev libavcodec52 libavformat52 libavformat-dev
+
+apt-get install libgstreamer0.10-0-dbg libgstreamer0.10-0  libgstreamer0.10-dev
+
+apt-get install libxine1-ffmpeg  libxine-dev libxine1-bin
+
+apt-get install libunicap2 libunicap2-dev
+
+apt-get install libdc1394-22-dev libdc1394-22 libdc1394-utils
+
+apt-get install swig
+
+apt-get install libv4l-0 libv4l-dev
+
+apt-get install python-numpy
+
+apt-get install libcvaux-dev
+</code></pre>
+
+<blockquote><p>＝＝＝＝＝＝＝＝＝＝＝＝以下就是我參考的東東＝＝＝＝＝＝＝＝＝＝＝＝</p></blockquote>
+
+<p><a href="http://sikuli.org/docx/faq/010-command-line.html">How to run Sikuli from Command Line</a></p>
+
+<p><a href="http://www.samontab.com/web/2010/04/installing-opencv-2-1-in-ubuntu/">install OpenCV 2.1 in Ubuntu</a></p>
+
+<p><a href="https://answers.launchpad.net/sikuli/+faq/1110">Building Large-scale Testing framework Using Sikuli</a></p>
+
+<p><a href="http://opencv.willowgarage.com/wiki/InstallGuide%20%3A%20Debian">OpenCV Installation Guide on Debian and Ubuntu</a></p>
+
+<p><a href="http://www.51testing.com/?uid-49689-action-spacelist-type-blog-itemtypeid-19557">Sikuli+RobotFramework集成</a></p>
+
+<p><a href="http://thebitbangtheory.wordpress.com/2011/10/23/how-to-install-opencv-2-3-1-in-ubuntu-11-10-oneiric-ocelot-with-python-support/">HOW TO INSTALL OPENCV 2.3.1 IN UBUNTU 11.10 ONEIRIC OCELOT WITH PYTHON SUPPORT</a></p>
+
+<p><a href="https://answers.launchpad.net/sikuli/+question/139540">之前遇到的問題1</a></p>
+
+<p><a href="https://bugs.launchpad.net/ubuntu/+source/sikuli/+bug/829757">之前遇到問題2</a></p>
+</div>
+
+
+<div class="meta">
+	<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2011-12-17T19:41:00+08:00" pubdate data-updated="true">Dec 17<span>th</span>, 2011</time></div>
+	
+
+<div class="tags">
+
+	<a class='category' href='/blog/categories/linux/'>Linux</a>, <a class='category' href='/blog/categories/sikuli/'>Sikuli</a>
+
+</div>
+
+
+	
+		<span class="comments"><a href="/blog/2011/12/17/install-sikuli-in-ubuntu/#disqus_thread">Comments</a></span>
+	
+</div></article>
+
+	<div class="share">
+	<div class="addthis_toolbox addthis_default_style ">
+	
+	<a class="addthis_button_facebook_like" fb:like:layout="button_count"></a>
+	
+	
+	<a class="addthis_button_tweet"></a>
+	
+	
+	<a class="addthis_button_google_plusone" g:plusone:size="medium"></a>
+	
+<!---	<a class="addthis_counter addthis_pill_style"></a> --->
+	</div>
+  <script type="text/javascript" src="http://s7.addthis.com/js/250/addthis_widget.js#pubid="></script>
+</div>
+
+
+
+<section id="comment">
+    <h2 class="title">Comments</h2>
+    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+</section>
+</div>
+	<footer id="footer" class="inner">Copyright &copy; 2014
+
+    Aloha
+
+<br>
+Powered by Octopress.
+</footer>
+	<script src="/javascripts/slash.js"></script>
+<script src="/javascripts/jquery.fancybox.pack.js"></script>
+<script type="text/javascript">
+(function($){
+	$('.fancybox').fancybox();
+})(jQuery);
+</script> <!-- Delete or comment this line to disable Fancybox -->
+
+
+<script type="text/javascript">
+      var disqus_shortname = 'ccaloha';
+      
+        
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://ccaloha.cc/blog/2011/12/17/install-sikuli-in-ubuntu/';
+        var disqus_url = 'http://ccaloha.cc/blog/2011/12/17/install-sikuli-in-ubuntu/';
+        var disqus_script = 'embed.js';
+      
+    (function () {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/' + disqus_script;
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script>
+
+
+
+	<script type="text/javascript">
+		var _gaq = _gaq || [];
+		_gaq.push(['_setAccount', 'UA-29608372-1']);
+		_gaq.push(['_trackPageview']);
+
+		(function() {
+			var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+			ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+			var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+		})();
+	</script>
+
+
+<a title="Google Analytics Alternative" href="http://clicky.com/100753071"><img alt="Google Analytics Alternative" src="//static.getclicky.com/media/links/badge.gif" border="0" /></a>
+<script src="//static.getclicky.com/js" type="text/javascript"></script>
+<script type="text/javascript">try{ clicky.init(100753071); }catch(e){}</script>
+<noscript><p><img alt="Clicky" width="1" height="1" src="//in.getclicky.com/100753071ns.gif" /></p></noscript>
+
+</body>
+</html>

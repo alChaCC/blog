@@ -1,0 +1,507 @@
+
+<!DOCTYPE HTML>
+<html>
+<head>
+	<script data-cfasync="false" type="text/javascript" src="//use.typekit.net/axj3cfp.js"></script>
+	<script data-cfasync="false" type="text/javascript">try{Typekit.load();}catch(e){}</script>
+	<meta charset="utf-8">
+	<title>Try to Make Something Diff | Just For Fun |  | AlohaCC</title>
+
+<meta name="author" content="Aloha"> 
+
+<meta name="description" content="Share Ruby on Rail and all about 'Chun Yu, Chen AlohaCC'"> <meta name="keywords" content="Aloha, Ruby on Rails, Blog, Web Developer, Taiwan, Chun-Yu Chen, Design Pattern, Action Scripts, Robotframework, Sikuli">
+
+	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+	<link href="http://feeds.feedburner.com/Alohacc" rel="alternate" title="AlohaCC" type="application/atom+xml">
+	<link rel="canonical" href="">
+	<link href="/favicon.png" rel="shortcut icon">
+	<link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+	<!--[if lt IE 9]><script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
+	<script src="//ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
+	<script type="text/javascript" src="/javascripts/jquery.fancybox.pack.js"></script>
+
+<script language="Javascript" type="text/javascript">
+$(document).ready(
+  function() {
+    (function($) {
+      $(".fancybox[data-content-id]").each(function() {
+        this.href = $(this).data('content-id');
+      });
+      $(".fancybox").fancybox({
+        beforeLoad: function() {
+          var el, 
+              id = $(this.element).data('title-id');
+
+          if (id) {
+            el = $('#' + id);
+
+            if (el.length) {
+              this.title = el.html();
+            }
+          }
+          if ($(this).data('content')) {
+            this.content = $(this).data('content');
+          }
+        },
+        helpers: {
+          title: {
+            type: 'inside'
+          }
+        }
+      });
+    })(jQuery);
+  }
+);
+</script>
+
+	
+</head>
+
+
+
+<body>
+	<header id="header" class="inner"><h1><a href="/">AlohaCC</a></h1>
+<h4>Try to Make Something Diff | Just For Fun |</h4>
+<nav id="main-nav"><ul>
+	<li><a href="/">Blog</a></li>
+	<li><a href="/About">About</a></li>
+	<li><a href="/presentation">Presentation</a></li>
+  	<li><a href="/RoR">Ruby on Rails</a></li>
+  	<li><a href="/ActionScript">Action Scripts</a></li>
+  	<li><a href="/DesignPattern">Design Pattern</a></li>
+	<li><a href="/archives">Archive</a></li>
+</ul>
+</nav>
+<nav id="mobile-nav">
+	<div class="alignleft menu">
+		<a class="button">Menu</a>
+		<div class="container"><ul>
+	<li><a href="/">Blog</a></li>
+	<li><a href="/About">About</a></li>
+	<li><a href="/presentation">Presentation</a></li>
+  	<li><a href="/RoR">Ruby on Rails</a></li>
+  	<li><a href="/ActionScript">Action Scripts</a></li>
+  	<li><a href="/DesignPattern">Design Pattern</a></li>
+	<li><a href="/archives">Archive</a></li>
+</ul>
+</div>
+	</div>
+	<div class="alignright search">
+		<a class="button"></a>
+		<div class="container">
+			<form action="http://google.com/search" method="get">
+				<input type="text" name="q" results="0">
+				<input type="hidden" name="q" value="site:ccaloha.cc">
+			</form>
+		</div>
+	</div>
+</nav>
+
+
+</header>
+
+	<div id="content" class="inner">
+
+
+    <article class="post">
+	<h2 class="title">
+		
+		<a href="/blog/2012/08/10/learning-on-ruby-on-rails-tutorial-ch10-user-microposts/">
+		
+			Learning on Ruby on Rails Tutorial-CH10 User Microposts</a>
+	</h2>
+	<div class="entry-content">
+		<p>這一章節，我們會完成User的微網誌！使用<strong>has_many</strong>和<strong>belongs_to</strong>的資料庫關聯性，來看每個user的po文</p>
+
+<p>一開始，我都會先這樣</p>
+
+<pre><code>$ cd /你的路徑/
+
+# 先用mate指令打開專案
+$ mate sample_app   
+
+$ cd sample_app
+
+# 看看目前有哪些gemset
+$ rvm gemset list 
+$ rvm gemset use rails3tutorial2ndEd
+</code></pre>
+
+<p>OK來開始第十章吧！</p>
+
+
+		
+		<a href="/blog/2012/08/10/learning-on-ruby-on-rails-tutorial-ch10-user-microposts/" class="more-link">Read on &rarr;</a>
+	</div>
+
+
+<div class="meta">
+	<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2012-08-10T11:09:00+08:00" pubdate data-updated="true">Aug 10<span>th</span>, 2012</time></div>
+	
+
+<div class="tags">
+
+	<a class='category' href='/blog/categories/reading/'>Reading</a>, <a class='category' href='/blog/categories/ruby-on-rails/'>Ruby_on_Rails</a>
+
+</div>
+
+
+	
+		<span class="comments"><a href="/blog/2012/08/10/learning-on-ruby-on-rails-tutorial-ch10-user-microposts//blog/page/4/index.html#disqus_thread">Comments</a></span>
+	
+</div></article>
+
+
+    <article class="post">
+	<h2 class="title">
+		
+		<a href="/blog/2012/08/10/learning-on-ruby-on-rails-tutorial-ch9-updating/">
+		
+			Learning on Ruby on Rails Tutorial-CH9 Updating , Showing , and Deleting Users</a>
+	</h2>
+	<div class="entry-content">
+		<p> 這章會完成Users的REST動作，<strong>edit</strong>、<strong>update</strong>、<strong>index</strong>、<strong>destroy</strong></p>
+
+<p> 廢話不多說，從做中學！</p>
+
+<pre><code>$ git checkout -b updating-users
+</code></pre>
+
+<h2>修改使用者</h2>
+
+<p>修改其實很像新增，和新增不同的地方在於</p>
+
+<p>new是對server提出POST的要求，但是update這個動作是提出PUT這個要求</p>
+
+<p>還有一個最大的差別，就是所有人都可以註冊，但是update動作，只能給已經登入的user使用！</p>
+
+
+		
+		<a href="/blog/2012/08/10/learning-on-ruby-on-rails-tutorial-ch9-updating/" class="more-link">Read on &rarr;</a>
+	</div>
+
+
+<div class="meta">
+	<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2012-08-10T11:07:00+08:00" pubdate data-updated="true">Aug 10<span>th</span>, 2012</time></div>
+	
+
+<div class="tags">
+
+	<a class='category' href='/blog/categories/reading/'>Reading</a>, <a class='category' href='/blog/categories/ruby-on-rails/'>Ruby_on_Rails</a>
+
+</div>
+
+
+	
+		<span class="comments"><a href="/blog/2012/08/10/learning-on-ruby-on-rails-tutorial-ch9-updating//blog/page/4/index.html#disqus_thread">Comments</a></span>
+	
+</div></article>
+
+
+    <article class="post">
+	<h2 class="title">
+		
+		<a href="/blog/2012/08/10/learning-on-ruby-on-rails-tutorial-ch8-sign-in/">
+		
+			Learning on Ruby on Rails Tutorial-CH8 Sign In</a>
+	</h2>
+	<div class="entry-content">
+		<p>上一章已經可以成功註冊使用者，接下來就是要到登入登出的部分！</p>
+
+<p>一樣在開始之前，我們先開Branch</p>
+
+<pre><code>$ git checkout -b sign-in-out
+</code></pre>
+
+<h2>Session 和登入錯誤</h2>
+
+<p>Session 就是半永久存在於兩台電腦，就像用戶端跑browser和伺服器端跑rails</p>
+
+<p>我們會使用session來實作&#8221;Sign in&#8221;還有&#8221;forgetting&#8221;(當你關掉瀏覽器)，&#8221;remember me&#8221;這個check box保存session，&#8221;forever&#8221;（除非使用者自己清，不然會一直保存）</p>
+
+<p>我們可以把session看成RESTful resource的觀念，我們有一個登入的頁面，登入成功時他會有新的session，當他登出時， session會被清掉。不像User那樣，他會利用後端資料庫保存資料，然而session是使用<strong>cookie</strong>(是user瀏覽器那邊一小塊文字)。Sign in會用到的動作，大多都是基於<strong>cookie</strong>的認證機制！</p>
+
+
+		
+		<a href="/blog/2012/08/10/learning-on-ruby-on-rails-tutorial-ch8-sign-in/" class="more-link">Read on &rarr;</a>
+	</div>
+
+
+<div class="meta">
+	<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2012-08-10T11:05:00+08:00" pubdate data-updated="true">Aug 10<span>th</span>, 2012</time></div>
+	
+
+<div class="tags">
+
+	<a class='category' href='/blog/categories/reading/'>Reading</a>, <a class='category' href='/blog/categories/ruby-on-rails/'>Ruby_on_Rails</a>
+
+</div>
+
+
+	
+		<span class="comments"><a href="/blog/2012/08/10/learning-on-ruby-on-rails-tutorial-ch8-sign-in//blog/page/4/index.html#disqus_thread">Comments</a></span>
+	
+</div></article>
+
+
+    <article class="post">
+	<h2 class="title">
+		
+		<a href="/blog/2012/08/10/learning-on-ruby-on-rails-tutorial-ch7-sign-up/">
+		
+			Learning on Ruby on Rails Tutorial-CH7 Sign Up</a>
+	</h2>
+	<div class="entry-content">
+		<p>在開始之前，先來</p>
+
+<pre><code>$ git checkout master
+$ git checkout -b sign-up
+</code></pre>
+
+<h3>Debug and Rail 環境</h3>
+
+<p>等一下我們要加入動態網頁！ 所以我們先來加一些debug mode 在網頁上</p>
+
+
+		
+		<a href="/blog/2012/08/10/learning-on-ruby-on-rails-tutorial-ch7-sign-up/" class="more-link">Read on &rarr;</a>
+	</div>
+
+
+<div class="meta">
+	<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2012-08-10T11:02:00+08:00" pubdate data-updated="true">Aug 10<span>th</span>, 2012</time></div>
+	
+
+<div class="tags">
+
+	<a class='category' href='/blog/categories/reading/'>Reading</a>, <a class='category' href='/blog/categories/ruby-on-rails/'>Ruby_on_Rails</a>
+
+</div>
+
+
+	
+		<span class="comments"><a href="/blog/2012/08/10/learning-on-ruby-on-rails-tutorial-ch7-sign-up//blog/page/4/index.html#disqus_thread">Comments</a></span>
+	
+</div></article>
+
+
+    <article class="post">
+	<h2 class="title">
+		
+		<a href="/blog/2012/08/10/learning-on-ruby-on-rails-tutorial-ch6-user-model/">
+		
+			Learning on Ruby on Rails Tutorial-CH6 User Model</a>
+	</h2>
+	<div class="entry-content">
+		<p>Sorry 最近有點忙碌 一口氣補完全部好了～</p>
+
+<p>當然一開始</p>
+
+<p>我們來開一個Branch吧</p>
+
+<pre><code>git checkout -b modeling-users
+</code></pre>
+
+<p>讓我們來gen出user model吧</p>
+
+<pre><code>rails generate model User name:string email:string
+</code></pre>
+
+<p>耶～ 建出了db/migrate/[時間註記]_create_users.rb</p>
+
+
+		
+		<a href="/blog/2012/08/10/learning-on-ruby-on-rails-tutorial-ch6-user-model/" class="more-link">Read on &rarr;</a>
+	</div>
+
+
+<div class="meta">
+	<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2012-08-10T10:59:00+08:00" pubdate data-updated="true">Aug 10<span>th</span>, 2012</time></div>
+	
+
+<div class="tags">
+
+	<a class='category' href='/blog/categories/reading/'>Reading</a>, <a class='category' href='/blog/categories/ruby-on-rails/'>Ruby_on_Rails</a>
+
+</div>
+
+
+	
+		<span class="comments"><a href="/blog/2012/08/10/learning-on-ruby-on-rails-tutorial-ch6-user-model//blog/page/4/index.html#disqus_thread">Comments</a></span>
+	
+</div></article>
+
+
+    <article class="post">
+	<h2 class="title">
+		
+		<a href="/blog/2012/07/06/howto-using-facebook-graph-api-flash-graphapi-web-post-message-to-your-facebook/">
+		
+			[HowTo] Using Facebook Graph API (Flash - GraphAPI_Web) Post Message to Your FaceBook</a>
+	</h2>
+	<div class="entry-content">
+		<blockquote><p>這個教學，是基於網站架立在Amazon Web Service (Using Suse)</p>
+
+<p>然後用Flash Developer 建立一個Flash的網頁版應用</p></blockquote>
+
+<p>他的功能是：</p>
+
+<blockquote><p>取得使用者的允許後，可以直接發文章到Facebook</p>
+
+<p>(可自行延伸其他應用)</p></blockquote>
+
+
+		
+		<a href="/blog/2012/07/06/howto-using-facebook-graph-api-flash-graphapi-web-post-message-to-your-facebook/" class="more-link">Read on &rarr;</a>
+	</div>
+
+
+<div class="meta">
+	<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2012-07-06T14:20:00+08:00" pubdate data-updated="true">Jul 6<span>th</span>, 2012</time></div>
+	
+
+<div class="tags">
+
+	<a class='category' href='/blog/categories/as3/'>AS3</a>, <a class='category' href='/blog/categories/facebook/'>Facebook</a>
+
+</div>
+
+
+	
+		<span class="comments"><a href="/blog/2012/07/06/howto-using-facebook-graph-api-flash-graphapi-web-post-message-to-your-facebook//blog/page/4/index.html#disqus_thread">Comments</a></span>
+	
+</div></article>
+
+<nav id="pagenavi">
+    
+        <a href="/blog/page/3/" class="prev">Prev</a>
+    
+    
+        <a href="/blog/page/5/" class="next">Next</a>
+    
+    <div class="center"><a href="/archives">Blog Archives</a></div>
+</nav></div>
+	<footer id="footer" class="inner">Copyright &copy; 2014
+
+    Aloha
+
+<br>
+Powered by Octopress.
+</footer>
+	<script src="/javascripts/slash.js"></script>
+<script src="/javascripts/jquery.fancybox.pack.js"></script>
+<script type="text/javascript">
+(function($){
+	$('.fancybox').fancybox();
+})(jQuery);
+</script> <!-- Delete or comment this line to disable Fancybox -->
+
+
+<script type="text/javascript">
+      var disqus_shortname = 'ccaloha';
+      
+        
+        var disqus_script = 'count.js';
+      
+    (function () {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/' + disqus_script;
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script>
+
+
+
+	<script type="text/javascript">
+		var _gaq = _gaq || [];
+		_gaq.push(['_setAccount', 'UA-29608372-1']);
+		_gaq.push(['_trackPageview']);
+
+		(function() {
+			var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+			ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+			var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+		})();
+	</script>
+
+
+<a title="Google Analytics Alternative" href="http://clicky.com/100753071"><img alt="Google Analytics Alternative" src="//static.getclicky.com/media/links/badge.gif" border="0" /></a>
+<script src="//static.getclicky.com/js" type="text/javascript"></script>
+<script type="text/javascript">try{ clicky.init(100753071); }catch(e){}</script>
+<noscript><p><img alt="Clicky" width="1" height="1" src="//in.getclicky.com/100753071ns.gif" /></p></noscript>
+
+</body>
+</html>

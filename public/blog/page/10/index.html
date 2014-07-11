@@ -1,0 +1,497 @@
+
+<!DOCTYPE HTML>
+<html>
+<head>
+	<script data-cfasync="false" type="text/javascript" src="//use.typekit.net/axj3cfp.js"></script>
+	<script data-cfasync="false" type="text/javascript">try{Typekit.load();}catch(e){}</script>
+	<meta charset="utf-8">
+	<title>Try to Make Something Diff | Just For Fun |  | AlohaCC</title>
+
+<meta name="author" content="Aloha"> 
+
+<meta name="description" content="Share Ruby on Rail and all about 'Chun Yu, Chen AlohaCC'"> <meta name="keywords" content="Aloha, Ruby on Rails, Blog, Web Developer, Taiwan, Chun-Yu Chen, Design Pattern, Action Scripts, Robotframework, Sikuli">
+
+	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+	<link href="http://feeds.feedburner.com/Alohacc" rel="alternate" title="AlohaCC" type="application/atom+xml">
+	<link rel="canonical" href="">
+	<link href="/favicon.png" rel="shortcut icon">
+	<link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+	<!--[if lt IE 9]><script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
+	<script src="//ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
+	<script type="text/javascript" src="/javascripts/jquery.fancybox.pack.js"></script>
+
+<script language="Javascript" type="text/javascript">
+$(document).ready(
+  function() {
+    (function($) {
+      $(".fancybox[data-content-id]").each(function() {
+        this.href = $(this).data('content-id');
+      });
+      $(".fancybox").fancybox({
+        beforeLoad: function() {
+          var el, 
+              id = $(this.element).data('title-id');
+
+          if (id) {
+            el = $('#' + id);
+
+            if (el.length) {
+              this.title = el.html();
+            }
+          }
+          if ($(this).data('content')) {
+            this.content = $(this).data('content');
+          }
+        },
+        helpers: {
+          title: {
+            type: 'inside'
+          }
+        }
+      });
+    })(jQuery);
+  }
+);
+</script>
+
+	
+</head>
+
+
+
+<body>
+	<header id="header" class="inner"><h1><a href="/">AlohaCC</a></h1>
+<h4>Try to Make Something Diff | Just For Fun |</h4>
+<nav id="main-nav"><ul>
+	<li><a href="/">Blog</a></li>
+	<li><a href="/About">About</a></li>
+	<li><a href="/presentation">Presentation</a></li>
+  	<li><a href="/RoR">Ruby on Rails</a></li>
+  	<li><a href="/ActionScript">Action Scripts</a></li>
+  	<li><a href="/DesignPattern">Design Pattern</a></li>
+	<li><a href="/archives">Archive</a></li>
+</ul>
+</nav>
+<nav id="mobile-nav">
+	<div class="alignleft menu">
+		<a class="button">Menu</a>
+		<div class="container"><ul>
+	<li><a href="/">Blog</a></li>
+	<li><a href="/About">About</a></li>
+	<li><a href="/presentation">Presentation</a></li>
+  	<li><a href="/RoR">Ruby on Rails</a></li>
+  	<li><a href="/ActionScript">Action Scripts</a></li>
+  	<li><a href="/DesignPattern">Design Pattern</a></li>
+	<li><a href="/archives">Archive</a></li>
+</ul>
+</div>
+	</div>
+	<div class="alignright search">
+		<a class="button"></a>
+		<div class="container">
+			<form action="http://google.com/search" method="get">
+				<input type="text" name="q" results="0">
+				<input type="hidden" name="q" value="site:ccaloha.cc">
+			</form>
+		</div>
+	</div>
+</nav>
+
+
+</header>
+
+	<div id="content" class="inner">
+
+
+    <article class="post">
+	<h2 class="title">
+		
+		<a href="/blog/2011/12/11/my-learning-ror-project-day-5-add-wep-app-theme-feature/">
+		
+			我的RoR學習專案-Day 5 使用wep-app-theme功能</a>
+	</h2>
+	<div class="entry-content">
+		<p>突然覺得我的網站，好醜&#8230;. <br/>
+現在我想要開發我的view！！！
+首先我要先開新的branch</p>
+
+<pre><code>git flow feature start add_web_app_theme_feature
+</code></pre>
+
+<p>OK 開始try and error吧～</p>
+
+
+		
+		<a href="/blog/2011/12/11/my-learning-ror-project-day-5-add-wep-app-theme-feature/" class="more-link">Read on &rarr;</a>
+	</div>
+
+
+<div class="meta">
+	<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2011-12-11T21:11:00+08:00" pubdate data-updated="true">Dec 11<span>th</span>, 2011</time></div>
+	
+
+<div class="tags">
+
+	<a class='category' href='/blog/categories/ruby-on-rails/'>Ruby_on_Rails</a>
+
+</div>
+
+
+	
+		<span class="comments"><a href="/blog/2011/12/11/my-learning-ror-project-day-5-add-wep-app-theme-feature//blog/page/10/index.html#disqus_thread">Comments</a></span>
+	
+</div></article>
+
+
+    <article class="post">
+	<h2 class="title">
+		
+		<a href="/blog/2011/12/10/my-learning-ror-project-day-4-add-admin/">
+		
+			我的RoR學習專案-Day 4 增加 Admin功能</a>
+	</h2>
+	<div class="entry-content">
+		<p>我們要如何讓使用者只能編輯或刪除自己的文章而不是別人的文章～</p>
+
+<p>首先我想應該先增加post的一個欄位～乃發佈文章人的id</p>
+
+<pre><code>rails g migration add_user_id_to_post
+</code></pre>
+
+
+		
+		<a href="/blog/2011/12/10/my-learning-ror-project-day-4-add-admin/" class="more-link">Read on &rarr;</a>
+	</div>
+
+
+<div class="meta">
+	<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2011-12-10T16:34:00+08:00" pubdate data-updated="true">Dec 10<span>th</span>, 2011</time></div>
+	
+
+<div class="tags">
+
+	<a class='category' href='/blog/categories/ruby-on-rails/'>Ruby_on_Rails</a>
+
+</div>
+
+
+	
+		<span class="comments"><a href="/blog/2011/12/10/my-learning-ror-project-day-4-add-admin//blog/page/10/index.html#disqus_thread">Comments</a></span>
+	
+</div></article>
+
+
+    <article class="post">
+	<h2 class="title">
+		
+		<a href="/blog/2011/12/10/my-learning-ror-project-day-3-mail-function/">
+		
+			我的RoR學習專案-Day 3-註冊並加上mail註冊信的功能</a>
+	</h2>
+	<div class="entry-content">
+		<h2>註冊並加上mail註冊信的功能</h2>
+
+<p>開始上工～別忘了上工第一件事 開</p>
+
+<pre><code>git flow feature start user_register_and_manager
+</code></pre>
+
+<p>這句話就代表我現在在feature/user_register_and_manager的版本開發中</p>
+
+<p>開工啦～</p>
+
+
+		
+		<a href="/blog/2011/12/10/my-learning-ror-project-day-3-mail-function/" class="more-link">Read on &rarr;</a>
+	</div>
+
+
+<div class="meta">
+	<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2011-12-10T15:46:00+08:00" pubdate data-updated="true">Dec 10<span>th</span>, 2011</time></div>
+	
+
+<div class="tags">
+
+	<a class='category' href='/blog/categories/ruby-on-rails/'>Ruby_on_Rails</a>
+
+</div>
+
+
+	
+		<span class="comments"><a href="/blog/2011/12/10/my-learning-ror-project-day-3-mail-function//blog/page/10/index.html#disqus_thread">Comments</a></span>
+	
+</div></article>
+
+
+    <article class="post">
+	<h2 class="title">
+		
+		<a href="/blog/2011/12/05/install-and-regist-mysql-php-apache-in-amazon-ec2/">
+		
+			申請安裝Apache,PHP,MySQL在Amazon Web Service-EC2 - 筆記</a>
+	</h2>
+	<div class="entry-content">
+		<h3>請到amazon web service 申請 EC2 ，申請太多教學了，請參考</h3>
+
+<p>   <a href="http://blog.soft.idv.tw/?p=823">什麼是雲端服務？阿正老師教你免費玩Amazon EC2雲端主機！(上篇)</a></p>
+
+<p>   <a href="http://blog.soft.idv.tw/?p=824">阿正老師教你免費玩Amazon EC2雲端主機(下篇)：主機實戰篇</a></p>
+
+<p>不過，我是手賤點了SuSE的image，另外我有先開了</p>
+
+<pre><code>22的port  (ssh用)
+
+80的port  (http用)
+
+443的port (https用)
+</code></pre>
+
+
+		
+		<a href="/blog/2011/12/05/install-and-regist-mysql-php-apache-in-amazon-ec2/" class="more-link">Read on &rarr;</a>
+	</div>
+
+
+<div class="meta">
+	<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2011-12-05T23:11:00+08:00" pubdate data-updated="true">Dec 5<span>th</span>, 2011</time></div>
+	
+
+<div class="tags">
+
+	<a class='category' href='/blog/categories/aws/'>AWS</a>, <a class='category' href='/blog/categories/linux/'>Linux</a>
+
+</div>
+
+
+	
+		<span class="comments"><a href="/blog/2011/12/05/install-and-regist-mysql-php-apache-in-amazon-ec2//blog/page/10/index.html#disqus_thread">Comments</a></span>
+	
+</div></article>
+
+
+    <article class="post">
+	<h2 class="title">
+		
+		<a href="/blog/2011/11/29/how-to-upload-photo-to-flickr-using-flickraw-using-file-field-tag/">
+		
+			How to Upload Photo to Flickr Using Flickraw - Using File_field_tag</a>
+	</h2>
+	<div class="entry-content">
+		<h2>真是太感動啦！！！</h2>
+
+<p>這個問題，卡了我超久，至少三個禮拜跑不掉&#8230;.就像卡到陰一樣</p>
+
+<p>問過PTT也問過Stackoverflow，不過還是沒有solution阿！</p>
+
+<p>為了解這個問題，把程式碼改寫了一遍</p>
+
+<p>也因此搞懂了一些似懂非懂的東西（但是不知道是不是觀念正確ＸＤ）</p>
+
+<h3>沒錯~就是剛剛!!!</h3>
+
+
+		
+		<a href="/blog/2011/11/29/how-to-upload-photo-to-flickr-using-flickraw-using-file-field-tag/" class="more-link">Read on &rarr;</a>
+	</div>
+
+
+<div class="meta">
+	<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2011-11-29T23:22:00+08:00" pubdate data-updated="true">Nov 29<span>th</span>, 2011</time></div>
+	
+
+<div class="tags">
+
+	<a class='category' href='/blog/categories/ruby-on-rails/'>Ruby_on_Rails</a>
+
+</div>
+
+
+	
+		<span class="comments"><a href="/blog/2011/11/29/how-to-upload-photo-to-flickr-using-flickraw-using-file-field-tag//blog/page/10/index.html#disqus_thread">Comments</a></span>
+	
+</div></article>
+
+
+    <article class="post">
+	<h2 class="title">
+		
+		<a href="/blog/2011/11/23/rf-sshlibrary-memo/">
+		
+			RF-SSHLibrary 大突破！</a>
+	</h2>
+	<div class="entry-content">
+		<p>話說這幾天克服了很多問題！</p>
+
+<p>趕快趁記憶還沒退化筆記筆記</p>
+
+<p><em>a. 改變輸出檔案位置和檔名</em></p>
+
+<p>這邊我是寫成一個run.sh檔</p>
+
+<p>目的是希望可以簡單的一行指令就可以按造我的設定設定檔名和存放位置</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>OUTDIR=Aloha/TestCases
+</span><span class='line'>COMMON_FLAGS="-d $OUTDIR"
+</span><span class='line'>pybot $COMMON_FLAGS -l Aloha_log -r Aloha_report -o Aloha_output $* TestCases</span></code></pre></td></tr></table></div></figure>
+
+
+
+
+
+		
+		<a href="/blog/2011/11/23/rf-sshlibrary-memo/" class="more-link">Read on &rarr;</a>
+	</div>
+
+
+<div class="meta">
+	<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2011-11-23T00:20:00+08:00" pubdate data-updated="true">Nov 23<span>rd</span>, 2011</time></div>
+	
+
+<div class="tags">
+
+	<a class='category' href='/blog/categories/robotframework/'>RobotFramework</a>
+
+</div>
+
+
+	
+		<span class="comments"><a href="/blog/2011/11/23/rf-sshlibrary-memo//blog/page/10/index.html#disqus_thread">Comments</a></span>
+	
+</div></article>
+
+<nav id="pagenavi">
+    
+        <a href="/blog/page/9/" class="prev">Prev</a>
+    
+    
+        <a href="/blog/page/11/" class="next">Next</a>
+    
+    <div class="center"><a href="/archives">Blog Archives</a></div>
+</nav></div>
+	<footer id="footer" class="inner">Copyright &copy; 2014
+
+    Aloha
+
+<br>
+Powered by Octopress.
+</footer>
+	<script src="/javascripts/slash.js"></script>
+<script src="/javascripts/jquery.fancybox.pack.js"></script>
+<script type="text/javascript">
+(function($){
+	$('.fancybox').fancybox();
+})(jQuery);
+</script> <!-- Delete or comment this line to disable Fancybox -->
+
+
+<script type="text/javascript">
+      var disqus_shortname = 'ccaloha';
+      
+        
+        var disqus_script = 'count.js';
+      
+    (function () {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/' + disqus_script;
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script>
+
+
+
+	<script type="text/javascript">
+		var _gaq = _gaq || [];
+		_gaq.push(['_setAccount', 'UA-29608372-1']);
+		_gaq.push(['_trackPageview']);
+
+		(function() {
+			var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+			ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+			var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+		})();
+	</script>
+
+
+<a title="Google Analytics Alternative" href="http://clicky.com/100753071"><img alt="Google Analytics Alternative" src="//static.getclicky.com/media/links/badge.gif" border="0" /></a>
+<script src="//static.getclicky.com/js" type="text/javascript"></script>
+<script type="text/javascript">try{ clicky.init(100753071); }catch(e){}</script>
+<noscript><p><img alt="Clicky" width="1" height="1" src="//in.getclicky.com/100753071ns.gif" /></p></noscript>
+
+</body>
+</html>

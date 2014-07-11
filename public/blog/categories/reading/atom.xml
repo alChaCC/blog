@@ -1,0 +1,5093 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: Reading | AlohaCC]]></title>
+  <link href="http://ccaloha.cc/blog/categories/reading/atom.xml" rel="self"/>
+  <link href="http://ccaloha.cc/"/>
+  <updated>2014-07-11T19:53:39+08:00</updated>
+  <id>http://ccaloha.cc/</id>
+  <author>
+    <name><![CDATA[Aloha]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[Learning on Ruby on Rails Tutorial-CH10 User microposts]]></title>
+    <link href="http://ccaloha.cc/blog/2012/08/10/learning-on-ruby-on-rails-tutorial-ch10-user-microposts/"/>
+    <updated>2012-08-10T11:09:00+08:00</updated>
+    <id>http://ccaloha.cc/blog/2012/08/10/learning-on-ruby-on-rails-tutorial-ch10-user-microposts</id>
+    <content type="html"><![CDATA[<p>這一章節，我們會完成User的微網誌！使用<strong>has_many</strong>和<strong>belongs_to</strong>的資料庫關聯性，來看每個user的po文</p>
+
+<p>一開始，我都會先這樣</p>
+
+<pre><code>$ cd /你的路徑/
+
+# 先用mate指令打開專案
+$ mate sample_app   
+
+$ cd sample_app
+
+# 看看目前有哪些gemset
+$ rvm gemset list 
+$ rvm gemset use rails3tutorial2ndEd
+</code></pre>
+
+<p>OK來開始第十章吧！</p>
+
+<!--more-->
+
+
+<p></p>
+
+<pre><code>$ git checkout -b user-microposts
+</code></pre>
+
+<h2>A Micropost model</h2>
+
+<h3>The basic model</h3>
+
+<p>先到model的部份，這個model很簡單，先把需要用的東東(發文內容和是哪個user)建起來，</p>
+
+<pre><code>$ rails generate model Micropost content:string user_id:integer
+</code></pre>
+
+<p>看一下剛剛gem出來的檔案，並且加上我們需要的功能</p>
+
+<p><strong>db/migrate/[timestamp]_create_microposts.rb</strong></p>
+
+<pre><code>class CreateMicroposts &lt; ActiveRecord::Migration
+  def change
+    create_table :microposts do |t|
+      t.string :content
+      t.integer :user_id
+
+      t.timestamps
+    end
+    add_index :microposts, [:user_id, :created_at]
+  end
+end
+</code></pre>
+
+<p>因為我們希望可以透過user_id取得所有microposts，並且可以依照時間排序，所以才多加一個<strong>add_index :microposts, [:user_id, :created_at]</strong></p>
+
+<p>寫測試摟</p>
+
+<p><strong>spec/models/micropost_spec.rb</strong></p>
+
+<pre><code>require 'spec_helper'
+
+describe Micropost do
+  let(:user) { FactoryGirl.create(:user) }
+   before do
+     # This code is wrong!
+     @micropost = Micropost.new(content: "Lorem ipsum", user_id: user.id)
+   end
+
+   subject { @micropost }
+
+   it { should respond_to(:content) }
+   it { should respond_to(:user_id) }
+
+end
+</code></pre>
+
+<p>跑指令，這樣應該是可以work的！</p>
+
+<pre><code>$ bundle exec rake db:migrate
+$ bundle exec rake db:test:prepare
+$ bundle exec rspec spec/models/micropost_spec.rb
+</code></pre>
+
+<p>雖然會pass不過有段程式 有問題！ 會在下章解答why</p>
+
+<h3>Accessible attributes and the first validation</h3>
+
+<p>為了要知道為甚麼這些有錯</p>
+
+<p>我們來繼續寫測試！</p>
+
+<p><strong>spec/models/micropost_spec.rb</strong></p>
+
+<p>補上</p>
+
+<pre><code>it { should be_valid }
+
+  describe "when user_id is not present" do
+    before { @micropost.user_id = nil }
+    it { should_not be_valid }
+  end
+</code></pre>
+
+<p>這段程式碼，要求micropost必須有效，而且<strong>user_id</strong>也必須要存在！</p>
+
+<p>我們可以在<strong>app/models/micropost.rb</strong>加上一些話就可以確保測試會通過</p>
+
+<pre><code>class Micropost &lt; ActiveRecord::Base
+  attr_accessible :content, :user_id  
+  validates :user_id, presence: true
+end
+</code></pre>
+
+<p>現在我們來看為什麼這句話是錯的！</p>
+
+<pre><code>@micropost = Micropost.new(content: "Lorem ipsum", user_id: user.id)
+</code></pre>
+
+<p>其實是因為預設所有的Micropost的屬性都是accessible</p>
+
+<p>也就是說所有人都可以使用CLI發出不合法的要求，去改值，所以如果我故意改了文章的user_id他就會指錯使用者！ 也就是說，如果當我們把<strong>attr_accessible :user_id</strong>拿掉，剛剛的測試就會出現錯誤！！ 我們會在下一章解決這問題！</p>
+
+<h3>User/Micropost associations</h3>
+
+<p>先來說一下狀況，基本上 micropost <strong>belongs_to</strong> user</p>
+
+<p>另外，user <strong>has_many</strong> microposts</p>
+
+<p>因為這個關聯性，我們可以整理出一張表格！</p>
+
+<p>Method
+&nbsp;
+&nbsp;
+&nbsp;
+&nbsp;
+&nbsp;
+&nbsp;
+&nbsp;
+&nbsp;
+&nbsp;
+Purpose</p>
+
+<p>===========================================================</p>
+
+<p>micropost.user
+&nbsp;
+&nbsp;
+&nbsp;
+&nbsp;
+&nbsp;
+&nbsp;
+&nbsp;
+&nbsp;
+&nbsp;
+Return the User object associated with the micropost.</p>
+
+<p>user.microposts
+&nbsp;
+&nbsp;
+&nbsp;
+&nbsp;
+&nbsp;
+&nbsp;
+&nbsp;
+&nbsp;
+&nbsp;
+Return an array of the user’s microposts.</p>
+
+<p>user.microposts.create(arg)  <br/>
+&nbsp;
+&nbsp;
+&nbsp;
+&nbsp;
+&nbsp;
+&nbsp;
+&nbsp;
+&nbsp;
+&nbsp;
+Create a micropost (user_id = user.id).</p>
+
+<p>user.microposts.create!(arg)  <br/>
+&nbsp;
+&nbsp;
+&nbsp;
+&nbsp;
+&nbsp;
+&nbsp;
+&nbsp;
+&nbsp;
+&nbsp;
+Create a micropost (exception on failure).</p>
+
+<p>user.microposts.build(arg)
+&nbsp;
+&nbsp;
+&nbsp;
+&nbsp;
+&nbsp;
+&nbsp;
+&nbsp;
+&nbsp;
+&nbsp;
+Return a new Micropost object (user_id = user.id).</p>
+
+<p>注意歐！這邊我們沒有</p>
+
+<pre><code>Micropost.create
+Micropost.create!
+Micropost.new
+</code></pre>
+
+<p>而是</p>
+
+<pre><code>user.microposts.create
+user.microposts.create!
+user.microposts.build
+</code></pre>
+
+<p>這個才是合法的寫法，因為關聯性，所以我們在建立micropost時，是會自動幫你把user_id帶入！所以測試可以改成這樣</p>
+
+<pre><code>let(:user) { FactoryGirl.create(:user) }
+before { @micropost = user.microposts.build(content: "Lorem ipsum") }
+</code></pre>
+
+<p>透過關聯性建立micropost，並沒有解決user_id可以被accessible的安全性問題！</p>
+
+<p>所以…我們先來寫個測試！加到<strong>describe Micropost do</strong>區塊內</p>
+
+<pre><code> describe "accessible attributes" do
+       it "should not allow access to user_id" do
+         expect do
+           Micropost.new(user_id: user.id)
+         end.should raise_error(ActiveModel::MassAssignmentSecurity::Error)
+       end    
+  end
+</code></pre>
+
+<p>這個測試可以發出error訊息！</p>
+
+<p>但是在Rails 3.2.3預設是有開啓的！但是其它舊版本並沒有，所以為了確保這是可用的！</p>
+
+<p><strong>config/application.rb</strong>把下面那串un-mark掉</p>
+
+<pre><code> config.active_record.whitelist_attributes = true
+</code></pre>
+
+<p>在網頁上，實際能編輯的只有<strong>content</strong>屬性而已！所以我們應該要把<strong>attr_accessible :user_id</strong>拿掉！</p>
+
+<p>變成</p>
+
+<pre><code>class Micropost &lt; ActiveRecord::Base
+    attr_accessible :content
+    validates :user_id, presence: true
+end
+</code></pre>
+
+<p>再來我們來寫測試micropost的關聯性的測試！</p>
+
+<p>整體來說是這樣</p>
+
+<p><strong>spec/models/micropost_spec.rb</strong></p>
+
+<pre><code>require 'spec_helper'
+
+describe Micropost do
+
+  let(:user) { FactoryGirl.create(:user) }
+  before { @micropost = user.microposts.build(content: "Lorem ipsum") }
+
+  subject { @micropost }
+
+  it { should respond_to(:content) }
+  it { should respond_to(:user_id) }
+  it { should respond_to(:user) }
+  its(:user) { should == user }
+
+  it { should be_valid }
+
+  describe "accessible attributes" do
+    it "should not allow access to user_id" do
+      expect do
+        Micropost.new(user_id: user.id)
+      end.should raise_error(ActiveModel::MassAssignmentSecurity::Error)
+    end    
+  end
+
+  describe "when user_id is not present" do
+    before { @micropost.user_id = nil }
+    it { should_not be_valid }
+  end
+end
+</code></pre>
+
+<p>別忘了我們user這邊也要測試！</p>
+
+<p>首先user必須要有<strong>microposts</strong></p>
+
+<p><strong>spec/models/user_spec.rb</strong> 加上一句話</p>
+
+<pre><code>it { should respond_to(:microposts) }
+</code></pre>
+
+<p>完成後！ 剩下最後一步驟！在兩個model加上關聯性！</p>
+
+<p><strong>app/models/micropost.rb</strong></p>
+
+<pre><code>class Micropost &lt; ActiveRecord::Base
+  attr_accessible :content
+  belongs_to :user
+
+  validates :user_id, presence: true  
+end
+</code></pre>
+
+<p><strong>app/models/user.rb</strong></p>
+
+<pre><code>class User &lt; ActiveRecord::Base
+  attr_accessible :name, :email, :password, :password_confirmation
+  has_secure_password
+  has_many :microposts
+  .
+  .
+  .
+end
+</code></pre>
+
+<p>執行測試吧</p>
+
+<pre><code>$ bundle exec rspec spec/models
+</code></pre>
+
+<h3>Micropost refinements</h3>
+
+<p>此章節，我們必須要驗證到microposts的排序以及相依性</p>
+
+<p>在這之前要先產生一堆資料</p>
+
+<p>先定義好在<strong>spec/factories.rb</strong>，然後再呼叫…</p>
+
+<pre><code>FactoryGirl.define do
+  factory :user do
+    sequence(:name)  { |n| "Person #{n}" }
+    sequence(:email) { |n| "person_#{n}@example.com"}   
+    password "foobar"
+    password_confirmation "foobar"
+
+    factory :admin do
+      admin true
+    end
+  end
+
+  factory :micropost do
+    content "Aloha is so handsome"
+    user
+  end
+end
+</code></pre>
+
+<p>有一個地方要注意，因為那個<strong>user</strong>所以FactoryGirl知道這個micropost是屬於user的！</p>
+
+<p>所以等一下要用可以這樣用</p>
+
+<pre><code>FactoryGirl.create(:micropost, user: @user, created_at: 1.day.ago)
+</code></pre>
+
+<p>為了要讓資料有先後順序，我們打算以create時間來做排序，但是大多是資料庫，取資料時，都是以id為排序依據，所以在測試時，我們會改<strong>let</strong>變成<strong>lets</strong></p>
+
+<p>let!:   讓變數立即產生</p>
+
+<p>let:    只有在refecence時，才會使變數存在</p>
+
+<p><strong>spec/models/user_spec.rb</strong> 加在<strong>describe User do</strong>區塊內</p>
+
+<pre><code>describe "micropost associations" do
+
+    before { @user.save }
+    let!(:older_micropost) do 
+      FactoryGirl.create(:micropost, user: @user, created_at: 1.day.ago)
+    end
+    let!(:newer_micropost) do
+      FactoryGirl.create(:micropost, user: @user, created_at: 1.hour.ago)
+    end
+
+    it "should have the right microposts in the right order" do
+      @user.microposts.should == [newer_micropost, older_micropost]
+    end
+end
+</code></pre>
+
+<p>最關鍵的一行就是</p>
+
+<pre><code>@user.microposts.should == [newer_micropost, older_micropost]
+</code></pre>
+
+<p>為了讓測試通過其實很簡單，只要在<strong>app/models/micropost.rb</strong>加上一個東東！</p>
+
+<pre><code>default_scope order: 'microposts.created_at DESC'
+</code></pre>
+
+<p>DESC在SQL就是"descending"</p>
+
+<p>接著來看相依性的問題：<strong>刪除</strong></p>
+
+<p>admin有權限可以刪除使用者，照理說使用者被刪除後，他的micropost應該都要被刪除才是，我們可以這樣寫測試來驗證，當我們刪除文章的user時，相對應的文章都應該不會在資料庫內</p>
+
+<p><strong>spec/models/user_spec.rb</strong>在<strong>describe "micropost associations" do</strong>區塊加入</p>
+
+<pre><code>it "should destroy associated microposts" do
+   microposts = @user.microposts
+   @user.destroy
+   microposts.each do |micropost|
+   Micropost.find_by_id(micropost.id).should be_nil
+ end
+end
+</code></pre>
+
+<p>要認這測試通過很簡單，只要告訴他的相依性有哪些</p>
+
+<p><strong>app/models/user.rb</strong></p>
+
+<pre><code>has_many :microposts, dependent: :destroy
+</code></pre>
+
+<p>測試一下吧～應該要可以通過</p>
+
+<pre><code>$ bundle exec rspec spec/   
+</code></pre>
+
+<p>在跳到下一節之前，我們來看看內容驗證的部分！</p>
+
+<p>廢話不多說，看一下要驗證哪些東西</p>
+
+<p><strong>spec/models/micropost_spec.rb</strong></p>
+
+<pre><code>describe "when user_id is not present" do
+    before { @micropost.user_id = nil }
+    it { should_not be_valid }
+  end
+
+  describe "with blank content" do
+    before { @micropost.content = " " }
+    it { should_not be_valid }
+  end
+
+  describe "with content that is too long" do
+    before { @micropost.content = "a" * 141 }
+    it { should_not be_valid }
+  end
+</code></pre>
+
+<p> 為了要限制字數，還記得要加什麼嗎?</p>
+
+<p> 沒錯，就是</p>
+
+<pre><code>validates :content, presence: true, length: { maximum: 140 }
+</code></pre>
+
+<h2>Showing microposts</h2>
+
+<p>依照Twitter的設計，我們可以在個人頁面看到他發的post，而不需要到micropost的index頁面，所以來開始吧！</p>
+
+<h3>Augmenting the user show page</h3>
+
+<p>我們希望能夠建立兩個文章在一個user上，然後驗證show 頁面，包含文章的內容 ，因為我們希望文章和人可以馬上出現連結一起，所以我們不是用let而是使用let!</p>
+
+<p><strong>spec/requests/user_pages_spec.rb</strong> 加在<strong>describe "User pages" do</strong>程式區塊內</p>
+
+<pre><code>describe "profile page" do
+        let(:user) { FactoryGirl.create(:user) }
+        let!(:m1) { FactoryGirl.create(:micropost, user: user, content: "Aloha ") }
+        let!(:m2) { FactoryGirl.create(:micropost, user: user, content: "Cool") }
+
+        before { visit user_path(user) }
+
+        it { should have_selector('h1',    text: user.name) }
+        it { should have_selector('title', text: user.name) }
+
+        describe "microposts" do
+          it { should have_content(m1.content) }
+          it { should have_content(m2.content) }
+          it { should have_content(user.microposts.count) }
+        end
+  end
+</code></pre>
+
+<p>OK~來看一下 <strong>app/views/users/show.html.erb</strong> 在 <strong><aside></aside></strong>之後加入</p>
+
+<pre><code>&lt;div class="span8"&gt;
+    &lt;% if @user.microposts.any? %&gt;
+      &lt;h3&gt;Microposts (&lt;%= @user.microposts.count %&gt;)&lt;/h3&gt;
+      &lt;ol class="microposts"&gt;
+        &lt;%= render @microposts %&gt;
+      &lt;/ol&gt;
+      &lt;%= will_paginate @microposts %&gt;
+    &lt;% end %&gt;
+  &lt;/div&gt;
+</code></pre>
+
+<p>注意一些細節，我們加了 換頁的東東， 這邊其實可以只用</p>
+
+<pre><code>&lt;%= will_paginate %&gt;
+</code></pre>
+
+<p>為什麼要加上@microposts是因為在User controller底下，<strong>will_paginate</strong>是假設呼叫的值是@users，但是因為我們雖然在user controller之下，</p>
+
+<p>但是我們是要show 文章！所以才要丟參數給他</p>
+
+<p>還有一個特別的地方</p>
+
+<pre><code>&lt;ol class="microposts"&gt;
+   &lt;%= render @microposts %&gt;
+&lt;/ol&gt;
+</code></pre>
+
+<p>這是使用經排序的list標籤<strong>ol</strong>，另外那個render他會去找.....找什麼？</p>
+
+<p>如果是之前使用<strong>render @users</strong>他會去找<strong>_user.html.erb</strong></p>
+
+<p>So ?</p>
+
+<p>這邊他就會去找<strong>_micropost.html.erb</strong>，當然我們沒有要建立一個給他</p>
+
+<p><strong>app/views/microposts/_micropost.html.erb</strong></p>
+
+<pre><code>&lt;li&gt;
+  &lt;span class="content"&gt;&lt;%= micropost.content %&gt;&lt;/span&gt;
+  &lt;span class="timestamp"&gt;
+    Posted &lt;%= time_ago_in_words(micropost.created_at) %&gt; ago.
+  &lt;/span&gt;
+&lt;/li&gt;
+</code></pre>
+
+<p>這邊使用到一個很酷的方法<strong>time_ago_in_words</strong>，我們等一下會介紹這個helper</p>
+
+<p>接著我們趕緊來編輯，<strong>app/controllers/users_controller.rb</strong></p>
+
+<p>因為那些View都需要@microposts這個東東</p>
+
+<p>把show改成</p>
+
+<pre><code> def show
+    @user = User.find(params[:id])
+    $title = @user.name
+    @microposts = @user.microposts.paginate(page: params[:page])
+ end
+</code></pre>
+
+<p>yap~~不過到了這階段，目前還是沒有辦法看到一些東西～所以我們到下一小節，新增micropost吧！</p>
+
+<h3>Sample microposts</h3>
+
+<p>使用<strong>lib/tasks/sample_data.rake</strong>來建置大量使用者micropost吧！</p>
+
+<p>加到<strong>task populate: :environment do</strong>裡面</p>
+
+<pre><code>users = User.all(limit: 6)
+50.times do
+  content = Faker::Lorem.sentence(5)
+  users.each { |user| user.microposts.create!(content: content) }
+end
+</code></pre>
+
+<p>這邊我們只選擇前六個使用者，然後用<strong>Faker::Lorem.sentence</strong>這個方法隨機建立文字</p>
+
+<p>OK 建到資料庫吧！</p>
+
+<pre><code>$ bundle exec rake db:reset
+$ bundle exec rake db:populate
+$ bundle exec rake db:test:prepare
+</code></pre>
+
+<p>但是看起來好醜....所以我們來加一些css</p>
+
+<p><strong>app/assets/stylesheets/custom.css.scss</strong></p>
+
+<pre><code>/* microposts */
+
+.microposts {
+  list-style: none;
+  margin: 10px 0 0 0;
+
+  li {
+    padding: 10px 0;
+    border-top: 1px solid #e8e8e8;
+  }
+}
+.content {
+  display: block;
+}
+.timestamp {
+  color: $grayLight;
+}
+.gravatar {
+  float: left;
+  margin-right: 10px;
+}
+aside {
+  textarea {
+    height: 100px;
+    margin-bottom: 5px;
+  }
+}
+</code></pre>
+
+<p>yap~好看多了！</p>
+
+<h2>Manipulating microposts</h2>
+
+<p>完成data  的model和micropost的view，現在把重點放在micropost操作上，這個Micropost的操作會密集在User和static頁面controller之間，</p>
+
+<p>也就是說…這不簡單....OK！要操作Micropost之前，我們要先讓他有RestFul</p>
+
+<p>REST有主要有兩個核心精神：1. 使用Resource來當做識別的資源，也就是使用一個URL網址來代表一個Resource 2. 同一個Resource則可以有不同的Representations格式變化。</p>
+
+<p>所以我們要在<strong>config/routes.rb</strong>加上</p>
+
+<pre><code>resources :microposts, only: [:create, :destroy]
+</code></pre>
+
+<p>這也代表了他會有兩個url可以用！</p>
+
+<p>HTTP request
+&nbsp;
+&nbsp;
+&nbsp;
+&nbsp;URI
+&nbsp;
+&nbsp;
+&nbsp;
+&nbsp;Action
+&nbsp;
+&nbsp;
+&nbsp;
+&nbsp;Purpose</p>
+
+<p>POST
+&nbsp;
+&nbsp;
+&nbsp;
+&nbsp;
+/microposts
+&nbsp;
+&nbsp;
+&nbsp;
+&nbsp;
+create
+&nbsp;
+&nbsp;
+&nbsp;
+&nbsp;
+create a new micropost</p>
+
+<p>DELETE
+&nbsp;
+&nbsp;
+&nbsp;
+&nbsp;
+/microposts/1
+&nbsp;
+&nbsp;
+&nbsp;
+&nbsp;
+destroy
+&nbsp;
+&nbsp;
+&nbsp;
+&nbsp;
+delete micropost with id</p>
+
+<h3>Access control</h3>
+
+<p>當然要有登入的使用者才可以創建或刪除文章，所以我們的測試可以這樣寫</p>
+
+<p><strong>spec/requests/authentication_pages_spec.rb</strong>在<strong>describe "for non-signed-in users" do</strong>區塊加入</p>
+
+<pre><code>describe "in the Microposts controller" do
+
+    describe "submitting to the create action" do
+      before { post microposts_path }
+      specify { response.should redirect_to(signin_path) }
+    end
+
+    describe "submitting to the destroy action" do
+      before { delete micropost_path(FactoryGirl.create(:micropost)) }
+      specify { response.should redirect_to(signin_path) }
+    end
+  end
+</code></pre>
+
+<p>注意歐～這邊<strong>post microposts_path</strong>就是使用<strong>create</strong>動作; <strong>delete micropost_path(micropost)</strong>就會使用<strong>destroy</strong>動作！</p>
+
+<p>為了要讓測試通過，我們必須要小小的重構程式碼，我們在User controller的地方，使用了<strong>signed_in_user</strong>判斷使用者是否登入</p>
+
+<p>我們發現說原來在micropost也需要用到！所以我們把這段程式碼搬到<strong>app/helpers/sessions_helper.rb</strong></p>
+
+<p>加上</p>
+
+<pre><code>def signed_in_user
+  unless signed_in?
+    store_location
+    redirect_to signin_path, notice: "Please sign in." 
+  end
+end
+</code></pre>
+
+<p>耶～所以現在就可以在<strong>app/controllers/microposts_controller.rb</strong>使用啦～</p>
+
+<pre><code>class MicropostsController &lt; ApplicationController
+  before_filter :signed_in_user , only: [:create , :destroy]
+
+  def create
+  end
+
+  def destroy
+  end
+
+  def index
+  end
+
+end
+</code></pre>
+
+<p>跑測試吧～</p>
+
+<pre><code>$ bundle exec rspec spec/requests/authentication_pages_spec.rb
+</code></pre>
+
+<h3>Creating microposts</h3>
+
+<p>這邊有一個地方很不一樣，因為在發文的時候一定會是已登入的使用者，所以要建一個新的頁面專門給micropost使用的！</p>
+
+<p>在這之前，我們先來建立測試吧！</p>
+
+<pre><code>$ rails generate integration_test micropost_pages
+</code></pre>
+
+<p>編輯測試程式</p>
+
+<p><strong>spec/requests/micropost_pages_spec.rb</strong></p>
+
+<pre><code>require 'spec_helper'
+
+describe "Micropost pages" do
+
+  subject { page }
+
+  let(:user) { FactoryGirl.create(:user) }
+  before { sign_in user }
+
+  describe "micropost creation" do
+    before { visit root_path }
+
+    describe "with invalid information" do
+
+      it "should not create a micropost" do
+        expect { click_button "Post" }.should_not change(Micropost, :count)
+      end
+
+      describe "error messages" do
+        before { click_button "Post" }
+        it { should have_content('error') } 
+      end
+    end
+
+    describe "with valid information" do
+
+      before { fill_in 'micropost_content', with: "Lorem ipsum" }
+      it "should create a micropost" do
+        expect { click_button "Post" }.should change(Micropost, :count).by(1)
+      end
+    end
+  end
+end
+</code></pre>
+
+<p>在來編輯
+<strong>app/controllers/microposts_controller.rb</strong></p>
+
+<pre><code>class MicropostsController &lt; ApplicationController
+  before_filter :signed_in_user
+
+  def create
+    @micropost = current_user.microposts.build(params[:micropost])
+    if @micropost.save
+      flash[:success] = "Micropost created!"
+      redirect_to root_path
+    else
+      render 'static_pages/home'
+    end
+  end
+
+  def destroy
+  end
+end
+</code></pre>
+
+<p>Control 完 換View</p>
+
+<p><strong>app/views/static_pages/home.html.erb</strong></p>
+
+<p>其實就是多加了判斷user是不是登入！</p>
+
+<pre><code>&lt;% if signed_in? %&gt;
+  &lt;div class="row"&gt;
+    &lt;aside class="span4"&gt;
+      &lt;section&gt;
+        &lt;%= render 'shared/user_info' %&gt;
+      &lt;/section&gt;
+      &lt;section&gt;
+        &lt;%= render 'shared/micropost_form' %&gt;
+      &lt;/section&gt;
+    &lt;/aside&gt;
+  &lt;/div&gt;  
+&lt;% else %&gt;
+  &lt;div class="center hero-unit"&gt;
+    &lt;h1&gt;Welcome to the Sample App&lt;/h1&gt;
+
+    &lt;h2&gt;
+      This is the home page for the
+      &lt;a href="http://railstutorial.org/"&gt;Ruby on Rails Tutorial&lt;/a&gt;
+      sample application.
+    &lt;/h2&gt;
+
+    &lt;%= link_to "Sign up now!", signup_path, 
+                                class: "btn btn-large btn-primary" %&gt;
+  &lt;/div&gt;
+
+  &lt;%= link_to image_tag("rails.png", alt: "Rails"), 'http://rubyonrails.org/' %&gt;
+&lt;% end %&gt; 
+</code></pre>
+
+<p>注意歐！因為有些東西是可以拉出來寫的例如<strong>&lt;%= render 'shared/user_info' %></strong></p>
+
+<p>就是</p>
+
+<p><strong>app/views/shared/_user_info.html.erb</strong></p>
+
+<pre><code>&lt;a href="&lt;%= user_path(current_user) %&gt;"&gt;
+  &lt;%= gravatar_for current_user, size: 52 %&gt;
+&lt;/a&gt;
+&lt;h1&gt;
+  &lt;%= current_user.name %&gt;
+&lt;/h1&gt;
+&lt;span&gt;
+  &lt;%= link_to "view my profile", current_user %&gt;
+&lt;/span&gt;
+&lt;span&gt;
+  &lt;%= pluralize(current_user.microposts.count, "micropost") %&gt;
+&lt;/span&gt;
+</code></pre>
+
+<p>這些之前都有講過了～所以就不再提了～</p>
+
+<p>因為還有一個也是被拉出來寫<strong>&lt;%= render 'shared/micropost_form' %></strong></p>
+
+<pre><code>&lt;%= form_for(@micropost) do |f| %&gt;
+  &lt;%= render 'shared/error_messages', object: f.object %&gt;
+  &lt;div class="field"&gt;
+    &lt;%= f.text_area :content, placeholder: "Compose new micropost..." %&gt;
+  &lt;/div&gt;
+  &lt;%= f.submit "Post", class: "btn btn-large btn-primary" %&gt;
+&lt;% end %&gt;
+</code></pre>
+
+<p>那個@micropost是我們在controller用<strong>current_user.microposts.build</strong>建出來的</p>
+
+<p>另外還要加上micropost的變數實例在<strong>app/controllers/static_pages_controller.rb</strong></p>
+
+<pre><code>def home
+    @micropost = current_user.microposts.build if signed_in?
+end
+</code></pre>
+
+<p>還有一個很詭異的東東那就是</p>
+
+<pre><code>&lt;%= render 'shared/error_messages', object: f.object %&gt;
+</code></pre>
+
+<p>舉個例來說明，form_for(@user) do |f|</p>
+
+<p>那個f.object 就是 @user,</p>
+
+<p>同理可得form_for(@micropost) do |f|</p>
+
+<p>他的f.object 就是 @micropost</p>
+
+<p>換句話說， 那個object: f.object 會在<strong>error_messsages</strong>建立一個變數叫做<strong>object</strong></p>
+
+<p>因為這樣，所以要update一下<strong>app/views/shared/_error_messages.html.erb</strong></p>
+
+<pre><code>&lt;% if object.errors.any? %&gt;
+  &lt;div id="error_explanation"&gt;
+    &lt;div class="alert alert-error"&gt;
+      The form contains &lt;%= pluralize(object.errors.count, "error") %&gt;.
+    &lt;/div&gt;
+    &lt;ul&gt;
+    &lt;% object.errors.full_messages.each do |msg| %&gt;
+      &lt;li&gt;* &lt;%= msg %&gt;&lt;/li&gt;
+    &lt;% end %&gt;
+    &lt;/ul&gt;
+  &lt;/div&gt;
+&lt;% end %&gt;
+</code></pre>
+
+<p>執行測試看有沒有哪裡改錯</p>
+
+<pre><code>$  bundle exec rspec spec/requests/micropost_pages_spec.rb
+</code></pre>
+
+<p>注意看上面範例～ yap~沒錯！</p>
+
+<p>接著我們來更新<strong>app/views/users/new.html.erb</strong></p>
+
+<p>只有一個地方要改<strong>object: f.object</strong></p>
+
+<p>變成這樣</p>
+
+<pre><code>&lt;%= render 'shared/error_messages' , object: f.object %&gt;
+</code></pre>
+
+<p>當然那個<strong>app/views/users/edit.html.erb</strong>也要改</p>
+
+<pre><code>&lt;% provide(:title, "Edit user") %&gt; 
+    &lt;h1&gt;Update your profile&lt;/h1&gt;
+
+    &lt;div class="row"&gt;
+      &lt;div class="span6 offset3"&gt;
+      &lt;%= form_for(@user) do |f| %&gt;
+          &lt;%= render 'shared/error_messages', object: f.object %&gt;
+
+          &lt;%= f.label :name %&gt;
+          &lt;%= f.text_field :name %&gt;
+
+          &lt;%= f.label :email %&gt;
+          &lt;%= f.text_field :email %&gt;
+
+          &lt;%= f.label :password %&gt;
+          &lt;%= f.password_field :password %&gt;
+
+          &lt;%= f.label :password_confirmation, "Confirm Password" %&gt;
+          &lt;%= f.password_field :password_confirmation %&gt;
+
+          &lt;%= f.submit "Save changes", class: "btn btn-large btn-primary" %&gt;
+        &lt;% end %&gt;
+
+        &lt;%= gravatar_for @user %&gt;
+        &lt;a href="http://gravatar.com/emails"&gt;change&lt;/a&gt;
+      &lt;/div&gt;
+    &lt;/div&gt;
+</code></pre>
+
+<h3>A proto-feed</h3>
+
+<p>因為每個人都有feed，所以勢必要加一個<strong>feed</strong>的函式在User model裡面，先寫測試<strong>feed</strong>函式包含了現在使用者的micropost，
+但是沒有其他user的程式</p>
+
+<p><strong>spec/models/user_spec.rb</strong></p>
+
+<pre><code>require 'spec_helper'
+
+describe User do
+  .
+  .
+  .
+  it { should respond_to(:microposts) }
+  it { should respond_to(:feed) }
+  .
+  .
+  .
+  describe "micropost associations" do
+
+    before { @user.save }
+    let!(:older_micropost) do 
+      FactoryGirl.create(:micropost, user: @user, created_at: 1.day.ago)
+    end
+    let!(:newer_micropost) do
+      FactoryGirl.create(:micropost, user: @user, created_at: 1.hour.ago)
+    end
+    .
+    .
+    .
+    describe "status" do
+      let(:unfollowed_post) do
+        FactoryGirl.create(:micropost, user: FactoryGirl.create(:user))
+      end
+
+      its(:feed) { should include(newer_micropost) }
+      its(:feed) { should include(older_micropost) }
+      its(:feed) { should_not include(unfollowed_post) }
+    end
+  end
+end
+</code></pre>
+
+<p>這次的測試多了一個新的夥伴！<strong>include?</strong> 他主要的工作就是檢查array裡面，有沒有包含我們要找的值</p>
+
+<p>RSpec很聰明得知道我們要測試是否元素在陣列裡</p>
+
+<p>來到<strong>app/models/user.rb</strong></p>
+
+<pre><code> def feed
+    # This is preliminary. See "Following users" for the full implementation.
+    Micropost.where("user_id = ?", id)
+  end
+</code></pre>
+
+<p>這邊我有個問題，那就是那個<strong>Micropost.where("user_id = ?", id)</strong>是怎麼一回事</p>
+
+<p>文章是說<strong>id</strong>最好不要在SQL指令出現，這是因為會有<strong>SQL injection</strong>攻擊，但是對於我們這個
+例子，這個id是整數，所以沒有危險～  這一行其實等於下面</p>
+
+<pre><code>def feed
+ microposts
+end
+</code></pre>
+
+<p>再寫一個測試</p>
+
+<p><strong>spec/requests/static_pages_spec.rb</strong></p>
+
+<pre><code>describe "for signed-in users" do
+      let(:user) { FactoryGirl.create(:user) }
+      before do
+        FactoryGirl.create(:micropost, user: user, content: "Lorem ipsum")
+        FactoryGirl.create(:micropost, user: user, content: "Dolor sit amet")
+        sign_in user
+        visit root_path
+      end
+
+      it "should render the user's feed" do
+        user.feed.each do |item|
+          page.should have_selector("li##{item.id}", text: item.content)
+        end
+      end
+    end
+</code></pre>
+
+<p>注意一下</p>
+
+<pre><code> page.should have_selector("li##{item.id}", text: item.content)
+</code></pre>
+
+<p>有兩個#其中一個是要給CSS看得ID，另外一個#{}是一起的～是Ruby的字串包含程式碼</p>
+
+<p>為了要在程式使用到<strong>feed</strong>，我們會加上一個<strong>@feed_items</strong>實例變數(instance variable：宣告在 class 內，method 之外，且未使用 static 修飾的變數)，</p>
+
+<p>給現在使用者的feed.</p>
+
+<p><strong>app/controllers/static_pages_controller.rb</strong></p>
+
+<pre><code>def home
+    if signed_in?
+      @micropost  = current_user.microposts.build
+      @feed_items = current_user.feed.paginate(page: params[:page])
+    end
+  end
+</code></pre>
+
+<p>另外要作partial view 給feed 和 feed_item本身</p>
+
+<p><strong>app/views/shared/_feed.html.erb</strong></p>
+
+<pre><code>&lt;% if @feed_items.any? %&gt;
+  &lt;ol class="microposts"&gt;
+    &lt;%= render partial: 'shared/feed_item', collection: @feed_items %&gt;
+  &lt;/ol&gt;
+  &lt;%= will_paginate @feed_items %&gt;
+&lt;% end %&gt;
+</code></pre>
+
+<p><strong>app/views/shared/_feed_item.html.erb</strong></p>
+
+<pre><code>&lt;li id="&lt;%= feed_item.id %&gt;"&gt;
+  &lt;%= link_to gravatar_for(feed_item.user), feed_item.user %&gt;
+  &lt;span class="user"&gt;
+    &lt;%= link_to feed_item.user.name, feed_item.user %&gt;
+  &lt;/span&gt;
+  &lt;span class="content"&gt;&lt;%= feed_item.content %&gt;&lt;/span&gt;
+  &lt;span class="timestamp"&gt;
+    Posted &lt;%= time_ago_in_words(feed_item.created_at) %&gt; ago.
+  &lt;/span&gt;
+&lt;/li&gt;
+</code></pre>
+
+<p>yap~現在來看user登入後的view</p>
+
+<p><strong>app/views/static_pages/home.html.erb</strong></p>
+
+<pre><code>&lt;% if signed_in? %&gt;
+  &lt;div class="row"&gt;
+    &lt;aside class="span4"&gt;
+      &lt;section&gt;
+        &lt;%= render 'shared/user_info' %&gt;
+      &lt;/section&gt;
+      &lt;section&gt;
+        &lt;%= render 'shared/micropost_form' %&gt;
+      &lt;/section&gt;
+    &lt;/aside&gt;
+
+    &lt;div class="span8"&gt;
+          &lt;h3&gt;Micropost Feed&lt;/h3&gt;
+          &lt;%= render 'shared/feed' %&gt;
+    &lt;/div&gt;
+  &lt;/div&gt;  
+&lt;% else %&gt;
+  &lt;div class="center hero-unit"&gt;
+    &lt;h1&gt;Welcome to the Sample App&lt;/h1&gt;
+
+    &lt;h2&gt;
+      This is the home page for the
+      &lt;a href="http://railstutorial.org/"&gt;Ruby on Rails Tutorial&lt;/a&gt;
+      sample application.
+    &lt;/h2&gt;
+
+    &lt;%= link_to "Sign up now!", signup_path, 
+                                class: "btn btn-large btn-primary" %&gt;
+  &lt;/div&gt;
+
+  &lt;%= link_to image_tag("rails.png", alt: "Rails"), 'http://rubyonrails.org/' %&gt;
+&lt;% end %&gt;
+</code></pre>
+
+<p>耶～可以看一下網頁！看起來不錯歐！也可以發表成功！</p>
+
+<p>咦....不過如果我不打字串按發表的話，要跳出error</p>
+
+<p>解法暫時如下：</p>
+
+<p><strong>app/controllers/microposts_controller.rb</strong></p>
+
+<p>當使用者沒有輸入值時，先給他空的array</p>
+
+<pre><code>def create
+    @micropost = current_user.microposts.build(params[:micropost])
+    if @micropost.save
+      flash[:success] = "Micropost created!"
+      redirect_to root_path
+    else
+      @feed_items = []
+      render 'static_pages/home'
+    end
+  end
+</code></pre>
+
+<p>來跑測試吧！</p>
+
+<pre><code>$ bundle exec rspec spec/
+</code></pre>
+
+<h3>Destroying microposts</h3>
+
+<p>最後，加上一個可以刪除micropost的東東～</p>
+
+<p>大概就是加上</p>
+
+<pre><code>&lt;% if current_user?(micropost.user) %&gt;
+        &lt;%= link_to "delete", micropost, method:  :delete,
+                                         confirm: "You sure?",
+                                         title:   micropost.content %&gt;
+&lt;% end %&gt;
+</code></pre>
+
+<p><strong>app/views/microposts/_micropost.html.erb</strong></p>
+
+<pre><code>&lt;li&gt;
+  &lt;span class="content"&gt;&lt;%= micropost.content %&gt;&lt;/span&gt;
+  &lt;span class="timestamp"&gt;
+    Posted &lt;%= time_ago_in_words(micropost.created_at) %&gt; ago.
+  &lt;/span&gt;
+  &lt;% if current_user?(micropost.user) %&gt;
+    &lt;%= link_to "delete", micropost, method:  :delete,
+                                     confirm: "You sure?",
+                                     title:   micropost.content %&gt;
+  &lt;% end %&gt;
+&lt;/li&gt;
+</code></pre>
+
+<p><strong>app/views/shared/_feed_item.html.erb</strong></p>
+
+<pre><code>&lt;li id="&lt;%= feed_item.id %&gt;"&gt;
+  &lt;%= link_to gravatar_for(feed_item.user), feed_item.user %&gt;
+    &lt;span class="user"&gt;
+      &lt;%= link_to feed_item.user.name, feed_item.user %&gt;
+    &lt;/span&gt;
+    &lt;span class="content"&gt;&lt;%= feed_item.content %&gt;&lt;/span&gt;
+    &lt;span class="timestamp"&gt;
+      Posted &lt;%= time_ago_in_words(feed_item.created_at) %&gt; ago.
+    &lt;/span&gt;
+  &lt;% if current_user?(feed_item.user) %&gt;
+    &lt;%= link_to "delete", feed_item, method:  :delete,
+                                     confirm: "You sure?",
+                                     title:   feed_item.content %&gt;
+  &lt;% end %&gt;
+&lt;/li&gt;
+</code></pre>
+
+<p>在寫controller刪除功能之前，先來寫測試</p>
+
+<p><strong>spec/requests/micropost_pages_spec.rb</strong></p>
+
+<p>在<strong>describe "Micropost pages" do</strong>區塊加上</p>
+
+<pre><code>describe "micropost destruction" do
+    before { FactoryGirl.create(:micropost, user: user) }
+
+    describe "as correct user" do
+      before { visit root_path }
+
+      it "should delete a micropost" do
+        expect { click_link "delete" }.should change(Micropost, :count).by(-1)
+      end
+    end
+  end
+</code></pre>
+
+<p>刪除的地方在之前user的地方有做過！主要差別在於只要是user本人即可刪除訊息，所以我們用</p>
+
+<p><strong>correct_user</strong>來檢查</p>
+
+<p><strong>app/controllers/microposts_controller.rb</strong></p>
+
+<pre><code>before_filter :correct_user,   only: :destroy
+
+def destroy
+    @micropost.destroy
+    redirect_to root_path
+end
+
+private
+
+def correct_user
+  @micropost = current_user.microposts.find_by_id(params[:id])
+  redirect_to root_path if @micropost.nil?
+end
+</code></pre>
+
+<p>這個寫法主要是可以確保現在的user 他的文章裡頭可以找到這個id的文章！</p>
+
+<p>其實也是可以這樣寫！</p>
+
+<pre><code>@micropost = Micropost.find_by_id(params[:id])
+redirect_to root_path unless current_user?(@micropost.user)
+</code></pre>
+
+<p>不過根據高手的文章表示，</p>
+
+<blockquote><p>for security purposes it is a good practice always to run lookups through the association.</p></blockquote>
+
+<p>ＯＫ～確保一下程式都沒問題</p>
+
+<pre><code>$ bundle exec rspec spec/
+</code></pre>
+
+<h2>Conclusion</h2>
+
+<pre><code>$ git add .
+$ git commit -m "Add user microposts"
+$ git checkout master
+$ git merge user-microposts
+$ git push
+</code></pre>
+
+<p>You can also push the app up to Heroku at this point. Because the data model has changed through the addition of the microposts table, you will also need to migrate the production database:</p>
+
+<p>$ git push heroku
+$ heroku pg:reset SHARED_DATABASE --confirm &lt;name-heroku-gave-to-your-app>
+$ heroku run rake db:migrate
+$ heroku run rake db:populate</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Learning on Ruby on Rails Tutorial-CH9 Updating , Showing , and deleting users]]></title>
+    <link href="http://ccaloha.cc/blog/2012/08/10/learning-on-ruby-on-rails-tutorial-ch9-updating/"/>
+    <updated>2012-08-10T11:07:00+08:00</updated>
+    <id>http://ccaloha.cc/blog/2012/08/10/learning-on-ruby-on-rails-tutorial-ch9-updating</id>
+    <content type="html"><![CDATA[<p> 這章會完成Users的REST動作，<strong>edit</strong>、<strong>update</strong>、<strong>index</strong>、<strong>destroy</strong></p>
+
+<p> 廢話不多說，從做中學！</p>
+
+<pre><code>$ git checkout -b updating-users
+</code></pre>
+
+<h2>修改使用者</h2>
+
+<p>修改其實很像新增，和新增不同的地方在於</p>
+
+<p>new是對server提出POST的要求，但是update這個動作是提出PUT這個要求</p>
+
+<p>還有一個最大的差別，就是所有人都可以註冊，但是update動作，只能給已經登入的user使用！</p>
+
+<!--more-->
+
+
+<p></p>
+
+<h2>Edit 表格</h2>
+
+<p>直接來看測試！把它加到<strong>describe "User pages" do</strong>區塊內</p>
+
+<p><strong>spec/requests/user_pages_spec.rb</strong></p>
+
+<pre><code>describe "edit" do
+    let(:user) { FactoryGirl.create(:user) }
+    before { visit edit_user_path(user) }
+
+    describe "page" do
+      it { should have_selector('h1',    text: "Update your profile") }
+      it { should have_selector('title', text: "Edit user") }
+      it { should have_link('change', href: 'http://gravatar.com/emails') }
+    end
+
+    describe "with invalid information" do
+      before { click_button "Save changes" }
+
+      it { should have_content('error') }
+    end
+  end
+</code></pre>
+
+<p>要編輯使用者之前一定要知道誰是使用者</p>
+
+<p>別忘了可以使用params[:id]</p>
+
+<p>所以我們在controller的地方可以加上這句話，<strong>app/controller/users_controller.rb</strong></p>
+
+<pre><code>def edit
+    @user = User.find(params[:id])
+end
+</code></pre>
+
+<p>再來新增view</p>
+
+<p><strong>app/views/users/edit.html.erb</strong></p>
+
+<pre><code>&lt;% provide(:title, "Edit user") %&gt; 
+&lt;h1&gt;Update your profile&lt;/h1&gt;
+
+&lt;div class="row"&gt;
+  &lt;div class="span6 offset3"&gt;
+  &lt;%= form_for(@user) do |f| %&gt;
+      &lt;%= render 'shared/error_messages', object: f.object %&gt;
+
+      &lt;%= f.label :name %&gt;
+      &lt;%= f.text_field :name %&gt;
+
+      &lt;%= f.label :email %&gt;
+      &lt;%= f.text_field :email %&gt;
+
+      &lt;%= f.label :password %&gt;
+      &lt;%= f.password_field :password %&gt;
+
+      &lt;%= f.label :password_confirmation, "Confirm Password" %&gt;
+      &lt;%= f.password_field :password_confirmation %&gt;
+
+      &lt;%= f.submit "Save changes", class: "btn btn-large btn-primary" %&gt;
+    &lt;% end %&gt;
+
+    &lt;%= gravatar_for @user %&gt;
+    &lt;a href="http://gravatar.com/emails"&gt;change&lt;/a&gt;
+  &lt;/div&gt;
+&lt;/div&gt;
+</code></pre>
+
+<p>跑看看測試吧～</p>
+
+<pre><code>$ bundle exec rspec spec/requests/user_pages_spec.rb -e "edit page"
+</code></pre>
+
+<p>嘿嘿～ 你一定會好奇…奇怪....他跟new幾乎長得一模一樣</p>
+
+<p>那Rails怎麼知道他是要用<strong>POST</strong>還是<strong>PUT</strong>?</p>
+
+<p>其實他是用Active Record的一個方法：<strong>new_record?</strong></p>
+
+<p>很簡單的驗證方法</p>
+
+<pre><code>$ rails console
+&gt;&gt; User.new.new_record?
+=&gt; true
+&gt;&gt; User.first.new_record?
+=&gt; false
+</code></pre>
+
+<p>接著我們來新加另外一個測試的東西，在<strong>spec/requests/authentication_pages_spec.rb</strong></p>
+
+<p>加上使用者用正確資料登入時，會有一個新的<strong>Setting</strong>的鏈結可以選</p>
+
+<pre><code>it { should have_link('Settings', href: edit_user_path(user)) }
+</code></pre>
+
+<p>在下面那些底下</p>
+
+<pre><code> it { should have_selector('title', text: user.name) }
+ it { should have_link('Profile', href: user_path(user)) }
+ it { should have_link('Sign out', href: signout_path) }
+ it { should_not have_link('Sign in', href: signin_path) }  
+</code></pre>
+
+<p>還有一個地方要改～請把</p>
+
+<pre><code>before do
+  fill_in "Email",    with: user.email
+  fill_in "Password", with: user.password
+  click_button "Sign in"
+end
+</code></pre>
+
+<p>改成一句話！</p>
+
+<pre><code>before { sign_in user }
+</code></pre>
+
+<p>用一個helper來取代！把這個helper寫在<strong>spec/support/utilities.rb</strong></p>
+
+<pre><code>def sign_in(user)
+  visit signin_path
+  fill_in "Email",    with: user.email
+  fill_in "Password", with: user.password
+  click_button "Sign in"
+  # Sign in when not using Capybara as well.
+  cookies[:remember_token] = user.remember_token
+end
+</code></pre>
+
+<p>為了要確保Capybara有work</p>
+
+<p>所以才加上</p>
+
+<pre><code>cookies[:remember_token] = user.remember_token
+</code></pre>
+
+<p>還要把<strong>Setting</strong>的連結加到<strong>header</strong>上面</p>
+
+<p>也就是要改<strong>app/views/layouts/_header.html.erb</strong></p>
+
+<p>把</p>
+
+<pre><code>&lt;li&gt;&lt;%= link_to "Settings", '#' %&gt;&lt;/li&gt;
+</code></pre>
+
+<p>改成</p>
+
+<pre><code>&lt;li&gt;&lt;%= link_to "Settings", edit_user_path(current_user) %&gt;&lt;/li&gt;
+</code></pre>
+
+<h2>不成功的編輯</h2>
+
+<p>當使用者編輯好，按下submit，會到controller的<strong>update</strong>動作執行，</p>
+
+<p>所以User會使用他的update_attributes方法更新內容！</p>
+
+<p>所以我們就用這個特性！</p>
+
+<p>如果使用者編輯不成功的話，我們要在重新render給他<strong>edit</strong>頁面</p>
+
+<p>所以來改<strong>app/controllers/users_controller.rb</strong></p>
+
+<pre><code>def update
+    @user = User.find(params[:id])
+    if @user.update_attributes(params[:user])
+      # Handle a successful update.
+    else
+      render 'edit'
+    end
+  end
+</code></pre>
+
+<h2>成功的編輯</h2>
+
+<p>接著我們要來寫編輯的測試！</p>
+
+<p>在<strong>spec/requests/user_pages_spec.rb</strong>的<strong>describe "edit" do</strong>區塊內加上</p>
+
+<pre><code> describe "with valid information" do
+      let(:new_name)  { "New Name" }
+      let(:new_email) { "new@example.com" }
+      before do
+        fill_in "Name",             with: new_name
+        fill_in "Email",            with: new_email
+        fill_in "Password",         with: user.password
+        fill_in "Confirm Password", with: user.password
+        click_button "Save changes"
+      end
+
+      it { should have_selector('title', text: new_name) }
+      it { should have_selector('div.alert.alert-success') }
+      it { should have_link('Sign out', href: signout_path) }
+      specify { user.reload.name.should  == new_name }
+      specify { user.reload.email.should == new_email }
+    end
+</code></pre>
+
+<p>那個比較特別的就是</p>
+
+<pre><code>specify { user.reload.name.should  == new_name }
+specify { user.reload.email.should == new_email }
+</code></pre>
+
+<p>利用<strong>user.reload</strong>去重新讀取user的資料</p>
+
+<p>OK 來寫其他東東</p>
+
+<p>先來補上<strong>app/controllers/users_controller.rb</strong></p>
+
+<pre><code>if @user.update_attributes(params[:user])
+        flash[:success] = "Profile updated"
+        sign_in @user
+        redirect_to @user
+</code></pre>
+
+<p>sign_in再一次是因為當使用者儲存時，紀錄的token被重新設定，(<strong>before_save :create_remember_token</strong>)</p>
+
+<p>所以我們要在重啓一次sesion！這是很好的安全設計～</p>
+
+<p>跑一次測試～確保都有pass!</p>
+
+<h2>授權 (注意！不是認證歐XD)</h2>
+
+<p>我們在CH8已經寫過認證了！現在來實作授權，認證(<em>authentication</em>)是讓我們驗證使用者是可以使用網站的！授權(<em>authorization</em>)是讓我們控制使用者可以做什麼事情！</p>
+
+<h3>要求使用者必須登入</h3>
+
+<p>編輯測試先，主要是edit和update動作，必須要在登入時才可以用！測試寫在認證那邊就ＯＫ了，直接加到<strong>describe "Authentication do"</strong>裡面</p>
+
+<p><strong>spec/requests/authentication_pages_spec.rb</strong></p>
+
+<pre><code>describe "authorization" do
+
+    describe "for non-signed-in users" do
+      let(:user) { FactoryGirl.create(:user) }
+
+      describe "in the Users controller" do
+
+        describe "visiting the edit page" do
+          before { visit edit_user_path(user) }
+          it { should have_selector('title', text: 'Sign in') }
+        end
+
+        describe "submitting to the update action" do
+          before { put user_path(user) }
+          specify { response.should redirect_to(signin_path) }
+        end
+      end
+    end
+</code></pre>
+
+<p>這邊比較特別的就是，不使用<strong>Capybara</strong>的visit方法存取controller！ 而是直接使用HTTP 要求！ 所以這邊是使用<strong>put</strong></p>
+
+<p>put會要求直接到<strong>/users/1</strong>並且是update的動作，這是必要的因為沒有方法讓瀏覽器，直接visit <strong>update</strong>動作！只能透過提交edit 表格(Capybara也無法做到)，但是這樣是為了測edit的動作！並沒有針對update來測！所以才需要使用<strong>put</strong></p>
+
+<p>所以～因為我們使用<strong>put</strong>這個動作！所以底下那個</p>
+
+<pre><code>specify { response.should redirect_to(signin_path) }
+</code></pre>
+
+<p>也是特別的！是使用response物件！不像Capybara的page物件！response讓我們測試伺服器的回應！</p>
+
+<p>那所以要授權的程式碼，我們會使用<strong>before_filter</strong>這個callback，就是當使用者操作時，會讓某些特定的方法被呼叫</p>
+
+<p><strong>app/controllers/users_controller.rb</strong></p>
+
+<pre><code>class UsersController &lt; ApplicationController
+  before_filter :signed_in_user, only: [:edit, :update]
+  .
+  .
+  .
+  private
+
+    def signed_in_user
+      redirect_to signin_path, notice: "Please sign in." unless signed_in?
+    end
+end
+</code></pre>
+
+<p>預設before_filter 是會用在所有動作的！但是我們可以用<strong>only</strong>這個來限制！</p>
+
+<p>另外那個<strong>notice: "Please sign in."</strong> 他相當於會丟一個hash給<strong>redirect_to</strong>這個函式</p>
+
+<p>相當於</p>
+
+<pre><code>flash[:notice] = "Please sign in."
+redirect_to signin_path
+</code></pre>
+
+<p>注意歐！ 這邊用的是<strong>:notice</strong>，所以我們總共有<strong>:success</strong>和<strong>:error</strong>以及<strong>:notice</strong></p>
+
+<p>這些Bootstrap CSS都支援！</p>
+
+<p>這邊跑一下測試！</p>
+
+<pre><code>bundle exec rspec spec/
+</code></pre>
+
+<p>囧....怎麼錯誤變多，有9個錯誤！</p>
+
+<p>原來是因為我們加了限制</p>
+
+<p>在<strong>spec/requests/user_pages_spec.rb</strong>的</p>
+
+<pre><code>describe "edit" do
+  let(:user) { FactoryGirl.create(:user) }
+  before { visit edit_user_path(user) }
+</code></pre>
+
+<p>我們還沒有登入 就開始visit編輯畫面....所以會有問題！</p>
+
+<p>所以我們可以使用helper裡面的<strong>sign_in</strong>，改成這樣！</p>
+
+<pre><code>let(:user) { FactoryGirl.create(:user) }
+    before do
+      sign_in user
+      visit edit_user_path(user)
+    end
+</code></pre>
+
+<p>再執行一下 測試！ 恭喜！完成！</p>
+
+<h3>要求正確的使用者</h3>
+
+<p>當然我們只要求使用者登入這樣是不夠的！我們還需要是正當的使用者，所以來設計測試，當使用者用錯誤email登入時，然後點<strong>edit</strong>或是<strong>update</strong>，因為這個使用者也不行嘗試去編輯別人的頁面，使用者若嘗試去編輯別人的頁面，我們就將它導到root URL</p>
+
+<p><strong>spec/requests/authentication_pages_spec.rb</strong></p>
+
+<p>寫在<strong>describe "authorization" do</strong>區塊裡面</p>
+
+<pre><code>describe "as wrong user" do
+      let(:user) { FactoryGirl.create(:user) }
+      let(:wrong_user) { FactoryGirl.create(:user, email: "wrong@example.com") }
+      before { sign_in user }
+
+      describe "visiting Users#edit page" do
+        before { visit edit_user_path(wrong_user) }
+        it { should_not have_selector('title', text: full_title('Edit user')) }
+      end
+
+      describe "submitting a PUT request to the Users#update action" do
+        before { put user_path(wrong_user) }
+        specify { response.should redirect_to(root_path) }
+      end
+    end
+</code></pre>
+
+<p>所以我先來修改<strong>/app/controllers/users_controller.rb</strong></p>
+
+<pre><code>before_filter :correct_user, only: [:edit , :update]
+
+private
+
+def signed_in_user
+  redirect_to signin_path, notice: "Please sign in." unless signed_in?
+end
+
+def correct_user
+  @user = User.find(params[:id])
+  redirect_to(root_path) unless current_user?(@user)
+end
+</code></pre>
+
+<p>那個<strong>current_user?</strong>是寫在<strong>app/helpers/session_helper.rb</strong></p>
+
+<p>記得補上歐！</p>
+
+<pre><code>def current_user?(user)
+  user == current_user
+end
+</code></pre>
+
+<h3>友善的轉址</h3>
+
+<p>雖然一切看是完美～但是，其實有一個問題，那就是當user每次要使用保護的頁面時，他完成登入後，他都會被導向他的個人頁面～而且不是他想要去的頁面！所以我們要來改善這問題</p>
+
+<p>所以先來寫測試！我一開始會先到user的編輯頁面，然後理論上他會幫我導向登入畫面，當我完成登入之後，必須幫我導到編輯的頁面</p>
+
+<p><strong>spec/requests/authentication_pages_spec.rb</strong></p>
+
+<p>加在<strong>describe "for non-signed-in users" do</strong>裡面！</p>
+
+<pre><code>describe "when attempting to visit a protected page" do
+                before do
+                  visit edit_user_path(user)
+                  fill_in "Email",    with: user.email
+                  fill_in "Password", with: user.password
+                  click_button "Sign in"
+                end
+
+                describe "after signing in" do
+
+                  it "should render the desired protected page" do
+                    page.should have_selector('title', text: 'Edit user')
+                  end
+                end
+        end
+</code></pre>
+
+<p>為了要完成這件事情！ 我們要使用兩個function！</p>
+
+<p>把它寫在session helper裡面</p>
+
+<p><strong>app/helpers/sessions_helper.rb</strong></p>
+
+<pre><code>def redirect_back_or(default)
+    redirect_to(session[:return_to] || default)
+    session.delete(:return_to)
+end
+
+def store_location
+    session[:return_to] = request.fullpath
+end
+</code></pre>
+
+<p>Rails有提供<strong>session</strong>儲存的機制，(你就把它想成cookie物件)，另外我們也使用<strong>request</strong>物件，取得完整連結路徑(URI)，<strong>store_location</strong>就是把要求的完整路徑傳給<strong>session</strong>變數，他的key就是<strong>:return_to</strong></p>
+
+<p>所以要把<strong>store_location</strong>加到<strong>signed_in_user</strong>裡面，因為加在函式裡面，如果使用者不是登入狀態時，就要先把他想去的路徑先存起來，然後再把它導到登入畫面</p>
+
+<p>那就來修改</p>
+
+<p><strong>app/controllers/users_controller.rb</strong></p>
+
+<pre><code>def signed_in_user
+  unless signed_in?
+    store_location
+    redirect_to signin_path, notice: "Please sign in."
+  end
+end
+</code></pre>
+
+<p>最後再來加個<strong>app/controllers/sessions_controller.rb</strong></p>
+
+<pre><code>def create
+    user = User.find_by_email(params[:session][:email])
+    if user &amp;&amp; user.authenticate(params[:session][:password])
+      sign_in user
+      redirect_back_or user
+    else
+      flash.now[:error] = 'Invalid email/password combination'
+      render 'new'
+    end
+end
+</code></pre>
+
+<p>就是當使用者按下登入，並且也登入成功時，就會在<strong>session</strong>這邊create一個token</p>
+
+<p>所以我們在create這邊加上剛剛寫的<strong>redirect_back_or</strong>所以如果有記錄之前要去的url，他</p>
+
+<p>就會前往那邊～不然的話，就是連到user的頁面</p>
+
+<p>跑一下測試確認可以work</p>
+
+<pre><code>$  bundle exec rspec spec/
+</code></pre>
+
+<h2>Show出所有使用者</h2>
+
+<p>簡單來說，希望可以看到每個user的資料(還附上連結)，最後還要加上換頁的東西！</p>
+
+<h3>User Index</h3>
+
+<p>可以看到所有使用者這功能，必須限定是登入使用者，另外，要可以使用<strong>users_path</strong>這個連結看到所有使用者！</p>
+
+<p>So…開始寫測試吧！</p>
+
+<p><strong>spec/requests/authentication_pages_spec.rb</strong> 寫在 <strong>describe "in the Users controller" do</strong>裡面</p>
+
+<pre><code>describe "visiting the user index" do
+      before { visit users_path }
+      it { should have_selector('title', text: 'Sign in') }
+end
+</code></pre>
+
+<p>因為我們要限定登入成功使用者才可以用！所以在<strong>app/controllers/users_controller.rb</strong>請補上</p>
+
+<pre><code>before_filter :signed_in_user, only: [:index, :edit, :update]
+
+def index
+end
+</code></pre>
+
+<p>既然寫到了user controller當然要寫一下<strong>spec/requests/user_pages_spec.rb</strong></p>
+
+<p>加在 <strong>describe "User pages" do</strong>底下</p>
+
+<pre><code>describe "index" do
+    before do
+      sign_in FactoryGirl.create(:user) 
+      FactoryGirl.create(:user, name: "Derek" , email: "Derek@example.com")
+      FactoryGirl.create(:user, name: "Edison" , email: "Edison@example.com")
+      visit users_path
+    end
+
+    it { should have_selector('title',text: 'All users') }
+    it "should list each user" do 
+      User.all.each do |user|
+        page.should have_selector('li', text: user.name)
+      end
+    end
+end
+</code></pre>
+
+<p>為了要通過測試！讓我們開始補程式碼吧！</p>
+
+<p><strong>app/controllers/users_controller.rb</strong>的<strong>index</strong>請補上</p>
+
+<pre><code>def index
+    @users = User.all
+end
+</code></pre>
+
+<p>換到view的地方，先新增<strong>app/views/users/index.html.erb</strong></p>
+
+<pre><code>&lt;%= provide(:title, 'All users') %&gt;
+&lt;h1&gt;All users&lt;/h1&gt;
+
+&lt;ul class="users"&gt;
+  &lt;% @users.each do |user| %&gt;
+    &lt;li&gt;
+      &lt;%= gravatar_for user, size: 52 %&gt;
+      &lt;%= link_to user.name, user %&gt;
+    &lt;/li&gt;
+  &lt;% end %&gt;
+&lt;/ul&gt;
+</code></pre>
+
+<p>再來為user index加上一些CSS效果</p>
+
+<p><strong>app/assets/stylesheets/custom.css.scss</strong></p>
+
+<pre><code>/* users index */
+
+.users {
+  list-style: none;
+  margin: 0;
+  li {
+    overflow: auto;
+    padding: 10px 0;
+    border-top: 1px solid $grayLighter;
+    &amp;:last-child {
+      border-bottom: 1px solid $grayLighter;
+    }
+  }
+}
+</code></pre>
+
+<p>那我們在認證的地方也要加上一個測試！確保Users這個link可以用</p>
+
+<p><strong>spec/requests/authentication_pages_spec.rb</strong>的<strong>describe "with valid information" do</strong>底下</p>
+
+<pre><code>it { should have_link('Users',    href: users_path) }
+</code></pre>
+
+<p>補上URI到<strong>app/views/layouts/_header.html.erb</strong></p>
+
+<pre><code>&lt;li&gt;&lt;%= link_to "Users", '#' %&gt;&lt;/li&gt;
+</code></pre>
+
+<p>改成</p>
+
+<pre><code>&lt;li&gt;&lt;%= link_to "Users", users_path %&gt;&lt;/li&gt;
+</code></pre>
+
+<p>耶～測試吧</p>
+
+<pre><code>$ bundle exec rspec spec/
+</code></pre>
+
+<p>囧…有錯…奇怪..他說…gravatar_for 預設輸入參數只有一個，結果我給她兩個....</p>
+
+<p>原來…是因為我沒有做CH7的練習，補上</p>
+
+<p>讓我們可以改變顯圖的大小！</p>
+
+<p><strong>app/helpers/users_helper.rb</strong></p>
+
+<pre><code>def gravatar_for(user, options = { size: 50 })
+    gravatar_id = Digest::MD5::hexdigest(user.email.downcase)
+    size = options[:size]
+    gravatar_url = "http://gravatar.com/avatar/#{gravatar_id}?s=#{size}"
+    image_tag(gravatar_url, alt: user.name, class: "gravatar")
+end
+</code></pre>
+
+<p>再跑一次！恭喜～通過～</p>
+
+<p>其實可以開網頁來看！ 你會發現....東西好少....好乾歐！</p>
+
+<p>所以....</p>
+
+<h3>User 樣本</h3>
+
+<p>我們要安裝並使用一個叫做是<strong>faker</strong>的gem</p>
+
+<p>所以先在<strong>Gemfile</strong>加上</p>
+
+<pre><code>gem 'faker', '1.0.1'
+</code></pre>
+
+<p>別忘了</p>
+
+<pre><code>$ bundle install
+</code></pre>
+
+<p>要如何使用呢？</p>
+
+<p>我們必須要加一個<strong>Rake task</strong>的東東去建樣本使用者！</p>
+
+<p>Rake task通常被放在<strong>lib/tasks</strong>資料夾下</p>
+
+<p>所以我們新增一個檔案吧！<strong>lib/tasks/sample_data.rake</strong></p>
+
+<pre><code>namespace :db do
+  desc "Fill database with sample data"
+  task populate: :environment do
+    User.create!(name: "Example User",
+                 email: "example@railstutorial.org",
+                 password: "foobar",
+                 password_confirmation: "foobar")
+    99.times do |n|
+      name  = Faker::Name.name
+      email = "example-#{n+1}@railstutorial.org"
+      password  = "password"
+      User.create!(name: name,
+                   email: email,
+                   password: password,
+                   password_confirmation: password)
+    end
+  end
+end
+</code></pre>
+
+<p>所以定義了一個任務 <strong>db:populate</strong>，透過<strong>db:reset</strong>會重設development資料庫！</p>
+
+<p>然後會建置99個資料</p>
+
+<p>這一行</p>
+
+<pre><code>task populate: :environment do
+</code></pre>
+
+<p>確保Rake task 會被本地端的Rails環境存取(包含User model)，另外那個<strong>create!</strong>和<strong>create</strong>差在他會丟出例外原因，而不是只告訴你False</p>
+
+<p>所以我們可以透過什麼方式調用(invoke)這個Rake task呢？</p>
+
+<pre><code>$ bundle exec rake db:reset
+$ bundle exec rake db:populate
+$ bundle exec rake db:test:prepare
+</code></pre>
+
+<p>OK~我們就可以看到一堆user了！</p>
+
+<h3>分頁功能</h3>
+
+<p>看到那麼多user當然我們要加上分頁功能，這個之前在我另外的自我學習已經有練過了～所以我就快速帶過～</p>
+
+<p>在<strong>Gemfile</strong>加上</p>
+
+<pre><code>gem 'will_paginate', '3.0.3'
+gem 'bootstrap-will_paginate', '0.0.5'
+</code></pre>
+
+<p>別忘了</p>
+
+<pre><code>$ bundle install
+</code></pre>
+
+<p>OK! 當然我們也要寫測試！</p>
+
+<p>但是寫測試之前....有個問題，因為要測翻頁功能有work!</p>
+
+<p>所以....是必我要寫像下面那樣一百遍嗎～歐不～～</p>
+
+<pre><code>FactoryGirl.define do
+  factory :user do
+    name     "Michael Hartl"
+    email    "michael@example.com"
+    password "foobar"
+    password_confirmation "foobar"
+  end
+end
+</code></pre>
+
+<p>好佳在！</p>
+
+<p>FactoryGirl有提供<strong>sequence</strong>的功能！</p>
+
+<p>我們可以這樣用！</p>
+
+<pre><code>factory :user do
+    sequence(:name)  { |n| "Person #{n}" }
+    sequence(:email) { |n| "person_#{n}@example.com"}   
+</code></pre>
+
+<p>它就會建出這樣的東東</p>
+
+<pre><code>“Person 1”  “person_1@example.com”
+“Person 2”  “person_2@example.com”
+“Person 3”  “person_3@example.com”
+….等
+</code></pre>
+
+<p>所以我們可以定義FactoryGirl為<strong>sequence</strong>版本，把它改在</p>
+
+<p><strong>spec/factories.rb</strong></p>
+
+<pre><code>FactoryGirl.define do
+  factory :user do
+    sequence(:name)  { |n| "Person #{n}" }
+    sequence(:email) { |n| "person_#{n}@example.com"}   
+    password "foobar"
+    password_confirmation "foobar"
+  end
+end
+</code></pre>
+
+<p>然後開始寫測試摟～</p>
+
+<p><strong>spec/requests/user_pages_spec.rb</strong></p>
+
+<p>把</p>
+
+<pre><code>describe "index" do
+    before do
+      sign_in FactoryGirl.create(:user) 
+      FactoryGirl.create(:user, name: "Derek" , email: "Derek@example.com")
+      FactoryGirl.create(:user, name: "Edison" , email: "Edison@example.com")
+      visit users_path
+    end
+
+    it { should have_selector('title',text: 'All users') }
+    it "should list each user" do 
+      User.all.each do |user|
+        page.should have_selector('li', text: user.name)
+      end
+    end
+  end
+</code></pre>
+
+<p>改成</p>
+
+<pre><code>describe "index" do
+
+    let(:user) { FactoryGirl.create(:user) }
+
+    before do
+      sign_in user
+      visit users_path
+    end
+
+    it { should have_selector('title', text: 'All users') }
+
+    describe "pagination" do
+      before(:all) { 30.times { FactoryGirl.create(:user) } }
+      after(:all)  { User.delete_all }
+
+      it { should have_link('Next') }
+      its(:html) { should match('&gt;2&lt;/a&gt;') }
+
+      it "should list each user" do
+        User.all[0..2].each do |user|
+          page.should have_selector('li', text: user.name)
+        end
+      end
+    end
+  end
+</code></pre>
+
+<p>這裡面有些相當特別的code！</p>
+
+<pre><code>its(:html) { should match('&gt;2&lt;/a&gt;') }
+</code></pre>
+
+<p>他的意思是 測試頁面有包含2…就這樣</p>
+
+<p>ok要讓<strong>pagination</strong>可以用，我們來改<strong>app/views/users/index.html.erb</strong></p>
+
+<pre><code>&lt;%= provide(:title, 'All users') %&gt;
+&lt;h1&gt;All users&lt;/h1&gt;
+
+&lt;%= will_paginate %&gt;
+
+&lt;ul class="users"&gt;
+  &lt;% @users.each do |user| %&gt;
+    &lt;li&gt;
+      &lt;%= gravatar_for user, size: 52 %&gt;
+      &lt;%= link_to user.name, user %&gt;
+    &lt;/li&gt;
+  &lt;% end %&gt;
+&lt;/ul&gt;
+
+&lt;%= will_paginate %&gt;
+</code></pre>
+
+<p>主要是因為加上<strong>will_paginate</strong></p>
+
+<p>他會自動找尋@users這個物件，然後秀出換頁的連結</p>
+
+<p>但是目前這個view是不work的！</p>
+
+<p>因為<strong>@users</strong>是來自<strong>User.all</strong>，它是一個Array類別，但是<strong>will_paginate</strong>是預期物件是一個<strong>ActiveRecord::Relation</strong></p>
+
+<p>但是好佳在，我們可以使用<strong>will_paginate</strong>提供的<strong>paginate</strong>方法轉成<strong>ActiveRecord::Relation</strong></p>
+
+<pre><code>$ rails console
+&gt;&gt; User.all.class
+=&gt; Array
+&gt;&gt; User.paginate(page: 1).class
+=&gt; ActiveRecord::Relation
+</code></pre>
+
+<p>注意！那個paginate使用<strong>:page</strong>當成其hash的key，所以<strong>User.paginate</strong>從資料庫撈出的筆數就是依據<strong>:page</strong>這個值！</p>
+
+<p>所以我們可以來改寫一下我controller</p>
+
+<p>把 <strong>@users = User.all</strong>改成</p>
+
+<pre><code>def index
+  @users = User.paginate(page: params[:page])
+end
+</code></pre>
+
+<p>yap!執行一下測試！</p>
+
+<pre><code>$ bundle exec rspec spec/
+</code></pre>
+
+<h3>Partial refactoring</h3>
+
+<p>因為我們測試已經完成～我們可以來改寫一下程式碼</p>
+
+<p>善用Rails的一些特性！</p>
+
+<p>先來改寫<strong>app/views/users/index.html.erb</strong></p>
+
+<pre><code>&lt;% provide(:title, 'All users') %&gt;
+&lt;h1&gt;All users&lt;/h1&gt;
+
+&lt;%= will_paginate %&gt;
+
+&lt;ul class="users"&gt;
+  &lt;% @users.each do |user| %&gt;
+    &lt;%= render user %&gt;
+  &lt;% end %&gt;
+&lt;/ul&gt;
+
+&lt;%= will_paginate %&gt;
+</code></pre>
+
+<p>因為把它改寫成<strong>render</strong></p>
+
+<p>Rails會自動去搜尋<strong>_user.html.erb</strong></p>
+
+<p>所以要新建這個檔案<strong>app/views/users/_user.html.erb</strong>(注意歐！不是在layout底下歐)並加上</p>
+
+<pre><code>&lt;li&gt;
+  &lt;%= gravatar_for user, size: 52 %&gt;
+  &lt;%= link_to user.name, user %&gt;
+&lt;/li&gt;
+</code></pre>
+
+<p>但是更酷的是！ 你以為這樣就結束了？</p>
+
+<p>其實可以再改寫<strong>app/views/users/index.html.erb</strong></p>
+
+<p>把這一句</p>
+
+<pre><code>&lt;% @users.each do |user| %&gt;
+    &lt;%= render user %&gt;
+&lt;% end %&gt;
+</code></pre>
+
+<p>改成這一句就好！</p>
+
+<pre><code>&lt;%= render @users %&gt;
+</code></pre>
+
+<p>因為Rails它會發現<strong>@users</strong>是<strong>User</strong>物件的list，當呼叫出users的collection時，Rails會自動幫你做迭代！當你每個值都丟到<strong>_user.html.erb</strong>裡面酷吧！</p>
+
+<p>改完code，當然要跑測試～看有沒有改錯！</p>
+
+<pre><code>$ bundle exec rspec spec/
+</code></pre>
+
+<h2>刪除使用者</h2>
+
+<p>必須要是Administrator才可以刪除使用者</p>
+
+<p>當然測試要驗證一下！</p>
+
+<p><strong>spec/models/user_spec.rb</strong></p>
+
+<p>在最前面補上</p>
+
+<pre><code>it { should respond_to(:admin) }
+
+it { should_not be_admin }
+
+describe "with admin attribute set to 'true'" do
+    before { @user.toggle!(:admin) }
+
+    it { should be_admin }
+  end
+</code></pre>
+
+<p>這邊有個很酷的東西！</p>
+
+<p>使用<strong>toggle!</strong>方法切換<strong>admin</strong>的屬性，不是true就是false，還有一個要注意！</p>
+
+<pre><code>it { should be_admin }
+</code></pre>
+
+<p>這代表了我們必須有<strong>admin?</strong>這個回傳True或是False的函式！</p>
+
+<p>如同往常！</p>
+
+<p>我們必須先加上<strong>admin</strong>這個屬性！然後他是boolean類型</p>
+
+<pre><code>$ rails generate migration add_admin_to_users admin:boolean
+</code></pre>
+
+<p>跑完之後~ 補上一些東西！</p>
+
+<pre><code>class AddAdminToUsers &lt; ActiveRecord::Migration
+  def change
+    add_column :users, :admin, :boolean, default: false
+  end
+end
+</code></pre>
+
+<p>加完要記得</p>
+
+<pre><code>$ bundle exec rake db:migrate
+$ bundle exec rake db:test:prepare
+</code></pre>
+
+<p>然後我們用console把其中一個user改成admin來看看我們剛剛寫的那些東東work不work～</p>
+
+<pre><code>$ rails console --sandbox
+&gt;&gt; user = User.first
+&gt;&gt; user.admin?
+=&gt; false
+&gt;&gt; user.toggle!(:admin)
+=&gt; true
+&gt;&gt; user.admin?
+=&gt; true
+</code></pre>
+
+<p>最後一步驟，我們要改一下我們自動產生user的</p>
+
+<p><strong>lib/tasks/sample_data.rake</strong></p>
+
+<pre><code>namespace :db do
+  desc "Fill database with sample data"
+  task populate: :environment do
+    admin = User.create!(name: "Example User",
+                         email: "example@railstutorial.org",
+                         password: "foobar",
+                         password_confirmation: "foobar")
+    admin.toggle!(:admin)
+    .
+    .
+    .
+  end
+end
+</code></pre>
+
+<p>改了這個之後，我們要重跑一下資料庫！還記得哪些步驟嗎？</p>
+
+<pre><code>$ bundle exec rake db:reset
+$ bundle exec rake db:populate
+$ bundle exec rake db:test:prepare
+</code></pre>
+
+<h3>重新看attr_accessible</h3>
+
+<p>你可能有注意到，利用<strong>toggle!(:admin)</strong>，把使用者改成admin，那為甚麼我們不直接使用<strong>admin: true</strong>來初始化hash?</p>
+
+<p>答案是這是不對的！</p>
+
+<p>只有<strong>attr_accessible</strong>屬性可以被大量指派值(丟一個hash，Rails會自動幫你把值對應進去)，然而<strong>admin</strong>屬性，並非accessible</p>
+
+<p>(我們在app/models/user.rb並沒有在attr_accessible加入:admin)</p>
+
+<p>明確的定義accessible對網站資安相當有助益！</p>
+
+<p>假設我們使用<strong>attr_accessible</strong>把admin加進去的話，駭客就可使用這樣的方式來改你的資料庫！</p>
+
+<pre><code>put /users/17?admin=1
+</code></pre>
+
+<p>所以…可以嘗試測試，把所有model的屬性，就像<strong>:admin</strong>，測試並沒有被加到accessible</p>
+
+<h3>刪除動作</h3>
+
+<p>為了要寫刪除函數的測試，我們可以使用factorygirl建立管理者，請看下面</p>
+
+<p><strong>spec/factories.rb</strong></p>
+
+<pre><code>FactoryGirl.define do
+  factory :user do
+    sequence(:name)  { |n| "Person #{n}" }
+    sequence(:email) { |n| "person_#{n}@example.com"}   
+    password "foobar"
+    password_confirmation "foobar"
+
+    factory :admin do
+      admin true 
+    end
+
+  end
+end
+</code></pre>
+
+<p>沒錯！就是加上</p>
+
+<pre><code>factory :admin do
+   admin true 
+end
+</code></pre>
+
+<p>OK~先來寫測試！ 等一下再說為什麼要這樣寫</p>
+
+<p><strong>spec/requests/user_pages_spec.rb</strong></p>
+
+<p>在<strong>describe "index" do</strong>區塊加上</p>
+
+<pre><code>describe "delete links" do
+
+          it { should_not have_link('delete') }
+
+          describe "as an admin user" do
+            let(:admin) { FactoryGirl.create(:admin) }
+            before do
+              sign_in admin
+              visit users_path
+            end
+
+            it { should have_link('delete', href: user_path(User.first)) }
+            it "should be able to delete another user" do
+              expect { click_link('delete') }.to change(User, :count).by(-1)
+            end
+            it { should_not have_link('delete', href: user_path(admin)) }
+          end
+ end
+</code></pre>
+
+<p>為什麼要這樣寫，一般使用者是看不到delete這個選項的！</p>
+
+<pre><code>it { should_not have_link('delete') }
+</code></pre>
+
+<p>再來，Admin是可以刪除的！所以才有那面那些行</p>
+
+<pre><code>it { should have_link('delete', href: user_path(User.first)) }
+it "should be able to delete another user" do
+  expect { click_link('delete') }.to change(User, :count).by(-1)
+end
+it { should_not have_link('delete', href: user_path(admin)) }
+</code></pre>
+
+<p>再來寫code通過測試吧！</p>
+
+<p><strong>app/views/users/_user.html.erb</strong></p>
+
+<pre><code>&lt;li&gt;
+  &lt;%= gravatar_for user, size: 52 %&gt;
+  &lt;%= link_to user.name, user %&gt;
+  &lt;% if current_user.admin? &amp;&amp; !current_user?(user) %&gt;
+    | &lt;%= link_to "delete" , user , method: :delete , confirm: "Are you sure?" %&gt;
+&lt;% end %&gt;
+&lt;/li&gt;
+</code></pre>
+
+<p>因為瀏覽器無法送出DELETE的要求，所以Rails是利用javaScript來假</p>
+
+<p>再來，為了要讓Delele連結work! 來寫</p>
+
+<p><strong>app/controllers/users_controller.rb</strong></p>
+
+<pre><code>def destroy
+    User.find(params[:id]).destroy
+    flash[:success] = "User destroyed."
+    redirect_to users_path
+end
+</code></pre>
+
+<p>這邊有個資安的漏洞，經驗豐富的駭客～可以簡單的使用CLI來送出DELETE要求，來刪除使用者！所以我們必須對detroy作存取控制！</p>
+
+<p>先來寫測試！</p>
+
+<p><strong>spec/requests/authentication_pages_spec.rb</strong></p>
+
+<p>在<strong>describe "authorization" do</strong>加上</p>
+
+<pre><code>describe "as non-admin user" do
+  let(:user) { FactoryGirl.create(:user) }
+  let(:non_admin) { FactoryGirl.create(:user) }
+
+  before { sign_in non_admin }
+
+  describe "submitting a DELETE request to the Users#destroy action" do
+    before { delete user_path(user) }
+    specify { response.should redirect_to(root_path) }        
+  end
+end
+</code></pre>
+
+<p>這邊還是有些小的資安漏洞，那就是管理者可以刪除自己XD，可以寫看看摟～不過就先跳過，繼續下去啦！</p>
+
+<p>改<strong>app/controllers/users_controller.rb</strong></p>
+
+<p>在前頭加上</p>
+
+<pre><code>before_filter :admin_user,     only: :destroy
+</code></pre>
+
+<p>在<strong>private</strong>後面加上</p>
+
+<pre><code>def admin_user
+  redirect_to(root_path) unless current_user.admin?
+end
+</code></pre>
+
+<p>跑測試！</p>
+
+<pre><code>$ bundle exec rspec spec/
+</code></pre>
+
+<p>yap~~All pass!</p>
+
+<p>耶～終於完成CH9</p>
+
+<pre><code>$ git add .
+$ git commit -m "Finish user edit, update, index, and destroy actions"
+$ git checkout master
+$ git merge updating-users
+</code></pre>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Learning on Ruby on Rails Tutorial-CH8 Sign in]]></title>
+    <link href="http://ccaloha.cc/blog/2012/08/10/learning-on-ruby-on-rails-tutorial-ch8-sign-in/"/>
+    <updated>2012-08-10T11:05:00+08:00</updated>
+    <id>http://ccaloha.cc/blog/2012/08/10/learning-on-ruby-on-rails-tutorial-ch8-sign-in</id>
+    <content type="html"><![CDATA[<p>上一章已經可以成功註冊使用者，接下來就是要到登入登出的部分！</p>
+
+<p>一樣在開始之前，我們先開Branch</p>
+
+<pre><code>$ git checkout -b sign-in-out
+</code></pre>
+
+<h2>Session 和登入錯誤</h2>
+
+<p>Session 就是半永久存在於兩台電腦，就像用戶端跑browser和伺服器端跑rails</p>
+
+<p>我們會使用session來實作"Sign in"還有"forgetting"(當你關掉瀏覽器)，"remember me"這個check box保存session，"forever"（除非使用者自己清，不然會一直保存）</p>
+
+<p>我們可以把session看成RESTful resource的觀念，我們有一個登入的頁面，登入成功時他會有新的session，當他登出時， session會被清掉。不像User那樣，他會利用後端資料庫保存資料，然而session是使用<strong>cookie</strong>(是user瀏覽器那邊一小塊文字)。Sign in會用到的動作，大多都是基於<strong>cookie</strong>的認證機制！</p>
+
+<!--more-->
+
+
+<p></p>
+
+<h3>Session Controller</h3>
+
+<p>Sign in 是由new動作來處理，事實上送出"POST"這個要求給create 動作</p>
+
+<p>Sign out 是送出"DELETE"這個要求給destroy動作</p>
+
+<p>所以先來gen一些東東出來吧</p>
+
+<pre><code>$ rails generate controller Sessions --no-test-framework
+$ rails generate integration_test authentication_pages
+</code></pre>
+
+<p>先想一下，我們需要什麼樣的頁面在Sign in的頁面</p>
+
+<p>首先，我們要有一個叫做<strong>signin_path</strong>的鏈結，可以連到認證的頁面，我們還希望有個h1的標簽，他的文字是Sing in ，還有一個標簽叫做title，文字也是Sign in</p>
+
+<p>所以測試程式是</p>
+
+<p><strong>spec/requests/authentication_pages_spec.rb</strong></p>
+
+<pre><code>require 'spec_helper'
+
+describe "Authentication" do
+
+  subject { page }
+
+  describe "signin page" do
+    before { visit signin_path }
+
+    it { should have_selector('h1',    text: 'Sign in') }
+    it { should have_selector('title', text: 'Sign in') }
+  end
+end
+</code></pre>
+
+<p>執行一下確保"有"錯誤</p>
+
+<pre><code>$ bundle exec rspec spec/
+</code></pre>
+
+<p>先寫route的部份，因為剛剛有提到只有在create , new 和 destryo有使用到session,所以加上下面的東東在<strong>config/routes.rb</strong></p>
+
+<pre><code>resources :sessions, only: [:new, :create, :destroy]
+
+match '/signup', to: 'users#new'
+match '/signin',  to: 'sessions#new'
+match '/signout', to: 'sessions#destroy', via: :delete
+</code></pre>
+
+<p>注意那個<strong>via: :delete</strong>這句話就是表示當使用HTTP Delete的要求時，他會被呼叫！</p>
+
+<p>上面那些所得到的URIs就是</p>
+
+<p>HTTP request
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+URI
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+Named route
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+Action<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+Purpose</p>
+
+<p><em>===============================</em></p>
+
+<p>GET
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+/signin
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+signin_path
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+new page for a new session (signin)</p>
+
+<p>POST
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+/sessions
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+sessions_path
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+create
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+create a new session</p>
+
+<p>DELETE
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+/signout
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+signout_path
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+destroy delete a session (sign out)</p>
+
+<p>加了route之後，再來加上controller的部份
+<strong>app/controllers/sessions_controller.rb</strong></p>
+
+<pre><code>class SessionsController &lt; ApplicationController
+
+  def new
+  end
+
+  def create
+  end
+
+  def destroy
+  end
+end
+</code></pre>
+
+<p>先來新增並寫<strong>app/views/sessions/new.html.erb</strong></p>
+
+<pre><code>&lt;% provide(:title, "Sign in") %&gt;
+&lt;h1&gt;Sign in&lt;/h1&gt;
+</code></pre>
+
+<p>再來執行看看測試程式</p>
+
+<pre><code>$ bundle exec rspec spec/
+</code></pre>
+
+<h2>登入測試</h2>
+
+<p>先講需求，我們希望當使用者輸入錯誤帳號密碼時，會跳出error message也會跳回Sign in 的頁面(底下可以有一個連結，連到<strong>create new user</strong>)</p>
+
+<p>我們需要這句測試～</p>
+
+<pre><code>it { should have_selector('div.alert.alert-error', text: 'Invalid') }
+</code></pre>
+
+<p>上面那句話 <strong>div.alert.alert-error</strong>代表了</p>
+
+<pre><code>&lt;div class="alert alert-error"&gt;Invalid….&lt;/div&gt;
+</code></pre>
+
+<p>這樣就可以達成我們要的規格</p>
+
+<p>OK~把下面那一段加到 <strong>describe "Authentication" do</strong>這個區塊內</p>
+
+<pre><code>describe "sign in" do 
+    before { visit signin_path }
+
+    describe "with invalid information" do 
+      before { click_button  "Sign in" }
+
+      it { should have_selector('title',text: 'Sign in' ) }
+      it { should have_selector('div.alert.alert-error' , text: 'Invalid') }
+    end
+  end
+</code></pre>
+
+<p>接下來，我們來看一下如果登入成功的話，希望可以看到的頁面</p>
+
+<ul>
+<li>出現，一個鏈結到profile頁面</li>
+<li>出現，登出的連結</li>
+<li>登入的連結消失</li>
+</ul>
+
+
+<p>所以寫測試！把下面的加到<strong>describe "sign in" do</strong>這個區塊內</p>
+
+<pre><code>describe "with valid information" do
+      let(:user) { FactoryGirl.create(:user) }
+      before do
+        fill_in "Email",    with: user.email
+        fill_in "Password", with: user.password
+        click_button "Sign in"
+      end
+
+      it { should have_selector('title', text: user.name) }
+      it { should have_link('Profile', href: user_path(user)) }
+      it { should have_link('Sign out', href: signout_path) }
+      it { should_not have_link('Sign in', href: signin_path) }
+    end
+</code></pre>
+
+<p>這邊使用到一個新的方法 叫做是<strong>have_link</strong>,然後有個屬性叫做是 :href</p>
+
+<p>應該懂吧～XD，這是要確保我的標籤<strong>a</strong>會有正確的鏈結</p>
+
+<h2>登入表格</h2>
+
+<p>還記不記得先前寫的<strong>app/views/users/new.html.erb</strong></p>
+
+<p>其實登入表格就像那樣～</p>
+
+<p>但是不同的地方在於，create user時表格的結果是給<strong>@user</strong>的，但是這個登入表格是要給<strong>session</strong>的</p>
+
+<p>OK我們來寫吧</p>
+
+<p><strong>app/views/sessions/new.html.erb</strong></p>
+
+<pre><code>&lt;% provide(:title, "Sign in") %&gt;
+&lt;h1&gt;Sign in&lt;/h1&gt;
+
+&lt;div class="row"&gt;
+  &lt;div class="span6 offset3"&gt;
+    &lt;%= form_for(:session, url: sessions_path) do |f| %&gt;
+
+      &lt;%= f.label :email %&gt;
+      &lt;%= f.text_field :email %&gt;
+
+      &lt;%= f.label :password %&gt;
+      &lt;%= f.password_field :password %&gt;
+
+      &lt;%= f.submit "Sign in", class: "btn btn-large btn-primary" %&gt;
+    &lt;% end %&gt;
+
+    &lt;p&gt;New user? &lt;%= link_to "Sign up now!", signup_path %&gt;&lt;/p&gt;
+  &lt;/div&gt;
+&lt;/div&gt;
+</code></pre>
+
+<p>我們可以得知<strong>params</strong>這個hash，大概就有這些內容<strong>params[:session][:email]</strong>和<strong>params[:session][:password]</strong></p>
+
+<h2>重新看一下提交表格的部分</h2>
+
+<p>先在<strong>app/controllers/sessions_controller.rb</strong>加上</p>
+
+<pre><code>def create
+    render 'new'
+end
+</code></pre>
+
+<p>奇怪…怎麼點Sign in並沒有跳出…原來是因為我還沒有改一個東西</p>
+
+<p><strong>app/views/layouts/_header.html</strong> 其中Sign in 要改成這樣</p>
+
+<pre><code>&lt;li&gt;&lt;%= link_to "Sign in", signin_path %&gt;&lt;/li&gt;
+</code></pre>
+
+<p>接著我們來看controller的create動作！</p>
+
+<p>當使用者登入時，就會create 一個session，然後如果登入成功的話，我們要把他轉到他的show page下面</p>
+
+<p>如果登入失敗的話，我們要重新render登入畫面給他！並告訴他訊息！</p>
+
+<p>所以....</p>
+
+<pre><code>def create
+  user = User.find_by_email(params[:session][:email])
+  if user &amp;&amp; user.authenticate(params[:session][:password])
+    # Sign the user in and redirect to the user's show page.
+  else
+    # Create an error message and re-render the signin form.
+  end
+end
+</code></pre>
+
+<p>用<strong>&amp;&amp;</strong>的原因是只要有一個失敗 就是Fail一個是找不到User一個是密碼錯誤！</p>
+
+<h2>Rendering with flash message</h2>
+
+<p>之前在第七章，有看到flash的用法，這邊不在贅述</p>
+
+<p>加到<strong>app/controllers/sessions_controller.rb</strong>裡面</p>
+
+<pre><code>def create
+    user = User.find_by_email(params[:session][:email])
+    if user &amp;&amp; user.authenticate(params[:session][:password])
+      # Sign the user in and redirect to the user's show page.
+    else
+      flash[:error] = 'Invalid email/password combination' # Not quite right!
+      render 'new'
+    end
+  end
+</code></pre>
+
+<p>OK~這時候可以玩玩網頁～隨便輸入錯誤的賬號密碼，他果然有跳出錯誤訊息....但是…見鬼了！當你點其他頁面時，錯誤訊息並不會消失～</p>
+
+<p>不過當你執行</p>
+
+<pre><code>$ bundle exec rspec spec/requests/authentication_pages_spec.rb -e "sign in with invalid information"
+</code></pre>
+
+<p>他會pass歐！！</p>
+
+<p>但是實際上這是有bug的....所以我們必須要加上測試的東東，確保他沒有問題</p>
+
+<p>加在<strong>spec/requests/authentication_pages_spec.rb</strong>的<strong>describe "with invalid information" do</strong>區塊裡面</p>
+
+<pre><code>describe "after visiting another page" do
+  before { click_link "Home" }
+  it { should_not have_selector('div.alert.alert-error') }
+end
+</code></pre>
+
+<p>在執行一次，發現有錯誤了！</p>
+
+<pre><code>$ bundle exec rspec spec/requests/authentication_pages_spec.rb -e "sign in with invalid information"
+</code></pre>
+
+<p>OK~ 那我們怎麼樣改掉這個bug，很簡單....只要在<strong>flash[:error]</strong>多加一個now即可阿！</p>
+
+<pre><code> def create
+    user = User.find_by_email(params[:session][:email])
+    if user &amp;&amp; user.authenticate(params[:session][:password])
+      # Sign the user in and redirect to the user's show page.
+    else
+      flash.now[:error] = 'Invalid email/password combination'
+      render 'new'
+    end
+  end
+</code></pre>
+
+<h2>登入成功！</h2>
+
+<p>接下來就是一連串困難的開始！</p>
+
+<p>一開始是比較簡單的部分，當使用者登入成功時，我們要將它導到<strong>user</strong>頁面</p>
+
+<p>所以在<strong>app/controllers/sessions_controller.rb</strong>加入</p>
+
+<pre><code>def create
+    user = User.find_by_email(params[:session][:email])
+    if user &amp;&amp; user.authenticate(params[:session][:password])
+      sign_in user
+      redirect_to user
+    else
+      flash.now[:error] = 'Invalid email/password combination'
+      render 'new'
+    end
+  end
+</code></pre>
+
+<h3>記住我</h3>
+
+<p>現在開始開發signin的model部分，因為Sing 這個動作是屬於跨MVC會被用到的東西(譬如controller和view)，所以我們建了一個<strong>SessionsHelper</strong>，這個會自動被include到Rails的view，如果希望在所有controller被使用的話，那就是在<strong>app/controllers/application_controller.rb</strong>加上</p>
+
+<pre><code>include SessionsHelper
+</code></pre>
+
+<p>在開始寫之前，先來看一些現象</p>
+
+<p>因為HTTP 是一個stateless的協定，網頁應用需要使用者登入，必須實作追蹤每個使用者的動態，一個簡單方法是使用傳統Rails的session，儲存<strong>remember token</strong>讓它等於使用者id</p>
+
+<pre><code>session[:remember_token] = user.id
+</code></pre>
+
+<p>所以我們可以在每個頁面用下面那句話，很簡單的找到user</p>
+
+<pre><code>User.find(session[:remember_token])
+</code></pre>
+
+<p>對於我們的網頁的規劃是，我們可以讓user永久保留session，所以我們需要使用一個<em>permanent</em>的標籤，所以要gen一個獨特、機密的記錄token並且記錄他當成永久cookie(除非browser被清掉)，這個記錄需要和user相關，而且還要留存到之後，所以....我們需要在model上加點東西！再加之前我們來來寫測試吧！</p>
+
+<p><strong>spec/models/user_spec.rb</strong>加上</p>
+
+<pre><code>it { should respond_to(:remember_token) }
+</code></pre>
+
+<p>為了通過測試！ 我們要下</p>
+
+<pre><code>$ rails generate migration add_remember_token_to_users
+</code></pre>
+
+<p>在<strong>db/migrate/[timestamp]_add_remember_token_to_users.rb</strong>寫下</p>
+
+<pre><code>class AddRememberTokenToUsers &lt; ActiveRecord::Migration
+  def change
+    add_column :users, :remember_token, :string
+    add_index  :users, :remember_token
+  end
+end
+</code></pre>
+
+<p>別忘了</p>
+
+<pre><code>$ bundle exec rake db:migrate
+$ bundle exec rake db:test:prepare
+</code></pre>
+
+<p>加完這些後，測試應該是可以通過的～</p>
+
+<pre><code>$ bundle exec rspec spec/models/user_spec.rb
+</code></pre>
+
+<p>現在我們要來決定要拿什麼東西當作是remember token , 基本上就要用很多亂數的字串組成，當然也可以使用密碼(<strong>password_hash</strong>)，但是這會讓使用者暴露在外，造成不必要的困擾，所以！！！小心起見，我們都會製作客制化的token，利用！！！<strong>urlsafe_base64</strong>方法（來自<strong>SecureRandom</strong>這個module），他會製作url使用的Base64字串</p>
+
+<p>再來，我們會使用callback(before_save)來作token（藉由email的獨特性！），在使用者存檔前，做create <strong>remember_token</strong>這個動作</p>
+
+<p>OK來寫測試！</p>
+
+<p><strong>spec/models/user_spec.rb</strong> 加到<strong>describe User do</strong>區塊內</p>
+
+<pre><code>describe "remember token" do
+    before { @user.save }
+    its(:remember_token) { should_not be_blank }
+  end 
+</code></pre>
+
+<p>這邊要說一下那個<strong>its</strong>就像是<strong>it</strong>但他有的特殊的含義！</p>
+
+<p>舉例一下</p>
+
+<pre><code>its(:remember_token) { should_not be_blank }
+</code></pre>
+
+<p>就等於</p>
+
+<pre><code>it { @user.remember_token.should_not be_blank }
+</code></pre>
+
+<p>OK來寫callback在<strong>app/models/user.rb</strong></p>
+
+<pre><code>before_save :create_remember_token
+
+private
+  def create_remember_token
+    self.remember_token = SecureRandom.urlsafe_base64
+  end
+</code></pre>
+
+<p>這邊我們使用<strong>self</strong>是因為我們希望User物件本身的remember_token被設定為值</p>
+
+<p>OK~因為在before_save時已經有塞值給他了，所以現在跑測試應該可以通過</p>
+
+<pre><code>$ bundle exec rspec spec/models/user_spec.rb
+</code></pre>
+
+<h2>Sing_in 這個在Helper的方法</h2>
+
+<p>就之前的設計概念，希望可以將紀錄的token當成cookie放在使用者的瀏覽器！</p>
+
+<p>然後透過這個token找到這個使用者在我們網站上的紀錄！ 所以我們sign_in就是要做這件事情</p>
+
+<p>所以接下來要講個很酷的東東 請先看code</p>
+
+<p><strong>app/helpers/sessions_helper.rb</strong></p>
+
+<pre><code>module SessionsHelper
+
+  def sign_in(user)
+    cookies.permanent[:remember_token] = user.remember_token
+    current_user = user
+  end
+end
+</code></pre>
+
+<p>我們可以來看一下cookie內容長什麼樣子</p>
+
+<pre><code>cookies[:remember_token] = { value:   user.remember_token,
+                         expires: 20.years.from_now.utc }
+</code></pre>
+
+<p>其實是因為我們使用<strong>cookies.permanent</strong>所以預設失效時間是二十年後！</p>
+
+<p>所以我們在使用上就可以這樣找User</p>
+
+<pre><code>User.find_by_remember_token(cookies[:remember_token])
+</code></pre>
+
+<p>也許你會注意到，如果在使用者的瀏覽器記錄登入cookie，並且傳輸透明在應用上，可能會被使用</p>
+
+<p><strong>session hijacking</strong>攻擊，那其實解決方法就是使用ssl</p>
+
+<h2>目前的使用者</h2>
+
+<p>來看一下剛剛那個檔案</p>
+
+<pre><code>module SessionsHelper
+
+  def sign_in(user)
+    cookies.permanent[:remember_token] = user.remember_token
+    current_user = user
+  end
+end
+</code></pre>
+
+<p>我們來看這句</p>
+
+<pre><code>current_user = user
+</code></pre>
+
+<p>這個我們希望他可以在controller和view都可以被存取</p>
+
+<p>就像</p>
+
+<pre><code>&lt;%= current_user.name %&gt; 和 redirect_to current_user
+</code></pre>
+
+<p>所以....我們在<strong>app/helpers/sessions_helper.rb</strong>加上</p>
+
+<pre><code>def current_user=(user)
+    @current_user = user
+end 
+</code></pre>
+
+<p>這邊有點奇特，就是那個<strong>current_user=(...)</strong>其實等同於 <strong>current_user = …</strong></p>
+
+<p>接下來，我們來寫一個funcion使可以取得current_user的，你會發現長的跟上面好像</p>
+
+<pre><code>def current_user
+    @current_user     # Useless! Don't use this line.
+end
+</code></pre>
+
+<p> 但是一般來說我們不會這樣用～</p>
+
+<p> 因為這樣做，我們乾脆就用<strong>attr_accessor</strong>就好～ 不過…其實這完全沒有解決問題，使用者的登入狀態，會被忘記～～所以當他從一個頁面跳到另一個頁面，session就會失效～～</p>
+
+<p> 所以我們會這樣做！</p>
+
+<pre><code> def current_user
+    @current_user ||= user_from_remember_token
+ end
+
+ private 
+
+    def user_from_remember_token
+        remember_token = cookies[:remember_token]
+        User.find_by_remember_token(remember_token) unless remember_token.nil?
+    end
+</code></pre>
+
+<p>那個 <strong>@current_user ||= user_from_remember_token</strong> 等同於</p>
+
+<p>@current_user = @current_user || user_from_remember_token</p>
+
+<h3>改變layout的連結</h3>
+
+<p>我們需要一個類似 <strong>signed_in?</strong></p>
+
+<p>可以讓我們用在 view那邊</p>
+
+<pre><code>&lt;% if signed_in? %&gt;
+  # Links for signed-in users
+&lt;% else %&gt;
+  # Links for non-signed-in-users
+&lt;% end %&gt;
+</code></pre>
+
+<p>所以我們在<strong>app/helpers/sessions_helper.rb</strong>加上</p>
+
+<pre><code>def signed_in?
+    !current_user.nil?
+end
+</code></pre>
+
+<p>這句話的意思是，當現在使用者是空的嗎？如果是的話，singed_in?就是true , 反之</p>
+
+<p>有了這個之後～我們view就有很多要改的</p>
+
+<p><strong>app/views/layouts/_header.html.erb</strong></p>
+
+<pre><code>&lt;header class="navbar navbar-fixed-top"&gt;
+  &lt;div class="navbar-inner"&gt;
+    &lt;div class="container"&gt;
+      &lt;%= link_to "sample app", root_path, id: "logo" %&gt;
+      &lt;nav&gt;
+        &lt;ul class="nav pull-right"&gt;
+          &lt;li&gt;&lt;%= link_to "Home", root_path %&gt;&lt;/li&gt;
+          &lt;li&gt;&lt;%= link_to "Help", help_path %&gt;&lt;/li&gt;
+          &lt;% if signed_in? %&gt;
+            &lt;li&gt;&lt;%= link_to "Users", '#' %&gt;&lt;/li&gt;
+            &lt;li id="fat-menu" class="dropdown"&gt;
+              &lt;a href="#" class="dropdown-toggle" data-toggle="dropdown"&gt;
+                Account &lt;b class="caret"&gt;&lt;/b&gt;
+              &lt;/a&gt;
+              &lt;ul class="dropdown-menu"&gt;
+                &lt;li&gt;&lt;%= link_to "Profile", current_user %&gt;&lt;/li&gt;
+                &lt;li&gt;&lt;%= link_to "Settings", '#' %&gt;&lt;/li&gt;
+                &lt;li class="divider"&gt;&lt;/li&gt;
+                &lt;li&gt;
+                  &lt;%= link_to "Sign out", signout_path, method: "delete" %&gt;
+                &lt;/li&gt;
+              &lt;/ul&gt;
+            &lt;/li&gt;
+          &lt;% else %&gt;
+            &lt;li&gt;&lt;%= link_to "Sign in", signin_path %&gt;&lt;/li&gt;
+          &lt;% end %&gt;
+        &lt;/ul&gt;
+      &lt;/nav&gt;
+    &lt;/div&gt;
+  &lt;/div&gt;
+&lt;/header&gt;
+</code></pre>
+
+<p>這邊有幾個酷炫的地方</p>
+
+<ol>
+<li><p>&lt;%= link_to "Sign out", signout_path, method: "delete" %></p>
+
+<p> 這個會pass一個hash參數，告訴提交一個HTTP DELETE 要求</p></li>
+<li><p>&lt;%= link_to "Profile", current_user %></p>
+
+<p> 因為Rails會讓你自動幫你用成user_path(current_user)</p></li>
+</ol>
+
+
+<p>然後那個裡頭<strong><li id="fat-menu" class="dropdown"></strong> 是由Bootstrap's Javascript Library提供～</p>
+
+<p>所以我們要在 <strong>app/assets/javascripts/application.js</strong> 加上</p>
+
+<pre><code>//= require bootstrap
+</code></pre>
+
+<h3>Sign up 之後就是Sign in</h3>
+
+<p>先寫測試，把這個加到<strong>spec/requests/user_pages_spec.rb</strong>的<strong>describe "after saving the user" do</strong>裡</p>
+
+<pre><code>it { should have_link('Sign out') }
+</code></pre>
+
+<p>還有在<strong>app/controllers/users_controller.rb</strong>加上一句話<strong>sign_in @user</strong></p>
+
+<pre><code>def create
+@user = User.new(params[:user])
+if @user.save
+  sign_in @user
+  flash[:success] = "Welcome to the Sample App!"
+  redirect_to @user
+else
+  render 'new'
+end
+end
+</code></pre>
+
+<p>這樣 就完成了～～</p>
+
+<h3>Sign out</h3>
+
+<p>一樣先寫測試～不過這次要換成destroy 在<strong>spec/requests/authentication_pages_spec.rb</strong></p>
+
+<p>的<strong>describe "with valid information" do</strong>的區塊加上</p>
+
+<pre><code>describe "followed by signout" do
+    before { click_link "Sign out" }
+    it { should have_link('Sign in') }
+  end
+</code></pre>
+
+<p>在<strong>app/controllers/sessions_controller.rb</strong>寫上</p>
+
+<pre><code>def destroy
+    sign_out
+    redirect_to root_path
+  end
+</code></pre>
+
+<p>因為我們還沒有sign_out所以…要在helper寫～主要就是要讓current_user變成空的～然後把cookie刪掉</p>
+
+<p>所以在<strong>app/helpers/sessions_helper.rb</strong>寫下</p>
+
+<pre><code>def sign_out
+    current_user = nil
+    cookies.delete(:remember_token)
+end
+</code></pre>
+
+<p>我發現一個怪怪的地方～那就是<strong>/spec/requests/user_pages_spec.rb</strong> 裡頭有個<strong>describe "after saving the user" do</strong></p>
+
+<p>我居然找不到！ 結果在CH7底下練習找到</p>
+
+<p>所以我補充一下剛剛那個<strong>spec/requests/user_pages_spec.rb</strong></p>
+
+<p>describe "after saving the user" do</p>
+
+<pre><code>            before { click_button submit }
+            let(:user) { User.find_by_email('user@example.com') }
+            it { should have_selector('title', text: user.name) }
+            it { should have_selector('div.alert.alert-success', text: 'Welcome') }
+            it { should have_link('Sign out') }
+    end
+</code></pre>
+
+<p>OK~大功告成！</p>
+
+<p>ps. 我跳過<a href="http://ruby.railstutorial.org/chapters/sign-in-sign-out?version=3.2#sec:cucumber">Introduction to Cucumber</a></p>
+
+<pre><code>$ git add .
+$ git commit -m "Finish sign in"
+$ git checkout master
+$ git merge sign-in-out
+</code></pre>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Learning on Ruby on Rails Tutorial-CH7 Sign Up]]></title>
+    <link href="http://ccaloha.cc/blog/2012/08/10/learning-on-ruby-on-rails-tutorial-ch7-sign-up/"/>
+    <updated>2012-08-10T11:02:00+08:00</updated>
+    <id>http://ccaloha.cc/blog/2012/08/10/learning-on-ruby-on-rails-tutorial-ch7-sign-up</id>
+    <content type="html"><![CDATA[<p>在開始之前，先來</p>
+
+<pre><code>$ git checkout master
+$ git checkout -b sign-up
+</code></pre>
+
+<h3>Debug and Rail 環境</h3>
+
+<p>等一下我們要加入動態網頁！ 所以我們先來加一些debug mode 在網頁上</p>
+
+<!--more-->
+
+
+<p>
+<strong>app/views/layouts/application.html.erb</strong></p>
+
+<pre><code>&lt;!DOCTYPE html&gt;
+&lt;html&gt;
+  &lt;head&gt;
+    &lt;title&gt;&lt;%= full_title(yield(:title)) %&gt;&lt;/title&gt;
+    &lt;%= stylesheet_link_tag    "application", media: "all" %&gt;
+    &lt;%= javascript_include_tag "application" %&gt;
+    &lt;%= csrf_meta_tags %&gt;
+    &lt;%= render 'layouts/shim' %&gt;    
+  &lt;/head&gt;
+  &lt;body&gt;
+    &lt;%= render 'layouts/header' %&gt;
+    &lt;div class="container"&gt;
+      &lt;%= yield %&gt;
+      &lt;%= render 'layouts/footer' %&gt;
+      #加入下面那句
+      &lt;%= debug(params) if Rails.env.development? %&gt;
+    &lt;/div&gt;
+  &lt;/body&gt;
+&lt;/html&gt;
+</code></pre>
+
+<!--more-->
+
+
+<p></p>
+
+<p>甚麼是Rails.env.development?</p>
+
+<p>讓我們來開一下 concole</p>
+
+<pre><code>$ rails console
+$ Rials.env
+$ Rails.env.development?
+$ Rails.env.test?
+</code></pre>
+
+<p>你會發現 default就是
+development</p>
+
+<p>如果想要改成其他mode你可以這樣做</p>
+
+<ul>
+<li><p>改console的mode</p>
+
+<p>  $ rails console test</p></li>
+<li><p>改local rails server</p>
+
+<p>  $ rails server --enviroment production</p></li>
+<li><p>如果app跑在production之下時，db也要改</p>
+
+<p> $ bundle exec rake db:migrate RAILS_ENV=production</p></li>
+</ul>
+
+
+<p>然後再來改一下
+<strong>app/assets/stylesheets/custom.css.scss</strong></p>
+
+<p>加上</p>
+
+<pre><code>@mixin box_sizing {
+  -moz-box-sizing: border-box; 
+  -webkit-box-sizing: border-box; 
+  box-sizing: border-box;
+}
+
+/* miscellaneous */
+
+.debug_dump {
+  clear: both;
+  float: left;
+  width: 100%;
+  margin-top: 45px;
+  @include box_sizing;
+}
+</code></pre>
+
+<p>注意看一下那個</p>
+
+<p><strong>@include box_sizing;</strong></p>
+
+<p>他是Sass的mixin facility , 它可以讓一大堆的CSS 規則打包在一起 然後透過@include 來用！！！ 真是酷斃了！</p>
+
+<h3>A User resource</h3>
+
+<p>When following REST principles, resources are typically referenced using the resource name and a unique identifier. What this means in the context of users—which we’re now thinking of as a Users resource—is that we should view the user with id 1 by issuing a GET request to the URL /users/1</p>
+
+<p>Unfortunately, the URL /users/1 doesn’t work quite yet
+due to a routing error (Figure 6.9). We can get the REST-style Users URL to work by adding users as a resource to</p>
+
+<p>所以我們在這邊<strong>config/routes.rb</strong> 必須加上</p>
+
+<pre><code>resources :users
+</code></pre>
+
+<p>我們再來看一下user的route表</p>
+
+<p>Named route &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Path</p>
+
+<p>==========================</p>
+
+<ul>
+<li><p>users_path
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp;&nbsp;
+/users</p></li>
+<li><p>user_path(@user)
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+&nbsp;
+/users/1</p></li>
+<li><p>new_user_path
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp;
+/users/new</p></li>
+<li><p>edit_user_path(@user)
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+/users/1/edit</p></li>
+<li><p>users_url  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &nbsp; http://localhost:3000/users</p></li>
+<li>user_url(@user) &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; http://localhost:3000/users/1</li>
+<li>new_user_url &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;   http://localhost:3000/users/new</li>
+<li>edit_user_url(@user)   &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;http://localhost:3000/users/1/edit</li>
+</ul>
+
+
+<p>然後那個</p>
+
+<p><em>&lt;%= link_to user_path(@user), @user %></em>
+等於
+<em>&lt;%= link_to user_path(@user), user_path(@user) %></em></p>
+
+<p>因為Rails converts @user to the appropriate URL</p>
+
+<p>OK~讓我們來加一些東西在controller上吧！</p>
+
+<p><strong>app/controllers/users_controller.rb</strong></p>
+
+<pre><code>class UsersController &lt; ApplicationController
+
+  def show
+    @user = User.find(params[:id])
+  end
+
+  def new
+    @title = "Sign up"
+  end
+end
+</code></pre>
+
+<p>我們使用Rails的<strong>params</strong>物件擷取user的id</p>
+
+<p>還有View的部份 先加個</p>
+
+<p><strong>app/views/users/show.html.erb</strong></p>
+
+<pre><code>&lt;%= @user.name %&gt;, &lt;%= @user.email %&gt;
+</code></pre>
+
+<h3>測試 User 的show page</h3>
+
+<p>請寫在<strong>spec/requests/user_pages_spec.rb</strong></p>
+
+<pre><code>require 'spec_helper'
+
+describe "User pages" do
+  subject {page}
+  describe "profile page"" do
+    before {visit signup_path}
+
+      it {should have_selector('h1', text: 'Sign up')}
+      it {should have_selector('title', text: full_title('Sign up'))}
+  end
+end
+</code></pre>
+
+<p>通常會用<strong>User.create</strong>來做檔案，不過在測試時，通常都會用工廠女孩來簡化操作</p>
+
+<p>再開始之前，我們要來使用工廠女孩XD , 一個Ruby 的gem 由thoughtbot 製作</p>
+
+<p>OK~請到<strong>Gemfile</strong>我們來加這個Gem但是因為我們只需要在測試時用到，所以....請在group :test do這個block加上</p>
+
+<pre><code> gem 'factory_girl_rails', '1.4.0'
+</code></pre>
+
+<p>存檔之後 別忘了....</p>
+
+<pre><code>bundle install 
+</code></pre>
+
+<p>OK 來寫檔案吧</p>
+
+<p><strong>spec/factories.rb</strong></p>
+
+<pre><code>Factory.define :user do |user|
+  user.name                  "Aloha CC"
+  user.email                 "aloha@example.com"
+  user.password              "foobar"
+  user.password_confirmation "foobar"
+end
+</code></pre>
+
+<p>之後，<strong>我們就可以在測試裡面這樣用</strong></p>
+
+<pre><code>let(:user) { FactoryGirl.create(:user) }
+</code></pre>
+
+<p>let的意思是</p>
+
+<p>RSpec’s let method provides a convenient way to create local variables inside tests. The syntax might look a little strange, but its effect is similar to variable assignment. The argument of let is a symbol, and it takes a block whose return value is assigned to a local variable with the symbol’s name. In other words,</p>
+
+<pre><code>let(:found_user) { User.find_by_email(@user.email) }
+</code></pre>
+
+<p>creates a found_user variable whose value is equal to the result of find_by_email. We can then use this variable in any of the before or it blocks throughout the rest of the test. One advantage of let is that it memoizes its value, which means that it remembers the value from one invocation to the next. (Note that memoize is a technical term; in particular, it’s not a misspelling of “memorize”.) In the present case, because let memoizes the found_user variable, the find_by_email method will only be called once whenever the User model specs are run.</p>
+
+<p>那來改一下</p>
+
+<p><strong>spec/requests/user_pages_spec.rb</strong></p>
+
+<pre><code>require 'spec_helper'
+
+describe "User pages" do
+  subject {page}
+  describe "profile page" do
+    let(:user) { FactoryGirl.create(:user) }
+    before {visit signup_path}
+
+      it {should have_selector('h1', text: 'Sign up')}
+      it {should have_selector('title', text: full_title('Sign up'))}
+  end
+end
+</code></pre>
+
+<p>現在執行測試一定一堆錯誤！</p>
+
+<p>讓我們繼續改<strong>app/views/users/show.html.erb</strong></p>
+
+<p>加上</p>
+
+<pre><code>&lt;% provide(:title, @user.name) %&gt;
+&lt;h1&gt;&lt;%= @user.name %&gt;&lt;/h1&gt;
+</code></pre>
+
+<p>OK~當你執行</p>
+
+<pre><code>$ bundle exec rspec spec/
+</code></pre>
+
+<p>One thing you will quickly notice when running tests with Factory Girl is that they are slow. The reason is not Factory Girl’s fault, and in fact it is a feature, not a bug. The issue is that the BCrypt algorithm used in Section 6.3.1 to create a secure password hash is slow by design: BCrypt’s slow speed is part of what makes it so hard to attack. Unfortunately, this means that creating users can bog down the test suite; happily, there is an easy fix. BCrypt uses a cost factor to control how computationally costly it is to create the secure hash. The default value is designed for security, not for speed, which is perfect for production applications, but in tests our needs are reversed: we want fast tests, and don’t care at all about the security of the test users’ password hashes. The solution is to add a few lines to the test configuration file, config/environments/test.rb, redefining the cost factor from its secure default value to its fast minimum value, as shown in Listing 7.11. Even for a small test suite, the gains in speed from this step can be considerable, and I strongly recommend including Listing 7.11 in your test.rb.</p>
+
+<p>所以我們要來改一下環境變數
+<strong>config/environments/test.rb</strong>
+加上</p>
+
+<pre><code># Speed up tests by lowering BCrypt's cost function.
+  require 'bcrypt'
+  silence_warnings do
+    BCrypt::Engine::DEFAULT_COST = BCrypt::Engine::MIN_COST
+  end
+</code></pre>
+
+<p>補充一下～</p>
+
+<p>別忘了確認一下有沒有在<strong>Gemfile</strong>加上</p>
+
+<pre><code>gem 'bcrypt-ruby', '3.0.1'
+</code></pre>
+
+<h3>A Gravatar image and a sidebar</h3>
+
+<p>Gravatar就是一個免費可以讓使用者上傳圖片，然後這張圖片會和他的email做連結！</p>
+
+<p>你只要這樣改一下
+<strong>app/views/users/show.html.erb</strong></p>
+
+<pre><code>&lt;% provide(:title, @user.name) %&gt;
+&lt;h1&gt;
+  &lt;%= gravatar_for @user %&gt;
+  &lt;%= @user.name %&gt;
+&lt;/h1&gt;
+</code></pre>
+
+<p>如果現在跑測試的話你會得到錯誤！</p>
+
+<p>因為 <strong>gravatar_for</strong>這個方法尚未定義！</p>
+
+<p>一般來說，方法定義在任何的helper裡面，都會自動可以被所有view使用，但是為了方便，我們會把 <strong>gravatar_for</strong>這個方法，放到和User controller有關聯的helper上！</p>
+
+<p>由gravatar官方文件指出，Garavatar的URI是基於使用者email的MD5 Hash.
+在Rails裡面MD5是由Digest這個library裡頭的hexdigest方法負責</p>
+
+<p>我們可以這樣用</p>
+
+<pre><code>    $ rails console
+    &gt;&gt; email = "MHARTL@example.COM"
+    &gt;&gt; Digest::MD5::hexdigest(email.downcase)
+    =&gt; "1fda4469bcbec3badf5418269ffc5968" 
+</code></pre>
+
+<p>然後來寫一下
+<strong>gravatar_for</strong></p>
+
+<p>我們寫在<strong>app/helpers/users_helper.rb</strong></p>
+
+<pre><code>module UsersHelper
+
+  # Returns the Gravatar (http://gravatar.com/) for the given user.
+  def gravatar_for(user)
+    gravatar_id = Digest::MD5::hexdigest(user.email.downcase)
+    gravatar_url = "http://www.gravatar.com/avatar/#{gravatar_id}.png"
+    image_tag(gravatar_url, alt: user.name, class: "gravatar")
+  end
+end
+</code></pre>
+
+<p>接下來我們來編輯</p>
+
+<p><strong>app/views/users/show.html.erb</strong></p>
+
+<p>我們使用row和span4這兩個class(都有在bootstrap被定義)</p>
+
+<pre><code>&lt;% provide(:title, @user.name) %&gt;
+&lt;div class="row"&gt;
+  &lt;aside class="span4"&gt;
+    &lt;section&gt;
+      &lt;h1&gt;
+        &lt;%= gravatar_for @user %&gt;
+        &lt;%= @user.name %&gt;
+      &lt;/h1&gt;
+    &lt;/section&gt;
+  &lt;/aside&gt;
+&lt;/div&gt;
+</code></pre>
+
+<p>OK~再來編輯<strong>app/assets/stylesheets/custom.css.scss</strong> 加上</p>
+
+<pre><code>/* sidebar */
+
+aside {
+  section {
+    padding: 10px 0;
+    border-top: 1px solid $grayLighter;
+    &amp;:first-child {
+      border: 0;
+      padding-top: 0;
+    }
+    span {
+      display: block;
+      margin-bottom: 3px;
+      line-height: 1;
+    }
+    h1 {
+      font-size: 1.6em;
+      text-align: left;
+      letter-spacing: -1px;
+      margin-bottom: 3px;
+    }
+  }
+}
+
+.gravatar {
+  float: left;
+  margin-right: 10px;
+}
+</code></pre>
+
+<h1>Sign up 表格</h1>
+
+<p>因為這邊我們要開始用表格，讓user註冊！</p>
+
+<p>所以我們必須先</p>
+
+<pre><code>$ bundle exec rake db:reset
+$ bundle exec rake db:test:prepare
+</code></pre>
+
+<p>再來寫測試吧！</p>
+
+<p>在****加到describe "User pages" block裡面</p>
+
+<pre><code>describe "signup" do
+
+    before { visit signup_path }
+
+    let(:submit) { "Create my account" }
+
+    describe "with invalid information" do
+      it "should not create a user" do
+        expect { click_button submit }.not_to change(User, :count)
+      end
+    end
+
+    describe "with valid information" do
+      before do
+        fill_in "Name",         with: "Example User"
+        fill_in "Email",        with: "user@example.com"
+        fill_in "Password",     with: "foobar"
+        fill_in "Confirmation", with: "foobar"
+      end
+
+      it "should create a user" do
+        expect { click_button submit }.to change(User, :count).by(1)
+      end
+    end
+  end
+</code></pre>
+
+<p><strong>expect { click_button submit }.not_to change(User, :count)</strong>這句話是因為當目前沒有user註冊的時候，理論上User.count的結果不會變！</p>
+
+<p>因為let的關係，所以submit等同於"Create my account"</p>
+
+<p>在執行<strong>click_button "Create my account"</strong>的前後，都會執行User.count</p>
+
+<p>那個<strong>not_to</strong>等於 ==</p>
+
+<p>所以上面那句話就等同於</p>
+
+<pre><code>initial = User.count
+click_button "Create my account"
+final = User.count
+initial.should == final
+</code></pre>
+
+<p>現在執行測試應該就會pass了！</p>
+
+<h3>Using form_for</h3>
+
+<p>來編輯<strong>app/views/users/new.html.erb</strong></p>
+
+<pre><code>&lt;%= provide(:title, 'Sign up') %&gt;
+&lt;h1&gt;Sign up&lt;/h1&gt;
+
+&lt;div class="row"&gt;
+  &lt;div class="span6 offset3"&gt;
+    &lt;%= form_for(@user) do |f| %&gt;
+
+      &lt;%= f.label :name %&gt;
+      &lt;%= f.text_field :name %&gt;
+
+      &lt;%= f.label :email %&gt;
+      &lt;%= f.text_field :email %&gt;
+
+      &lt;%= f.label :password %&gt;
+      &lt;%= f.password_field :password %&gt;
+
+      &lt;%= f.label :password_confirmation, "Confirmation" %&gt;
+      &lt;%= f.password_field :password_confirmation %&gt;
+
+      &lt;%= f.submit "Create my account", class: "btn btn-large btn-primary" %&gt;
+    &lt;% end %&gt;
+  &lt;/div&gt;
+&lt;/div&gt;
+</code></pre>
+
+<p>那個f是 一般都稱作是form</p>
+
+<p>他是Rails內建的helper，他有很多關於html 表格元件好用的東東</p>
+
+<p>例如：</p>
+
+<pre><code>&lt;%= f.label :name %&gt;
+&lt;%= f.text_field :name %&gt;
+</code></pre>
+
+<p>會產生</p>
+
+<pre><code>&lt;label for="user_name"&gt;Name&lt;/label&gt;
+&lt;input id="user_name" name="user[name]" size="30" type="text" /&gt;
+</code></pre>
+
+<p>又例如：</p>
+
+<pre><code>&lt;%= f.password_field :password %&gt;
+</code></pre>
+
+<p>會產生</p>
+
+<pre><code>&lt;input id="user_password" name="user[password]" size="30" type="password" /&gt;
+</code></pre>
+
+<p>再來重要的是<strong>form_for</strong>，Rails製作form標籤，利用@user物件，因為每個Ruby物件知道自己的class，Rails就會知道@user是屬於user class，又因為@user 是要新增使用者，Rails知道要使用"post"這個方法</p>
+
+<p>讓我們來跑個測試吧！</p>
+
+<pre><code>$ bundle exec rspec spec/requests/user_pages_spec.rb -e "signup page"
+</code></pre>
+
+<p>加上-e是規定跑的example就是 描述符合"signup page"的</p>
+
+<p>這會有Fail因為@user目前是空的！</p>
+
+<p>所以我們在
+<strong>app/controllers/users_controller.rb</strong>
+的 def new 這個block加上</p>
+
+<pre><code>@user = User.new
+</code></pre>
+
+<p>來美觀一下吧！
+加到<strong>app/assets/stylesheets/custom.css.scss</strong></p>
+
+<pre><code>/* forms */
+
+input, textarea, select, .uneditable-input {
+  border: 1px solid #bbb;
+  width: 100%;
+  padding: 10px;
+  height: auto;
+  margin-bottom: 15px;
+  @include box_sizing;
+}
+</code></pre>
+
+<h2>註冊失敗</h2>
+
+<p>希望當user點下submit時，會觸發create的動作，他會使用<strong>User.new</strong>新增使用者，並嘗試儲存，如果註冊失敗，還會render一次註冊網頁給你</p>
+
+<p>所以我們可以這樣寫在<strong>app/controllers/users_controller.rb</strong></p>
+
+<pre><code>  def create
+      @user = User.new(params[:user])
+      if @user.save
+        # Handle a successful save.
+      else
+        render 'new'
+      end
+    end
+</code></pre>
+
+<p>你一定好奇，到底param裡面有啥</p>
+
+<p>先隨意create一個錯誤的user來看看 log</p>
+
+<pre><code>user:
+  name: Foo Bar
+  password_confirmation: foo
+  password: bar
+  email: foo@invalid
+commit: Create my account
+action: create
+controller: users
+</code></pre>
+
+<p>在這個post到signup 表格的case，params事實上包含了 許多hash，從上面那個就知道了！</p>
+
+<p>這些值關鍵都是從view那邊拿來的，例如</p>
+
+<p>email就是從</p>
+
+<pre><code>&lt;input id="user_email" name="user[email]" size="30" type="text" /&gt;
+</code></pre>
+
+<p>name那個屬性的值，雖然我們在log上看到的是string，實際上，在rails上</p>
+
+<p>他是使用symbol！所以</p>
+
+<p>param[:user] 就是user屬性的hash表，</p>
+
+<p>所以<strong>@user = User.new(params[:user])</strong>等於</p>
+
+<pre><code>@user = User.new(name: "Foo Bar", email: "foo@invalid",
+                 password: "foo", password_confirmation: "bar")
+</code></pre>
+
+<p>那個</p>
+
+<pre><code>&lt;%= form_for(@user) do |f| %&gt;
+&lt;%= f.label :name %&gt;
+&lt;%= f.text_field :name %&gt;
+.
+.
+.
+</code></pre>
+
+<p> form_for 他會自動把使用者輸入的值，丟給@user物件！ 酷吧！</p>
+
+<p> OK~再來執行</p>
+
+<pre><code>$ bundle exec rspec spec/requests/user_pages_spec.rb -e "signup with invalid information"
+</code></pre>
+
+<p>就會pass了！！！</p>
+
+<h3>Signup error messages</h3>
+
+<p>事實上，如果你輸入錯誤的值，在<strong>errors.full_message</strong>是擁有所有錯誤訊息的！那我們要怎麼把它加到view勒</p>
+
+<p>很簡單，我們加到<strong>app/views/users/new.html.erb</strong></p>
+
+<pre><code>&lt;% provide(:title, 'Sign up') %&gt;
+&lt;h1&gt;Sign up&lt;/h1&gt;
+
+&lt;%= form_for(@user) do |f| %&gt;
+  &lt;%= render 'shared/error_messages' %&gt;
+  .
+  .
+  .
+&lt;% end %&gt;                     
+</code></pre>
+
+<p>注意這邊！ render 一個partial，叫做是
+<strong>shared/error_messages</strong> 意思就是我們要自己寫一個！</p>
+
+<p>請新增一個檔案
+<strong>app/views/shared/_error_messages.html.erb</strong></p>
+
+<pre><code>&lt;% if @user.errors.any? %&gt;
+  &lt;div id="error_explanation"&gt;
+    &lt;div class="alert alert-error"&gt;
+      The form contains &lt;%= pluralize(@user.errors.count, "error") %&gt;.
+    &lt;/div&gt;
+    &lt;ul&gt;
+    &lt;% @user.errors.full_messages.each do |msg| %&gt;
+      &lt;li&gt;* &lt;%= msg %&gt;&lt;/li&gt;
+    &lt;% end %&gt;
+    &lt;/ul&gt;
+  &lt;/div&gt;
+&lt;% end %&gt;
+</code></pre>
+
+<p>那個any?是甚麼意思 請看</p>
+
+<pre><code>&gt;&gt; [].empty?
+=&gt; true
+&gt;&gt; [].any?
+=&gt; false
+&gt;&gt; a.empty?
+=&gt; false
+&gt;&gt; a.any?
+=&gt; true
+</code></pre>
+
+<p>那個<strong>pluralize</strong>是一個text helper他的功能就是 請看！</p>
+
+<pre><code>&gt;&gt; include ActionView::Helpers::TextHelper
+&gt;&gt; pluralize(1, "error")
+=&gt; "1 error" 
+&gt;&gt; pluralize(5, "error")
+=&gt; "5 errors"
+&gt;&gt; pluralize(2, "woman")
+=&gt; "2 women"
+&gt;&gt; pluralize(3, "erratum")
+=&gt; "3 errata"
+</code></pre>
+
+<p>酷吧！</p>
+
+<p>來美觀一下吧</p>
+
+<p>在 <strong>app/assets/stylesheets/custom.css.scss</strong> 裡頭的/* forms */</p>
+
+<pre><code>#error_explanation {
+  color:#f00;
+  ul {
+    list-style: none;
+    margin: 0 0 18px 0;
+  }
+}
+
+.field_with_errors {
+  @extend .control-group;
+  @extend .error;
+ }
+</code></pre>
+
+<p>這邊有個很怪的地方.field_with_errors是打哪來的?</p>
+
+<p>請看這句話， In addition, on error pages Rails automatically wraps the fields with errors in divs with the CSS class field_with_errors.</p>
+
+<h2>Signup success</h2>
+
+<p>換到如果註冊成功的部分,</p>
+
+<p>先跑一下測試～照理說會失敗～</p>
+
+<pre><code>$ bundle exec rspec spec/requests/user_pages_spec.rb -e "signup with valid information"
+</code></pre>
+
+<p>事實上，這邊我們少了一些東西，來改<strong>app/controllers/users_controller.rb</strong>吧～</p>
+
+<pre><code>def create
+    @user = User.new(params[:user])
+    if @user.save
+      redirect_to @user
+    else
+      render 'new'
+    end
+  end
+</code></pre>
+
+<h2>Flash</h2>
+
+<p>在發佈code之前，我們來看一下flash的功能</p>
+
+<pre><code>$ rails console
+&gt;&gt; flash = { success: "It worked!", error: "It failed." }
+=&gt; {:success=&gt;"It worked!", error: "It failed."}
+&gt;&gt; flash.each do |key, value|
+?&gt;   puts "#{key}"
+?&gt;   puts "#{value}"
+&gt;&gt; end
+success
+It worked!
+error
+It failed.
+</code></pre>
+
+<p>沒錯flash他有個key(就是success和error)和value的對應！我們來試著把它用到 <strong>app/views/layouts/application.html.erb</strong> 裡面</p>
+
+<pre><code>&lt;!DOCTYPE html&gt;
+&lt;html&gt;
+  &lt;head&gt;
+    &lt;title&gt;&lt;%= full_title(yield(:title)) %&gt;&lt;/title&gt;
+    &lt;%= stylesheet_link_tag    "application", media: "all" %&gt;
+    &lt;%= javascript_include_tag "application" %&gt;
+    &lt;%= csrf_meta_tags %&gt;
+    &lt;%= render 'layouts/shim' %&gt;    
+  &lt;/head&gt;
+  &lt;body&gt;
+    &lt;%= render 'layouts/header' %&gt;
+    &lt;div class="container"&gt;
+     &lt;% flash.each do |key, value| %&gt;
+     &lt;div class="alert alert-&lt;%= key %&gt;"&gt;&lt;%= value %&gt;&lt;/div&gt;
+      &lt;% end %&gt;
+      &lt;%= yield %&gt;
+      &lt;%= render 'layouts/footer' %&gt;
+      &lt;%= debug(params) if Rails.env.development? %&gt;
+    &lt;/div&gt;
+  &lt;/body&gt;
+&lt;/html&gt;
+</code></pre>
+
+<p>yap~~所以我們在create就可以加點東東</p>
+
+<p>如果儲存成功就跟她說歡迎之類的～</p>
+
+<pre><code>def create
+      @user = User.new(params[:user])
+      if @user.save
+         flash[:success] = "Welcome to the Sample App!"
+        refirect_to @user
+      else
+        render 'new'
+      end
+    end
+</code></pre>
+
+<p>耶～
+別忘了
+更新一下資料庫！開始測試吧</p>
+
+<pre><code>＄ bundle exec rake db:reset
+＄ bundle exec rake db:test:prepare
+</code></pre>
+
+<p>耶～～～可以deploy了！</p>
+
+<h2>Deploying to production with SSL</h2>
+
+<pre><code>$ git add .
+$ git commit -m "Finish user signup"
+$ git checkout master
+$ git merge sign-up
+</code></pre>
+
+<p>因為我們希望deploy成product版本時，要用ssl 保護！</p>
+
+<p>所以我們要在
+<strong>config/environments/production.rb</strong></p>
+
+<p>加上一句(其實就是把#號拿掉就好)</p>
+
+<pre><code>config.force_ssl = true
+</code></pre>
+
+<p>之後執行</p>
+
+<pre><code>$ git commit -am "Add SSL in production"
+$ git push heroku
+$ heroku run rake db:migrate
+</code></pre>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Learning on Ruby on Rails Tutorial-CH6 User model]]></title>
+    <link href="http://ccaloha.cc/blog/2012/08/10/learning-on-ruby-on-rails-tutorial-ch6-user-model/"/>
+    <updated>2012-08-10T10:59:00+08:00</updated>
+    <id>http://ccaloha.cc/blog/2012/08/10/learning-on-ruby-on-rails-tutorial-ch6-user-model</id>
+    <content type="html"><![CDATA[<p>Sorry 最近有點忙碌 一口氣補完全部好了～</p>
+
+<p>當然一開始</p>
+
+<p>我們來開一個Branch吧</p>
+
+<pre><code>git checkout -b modeling-users
+</code></pre>
+
+<p>讓我們來gen出user model吧</p>
+
+<pre><code>rails generate model User name:string email:string
+</code></pre>
+
+<p>耶～ 建出了db/migrate/[時間註記]_create_users.rb</p>
+
+<!--more-->
+
+
+<p></p>
+
+<p>長這樣</p>
+
+<pre><code>class CreateUsers &lt; ActiveRecord::Migration
+  def change
+    create_table :users do |t|
+      t.string :name
+      t.string :email
+
+      t.timestamps
+    end
+  end
+end
+</code></pre>
+
+<p>其中migration本身有change這個方法，決定資料庫的改變！</p>
+
+<p>而這個change方法，又呼叫了create_table 建立資料表再資料庫內</p>
+
+<p>之後，我們就可以執行</p>
+
+<pre><code> bundle exec rake db:migrate
+</code></pre>
+
+<p>如果要rollback的話執行</p>
+
+<pre><code>bundle exec rake db:rollback
+</code></pre>
+
+<p>接下來我們要改Gemfile新增</p>
+
+<pre><code>gem 'annotate', '~&gt; 2.4.1.beta'
+</code></pre>
+
+<p>在
+group :development, :test do</p>
+
+<p>end
+裡面放</p>
+
+<p>之後別忘了</p>
+
+<pre><code>bundle install 
+</code></pre>
+
+<p>這樣我們就可以看資料庫的變化</p>
+
+<pre><code>bundle exec annotate --position before
+</code></pre>
+
+<p>於是乎在app/models/user.rb 就出現了</p>
+
+<pre><code># == Schema Information
+#
+# Table name: users
+#
+#  id         :integer         not null, primary key
+#  name       :string(255)
+#  email      :string(255)
+#  created_at :datetime        not null
+#  updated_at :datetime        not null
+#
+
+class User &lt; ActiveRecord::Base
+   attr_accessible :name, :email
+end
+</code></pre>
+
+<p>之後 你想要看資料庫最新狀況都可以再輸入一次</p>
+
+<p>讓我們來重新看app/models/user.rb</p>
+
+<p>using attr_accessible is important for preventing a mass assignment vulnerability, a distressingly common and often serious security hole in many Rails applications.</p>
+
+<p>所以這很重要！</p>
+
+<p>接著我們來看Model上的操作</p>
+
+<p>先來開個console來</p>
+
+<pre><code>rails console --sandbox
+</code></pre>
+
+<h2>增</h2>
+
+<p>新增</p>
+
+<pre><code>User.new
+＃When called with no arguments, User.new returns an object with all nil attributes.
+
+user = User.new(name: "Michael Hartl", email: "mhartl@example.com")
+</code></pre>
+
+<p>儲存</p>
+
+<pre><code>user.save
+</code></pre>
+
+<p>更方便的新增</p>
+
+<pre><code>User.create(name: "A Nother", email: "another@example.org")
+</code></pre>
+
+<h2>刪</h2>
+
+<p>刪除</p>
+
+<pre><code>foo.destroy
+</code></pre>
+
+<h2>修</h2>
+
+<pre><code>user
+user.email = "mhartl@example.net"
+user.save   
+</code></pre>
+
+<p>使用reload回到先前未儲存狀況</p>
+
+<pre><code>user.email
+user.email = "foo@bar.com"
+user.reload.email
+</code></pre>
+
+<p>使用update_attributes修改</p>
+
+<pre><code>user.update_attributes(name: "The Dude", email: "dude@abides.org") 
+</code></pre>
+
+<h2>查</h2>
+
+<p>找尋 - by ID</p>
+
+<pre><code>User.find(1)
+</code></pre>
+
+<p>找尋 - by XXX</p>
+
+<p>這個方法是從Active Recoed內建的東西(depend on 你的table)</p>
+
+<pre><code>User.find_by_email("mhartl@example.com")
+</code></pre>
+
+<p>找尋 - 找第一個</p>
+
+<pre><code>User.first
+</code></pre>
+
+<p>找尋 - 找所有</p>
+
+<pre><code>User.all
+</code></pre>
+
+<p>某筆資料的看詳細資訊</p>
+
+<pre><code>user.name
+
+user.email
+
+user.updated_at
+</code></pre>
+
+<h2>使用者驗證</h2>
+
+<p>OK~~讓我們來開始測試驅動開發八～</p>
+
+<p>我們剛剛在gen user時，因為我們沒有帶--no-test-framework</p>
+
+<p>所以她有自動幫我們建了測試的code在</p>
+
+<p>/spec/models/user_spec.rb</p>
+
+<p>如果你執行</p>
+
+<pre><code>bundle exec rspec spec/models/user_spec.rb 
+</code></pre>
+
+<p>會得到pending的結果</p>
+
+<p>因為它裡頭寫了</p>
+
+<pre><code>pending "add some examples to (or delete) #{__FILE__}"
+</code></pre>
+
+<p>OK~</p>
+
+<p>那我們來改寫吧</p>
+
+<pre><code>require 'spec_helper'
+
+describe User do
+
+  before { @user = User.new(name: "Example User", email: "user@example.com") }
+
+  subject { @user }
+
+  it { should respond_to(:name) }
+  it { should respond_to(:email) }
+end
+</code></pre>
+
+<p>首先那個before就是在做測試之前我們會先create一個instace varibale @user</p>
+
+<p>並透過subject{@user} 定義@user為default的test的subject</p>
+
+<p>然後那個respond_to(:name)</p>
+
+<p>代表的是裡頭是否有這個屬性！</p>
+
+<p>(Recall from Section 4.2.3 that Ruby uses a question mark to indicate such true/false boolean methods.) The tests themselves rely on the boolean convention used by RSpec: the code</p>
+
+<pre><code>@user.respond_to?(:name)
+</code></pre>
+
+<p>can be tested using the RSpec code</p>
+
+<pre><code>@user.should respond_to(:name)
+</code></pre>
+
+<p>Because of subject { @user }, we can leave off @user in the test, yielding</p>
+
+<pre><code>it { should respond_to(:name) }
+</code></pre>
+
+<p>這時候～我就高興的執行了</p>
+
+<pre><code>bundle exec rspec spec/
+</code></pre>
+
+<p>但是....囧  怎麼有錯～</p>
+
+<p>原來是因為 即使我們用<strong>rake db:migrate</strong>建立開發用的資料庫，但是測試時，測試資料庫並不會知道資料的模型(事實上，根本還不存在)</p>
+
+<p>所以我們要建立正確結構的test db，讓測試通過，我們必須使用<strong>db:test:prepare</strong></p>
+
+<p>所以</p>
+
+<pre><code> bundle exec rake db:test:prepare
+</code></pre>
+
+<p>然後在執行</p>
+
+<pre><code>bundle exec rspec spec/
+</code></pre>
+
+<p>過了耶！！</p>
+
+<h3>驗證資料是否有存在</h3>
+
+<p>當然要來寫一下測試拉！ 加上下面那些</p>
+
+<pre><code> it { should be_valid }
+
+  describe "when name is not present" do
+    before { @user.name = " " }
+    it { should_not be_valid }
+  end
+</code></pre>
+
+<p>為甚麼可以寫成should be_valid</p>
+
+<p>原因是一個物件若有定應到boolean的方法例如foo?的話</p>
+
+<p>就會自動對應到測試方法"be_foo"</p>
+
+<p>所以be_valid就是從</p>
+
+<p>@user.valid？來的</p>
+
+<p>然後變成</p>
+
+<pre><code>@user.should be_valid
+</code></pre>
+
+<p>因為我們有用subject所以…可以改寫成</p>
+
+<pre><code>it { should be_valid }
+</code></pre>
+
+<p>也完驗證～在來寫validates吧～</p>
+
+<p>只要在<strong>app/models/user.rb</strong>加入</p>
+
+<pre><code>validates :name, presence: true
+</code></pre>
+
+<p>看起來很酷～但是事實上就是使用一個function
+就像下面那樣</p>
+
+<pre><code>class User &lt; ActiveRecord::Base 
+  attr_accessible(:name, :email)
+
+  validates(:name, presence: true)
+end
+</code></pre>
+
+<p>ＯＫ～pass了！</p>
+
+<p>之後我們再補上下面的東東到<strong>spec/models/user_spec.rb</strong></p>
+
+<pre><code>describe "when email is not present" do
+    before { @user.email = " " }
+    it { should_not be_valid }
+  end
+</code></pre>
+
+<p>還有在 <strong>app/models/user.rb
+</strong></p>
+
+<p>加上</p>
+
+<pre><code>validates :email, presence: true
+</code></pre>
+
+<h3>驗證資料長度是否有存在</h3>
+
+<p>先來寫名字長度驗證的測試<strong>spec/models/user_spec.rb</strong></p>
+
+<pre><code>describe "when name is too long" do
+    before { @user.name = "a" * 51 }
+    it { should_not be_valid }
+  end
+</code></pre>
+
+<p>在補寫程式</p>
+
+<pre><code> validates :name, presence: true , length: { maximum: 50}
+</code></pre>
+
+<h3>驗證資料格式是否有正確</h3>
+
+<p>先寫測試</p>
+
+<pre><code> describe "when email format is invalid" do
+    it "should be invalid" do
+      addresses = %w[user@foo,com user_at_foo.org example.user@foo.]
+      addresses.each do |invalid_address|
+        @user.email = invalid_address
+        @user.should_not be_valid
+      end      
+    end
+  end
+
+  describe "when email format is valid" do
+    it "should be valid" do
+      addresses = %w[user@foo.com A_USER@f.b.org frst.lst@foo.jp a+b@baz.cn]
+      addresses.each do |valid_address|
+        @user.email = valid_address
+        @user.should be_valid
+      end      
+    end
+</code></pre>
+
+<p>那個%w[] 可以做字串的array</p>
+
+<p>再來寫 比對的正則表示式</p>
+
+<pre><code>VALID_EMAIL_REGEX = /\A[\w+\-.]+@[a-z\d\-.]+\.[a-z]+\z/i
+validates :email, presence: true, format: { with: VALID_EMAIL_REGEX }
+</code></pre>
+
+<p> 全部的意思是：</p>
+
+<pre><code> Expression Meaning
+</code></pre>
+
+<p>full regex</p>
+
+<pre><code>/\A[\w+\-.]+@[a-z\d\-.]+\.[a-z]+\z/i    
+</code></pre>
+
+<p>start of regex</p>
+
+<pre><code>/                                       
+</code></pre>
+
+<p>match start of a string</p>
+
+<pre><code>\A                                      
+</code></pre>
+
+<p>at least one word character, plus, hyphen, or dot</p>
+
+<pre><code>[\w+\-.]+   
+</code></pre>
+
+<p>literal “at sign”</p>
+
+<pre><code>@   
+</code></pre>
+
+<p>at least one letter, digit, hyphen, or dot</p>
+
+<pre><code>[a-z\d\-.]+ 
+</code></pre>
+
+<p>literal dot</p>
+
+<pre><code>\.  
+</code></pre>
+
+<p>at least one letter</p>
+
+<pre><code>[a-z]+  
+</code></pre>
+
+<p>match end of a string</p>
+
+<pre><code>\z  
+</code></pre>
+
+<p>end of regex</p>
+
+<pre><code>/   
+</code></pre>
+
+<p>case insensitive</p>
+
+<pre><code>i   
+</code></pre>
+
+<p>如果不知道怎麼寫 可以參考</p>
+
+<p>http://www.rubular.com/</p>
+
+<h3>驗證獨特性</h3>
+
+<p> A test for the rejection of duplicate email addresses.
+<strong>spec/models/user_spec.rb</strong></p>
+
+<p>新增</p>
+
+<pre><code>describe "when email address is already taken" do
+       before do
+         user_with_same_email = @user.dup
+         user_with_same_email.save
+       end
+       it { should_not be_valid }
+    end
+</code></pre>
+
+<p> 然後<strong>app/models/user.rb</strong></p>
+
+<p> 加上</p>
+
+<pre><code>validates :email, presence: true, format: { with: VALID_EMAIL_REGEX },
+                uniqueness: true
+</code></pre>
+
+<p>但是我們尚未完成！</p>
+
+<p>因為....如果email只有在大小寫上有所不同 這樣就會有問題</p>
+
+<p>先寫test case</p>
+
+<pre><code>describe "when email address is already taken" do
+       before do
+         user_with_same_email = @user.dup
+         user_with_same_email.save
+       end
+       it { should_not be_valid }
+    end
+</code></pre>
+
+<p>好佳在～ :uniqueness accepts an option, :case_sensitive, for just this purpose</p>
+
+<p>所以我們可加上</p>
+
+<pre><code>uniqueness: { case_sensitive: false }
+</code></pre>
+
+<p>但是.....實際上…這個uniqueness並不是完成 可以達成獨特性的驗證</p>
+
+<p>詳細為啥請看網站舉例</p>
+
+<p>we just need to enforce uniqueness at the database level as well. Our method is to create a database index on the email column, and then require that the index be unique.</p>
+
+<p>所以我們來加上一些index來確保這個問題不會發生</p>
+
+<pre><code> rails generate migration add_index_to_users_email
+</code></pre>
+
+<p>加上一句話</p>
+
+<pre><code>class AddIndexToUsersEmail &lt; ActiveRecord::Migration
+  def change
+    add_index :users, :email, unique: true
+  end
+end
+</code></pre>
+
+<p>他會加上一個index在users資料表的email欄位上</p>
+
+<p>別忘了執行</p>
+
+<pre><code>bundle exec rake db:migrate
+</code></pre>
+
+<p>最後還有一個特別的地方就是</p>
+
+<p>在儲存email之前 必須把它全部轉成小寫！</p>
+
+<p>原因是</p>
+
+<p>The reason is that not all database adapters use case-sensitive indices.</p>
+
+<p>所以我們可以使用一個callback的方法，which is a method that gets invoked at a particular point in the lifetime of an Active Record object</p>
+
+<p>在<strong>app/models/user.rb</strong>加上</p>
+
+<pre><code>before_save { |user| user.email = email.downcase }
+</code></pre>
+
+<h2>增加密碼的保密</h2>
+
+<p>加密的密碼！</p>
+
+<p>為了要讓密碼加密，我們會使用state-of-the-art hash 函式，又稱作bcrypt,他會將密碼不可逆做雜湊加密</p>
+
+<p>所以加上下面到<strong>Gemfile</strong></p>
+
+<pre><code>gem 'bcrypt-ruby', '3.0.1'
+</code></pre>
+
+<p>寫測試！我們要確保User物件有<strong>encrypted_password</strong>這個欄位</p>
+
+<p><strong>spec/models/user_spec.rb</strong></p>
+
+<pre><code>#在it { should respond_to(:name) }和it { should respond_to(:email) }底下加上
+  it { should respond_to(:password_digest) }
+</code></pre>
+
+<p>要通過測試，我們必須要加資料庫東西了！</p>
+
+<pre><code>＄rails generate migration add_password_digest_to_users password_digest:string
+
+#加完別忘了
+$ bundle exec rake db:migrate
+$ bundle exec rake db:test:prepare
+
+#還有測試
+$ bundle exec rspec spec/
+</code></pre>
+
+<h3>密碼與確認</h3>
+
+<p>要讓使用者確認密碼，所以必需要在User這邊，加上兩個屬性！password和password_confirmation</p>
+
+<p>一樣先加到測試裡面！<strong>spec/models/user_spec.rb</strong></p>
+
+<pre><code> it { should respond_to(:password) }
+ it { should respond_to(:password_confirmation) }
+</code></pre>
+
+<p> 因為加了上面兩行！所以..... before do這個block要加點東西</p>
+
+<pre><code>before do
+@user = User.new(name: "Example User", email: "user@example.com", 
+                 password: "foobar", password_confirmation: "foobar")
+end
+</code></pre>
+
+<p>另外，也不希望使用者輸入空的密碼，所以測試再加上</p>
+
+<pre><code>describe "when password is not present" do
+  before { @user.password = @user.password_confirmation = " " }
+  it { should_not be_valid }
+end
+</code></pre>
+
+<p>也不希望使用者沒有輸入confirmation</p>
+
+<pre><code>describe "when password confirmation is nil" do
+  before { @user.password_confirmation = nil }
+  it { should_not be_valid }
+end
+</code></pre>
+
+<p>不希望使用者密碼太短(實作寫在下面)</p>
+
+<pre><code>describe "with a password that's too short" do
+  before { @user.password = @user.password_confirmation = "a" * 5 }
+  it { should be_invalid }
+end
+</code></pre>
+
+<h3>使用者認證機制</h3>
+
+<p>要認證的話，預計flow是這樣做</p>
+
+<pre><code>user = User.find_by_email(email)
+current_user = user.authenticate(password)
+</code></pre>
+
+<p>那個authenticate是判斷使用者輸入的密碼，如果true的話就會return user不是的話，就會return false，所以User必須要用這個function，所以來寫測試吧<strong>spec/models/user_spec.rb</strong></p>
+
+<pre><code>#在前面加上這句
+it { should respond_to(:authenticate) }
+
+#在底下加上
+describe "return value of authenticate method" do
+  before { @user.save }
+  let(:found_user) { User.find_by_email(@user.email) }
+
+  describe "with valid password" do
+    it { should == found_user.authenticate(@user.password) }
+  end
+
+  describe "with invalid password" do
+    let(:user_for_invalid_password) { found_user.authenticate("invalid") }
+
+    it { should_not == user_for_invalid_password }
+    specify { user_for_invalid_password.should be_false }
+  end
+end
+</code></pre>
+
+<p>let 就是讓found_user 等同於 User.find_by_email(@user.email)</p>
+
+<p>specify就是it的代名詞(用在當it念起來怪怪的時候XD)</p>
+
+<p>舉例來說：</p>
+
+<p>it(別忘了就是@user) should not equal wrong user  => 順！</p>
+
+<p>user: user with invalid password should be false => 怪....</p>
+
+<p>所以才用specify</p>
+
+<p>變成</p>
+
+<p>“specify: user with invalid password should be false =>順！</p>
+
+<h3>User has secure password</h3>
+
+<p>先看一下觀念</p>
+
+<p>我們希望讓password和password_confirmation欄位變成accessible，讓我們可以實例化新的用戶一個初始雜湊</p>
+
+<p><strong>網路上查的資訊</strong>
+attr_accessor :password</p>
+
+<p>表示在user model中加入一個virtual attribute稱為password，virtual attribute的意思是password不對應於資料庫裡的欄位，只用在程式類似變數的角色。</p>
+
+<p>attr_accessible :name, :email, :password, :password_confirmation
+表示將password與password_confirmation加入到attr_accessible的list中，加到list中的變數意味著這個變數可以從外部去修改它，例如可以做一個頁面來重設password等。加到list的另一個好處是可以防止不當的hacker行為(mass assignment)。</p>
+
+<p>所以我們在 <strong>app/models/user.rb</strong>需要這句</p>
+
+<pre><code>attr_accessible :name, :email, :password, :password_confirmation
+</code></pre>
+
+<p>再來我們希望密碼不要太短(還記得上面～寫的測試媽)</p>
+
+<pre><code>validates :password, length: { minimum: 6 }
+</code></pre>
+
+<p><strong>password_confirmation</strong>要有</p>
+
+<pre><code>validates :password_confirmation, presence: true
+</code></pre>
+
+<p>最後我們需要新加password和password_confirmation屬性，也需要加authenticate方法去比較加密的密碼是否和密碼一致，所以我們要整合到一個function裡面 就叫他為</p>
+
+<pre><code>has_secure_password
+</code></pre>
+
+<p>他其實是Rails內建的funciton，請看下面</p>
+
+<pre><code>module ActiveModel
+  module SecurePassword
+    extend ActiveSupport::Concern
+
+    module ClassMethods
+        def has_secure_password
+        # Load bcrypt-ruby only when has_secure_password is used.
+        # This is to avoid ActiveModel (and by extension the entire framework) being dependent on a binary library.
+        gem 'bcrypt-ruby', '~&gt; 3.0.0'
+        require 'bcrypt'
+
+        attr_reader :password
+
+        validates_confirmation_of :password
+        validates_presence_of     :password_digest
+
+        include InstanceMethodsOnActivation
+
+        if respond_to?(:attributes_protected_by_default)
+          def self.attributes_protected_by_default
+            super + ['password_digest']
+          end
+        end
+      end
+    end
+
+  module InstanceMethodsOnActivation
+  # Returns self if the password is correct, otherwise false.
+  def authenticate(unencrypted_password)
+    BCrypt::Password.new(password_digest) == unencrypted_password &amp;&amp; self
+  end
+
+  # Encrypts the password into the password_digest attribute, only if the
+  # new password is not blank.
+  def password=(unencrypted_password)
+    unless unencrypted_password.blank?
+      @password = unencrypted_password
+      self.password_digest = BCrypt::Password.create(unencrypted_password)
+                end
+            end
+        end
+    end
+end     
+</code></pre>
+
+<p>傑克！這真的是太神奇了！！！！！</p>
+
+<pre><code>$ git add .
+$ git commit -m "Make a basic User model (including secure passwords)"
+Then merge back into the master branch:
+
+$ git checkout master
+$ git merge modeling-users
+</code></pre>
+
+<p>＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝底下是之前版本的....你就知道為甚麼我說這太神奇了！！！＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝</p>
+
+<h3>驗證密碼</h3>
+
+<p>首先我們先來寫測試程式</p>
+
+<p>要先修改內容 ，把</p>
+
+<pre><code>before { @user = User.new(name: "Example User", email: "user@example.com") }
+</code></pre>
+
+<p>改成這樣</p>
+
+<pre><code>before(:each) do
+@attr = {
+  :name =&gt; "Example User",
+  :email =&gt; "user@example.com",
+  :password =&gt; "foobar",
+  :password_confirmation =&gt; "foobar"
+}
+end
+
+it "should create a new instance given valid attributes" do
+    User.create!(@attr)
+end
+</code></pre>
+
+<p> 然後後面加上</p>
+
+<pre><code> describe "password validations" do
+
+    it "should require a password" do
+      User.new(@attr.merge(:password =&gt; "", :password_confirmation =&gt; "")).
+        should_not be_valid
+    end
+
+    it "should require a matching password confirmation" do
+      User.new(@attr.merge(:password_confirmation =&gt; "invalid")).
+        should_not be_valid
+    end
+
+    it "should reject short passwords" do
+      short = "a" * 5
+      hash = @attr.merge(:password =&gt; short, :password_confirmation =&gt; short)
+      User.new(hash).should_not be_valid
+    end
+
+    it "should reject long passwords" do
+      long = "a" * 41
+      hash = @attr.merge(:password =&gt; long, :password_confirmation =&gt; long)
+      User.new(hash).should_not be_valid
+    end
+  end
+</code></pre>
+
+<p>OK寫好測試後，來讓我們的程式通過測試吧～</p>
+
+<p>先到<strong>app/models/user.rb</strong></p>
+
+<pre><code>#改這些，這是因為流程上我們會接受密碼還有密碼的確認，所以我們必須加上這個
+attr_accessor :password
+attr_accessible :name, :email, :password, :password_confirmation
+ #還有下面那些，這個還會自動幫你產生虛擬的屬性"password_confirmation"
+validates :password, :presence     =&gt; true,
+                   :confirmation =&gt; true,
+                   :length       =&gt; { :within =&gt; 6..40 }
+</code></pre>
+
+<p>現在讓我們計畫 使用encrypted_password這個屬性來儲存有加密的密碼</p>
+
+<p>首先我們先用console來先試玩一下</p>
+
+<pre><code>$rails console --sandbox 
+$ user = User.new
+$ user.respond_to?(:password)   =&gt;你會得到true
+$ user.respond_to?(:encrypted_password)  =&gt;你會得到False!
+</code></pre>
+
+<p>科科....</p>
+
+<p>所以我們加個測試<strong>spec/models/user_spec.rb</strong>好了！確保程式會respond_to  “encrypted_password”</p>
+
+<pre><code>describe "password encryption" do
+
+    before(:each) do
+      @user = User.create!(@attr)
+    end
+
+    it "should have an encrypted password attribute" do
+      @user.should respond_to(:encrypted_password)
+    end
+  end
+</code></pre>
+
+<p>上面我們會什麼不用User.new (其實用User.new也可以)，但是因為要設定加密的密碼，是必須在使用者資料寫到資料庫時，在做的動作，所以使用create! 還有把它放在 before(:each) 裡面可以確保所有的加密的密碼都會在這個describe區塊內work</p>
+
+<p>所以要通過測試，我們必須要加資料庫東西了！</p>
+
+<pre><code>＄rails generate migration add_password_to_users encrypted_password:string
+</code></pre>
+
+<p>改<strong>db/migrate/<timestamp>_add_password_to_users.rb</strong></p>
+
+<pre><code>class AddPasswordToUsers &lt; ActiveRecord::Migration
+  def self.up
+    add_column :users, :encrypted_password, :string
+  end
+
+  def self.down
+    remove_column :users, :encrypted_password
+  end
+end
+</code></pre>
+
+<p>接下來，執行</p>
+
+<pre><code>$bundle exec rake db:migrate
+$bundle exec rake db:test:prepare
+#rake db:test:prepare - 建立一個資料庫給測試環境使用(當新增或修改migrate檔案時，要重新下這個指令)
+</code></pre>
+
+<p>ＯＫ來跑測試吧</p>
+
+<pre><code>$ bundle exec rspec spec/models/user_spec.rb -e "should have an encrypted password attribute"
+</code></pre>
+
+<p>接下來，我們還必須要加入測試，因為不希望再加入密碼時，是空的</p>
+
+<p>所以先加入測試<strong>spec/models/user_spec.rb</strong></p>
+
+<p>在<strong>describe "password encryption" do</strong>這個block裡面</p>
+
+<p>加入</p>
+
+<pre><code>it "should set the encrypted password" do
+  @user.encrypted_password.should_not be_blank
+end
+</code></pre>
+
+<p>為了讓測試可以通過，我們寫一個callback function叫做是<strong>encrypt_password</strong>用在before_save方法，他的工作就是加密</p>
+
+<p>寫在<strong>app/models/user.rb</strong></p>
+
+<pre><code>private
+def encrypt_password
+    self.encrypted_password = encrypt(password)
+    #加個self是確保寫到User類別的self.encrypted_password
+end
+
+def encrypt(string)
+    string # Only a temporary implementation!
+end
+</code></pre>
+
+<p>在Ruby類別內，<strong>private</strong>這個keyword之後的function，都只能用在本身的class內</p>
+
+<h2>機密的密碼</h2>
+
+<p>我們在<strong>app/models/user.rb</strong>加一個public 的方法，
+has_password?，他的功能就是比對user輸入的密碼和資料庫的密碼是否一致，對於這個方法，我們可以寫一個測試for that，測試他會return 正確的true 或 false</p>
+
+<p>請看測試程式，我們把它寫在describe "password encryption" do這個block 裡頭<strong>spec/models/user_spec.rb</strong></p>
+
+<pre><code> describe "has_password? method" do
+
+      it "should be true if the passwords match" do
+        @user.has_password?(@attr[:password]).should be_true
+      end    
+
+      it "should be false if the passwords don't match" do
+        @user.has_password?("invalid").should be_false
+      end 
+    end
+</code></pre>
+
+<p>在寫程式之前，我們來看下console</p>
+
+<pre><code>$rails console
+&gt;&gt; require 'digest'
+&gt;&gt; def secure_hash(string)
+&gt;&gt;   Digest::SHA2.hexdigest(string)
+&gt;&gt; end
+&gt;&gt; require 'digest'
+=&gt; false
+&gt;&gt; def secure_hash(string)
+&gt;&gt;   Digest::SHA2.hexdigest(string)
+&gt;&gt; end
+=&gt; nil
+&gt;&gt; password = "secret"
+=&gt; "secret"
+&gt;&gt; encrypted_password = secure_hash(password)
+=&gt; "2bb80d537b1da3e38bd30361aa855686bde0eacd7162fef6a25fe97bf527a25b"
+&gt;&gt; submitted_password = "secret"
+=&gt; "secret"
+&gt;&gt; encrypted_password == secure_hash(submitted_password)
+=&gt; true
+</code></pre>
+
+<p>我們使用Ruby的digest library的SHA2來作加密，但是如果攻擊者去try密碼，可能會給他猜到密碼，所以為了讓密碼更加保密，我們會使用salt這個方法，最簡單的方法就是把現在的時間加到密碼內，所以只有當使用者在同一時間製作同一密碼，才有可能得到一樣的加密</p>
+
+<p>我們一樣在console試試</p>
+
+<pre><code>Time.now.utc
+ =&gt; 2012-05-06 09:45:08 UTC 
+  salt = secure_hash("#{Time.now.utc}--#{password}")
+ =&gt; "1c63c82c6d9795c3c81762082392df1f238bb929d7fefaab4ea14779ec71e15a" 
+
+ encrypted_password =secure_hash("#{salt}--#{password}")
+ =&gt; "2ffa2d908d96bd8b94b53d5a8ee1e3632fc1d16dbd0cdb05860c1b053759b631" 
+</code></pre>
+
+<p>為了要記錄salt我們必須在資料表上增加一個欄位</p>
+
+<pre><code> $ rails generate migration add_salt_to_users salt:string
+</code></pre>
+
+<p>編輯<strong>db/migrate/<timestamp>_add_salt_to_users.rb</strong></p>
+
+<pre><code>  def self.up
+    add_column :users, :salt, :string
+  end
+
+  def self.down
+    remove_column :users, :salt
+  end
+</code></pre>
+
+<p>執行</p>
+
+<pre><code>$ bundle exec rake db:migrate
+$ bundle exec rake db:test:prepare
+</code></pre>
+
+<p>再來寫<strong>app/models/user.rb</strong>吧</p>
+
+<pre><code>require 'digest'
+class User &lt; ActiveRecord::Base
+  .
+  .
+  .
+  before_save :encrypt_password
+
+  def has_password?(submitted_password)
+    encrypted_password == encrypt(submitted_password)
+  end
+
+  private
+
+    def encrypt_password
+      self.salt = make_salt unless has_password?(password)
+      self.encrypted_password = encrypt(password)
+    end
+
+    def encrypt(string)
+      secure_hash("#{salt}--#{string}")
+    end
+
+    def make_salt
+      secure_hash("#{Time.now.utc}--#{password}")
+    end
+
+    def secure_hash(string)
+      Digest::SHA2.hexdigest(string)
+    end
+end
+</code></pre>
+
+<p>OK~來執行測試程式吧</p>
+
+<pre><code>$ bundle exec rspec spec/models/user_spec.rb  -e "should be false if the passwords don't match"
+
+$  bundle exec rspec spec/models/user_spec.rb -e "should be true if the passwords match"
+
+＃當然你也可以run所有在某個**describe**裡面的examples
+＃但是別忘了加上跳脫字元
+
+$ bundle exec rspec spec/models/user_spec.rb -e "has_password\? method"
+</code></pre>
+
+<h3>認證方法</h3>
+
+<p>對於每個使用者使用<strong>has_password?</strong> 看起來還不錯，但是它本身並不是那個有用，在第九章，當使用者登入時，會使用"<strong>authenticate</strong>"這個方法</p>
+
+<p>我們希望可以有一個方法，會return 登入使用者密碼是否正確，希望可以用一個<strong>類別方法</strong>，像這樣</p>
+
+<pre><code>User.authenticate(email, submitted_password)
+</code></pre>
+
+<p>希望有這個方法的話，我們先來寫測試吧～～</p>
+
+<p>在<strong>spec/models/user_spec.rb</strong> 寫在 describe "password encryption" do這個block裡面</p>
+
+<pre><code> describe "authenticate method" do
+
+      it "should return nil on email/password mismatch" do
+        wrong_password_user = User.authenticate(@attr[:email], "wrongpass")
+        wrong_password_user.should be_nil
+      end
+
+      it "should return nil for an email address with no user" do
+        nonexistent_user = User.authenticate("bar@foo.com", @attr[:password])
+        nonexistent_user.should be_nil
+      end
+
+      it "should return the user on email/password match" do
+        matching_user = User.authenticate(@attr[:email], @attr[:password])
+        matching_user.should == @user
+      end
+    end
+</code></pre>
+
+<p>要如何寫一個類別方法呢？(類別方法就是直接透過類別名稱呼叫到的函式，不用說一定要new出來，或是找到物件之類的)</p>
+
+<p>很簡單....請參考 寫在<strong>app/models/user.rb</strong></p>
+
+<pre><code>def self.authenticate(email, submitted_password)
+    user = find_by_email(email)
+    return nil  if user.nil?
+    return user if user.has_password?(submitted_password)
+end
+</code></pre>
+
+<p>這樣，我們就來改一下</p>
+
+<p><strong>spec/controllers/users_controller_spec.rb</strong></p>
+
+<p>新增在describe UsersController do這個block底下</p>
+
+<pre><code>describe "GET 'show'" do
+
+before(:each) do
+  @user = Factory(:user)
+end
+
+it "should be successful" do
+  get :show, :id =&gt; @user
+  response.should be_success
+end
+
+it "should find the right user" do
+  get :show, :id =&gt; @user
+  assigns(:user).should == @user
+ end
+end
+</code></pre>
+
+<p>幾個問題
+ assigns(:user) 是啥！？</p>
+
+<p>就文章指出，這是RSpec的Function
+The assigns method takes in a symbol argument and returns the value of the corresponding instance variable in the controller action</p>
+
+<p>所以assigns(:user)這句話，會return <strong>@user</strong></p>
+
+<p>接下來，有一個issue，就是要不要用RSpec的stub方法，(Stub回傳設定好的回傳值)</p>
+
+<pre><code>before(:each)
+    @user = Factory(:user)
+    User.stub!(:find, @user.id).and_return(@user)
+  end
+</code></pre>
+
+<p>這個程式確保任何呼叫User.find(用id找） 找到之後會return @user，Many Rails programmers, especially RSpec users, prefer this stubbing approach because it separates the controller tests from the model layer.</p>
+
+<p>Figuring out exactly when to stub things out is difficult, and message expectations are incredibly subtle and error-prone (see, e.g., Box 8.1 in the Rails 2.3 Tutorial book). To the common objection, “But now the controller tests hit the test database!”, I now find myself saying: “So what?” In my experience it has never mattered. I see no compelling reason not to hit the model layer in the controller tests, especially when it leads to much simpler tests. If you are interested in learning stubbing and message expectation techniques, I recommend reading the Ruby on Rails 2.3 Tutorial book. Otherwise, I suggest not worrying about enforcing a full separation of the model and controller layers in Rails tests. Although the controller tests in the rest of this book will hit the test database, at a conceptual level it will always be clear which part of MVC is being tested.</p>
+
+<p>By the way, in principle the tests should run faster when the controllers don’t hit the database, and for the full Rails Tutorial sample application test suite they do—by around two-tenths of a second.</p>
+
+<p>總之就是本來考量會cover到其他的測試，作者是認為so what ?</p>
+
+<p>再來繼續看其他issue，</p>
+
+<p>get :show 和 get 'show'</p>
+
+<p>其實這兩個做的是同一件事情 ，只不過用get :show 看起來比較爽，另外，get :show, :id => @user 其實就等於 get :show, :id => @user.id</p>
+
+<p>因為Rails會自動轉換物件去對應@id</p>
+]]></content>
+  </entry>
+  
+</feed>

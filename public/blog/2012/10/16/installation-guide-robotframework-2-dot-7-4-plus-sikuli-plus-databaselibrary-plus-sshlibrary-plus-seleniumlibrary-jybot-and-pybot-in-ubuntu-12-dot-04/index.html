@@ -1,0 +1,409 @@
+
+<!DOCTYPE HTML>
+<html>
+<head>
+	<script data-cfasync="false" type="text/javascript" src="//use.typekit.net/axj3cfp.js"></script>
+	<script data-cfasync="false" type="text/javascript">try{Typekit.load();}catch(e){}</script>
+	<meta charset="utf-8">
+	<title>[Installation Guide] RobotFramework 2.7.4 + Sikuli + DatabaseLibrary +SSHLibrary + Seleniumlibrary (jybot and pybot)in Ubuntu 12.04  | AlohaCC</title>
+
+<meta name="author" content="Aloha"> 
+
+<meta name="description" content="Share Ruby on Rail and all about 'Chun Yu, Chen AlohaCC'"> <meta name="keywords" content="Aloha, Ruby on Rails, Blog, Web Developer, Taiwan, Chun-Yu Chen, Design Pattern, Action Scripts, Robotframework, Sikuli">
+
+	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+	<link href="http://feeds.feedburner.com/Alohacc" rel="alternate" title="AlohaCC" type="application/atom+xml">
+	<link rel="canonical" href="">
+	<link href="/favicon.png" rel="shortcut icon">
+	<link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+	<!--[if lt IE 9]><script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
+	<script src="//ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
+	<script type="text/javascript" src="/javascripts/jquery.fancybox.pack.js"></script>
+
+<script language="Javascript" type="text/javascript">
+$(document).ready(
+  function() {
+    (function($) {
+      $(".fancybox[data-content-id]").each(function() {
+        this.href = $(this).data('content-id');
+      });
+      $(".fancybox").fancybox({
+        beforeLoad: function() {
+          var el, 
+              id = $(this.element).data('title-id');
+
+          if (id) {
+            el = $('#' + id);
+
+            if (el.length) {
+              this.title = el.html();
+            }
+          }
+          if ($(this).data('content')) {
+            this.content = $(this).data('content');
+          }
+        },
+        helpers: {
+          title: {
+            type: 'inside'
+          }
+        }
+      });
+    })(jQuery);
+  }
+);
+</script>
+
+	
+</head>
+
+
+
+<body>
+	<header id="header" class="inner"><h1><a href="/">AlohaCC</a></h1>
+<h4>Try to Make Something Diff | Just For Fun |</h4>
+<nav id="main-nav"><ul>
+	<li><a href="/">Blog</a></li>
+	<li><a href="/About">About</a></li>
+	<li><a href="/presentation">Presentation</a></li>
+  	<li><a href="/RoR">Ruby on Rails</a></li>
+  	<li><a href="/ActionScript">Action Scripts</a></li>
+  	<li><a href="/DesignPattern">Design Pattern</a></li>
+	<li><a href="/archives">Archive</a></li>
+</ul>
+</nav>
+<nav id="mobile-nav">
+	<div class="alignleft menu">
+		<a class="button">Menu</a>
+		<div class="container"><ul>
+	<li><a href="/">Blog</a></li>
+	<li><a href="/About">About</a></li>
+	<li><a href="/presentation">Presentation</a></li>
+  	<li><a href="/RoR">Ruby on Rails</a></li>
+  	<li><a href="/ActionScript">Action Scripts</a></li>
+  	<li><a href="/DesignPattern">Design Pattern</a></li>
+	<li><a href="/archives">Archive</a></li>
+</ul>
+</div>
+	</div>
+	<div class="alignright search">
+		<a class="button"></a>
+		<div class="container">
+			<form action="http://google.com/search" method="get">
+				<input type="text" name="q" results="0">
+				<input type="hidden" name="q" value="site:ccaloha.cc">
+			</form>
+		</div>
+	</div>
+</nav>
+
+
+</header>
+
+	<div id="content" class="inner"><article class="post">
+	<h2 class="title">[Installation Guide] RobotFramework 2.7.4 + Sikuli + DatabaseLibrary +SSHLibrary + Seleniumlibrary (Jybot and Pybot)in Ubuntu 12.04</h2>
+	<div class="entry-content"><h2>Prepare</h2>
+
+<ol>
+<li>ubuntu-12.04.1-desktop-i386</li>
+<li>VirtualBox</li>
+</ol>
+
+
+<h2>Installation Ubuntu in VirtualBox</h2>
+
+<p>流程請參考</p>
+
+<p><a href="http://www.deltalounge.net/wpress/2012/06/virtualbox-install-ubuntu-12-04/">VirtualBox - Install Ubuntu 12.4</a></p>
+
+<p><a href="http://blog.xuite.net/yh96301/blog/60374490-VirtualBox+4.1%E5%AE%89%E8%A3%9DUbuntu+12.04">VirtualBox 4.1安裝Ubuntu 12.04</a></p>
+
+<!--more-->
+
+
+<h2>Update / Upgrade apt-get</h2>
+
+<pre><code>$ sudo apt-get update
+$ sudo apt-get -f upgrade
+</code></pre>
+
+<h2>Install VIM</h2>
+
+<pre><code>$ sudo apt-get install vim
+</code></pre>
+
+<h2>Install Python</h2>
+
+<pre><code>$ python --version
+</code></pre>
+
+<p>Ubuntu 已經幫你安裝好了</p>
+
+<!--more-->
+
+
+<p></p>
+
+<h2>Install Java</h2>
+
+<p>（http://maketecheasier.com/install-java-runtime-in-ubuntu/2012/05/14）</p>
+
+<pre><code>$ sudo apt-get install openjdk-7-jre
+$ java -version
+</code></pre>
+
+<h2>Install Jython</h2>
+
+<pre><code>$ sudo apt-get install jython  
+</code></pre>
+
+<h2>Install Robotframework</h2>
+
+<p>Download <em>robotframework-2.7.4.tar.gz</em></p>
+
+<pre><code>$ cd Downloads
+$ tar -zxv -f robotframework-2.7.4.tar.gz
+$ cd robotframework-2.7.4
+$ sudo python setup.py install
+$ sudo jython setup.py install
+$ pybot --version
+$ jybot --version
+</code></pre>
+
+<h4>2012/10/16補充</h4>
+
+<pre><code>if you get "jybot: command not found"
+
+$ ln -s  /usr/local/bin/jybot /usr/share/jython/bin/jybot 
+</code></pre>
+
+<h2>Intall ez_install</h2>
+
+<pre><code>$ wget http://peak.telecommunity.com/dist/ez_setup.py
+$ python ez_setup.py
+</code></pre>
+
+<h2>Install Database Library (pybot only)</h2>
+
+<pre><code>$ easy_install robotframework-databaselibrary
+$ sudo apt-get install python-mysqldb
+</code></pre>
+
+<h2>Install paramiko</h2>
+
+<pre><code>$ sudo apt-get install python-paramiko
+</code></pre>
+
+<h2>Install SSH Library</h2>
+
+<pre><code>$ tar -zxv -f robotframework-sshlibrary-1.1.tar.gz 
+$ cd robotframework-sshlibrary-1.1
+$ sudo python setup.py install
+$ sudo jython setup.py install
+</code></pre>
+
+<h2>Install Seleniumlibrary</h2>
+
+<pre><code>$ tar -zxv -f robotframework-sshlibrary-1.1.tar.gz 
+$ cd robotframework-sshlibrary-1.1
+$ sudo python setup.py install
+$ sudo jython setup.py install
+</code></pre>
+
+<h2>Install SVN</h2>
+
+<pre><code>$ sudo apt-get install subversion
+</code></pre>
+
+<h2>Install Sikuli related package</h2>
+
+<pre><code>$ sudo apt-get install wmctrl
+$ sudo apt-get install libopencv-*
+$ sudo apt-get isntall python-opencv
+$ sudo apt-get install build-essential libgtk2.0-dev libjpeg-dev libtiff4-dev libjasper-dev libopenexr-dev cmake python-dev python-numpy python-tk libtbb-dev libeigen2-dev yasm libfaac-dev libopencore-amrnb-dev libopencore-amrwb-dev libtheora-dev libvorbis-dev libxvidcore-dev libx264-dev libqt4-dev libqt4-opengl-dev sphinx-common texlive-latex-extra libv4l-dev libdc1394-22-dev libavcodec-dev libavformat-dev libswscale-dev
+</code></pre>
+
+<p>上面是參考<a href="http://www.samontab.com/web/2012/06/installing-opencv-2-4-1-ubuntu-12-04-lts/">Installing OpenCV 2.4.1 in Ubuntu 12.04 LTS</a></p>
+
+<h4>2012/10/16補充</h4>
+
+<pre><code>$ echo "deb http://us.archive.ubuntu.com/ubuntu/ oneiric universe"  &gt;&gt; /etc/apt/sources.list
+$ echo "deb http://us.archive.ubuntu.com/ubuntu/ oneiric-updates universe" &gt;&gt; /etc/apt/sources.list
+$ sudo apt-get update
+$ sudo apt-get install libcv2.1 libcvaux2.1 libhighgui2.1
+</code></pre>
+
+<h2>Install Rdesktop for Windows Login (Sikuli Used)</h2>
+
+<pre><code># sudo apt-get install rdesktop
+</code></pre>
+
+<h2>Prepare Related jar for Jybot</h2>
+
+<p>你必須要下載，我是把它放在我的test folder裡面 ex: resource/keyword/LinuxEnvirement</p>
+
+<pre><code>sikuli-script.jar
+trilead-ssh2-build213.jar
+dblibrary-2.0.jar
+mysql-connector-java-5.1.18-bin.jar
+</code></pre>
+
+<h2>Ubuntu Run Script Sample</h2>
+
+<blockquote><p>PATH is very IMPORTANT</p></blockquote>
+
+<pre><code>#!/bin/bash
+
+if [ $# -lt 4 ]; then
+        echo "usage : sh run_tests.sh "Test_IP" "Database_IP" "BriefTest/FullTest" "Revison"
+        exit 1
+fi
+
+#===========================================================
+# 這一段是把我的Sikuli所要使用的圖片路徑加進AddImagePath.py裡面
+# Absolute path to this script
+SCRIPT=`readlink -f $0`
+# Absolute path this script is in
+SCRIPTPATH=`dirname $SCRIPT`
+CONFIG_FILE=$SCRIPTPATH/resource/keyword/AddImagePath.py
+echo $SCRIPTPATH
+#sed -i 's/Winbasic=.*/Winbasic=""/g' $CONFIG_FILE
+sed -i -e "s@Winbasic=.*@Winbasic=\"$SCRIPTPATH/..\/Lib\/keyword\/Others\/Sikuli\/Windows_Operating.sikuli\/ImagesOfWindowsBasicOperation\"@g" $CONFIG_FILE
+sed -i -e "s@Shutdown=.*@Shutdown=\"$SCRIPTPATH/..\/Lib\/keyword\/Others\/Sikuli\/Windows_Operating.sikuli\/ImagesOfShutdown\"@g" $CONFIG_FILE
+sed -i -e "s@CreateFile=.*@CreateFile=\"$SCRIPTPATH/..\/Lib\/keyword\/Others\/Sikuli\/Windows_Operating.sikuli\/ImagesOfCreateFile\"@g" $CONFIG_FILE
+sed -i -e "s@Format=.*@Format=\"$SCRIPTPATH/..\/Lib\/keyword\/Others\/Sikuli\/Windows_Operating.sikuli\/ImagesOfFormat\"@g" $CONFIG_FILE
+sed -i -e "s@WinRDP=.*@WinRDP=\"$SCRIPTPATH/..\/Lib\/keyword\/Others\/Sikuli\/Windows_Operating.sikuli\/ImagesOfWinRDP\"@g" $CONFIG_FILE
+#===========================================================
+
+MYDIRPATH=../Lib/keyword/Others/Sikuli/Windows_Operating.sikuli:resource/keyword
+LOCALPATH=resource/keyword/LinuxEnvirement
+
+VERSION=$4
+TESTSCALE=$3
+Test_IP=$1
+Database_IP=$2
+
+export CLASSPATH=$LOCALPATH/sikuli-script.jar:$LOCALPATH/trilead-ssh2-build213.jar:$LOCALPATH/dblibrary-2.0.jar:$LOCALPATH/mysql-connector-java-5.1.18-bin.jar
+export JYTHONPATH=/usr/share/jython/Lib:$LOCALPATH/sikuli-script.jar/Lib 
+
+
+jybot --pythonpath $MYDIRPATH  --outputdir test --exclude no_run --include $TESTSCALE --loglevel TRACE -l Windows_log_$TESTSCALE\_$VERSION -r Windows_report_$TESTSCALE\_$VERSION -o Windows_output_$TESTSCALE\_$VERSION --variable Database_IP:$Database_IP --variable Test_IP:$Test_IP Windows_TestCase.txt
+</code></pre>
+
+<p>最重要就是要告訴JYTHONPATH</p>
+
+<p>大概是這樣！</p>
+
+<p>有些lib是為了可以跑sikuli裝的 沒有時間一一去驗證是否真的需要&#8230;.</p>
+
+<blockquote><p>特別感謝 EJ 和 林旺 提供強大支援！</p></blockquote>
+</div>
+
+
+<div class="meta">
+	<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2012-10-16T11:39:00+08:00" pubdate data-updated="true">Oct 16<span>th</span>, 2012</time></div>
+	
+
+<div class="tags">
+
+	<a class='category' href='/blog/categories/robotframework/'>RobotFramework</a>
+
+</div>
+
+
+	
+		<span class="comments"><a href="/blog/2012/10/16/installation-guide-robotframework-2-dot-7-4-plus-sikuli-plus-databaselibrary-plus-sshlibrary-plus-seleniumlibrary-jybot-and-pybot-in-ubuntu-12-dot-04/#disqus_thread">Comments</a></span>
+	
+</div></article>
+
+	<div class="share">
+	<div class="addthis_toolbox addthis_default_style ">
+	
+	<a class="addthis_button_facebook_like" fb:like:layout="button_count"></a>
+	
+	
+	<a class="addthis_button_tweet"></a>
+	
+	
+	<a class="addthis_button_google_plusone" g:plusone:size="medium"></a>
+	
+<!---	<a class="addthis_counter addthis_pill_style"></a> --->
+	</div>
+  <script type="text/javascript" src="http://s7.addthis.com/js/250/addthis_widget.js#pubid="></script>
+</div>
+
+
+
+<section id="comment">
+    <h2 class="title">Comments</h2>
+    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+</section>
+</div>
+	<footer id="footer" class="inner">Copyright &copy; 2014
+
+    Aloha
+
+<br>
+Powered by Octopress.
+</footer>
+	<script src="/javascripts/slash.js"></script>
+<script src="/javascripts/jquery.fancybox.pack.js"></script>
+<script type="text/javascript">
+(function($){
+	$('.fancybox').fancybox();
+})(jQuery);
+</script> <!-- Delete or comment this line to disable Fancybox -->
+
+
+<script type="text/javascript">
+      var disqus_shortname = 'ccaloha';
+      
+        
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://ccaloha.cc/blog/2012/10/16/installation-guide-robotframework-2-dot-7-4-plus-sikuli-plus-databaselibrary-plus-sshlibrary-plus-seleniumlibrary-jybot-and-pybot-in-ubuntu-12-dot-04/';
+        var disqus_url = 'http://ccaloha.cc/blog/2012/10/16/installation-guide-robotframework-2-dot-7-4-plus-sikuli-plus-databaselibrary-plus-sshlibrary-plus-seleniumlibrary-jybot-and-pybot-in-ubuntu-12-dot-04/';
+        var disqus_script = 'embed.js';
+      
+    (function () {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/' + disqus_script;
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script>
+
+
+
+	<script type="text/javascript">
+		var _gaq = _gaq || [];
+		_gaq.push(['_setAccount', 'UA-29608372-1']);
+		_gaq.push(['_trackPageview']);
+
+		(function() {
+			var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+			ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+			var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+		})();
+	</script>
+
+
+<a title="Google Analytics Alternative" href="http://clicky.com/100753071"><img alt="Google Analytics Alternative" src="//static.getclicky.com/media/links/badge.gif" border="0" /></a>
+<script src="//static.getclicky.com/js" type="text/javascript"></script>
+<script type="text/javascript">try{ clicky.init(100753071); }catch(e){}</script>
+<noscript><p><img alt="Clicky" width="1" height="1" src="//in.getclicky.com/100753071ns.gif" /></p></noscript>
+
+</body>
+</html>

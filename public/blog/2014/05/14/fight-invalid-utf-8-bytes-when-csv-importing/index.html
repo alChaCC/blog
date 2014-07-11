@@ -1,0 +1,350 @@
+
+<!DOCTYPE HTML>
+<html>
+<head>
+	<script data-cfasync="false" type="text/javascript" src="//use.typekit.net/axj3cfp.js"></script>
+	<script data-cfasync="false" type="text/javascript">try{Typekit.load();}catch(e){}</script>
+	<meta charset="utf-8">
+	<title>CSV匯入中文編碼問題  | AlohaCC</title>
+
+<meta name="author" content="Aloha"> 
+
+<meta name="description" content="Fight invalid UTF-8 bytes when CSV importing"> <meta name="keywords" content="UTF-8, invalid byte, Ruby on Rails, CSV, import, 中文, 字元轉碼">
+
+	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+	<link href="http://feeds.feedburner.com/Alohacc" rel="alternate" title="AlohaCC" type="application/atom+xml">
+	<link rel="canonical" href="">
+	<link href="/favicon.png" rel="shortcut icon">
+	<link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+	<!--[if lt IE 9]><script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
+	<script src="//ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
+	<script type="text/javascript" src="/javascripts/jquery.fancybox.pack.js"></script>
+
+<script language="Javascript" type="text/javascript">
+$(document).ready(
+  function() {
+    (function($) {
+      $(".fancybox[data-content-id]").each(function() {
+        this.href = $(this).data('content-id');
+      });
+      $(".fancybox").fancybox({
+        beforeLoad: function() {
+          var el, 
+              id = $(this.element).data('title-id');
+
+          if (id) {
+            el = $('#' + id);
+
+            if (el.length) {
+              this.title = el.html();
+            }
+          }
+          if ($(this).data('content')) {
+            this.content = $(this).data('content');
+          }
+        },
+        helpers: {
+          title: {
+            type: 'inside'
+          }
+        }
+      });
+    })(jQuery);
+  }
+);
+</script>
+
+	
+</head>
+
+
+
+<body>
+	<header id="header" class="inner"><h1><a href="/">AlohaCC</a></h1>
+<h4>Try to Make Something Diff | Just For Fun |</h4>
+<nav id="main-nav"><ul>
+	<li><a href="/">Blog</a></li>
+	<li><a href="/About">About</a></li>
+	<li><a href="/presentation">Presentation</a></li>
+  	<li><a href="/RoR">Ruby on Rails</a></li>
+  	<li><a href="/ActionScript">Action Scripts</a></li>
+  	<li><a href="/DesignPattern">Design Pattern</a></li>
+	<li><a href="/archives">Archive</a></li>
+</ul>
+</nav>
+<nav id="mobile-nav">
+	<div class="alignleft menu">
+		<a class="button">Menu</a>
+		<div class="container"><ul>
+	<li><a href="/">Blog</a></li>
+	<li><a href="/About">About</a></li>
+	<li><a href="/presentation">Presentation</a></li>
+  	<li><a href="/RoR">Ruby on Rails</a></li>
+  	<li><a href="/ActionScript">Action Scripts</a></li>
+  	<li><a href="/DesignPattern">Design Pattern</a></li>
+	<li><a href="/archives">Archive</a></li>
+</ul>
+</div>
+	</div>
+	<div class="alignright search">
+		<a class="button"></a>
+		<div class="container">
+			<form action="http://google.com/search" method="get">
+				<input type="text" name="q" results="0">
+				<input type="hidden" name="q" value="site:ccaloha.cc">
+			</form>
+		</div>
+	</div>
+</nav>
+
+
+</header>
+
+	<div id="content" class="inner"><article class="post">
+	<h2 class="title">CSV匯入中文編碼問題</h2>
+	<div class="entry-content"><blockquote><p>情境ㄧ：若是使用者(window平台)先從自己系統download資料，之後要再匯入</p></blockquote>
+
+<p>對於CSV檔案本身解決方法&#8230;.</p>
+
+<h3>=>  請他先用google drive 上傳他的CSV檔，再從google抓下來</h3>
+
+<p>程式端醜陋的解法</p>
+
+<pre><code>def import(file)
+  csv_text = File.read(file.csv_textpath)
+  begin  
+    csv_text_new = Iconv.conv('utf-8','big5',csv_text) #若是使用者使用自己excel轉csv匯入
+  rescue  
+    #do nothing just keep going
+    csv_text_new = csv_text #使用者使用google線上轉換下來的csv
+  end 
+  csv = CSV.parse(csv_text_new, headers: false, quote_char: "\x00", col_sep: "\t")
+  header = csv.first.first.split(',')
+  counter = 0
+  csv.each do |row|
+    unless counter == 0
+      row = Hash[[header,row.first.split(',',header.count)].transpose]
+      order = where(order_no: row["order_no"]).first
+      if order.present?
+        order.attributes = row.to_hash
+        order.save!
+      else
+        Order.create!(row.to_hash)
+      end
+    end
+      counter+=1
+  end
+end
+</code></pre>
+
+<blockquote><p>情境二 若是使用者直接拿外部產生的csv要匯入的話</p></blockquote>
+
+<pre><code>def importingrt(file)
+  CSV.foreach(file.path, :headers =&gt; true, :col_sep =&gt; ',',encoding:'Big5:utf-8') do |row|
+      order = where(order_no: rescueow["系統訂單編號"]).first
+      if order.present?
+               if row["訂單狀態"] == '已出貨'
+          order.ship!
+            end
+      else
+        #do what you want
+      end
+    end
+</code></pre>
+
+<p>附錄：Ruby 的編碼清單</p>
+
+<pre><code>Encoding.list.map {|a| a.name}
+</code></pre>
+
+<p>=> [&#8220;ASCII-8BIT&#8221;, &#8220;UTF-8&#8221;, &#8220;US-ASCII&#8221;, &#8220;Big5&#8221;, &#8220;Big5-HKSCS&#8221;, &#8220;Big5-UAO&#8221;,
+ &#8220;CP949&#8221;, &#8220;Emacs-Mule&#8221;, &#8220;EUC-JP&#8221;, &#8220;EUC-KR&#8221;, &#8220;EUC-TW&#8221;, &#8220;GB18030&#8221;,
+ &#8220;GBK&#8221;, &#8220;ISO-8859-1&#8221;, &#8220;ISO-8859-2&#8221;, &#8220;ISO-8859-3&#8221;, &#8220;ISO-8859-4&#8221;,
+ &#8220;ISO-8859-5&#8221;, &#8220;ISO-8859-6&#8221;, &#8220;ISO-8859-7&#8221;, &#8220;ISO-8859-8&#8221;, &#8220;ISO-8859-9&#8221;,
+ &#8220;ISO-8859-10&#8221;, &#8220;ISO-8859-11&#8221;,
+ &#8220;ISO-8859-13&#8221;,
+ &#8220;ISO-8859-14&#8221;,
+ &#8220;ISO-8859-15&#8221;,
+ &#8220;ISO-8859-16&#8221;,
+ &#8220;KOI8-R&#8221;,
+ &#8220;KOI8-U&#8221;,
+ &#8220;Shift_JIS&#8221;,
+ &#8220;UTF-16BE&#8221;,
+ &#8220;UTF-16LE&#8221;,
+ &#8220;UTF-32BE&#8221;,
+ &#8220;UTF-32LE&#8221;,
+ &#8220;Windows-31J&#8221;,
+ &#8220;Windows-1251&#8221;,
+ &#8220;IBM437&#8221;,
+ &#8220;IBM737&#8221;,
+ &#8220;IBM775&#8221;,
+ &#8220;CP850&#8221;,
+ &#8220;IBM852&#8221;,
+ &#8220;CP852&#8221;,
+ &#8220;IBM855&#8221;,
+ &#8220;CP855&#8221;,
+ &#8220;IBM857&#8221;,
+ &#8220;IBM860&#8221;,
+ &#8220;IBM861&#8221;,
+ &#8220;IBM862&#8221;,
+ &#8220;IBM863&#8221;,
+ &#8220;IBM864&#8221;,
+ &#8220;IBM865&#8221;,
+ &#8220;IBM866&#8221;,
+ &#8220;IBM869&#8221;,
+ &#8220;Windows-1258&#8221;,
+ &#8220;GB1988&#8221;,
+ &#8220;macCentEuro&#8221;,
+ &#8220;macCroatian&#8221;,
+ &#8220;macCyrillic&#8221;,
+ &#8220;macGreek&#8221;,
+ &#8220;macIceland&#8221;,
+ &#8220;macRoman&#8221;,
+ &#8220;macRomania&#8221;,
+ &#8220;macThai&#8221;,
+ &#8220;macTurkish&#8221;,
+ &#8220;macUkraine&#8221;,
+ &#8220;CP950&#8221;,
+ &#8220;CP951&#8221;,
+ &#8220;stateless-ISO-2022-JP&#8221;,
+ &#8220;eucJP-ms&#8221;,
+ &#8220;CP51932&#8221;,
+ &#8220;EUC-JP-2004&#8221;,
+ &#8220;GB2312&#8221;,
+ &#8220;GB12345&#8221;,
+ &#8220;ISO-2022-JP&#8221;,
+ &#8220;ISO-2022-JP-2&#8221;,
+ &#8220;CP50220&#8221;,
+ &#8220;CP50221&#8221;,
+ &#8220;Windows-1252&#8221;,
+ &#8220;Windows-1250&#8221;,
+ &#8220;Windows-1256&#8221;,
+ &#8220;Windows-1253&#8221;,
+ &#8220;Windows-1255&#8221;,
+ &#8220;Windows-1254&#8221;,
+ &#8220;TIS-620&#8221;,
+ &#8220;Windows-874&#8221;,
+ &#8220;Windows-1257&#8221;,
+ &#8220;MacJapanese&#8221;,
+ &#8220;UTF-7&#8221;,
+ &#8220;UTF8-MAC&#8221;,
+ &#8220;UTF-16&#8221;,
+ &#8220;UTF-32&#8221;,
+ &#8220;UTF8-DoCoMo&#8221;,
+ &#8220;SJIS-DoCoMo&#8221;,
+ &#8220;UTF8-KDDI&#8221;,
+ &#8220;SJIS-KDDI&#8221;,
+ &#8220;ISO-2022-JP-KDDI&#8221;,
+ &#8220;stateless-ISO-2022-JP-KDDI&#8221;,
+ &#8220;UTF8-SoftBank&#8221;,
+ &#8220;SJIS-SoftBank&#8221;</p>
+</div>
+
+
+<div class="meta">
+	<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2014-05-14T11:17:11+08:00" pubdate data-updated="true">May 14<span>th</span>, 2014</time></div>
+	
+
+<div class="tags">
+
+	<a class='category' href='/blog/categories/ruby-on-rails-csv/'>Ruby_on_Rails,CSV</a>
+
+</div>
+
+
+	
+		<span class="comments"><a href="/blog/2014/05/14/fight-invalid-utf-8-bytes-when-csv-importing/#disqus_thread">Comments</a></span>
+	
+</div></article>
+
+	<div class="share">
+	<div class="addthis_toolbox addthis_default_style ">
+	
+	<a class="addthis_button_facebook_like" fb:like:layout="button_count"></a>
+	
+	
+	<a class="addthis_button_tweet"></a>
+	
+	
+	<a class="addthis_button_google_plusone" g:plusone:size="medium"></a>
+	
+<!---	<a class="addthis_counter addthis_pill_style"></a> --->
+	</div>
+  <script type="text/javascript" src="http://s7.addthis.com/js/250/addthis_widget.js#pubid="></script>
+</div>
+
+
+
+<section id="comment">
+    <h2 class="title">Comments</h2>
+    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+</section>
+</div>
+	<footer id="footer" class="inner">Copyright &copy; 2014
+
+    Aloha
+
+<br>
+Powered by Octopress.
+</footer>
+	<script src="/javascripts/slash.js"></script>
+<script src="/javascripts/jquery.fancybox.pack.js"></script>
+<script type="text/javascript">
+(function($){
+	$('.fancybox').fancybox();
+})(jQuery);
+</script> <!-- Delete or comment this line to disable Fancybox -->
+
+
+<script type="text/javascript">
+      var disqus_shortname = 'ccaloha';
+      
+        
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://ccaloha.cc/blog/2014/05/14/fight-invalid-utf-8-bytes-when-csv-importing/';
+        var disqus_url = 'http://ccaloha.cc/blog/2014/05/14/fight-invalid-utf-8-bytes-when-csv-importing/';
+        var disqus_script = 'embed.js';
+      
+    (function () {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/' + disqus_script;
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script>
+
+
+
+	<script type="text/javascript">
+		var _gaq = _gaq || [];
+		_gaq.push(['_setAccount', 'UA-29608372-1']);
+		_gaq.push(['_trackPageview']);
+
+		(function() {
+			var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+			ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+			var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+		})();
+	</script>
+
+
+<a title="Google Analytics Alternative" href="http://clicky.com/100753071"><img alt="Google Analytics Alternative" src="//static.getclicky.com/media/links/badge.gif" border="0" /></a>
+<script src="//static.getclicky.com/js" type="text/javascript"></script>
+<script type="text/javascript">try{ clicky.init(100753071); }catch(e){}</script>
+<noscript><p><img alt="Clicky" width="1" height="1" src="//in.getclicky.com/100753071ns.gif" /></p></noscript>
+
+</body>
+</html>

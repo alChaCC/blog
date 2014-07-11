@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: Share | AlohaCC]]></title>
+  <link href="http://ccaloha.cc/blog/categories/share/atom.xml" rel="self"/>
+  <link href="http://ccaloha.cc/"/>
+  <updated>2014-07-11T19:53:39+08:00</updated>
+  <id>http://ccaloha.cc/</id>
+  <author>
+    <name><![CDATA[Aloha]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[[好分享] 永無島/Needing/Getting/How to Get into Harvard/管芒 - 2012.02.15]]></title>
+    <link href="http://ccaloha.cc/blog/2012/02/15/hao-fen-xiang-yong-wu-dao-slash-needing-slash-getting-slash-how-to-get-into-harvard-slash-guan-mang-2012-dot-02-dot-15/"/>
+    <updated>2012-02-15T08:34:00+08:00</updated>
+    <id>http://ccaloha.cc/blog/2012/02/15/hao-fen-xiang-yong-wu-dao-slash-needing-slash-getting-slash-how-to-get-into-harvard-slash-guan-mang-2012-dot-02-dot-15</id>
+    <content type="html"><![CDATA[<h2>南面而歌-安妮朵拉-永無島</h2>
+
+<iframe width="640" height="360" src="https://www.youtube-nocookie.com/embed/Jf6z4jHNrSY" frameborder="0" allowfullscreen></iframe>
+
+
+
+
+<!--more-->
+
+
+<h2>OK Go - Needing/Getting</h2>
+
+<iframe width="853" height="480" src="https://www.youtube-nocookie.com/embed/MejbOFk7H6c" frameborder="0" allowfullscreen></iframe>
+
+
+<h2>Jeremy Lin- How to Get into Harvard ft. Ryan Higa</h2>
+
+<iframe width="853" height="480" src="https://www.youtube-nocookie.com/embed/-9yVnKQNj58" frameborder="0" allowfullscreen></iframe>
+
+
+<h2>川秋沙 Goosander - 管芒</h2>
+
+<p><embed src="http://tw.streetvoice.com/static/player/MusicPlayer.swf?srv=tw.streetvoice.com&ph=music&getv=config&skinID=6&au=160954&listtype=1&listsd=725693&autoStart=false&autoPlay=false&isEmbed=true&jsPlayer=false" allowFullScreen="false" allowScriptAccess="always" scale="noscale" type="application/x-shockwave-flash" width="330" height="100"></embed></p>
+]]></content>
+  </entry>
+  
+</feed>

@@ -1,0 +1,189 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: grumble.js | AlohaCC]]></title>
+  <link href="http://ccaloha.cc/blog/categories/grumble-dot-js/atom.xml" rel="self"/>
+  <link href="http://ccaloha.cc/"/>
+  <updated>2014-07-11T19:53:39+08:00</updated>
+  <id>http://ccaloha.cc/</id>
+  <author>
+    <name><![CDATA[Aloha]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[[HOWTO]- Build a Step-By-Step Website Introduction using crumble.js instead of intro.js]]></title>
+    <link href="http://ccaloha.cc/blog/2014/03/06/howto-build-step-by-step-introduction-javascript-using-crumble-instead-of-intro-dot-js/"/>
+    <updated>2014-03-06T22:16:01+08:00</updated>
+    <id>http://ccaloha.cc/blog/2014/03/06/howto-build-step-by-step-introduction-javascript-using-crumble-instead-of-intro-dot-js</id>
+    <content type="html"><![CDATA[<h2>Intro</h2>
+
+<p>Crumble.js is a interactive step-by-step tour based on grumble.js</p>
+
+<p>you might want to check the demo site.</p>
+
+<p>Please check this out => <a href="http://blog.tommoor.com/crumble">http://blog.tommoor.com/crumble</a></p>
+
+<p>You can learn from this tutorial how to use crumble.js in your Ruby on
+Rails project.</p>
+
+<p>In advance, I will show you how to deploy to AWS EC2 without pain~~~</p>
+
+<!--more-->
+
+
+<h2>Step1. Download resource file from Github</h2>
+
+<p>You can download file from</p>
+
+<pre><code>git clone https://github.com/tommoor/crumble.git 
+
+git clone https://github.com/jamescryer/grumble.js.git
+</code></pre>
+
+<p>Or.....</p>
+
+<p>Download it via Github GUI.</p>
+
+<h2>Step2. Put all required files in vender</h2>
+
+<p>Below is how I vendor folder looks like</p>
+
+<pre><code>vender
+|
+|-- images
+|   |
+|   |-- crumble
+|       |
+|       |-- bubble-sprite.png
+|
+|-- javascripts
+|   |
+|   |-- crumble
+|       |
+|       |-- Bubble.js
+|       |-- jquery.crumble.min.js
+|       |-- jquery.grumble.js
+|
+|-- stylesheets
+    |
+    |-- crumble
+        |
+        |-- crumble.css
+        |-- grumble.min.css
+</code></pre>
+
+<h2>Step3. Add require to you application</h2>
+
+<p>app/assets/javascripts/application.coffee</p>
+
+<pre><code>#= require crumble/Bubble
+#= require crumble/jquery.grumble
+#= require crumble/jquery.crumble.min
+</code></pre>
+
+<p>ps. grumble must be above the crumble</p>
+
+<p>app/assets/stylesheets/application.css.scss</p>
+
+<pre><code>*= require crumble/grumble.min
+*= require crumble/crumble
+</code></pre>
+
+<h2>Step4. Add Step-By-Step tour using html code</h2>
+
+<p>app/views/shared/_guide.html.slim</p>
+
+<pre><code>ol id = "tour"
+  li  data-target= '.root-1' data-angle= '0' data-options= 'distance: 0'
+    | Step1
+  li data-target= '.root-2' data-angle= '30' data-options= 'distance: 50'
+    | Step2
+  li data-target= '.root-3' data-angle= '0' data-options= 'distance: 0'
+    | Step3
+</code></pre>
+
+<p>ps. .root-1, .root-2, .root-3  are html tag class which you can change
+to your own</p>
+
+<p>app/views/pages/home.html.slim</p>
+
+<pre><code>/! Add where you want
+= render 'shared/guide'
+</code></pre>
+
+<h2>Step5. Add another custom setting in javascript and css file</h2>
+
+<p>app/assets/javascripts/application.coffee</p>
+
+<pre><code>$('#tour').crumble()
+</code></pre>
+
+<p>or you can customize your setting such as</p>
+
+<pre><code>$('#tour').crumble grumble: {showAfter: 1000, hideAfter: 2000}
+</code></pre>
+
+<p>app/assets/stylesheets/application.css.scss</p>
+
+<pre><code>#tour {
+  display: none;
+}
+</code></pre>
+
+<p>After you finish step5, You are able to see the awesome introduction
+tour.</p>
+
+<p>Now, you might want to deploy to your VPS. In my case, I will deploy to
+AWS EC2.</p>
+
+<h2>Step6. Deploy to AWS EC2</h2>
+
+<p>Here I want to mention the problem I met, please check
+<a href="http://stackoverflow.com/questions/22222516/rake-aborted-no-such-file-or-directory-after-write-admin-css">http://stackoverflow.com/questions/22222516/rake-aborted-no-such-file-or-directory-after-write-admin-css</a></p>
+
+<p>The solution is that you have to make sure that your project have <strong>gem
+"non-stupid-digest-assets, '1.0.3'"</strong> in your gemfile</p>
+
+<p>and</p>
+
+<pre><code>bundle install
+</code></pre>
+
+<p>Secondly, the problem is I can't see the bubble image in my staging
+machine.</p>
+
+<p>Since my assets will be uploaded to S3, my solution is</p>
+
+<p>change <strong>grumble.min.css</strong> to <strong>grumble.min.css.scss</strong></p>
+
+<p>and update the image part in the code</p>
+
+<pre><code>.grumble{
+....
+background-image: image-url('crumble/bubble-sprite.png') 
+....
+}
+</code></pre>
+
+<p>In my opinion, since our images are uploaded to AWS S3 after
+assets:precompile.</p>
+
+<p>And procompile action will generate url automatically refer to S3 link.</p>
+
+<p>However, using "background-image: url('XXXX')" in your css, the compiler
+will not convert the link to S3, therefore, server will looking for the
+image in local http folder.</p>
+
+<p>So, I use <strong>image-url</strong> method in scss to fix this problem.</p>
+
+<h2>Congratulation !</h2>
+
+<p>In a nutshell, in order to lower the effort, I try to build my first
+gem. If finish, I will update in my blog.</p>
+]]></content>
+  </entry>
+  
+</feed>

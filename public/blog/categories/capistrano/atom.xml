@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: capistrano | AlohaCC]]></title>
+  <link href="http://ccaloha.cc/blog/categories/capistrano/atom.xml" rel="self"/>
+  <link href="http://ccaloha.cc/"/>
+  <updated>2014-07-11T19:53:39+08:00</updated>
+  <id>http://ccaloha.cc/</id>
+  <author>
+    <name><![CDATA[Aloha]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[[HOWTO] Transfer Capistrano 2 to Capistrano 3 using Ruby on Rails]]></title>
+    <link href="http://ccaloha.cc/blog/2014/03/27/howto-transfer-capistrano-2-to-capistrano-3-using-ruby-on-rails/"/>
+    <updated>2014-03-27T11:13:09+08:00</updated>
+    <id>http://ccaloha.cc/blog/2014/03/27/howto-transfer-capistrano-2-to-capistrano-3-using-ruby-on-rails</id>
+    <content type="html"><![CDATA[<p>At First, Why I want to transfer from Capistrano2 to Capistrano3?</p>
+
+<ol>
+<li>Stability</li>
+<li>Performance</li>
+</ol>
+
+
+<p>In Capistrano2,</p>
+
+<p>First, I often stuck at precompile...</p>
+
+<p>and sometimes I get <strong>[deploy:update_code] exception while rolling back:
+Net::SSH::Disconnect, connection closed by remote host"</strong></p>
+
+<p>Third, every deployments take about 10~15 minuates.</p>
+
+<p>So.... that's why I want to change to capistrano 3.</p>
+
+<!--more-->
+
+
+<p>this post is inspired by
+<a href="https://semaphoreapp.com/blog/2013/11/26/capistrano-3-upgrade-guide.html">https://semaphoreapp.com/blog/2013/11/26/capistrano-3-upgrade-guide.html</a></p>
+
+<p>But I still have some problems. Here I demo source code from my project
+and show how I fix these problems.</p>
+
+<h2>Just move your old "cap" files to a folder</h2>
+
+<pre><code>cd YOUR_PROJECT
+mkdir old_cap
+mv Capfile old_cap
+mv config/deploy.rb old_cap
+mv config/deploy/mv old_cap    
+</code></pre>
+
+<h2>1. Gemfile</h2>
+
+<h3>Original</h3>
+
+<script src="https://gist.github.com/alChaCC/9799086.js"></script>
+
+
+<h3>New</h3>
+
+<script src="https://gist.github.com/alChaCC/9799076.js"></script>
+
+
+<p><strong>gem "capistrano-rails"</strong>  = <em>gem 'capistrano'</em> + <em>gem
+'capistrano-ext'</em> + <em>gem 'capistrano_colors'</em></p>
+
+<h2>2. Capfilee</h2>
+
+<h3>Original</h3>
+
+<script src="https://gist.github.com/alChaCC/9799039.js"></script>
+
+
+<h3>New</h3>
+
+<p>If you want to know what is the deploy flow if you require these files</p>
+
+<p>check this <a href="http://capistranorb.com/documentation/getting-started/flow/">http://capistranorb.com/documentation/getting-started/flow/</a></p>
+
+<script src="https://gist.github.com/alChaCC/9799057.js"></script>
+
+
+<h2>3. config/deploy.rb</h2>
+
+<h3>Original</h3>
+
+<script src="https://gist.github.com/alChaCC/9799134.js"></script>
+
+
+<h3>New</h3>
+
+<script src="https://gist.github.com/alChaCC/9799113.js"></script>
+
+
+<h2>4. config/deploy/staging.rb</h2>
+
+<h3>Original</h3>
+
+<script src="https://gist.github.com/alChaCC/9799148.js"></script>
+
+
+<h3>New</h3>
+
+<script src="https://gist.github.com/alChaCC/9799161.js"></script>
+
+
+<h2>5. lib/capistrano/tasks/restart.cap</h2>
+
+<script src="https://gist.github.com/alChaCC/9799192.js"></script>
+
+
+<h2>6. lib/capistrano/tasks/sync_to_S3.cap</h2>
+
+<p>I use <strong>asset_sync</strong> to sync assets to S3.</p>
+
+<p><a href="https://github.com/rumblelabs/asset_sync">https://github.com/rumblelabs/asset_sync</a></p>
+
+<p><strong>Notice:</strong> within must inside roles or you will get no method problem.</p>
+
+<p>more details <a href="https://github.com/capistrano/sshkit">https://github.com/capistrano/sshkit</a></p>
+
+<script src="https://gist.github.com/alChaCC/9799214.js"></script>
+
+]]></content>
+  </entry>
+  
+</feed>

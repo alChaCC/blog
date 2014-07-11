@@ -1,0 +1,416 @@
+
+<!DOCTYPE HTML>
+<html>
+<head>
+	<script data-cfasync="false" type="text/javascript" src="//use.typekit.net/axj3cfp.js"></script>
+	<script data-cfasync="false" type="text/javascript">try{Typekit.load();}catch(e){}</script>
+	<meta charset="utf-8">
+	<title>How to Use RobotFramework-SSHLibrary-Write/Read Command  | AlohaCC</title>
+
+<meta name="author" content="Aloha"> 
+
+<meta name="description" content="Share Ruby on Rail and all about 'Chun Yu, Chen AlohaCC'"> <meta name="keywords" content="Aloha, Ruby on Rails, Blog, Web Developer, Taiwan, Chun-Yu Chen, Design Pattern, Action Scripts, Robotframework, Sikuli">
+
+	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+	<link href="http://feeds.feedburner.com/Alohacc" rel="alternate" title="AlohaCC" type="application/atom+xml">
+	<link rel="canonical" href="">
+	<link href="/favicon.png" rel="shortcut icon">
+	<link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+	<!--[if lt IE 9]><script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
+	<script src="//ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
+	<script type="text/javascript" src="/javascripts/jquery.fancybox.pack.js"></script>
+
+<script language="Javascript" type="text/javascript">
+$(document).ready(
+  function() {
+    (function($) {
+      $(".fancybox[data-content-id]").each(function() {
+        this.href = $(this).data('content-id');
+      });
+      $(".fancybox").fancybox({
+        beforeLoad: function() {
+          var el, 
+              id = $(this.element).data('title-id');
+
+          if (id) {
+            el = $('#' + id);
+
+            if (el.length) {
+              this.title = el.html();
+            }
+          }
+          if ($(this).data('content')) {
+            this.content = $(this).data('content');
+          }
+        },
+        helpers: {
+          title: {
+            type: 'inside'
+          }
+        }
+      });
+    })(jQuery);
+  }
+);
+</script>
+
+	
+</head>
+
+
+
+<body>
+	<header id="header" class="inner"><h1><a href="/">AlohaCC</a></h1>
+<h4>Try to Make Something Diff | Just For Fun |</h4>
+<nav id="main-nav"><ul>
+	<li><a href="/">Blog</a></li>
+	<li><a href="/About">About</a></li>
+	<li><a href="/presentation">Presentation</a></li>
+  	<li><a href="/RoR">Ruby on Rails</a></li>
+  	<li><a href="/ActionScript">Action Scripts</a></li>
+  	<li><a href="/DesignPattern">Design Pattern</a></li>
+	<li><a href="/archives">Archive</a></li>
+</ul>
+</nav>
+<nav id="mobile-nav">
+	<div class="alignleft menu">
+		<a class="button">Menu</a>
+		<div class="container"><ul>
+	<li><a href="/">Blog</a></li>
+	<li><a href="/About">About</a></li>
+	<li><a href="/presentation">Presentation</a></li>
+  	<li><a href="/RoR">Ruby on Rails</a></li>
+  	<li><a href="/ActionScript">Action Scripts</a></li>
+  	<li><a href="/DesignPattern">Design Pattern</a></li>
+	<li><a href="/archives">Archive</a></li>
+</ul>
+</div>
+	</div>
+	<div class="alignright search">
+		<a class="button"></a>
+		<div class="container">
+			<form action="http://google.com/search" method="get">
+				<input type="text" name="q" results="0">
+				<input type="hidden" name="q" value="site:ccaloha.cc">
+			</form>
+		</div>
+	</div>
+</nav>
+
+
+</header>
+
+	<div id="content" class="inner"><article class="post">
+	<h2 class="title">How to Use RobotFramework-SSHLibrary-Write/Read Command</h2>
+	<div class="entry-content"><p>之前，在Start和Excute command 那邊～發現一個問題</p>
+
+<p>那就是他不會去記錄你現在到底做了甚麼事情</p>
+
+<p>例如我cd 到一個資料夾底下</p>
+
+<p>然後在那個資料夾底下執行一個.sh檔案</p>
+
+<p>那兩個指令的工作，比較像“單純做指令” 做完指令就登出的感覺 所以兩個指令是無法連續的</p>
+
+<p>他不是屬於互動的！</p>
+
+<!--more-->
+
+
+<p>
+請看其官方文件有這樣的敘述&#8230;..</p>
+
+<p>================================================================================</p>
+
+<p>Currently, there are two modes of operation:</p>
+
+<p>When keyword <strong>Execute Command</strong> or <strong>Start Command</strong> is used to execute something, a new channel is opened over the SSH connection. In practice it means that no session information is stored.</p>
+
+<p>Keywords <strong>Write</strong> and <strong>Read XXX</strong> operate in an interactive shell, which means that changes to state are visible to next keywords. Note that in interactive mode, a prompt must be set before using any of the Write-keywords. Prompt can be set either on library importing or when a new connection is opened using Open Connection, or using keyword <strong>Set Prompt</strong>.</p>
+
+<p>================================================================================</p>
+
+<p>原來如果我們需要有所互動的話～也就是說你可以cd進去 然後就在裡頭作指令</p>
+
+<p>就是需要用WRITE和READ 這兩個指令</p>
+
+<p>那就開始八～我的小小心得</p>
+
+<p>在用Write之前，一定要有Set Prompt的動作</p>
+
+<p>所以我在一開始的Suite Setup是設定</p>
+
+<pre><code>Suite Setup     Login and Move Test Files
+</code></pre>
+
+<p>其中  Login and Move Test Files 這個keyword包含了Cd To File Path這個keyword又這個keyword是這樣定義的</p>
+
+<pre><code>Cd To File Path
+        Write   cd /home/${USERNAME}
+        Set Prompt  #
+       上面是假設你用root登入，若是用一般使用者可以使用
+       Set Prompt  $
+</code></pre>
+
+<p>那甚麼是prompt勒？</p>
+
+<p>google查到的就是提示基本上就是你在terminal key指令的前面的那些東東,</p>
+
+<p>我是設定為#或$是因為我想要抓到完整的前面那串</p>
+
+<p>[root@localhost root]#</p>
+
+<p>[aloha@localhost aloha]$</p>
+
+<h1>Write系列</h1>
+
+<p>=================================<strong>Write</strong>=================================</p>
+
+<p>我覺得最簡單的描述是：他就是把你的key的東西 寫到你要測試的ssh server上</p>
+
+<p>他都會自動幫你加上\n 這就好像輸入enter的感覺！</p>
+
+<p>所以當你寫了</p>
+
+<pre><code>    ${output} =  Write  ./${INTERACTIVE TEST SCRIPT NAME}
+</code></pre>
+
+<p>在server端看到的就是</p>
+
+<pre><code>    ./test_interactive.sh 然後按enter
+</code></pre>
+
+<p>例如：</p>
+
+<pre><code>    ${output} =  Write  Juha
+</code></pre>
+
+<p>它就等於輸入Juha然後按下enter</p>
+
+<p>=======================<strong>Write Until Expected Output</strong>====================</p>
+
+<p>一直寫一直寫，直到停止條件的發生</p>
+
+<pre><code>    Write Until Expected Output  放你要write的東東  放停止條件  timeout時間(後&gt;面要加s)  重試的時間間隔（後面要加s）
+</code></pre>
+
+<p>這邊要注意歐～<strong>text is written without appending newline.</strong></p>
+
+<p>也就是說和Write Bare一樣！所以你在後面沒有加\n會有錯誤</p>
+
+<p>舉例：</p>
+
+<pre><code>    Write Until Expected Output  ./counter.sh\n  3  15 seconds  0.5 seconds
+    [Teardown]  Remove Counter and Read All Data
+</code></pre>
+
+<p>這邊他就真的會開始數上去～因為你有下\n也就是enter的意思</p>
+
+<p>和下面不同的地方請看</p>
+
+<pre><code>    Write Until Expected Output  ./counter.sh  3  15 seconds  0.5 seconds
+    [Teardown]  Remove Counter and Read All Data
+</code></pre>
+
+<p>這邊他就不會數上去，對程式來說，就是下了./counter.sh 然後沒有按enter!</p>
+
+<p>=================================<strong>Write Bare</strong>=================================</p>
+
+<p>Write Bare  不像write他後面會自己加\n 這個必須要自己加\n</p>
+
+<h1>Read系列</h1>
+
+<p>=================================<strong>Read</strong>=================================</p>
+
+<p>這個指令會回覆目前的output，他的log level是INFO</p>
+
+<p>用法：</p>
+
+<pre><code>Write  rm ${COUNTER NAME}
+    Read
+</code></pre>
+
+<p>我得到的結果是:</p>
+
+<pre><code>    INFO    Writing 'rm counter.txt\n'
+INFO    rm counter.txt
+INFO    [test@localhost test]#
+</code></pre>
+
+<p>=========================<strong>Read Command Output</strong>==========================</p>
+
+<p>這邊我沒有用不過，我想看官方文件，這個應該是必須跟Start Command一起用</p>
+
+<p>用法:</p>
+
+<pre><code>Start Command   你要執行的指令           
+${out}= Read Command Output         
+${err}= Read Command Output stderr      #stderr is returned 
+${out}  ${err}= Read Command Output both    #stdout and stderr are returned
+</code></pre>
+
+<p>==============================<strong>Read Until</strong>==============================</p>
+
+<p>他會等到“你輸入的關鍵字”出現，他才會停止讀輸出，或是一直等不到關鍵字然後timeout</p>
+
+<p>他會跳出If no match is found, the keyword fails.</p>
+
+<p>用法：</p>
+
+<pre><code>    ${output} =  Write  ./${INTERACTIVE TEST SCRIPT NAME}
+${output} =  Read Until  Give your name?
+</code></pre>
+
+<p>結果：</p>
+
+<pre><code>INFO    Writring './test_interactive.sh\n'
+INFO    ${output} = [root@localhost root]#./test_interactive.sh   
+INFO    Give your name ?
+INFO    ${output} =  Give your name ?
+</code></pre>
+
+<p>===========================<strong>Read Until Prompt</strong>===========================</p>
+
+<p>和之前那個一樣的意思 不過他是讀到我們設定的Prompt</p>
+
+<p>這邊我感覺他的用法可以是這樣的，當你要run一個的指令，他會跑很多echo給你</p>
+
+<p>你想要知道這些執行結束前的資訊，就可以用這個指令</p>
+
+<p>用法：</p>
+
+<pre><code>${output} =  Read Until Prompt
+</code></pre>
+
+<p>===========================<strong>Read Until Regexp</strong>===========================</p>
+
+<p>讀到符合你設定的正則運算時停止</p>
+
+<pre><code>${output} =  Read Until Regexp  Give.*\\?
+         #Read Until Regexp  正則運算運算式
+</code></pre>
+
+<p>============================<strong>Set Timeout</strong>================================</p>
+
+<pre><code>Set Timeout  秒數
+</code></pre>
+
+<p>顧名思義摟，設定等待時間</p>
+
+<p>用法：</p>
+
+<pre><code>Write  Foo Bar And Some Other
+    Set Timeout  1
+    ${status}  ${error} =  Run Keyword And Ignore Error  Read Until  This is not found
+    Should Be Equal  ${error}  No match found for 'This is not found' in 1 second
+</code></pre>
+</div>
+
+
+<div class="meta">
+	<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2011-11-15T19:37:00+08:00" pubdate data-updated="true">Nov 15<span>th</span>, 2011</time></div>
+	
+
+<div class="tags">
+
+	<a class='category' href='/blog/categories/robotframework/'>RobotFramework</a>
+
+</div>
+
+
+	
+		<span class="comments"><a href="/blog/2011/11/15/how-to-use-robotframework-sshlibrary-write-slash-read-command/#disqus_thread">Comments</a></span>
+	
+</div></article>
+
+	<div class="share">
+	<div class="addthis_toolbox addthis_default_style ">
+	
+	<a class="addthis_button_facebook_like" fb:like:layout="button_count"></a>
+	
+	
+	<a class="addthis_button_tweet"></a>
+	
+	
+	<a class="addthis_button_google_plusone" g:plusone:size="medium"></a>
+	
+<!---	<a class="addthis_counter addthis_pill_style"></a> --->
+	</div>
+  <script type="text/javascript" src="http://s7.addthis.com/js/250/addthis_widget.js#pubid="></script>
+</div>
+
+
+
+<section id="comment">
+    <h2 class="title">Comments</h2>
+    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+</section>
+</div>
+	<footer id="footer" class="inner">Copyright &copy; 2014
+
+    Aloha
+
+<br>
+Powered by Octopress.
+</footer>
+	<script src="/javascripts/slash.js"></script>
+<script src="/javascripts/jquery.fancybox.pack.js"></script>
+<script type="text/javascript">
+(function($){
+	$('.fancybox').fancybox();
+})(jQuery);
+</script> <!-- Delete or comment this line to disable Fancybox -->
+
+
+<script type="text/javascript">
+      var disqus_shortname = 'ccaloha';
+      
+        
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://ccaloha.cc/blog/2011/11/15/how-to-use-robotframework-sshlibrary-write-slash-read-command/';
+        var disqus_url = 'http://ccaloha.cc/blog/2011/11/15/how-to-use-robotframework-sshlibrary-write-slash-read-command/';
+        var disqus_script = 'embed.js';
+      
+    (function () {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/' + disqus_script;
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script>
+
+
+
+	<script type="text/javascript">
+		var _gaq = _gaq || [];
+		_gaq.push(['_setAccount', 'UA-29608372-1']);
+		_gaq.push(['_trackPageview']);
+
+		(function() {
+			var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+			ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+			var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+		})();
+	</script>
+
+
+<a title="Google Analytics Alternative" href="http://clicky.com/100753071"><img alt="Google Analytics Alternative" src="//static.getclicky.com/media/links/badge.gif" border="0" /></a>
+<script src="//static.getclicky.com/js" type="text/javascript"></script>
+<script type="text/javascript">try{ clicky.init(100753071); }catch(e){}</script>
+<noscript><p><img alt="Clicky" width="1" height="1" src="//in.getclicky.com/100753071ns.gif" /></p></noscript>
+
+</body>
+</html>

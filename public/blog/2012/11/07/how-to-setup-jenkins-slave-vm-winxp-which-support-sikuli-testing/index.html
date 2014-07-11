@@ -1,0 +1,311 @@
+
+<!DOCTYPE HTML>
+<html>
+<head>
+	<script data-cfasync="false" type="text/javascript" src="//use.typekit.net/axj3cfp.js"></script>
+	<script data-cfasync="false" type="text/javascript">try{Typekit.load();}catch(e){}</script>
+	<meta charset="utf-8">
+	<title>How to Setup Jenkins Slave VM(WinXP) which support Sikuli Testing  | AlohaCC</title>
+
+<meta name="author" content="Aloha"> 
+
+<meta name="description" content="Share Ruby on Rail and all about 'Chun Yu, Chen AlohaCC'"> <meta name="keywords" content="Aloha, Ruby on Rails, Blog, Web Developer, Taiwan, Chun-Yu Chen, Design Pattern, Action Scripts, Robotframework, Sikuli">
+
+	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+	<link href="http://feeds.feedburner.com/Alohacc" rel="alternate" title="AlohaCC" type="application/atom+xml">
+	<link rel="canonical" href="">
+	<link href="/favicon.png" rel="shortcut icon">
+	<link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+	<!--[if lt IE 9]><script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
+	<script src="//ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
+	<script type="text/javascript" src="/javascripts/jquery.fancybox.pack.js"></script>
+
+<script language="Javascript" type="text/javascript">
+$(document).ready(
+  function() {
+    (function($) {
+      $(".fancybox[data-content-id]").each(function() {
+        this.href = $(this).data('content-id');
+      });
+      $(".fancybox").fancybox({
+        beforeLoad: function() {
+          var el, 
+              id = $(this.element).data('title-id');
+
+          if (id) {
+            el = $('#' + id);
+
+            if (el.length) {
+              this.title = el.html();
+            }
+          }
+          if ($(this).data('content')) {
+            this.content = $(this).data('content');
+          }
+        },
+        helpers: {
+          title: {
+            type: 'inside'
+          }
+        }
+      });
+    })(jQuery);
+  }
+);
+</script>
+
+	
+</head>
+
+
+
+<body>
+	<header id="header" class="inner"><h1><a href="/">AlohaCC</a></h1>
+<h4>Try to Make Something Diff | Just For Fun |</h4>
+<nav id="main-nav"><ul>
+	<li><a href="/">Blog</a></li>
+	<li><a href="/About">About</a></li>
+	<li><a href="/presentation">Presentation</a></li>
+  	<li><a href="/RoR">Ruby on Rails</a></li>
+  	<li><a href="/ActionScript">Action Scripts</a></li>
+  	<li><a href="/DesignPattern">Design Pattern</a></li>
+	<li><a href="/archives">Archive</a></li>
+</ul>
+</nav>
+<nav id="mobile-nav">
+	<div class="alignleft menu">
+		<a class="button">Menu</a>
+		<div class="container"><ul>
+	<li><a href="/">Blog</a></li>
+	<li><a href="/About">About</a></li>
+	<li><a href="/presentation">Presentation</a></li>
+  	<li><a href="/RoR">Ruby on Rails</a></li>
+  	<li><a href="/ActionScript">Action Scripts</a></li>
+  	<li><a href="/DesignPattern">Design Pattern</a></li>
+	<li><a href="/archives">Archive</a></li>
+</ul>
+</div>
+	</div>
+	<div class="alignright search">
+		<a class="button"></a>
+		<div class="container">
+			<form action="http://google.com/search" method="get">
+				<input type="text" name="q" results="0">
+				<input type="hidden" name="q" value="site:ccaloha.cc">
+			</form>
+		</div>
+	</div>
+</nav>
+
+
+</header>
+
+	<div id="content" class="inner"><article class="post">
+	<h2 class="title">How to Setup Jenkins Slave VM(WinXP) Which Support Sikuli Testing</h2>
+	<div class="entry-content"><p>Reference Topics:</p>
+
+<p><a href="http://technicaltesting.wordpress.com/2012/05/07/setting-up-a-jenkins-slave-for-sikuli-based-tests/">Setting up a Jenkins slave for Sikuli based tests</a></p>
+
+<p>作者環境是win7，我按造上面的設定修改</p>
+
+<h3>1.設定User 永遠不會被logout</h3>
+
+<p><strong>點選執行</strong>
+<a href="http://www.flickr.com/photos/alohacc/8163442105/" title="Flickr 上 aloooooooooooha 的 sikuli_vm_setup_step1"><img src="http://farm8.staticflickr.com/7129/8163442105_a1dabc5168.jpg" width="374" height="500" alt="sikuli_vm_setup_step1"></a></p>
+
+<p><strong>輸入regedit</strong></p>
+
+<p><a href="http://www.flickr.com/photos/alohacc/8163442169/" title="Flickr 上 aloooooooooooha 的 sikuli_vm_setup_step2"><img src="http://farm9.staticflickr.com/8061/8163442169_ea1e39d3c4.jpg" width="337" height="167" alt="sikuli_vm_setup_step2"></a></p>
+
+<!--more-->
+
+
+<p></p>
+
+<p><strong>點到HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Policies\System</strong></p>
+
+<p><a href="http://www.flickr.com/photos/alohacc/8163475730/" title="Flickr 上 aloooooooooooha 的 sikuli_vm_setup_step3"><img src="http://farm8.staticflickr.com/7106/8163475730_07772dc6b9_m.jpg" width="204" height="189" alt="sikuli_vm_setup_step3"></a></p>
+
+<p><a href="http://www.flickr.com/photos/alohacc/8163475788/" title="Flickr 上 aloooooooooooha 的 sikuli_vm_setup_step4"><img src="http://farm9.staticflickr.com/8479/8163475788_7b21b7497b.jpg" width="500" height="275" alt="sikuli_vm_setup_step4"></a></p>
+
+<p><strong>新增DWORD值</strong></p>
+
+<p><a href="http://www.flickr.com/photos/alohacc/8163442301/" title="Flickr 上 aloooooooooooha 的 sikuli_vm_setup_step5"><img src="http://farm9.staticflickr.com/8484/8163442301_7d7ce36f38.jpg" width="345" height="209" alt="sikuli_vm_setup_step5"></a></p>
+
+<p><strong>新增DisableLockWorkstation，設定為1</strong></p>
+
+<p><a href="http://www.flickr.com/photos/alohacc/8163475866/" title="Flickr 上 aloooooooooooha 的 sikuli_vm_setup_step6"><img src="http://farm8.staticflickr.com/7111/8163475866_f210b0fba8.jpg" width="322" height="184" alt="sikuli_vm_setup_step6"></a></p>
+
+<p>因為有查到這篇文章<a href="http://superuser.com/questions/96228/disabling-lock-workstation-in-windows-xp">Disabling Lock Workstation in Windows XP</a>,所以還要在設定一個參數</p>
+
+<p><strong>用尋找功能</strong></p>
+
+<p><a href="http://www.flickr.com/photos/alohacc/8163442715/" title="Flickr 上 aloooooooooooha 的 sikuli_vm_setup_step13"><img src="http://farm9.staticflickr.com/8479/8163442715_7693c918ba_m.jpg" width="211" height="210" alt="sikuli_vm_setup_step13"></a></p>
+
+<p><strong>尋找AllowMultipleTSSessions，並修改成0</strong></p>
+
+<p>ps.他在HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon裡面</p>
+
+<p><a href="http://www.flickr.com/photos/alohacc/8163476260/" title="Flickr 上 aloooooooooooha 的 sikuli_vm_setup_step14"><img src="http://farm8.staticflickr.com/7246/8163476260_266a58d497_m.jpg" width="240" height="104" alt="sikuli_vm_setup_step14"></a></p>
+
+<h3>2.設定使用者，重開機時，可以自行登入</h3>
+
+<p><strong>點到HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon</strong></p>
+
+<p><a href="http://www.flickr.com/photos/alohacc/8163475918/" title="Flickr 上 aloooooooooooha 的 sikuli_vm_setup_step7"><img src="http://farm9.staticflickr.com/8066/8163475918_009161e433.jpg"
+width="500" height="261" alt="sikuli_vm_setup_step7"></a></p>
+
+<p><strong>新增字串</strong></p>
+
+<p><a href="http://www.flickr.com/photos/alohacc/8163475960/" title="Flickr 上 aloooooooooooha 的 sikuli_vm_setup_step7-5"><img src="http://farm8.staticflickr.com/7272/8163475960_74bdb0b74a.jpg" width="342" height="234" alt="sikuli_vm_setup_step7-5"></a></p>
+
+<p><strong>新增DefaultPassword，輸入你的密碼</strong></p>
+
+<p><a href="http://www.flickr.com/photos/alohacc/8163475998/" title="Flickr 上 aloooooooooooha 的 sikuli_vm_setup_step8"><img src="http://farm8.staticflickr.com/7274/8163475998_c98a8c4c0f.jpg" width="379" height="146" alt="sikuli_vm_setup_step8"></a></p>
+
+<p><strong>修改DefaultUsername</strong></p>
+
+<p><a href="http://www.flickr.com/photos/alohacc/8163476034/" title="Flickr 上 aloooooooooooha 的 sikuli_vm_setup_step9"><img src="http://farm9.staticflickr.com/8487/8163476034_736554f892.jpg" width="383" height="154" alt="sikuli_vm_setup_step9"></a></p>
+
+<p><strong>修改AutoAdminLogon，設定為1</strong></p>
+
+<p><a href="http://www.flickr.com/photos/alohacc/8163476080/" title="Flickr 上 aloooooooooooha 的 sikuli_vm_setup_step10"><img src="http://farm9.staticflickr.com/8204/8163476080_fc059350a4.jpg" width="378" height="154" alt="sikuli_vm_setup_step10"></a></p>
+
+<h3>3.取消螢幕保護</h3>
+
+<p><strong>點到HKEY_CURRENT_USER\Control Panel\Desktop</strong></p>
+
+<p><a href="http://www.flickr.com/photos/alohacc/8163476112/" title="Flickr 上 aloooooooooooha 的 sikuli_vm_setup_step11"><img src="http://farm9.staticflickr.com/8489/8163476112_121e07519d.jpg" width="355" height="499" alt="sikuli_vm_setup_step11"></a></p>
+
+<p><strong>修改ScreenSaveActive為0</strong></p>
+
+<p><a href="http://www.flickr.com/photos/alohacc/8163476166/" title="Flickr 上 aloooooooooooha 的 sikuli_vm_setup_step12"><img src="http://farm8.staticflickr.com/7271/8163476166_021f20ef99.jpg" width="381" height="159" alt="sikuli_vm_setup_step12"></a></p>
+
+<h3>4. 重開機</h3>
+
+<h3>5. 最後也是最重要的一步！！清掉上次RDP所鎖定的畫面，在Jenkins Script加上</h3>
+
+<pre><code>    tscon.exe 0 /dest:console
+</code></pre>
+
+<p><strong>thanks to Mac support</strong></p>
+
+<p><a href="http://www.flickr.com/photos/alohacc/8163451817/" title="Flickr 上 aloooooooooooha 的 sikuli_vm_setup_step15"><img src="http://farm8.staticflickr.com/7260/8163451817_16141e0d28_b.jpg" width="1024" height="86" alt="sikuli_vm_setup_step15"></a></p>
+
+<p>Reference</p>
+
+<p><a href="http://www.pctools.com/guides/registry/detail/973/">參數: AllowMultipleTSSessions</a></p>
+
+<p><a href="http://www.pctools.com/guides/registry/detail/264/">參數: DisableLockWorkstation</a></p>
+
+<p><a href="http://www.pctools.com/guides/registry/detail/1190/">參數: ScreenSaveActive</a></p>
+</div>
+
+
+<div class="meta">
+	<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2012-11-07T18:28:00+08:00" pubdate data-updated="true">Nov 7<span>th</span>, 2012</time></div>
+	
+
+<div class="tags">
+
+	<a class='category' href='/blog/categories/jenkins/'>Jenkins</a>, <a class='category' href='/blog/categories/sikuli/'>Sikuli</a>
+
+</div>
+
+
+	
+		<span class="comments"><a href="/blog/2012/11/07/how-to-setup-jenkins-slave-vm-winxp-which-support-sikuli-testing/#disqus_thread">Comments</a></span>
+	
+</div></article>
+
+	<div class="share">
+	<div class="addthis_toolbox addthis_default_style ">
+	
+	<a class="addthis_button_facebook_like" fb:like:layout="button_count"></a>
+	
+	
+	<a class="addthis_button_tweet"></a>
+	
+	
+	<a class="addthis_button_google_plusone" g:plusone:size="medium"></a>
+	
+<!---	<a class="addthis_counter addthis_pill_style"></a> --->
+	</div>
+  <script type="text/javascript" src="http://s7.addthis.com/js/250/addthis_widget.js#pubid="></script>
+</div>
+
+
+
+<section id="comment">
+    <h2 class="title">Comments</h2>
+    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+</section>
+</div>
+	<footer id="footer" class="inner">Copyright &copy; 2014
+
+    Aloha
+
+<br>
+Powered by Octopress.
+</footer>
+	<script src="/javascripts/slash.js"></script>
+<script src="/javascripts/jquery.fancybox.pack.js"></script>
+<script type="text/javascript">
+(function($){
+	$('.fancybox').fancybox();
+})(jQuery);
+</script> <!-- Delete or comment this line to disable Fancybox -->
+
+
+<script type="text/javascript">
+      var disqus_shortname = 'ccaloha';
+      
+        
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://ccaloha.cc/blog/2012/11/07/how-to-setup-jenkins-slave-vm-winxp-which-support-sikuli-testing/';
+        var disqus_url = 'http://ccaloha.cc/blog/2012/11/07/how-to-setup-jenkins-slave-vm-winxp-which-support-sikuli-testing/';
+        var disqus_script = 'embed.js';
+      
+    (function () {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/' + disqus_script;
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script>
+
+
+
+	<script type="text/javascript">
+		var _gaq = _gaq || [];
+		_gaq.push(['_setAccount', 'UA-29608372-1']);
+		_gaq.push(['_trackPageview']);
+
+		(function() {
+			var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+			ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+			var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+		})();
+	</script>
+
+
+<a title="Google Analytics Alternative" href="http://clicky.com/100753071"><img alt="Google Analytics Alternative" src="//static.getclicky.com/media/links/badge.gif" border="0" /></a>
+<script src="//static.getclicky.com/js" type="text/javascript"></script>
+<script type="text/javascript">try{ clicky.init(100753071); }catch(e){}</script>
+<noscript><p><img alt="Clicky" width="1" height="1" src="//in.getclicky.com/100753071ns.gif" /></p></noscript>
+
+</body>
+</html>

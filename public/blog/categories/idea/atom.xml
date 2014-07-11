@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: Idea | AlohaCC]]></title>
+  <link href="http://ccaloha.cc/blog/categories/idea/atom.xml" rel="self"/>
+  <link href="http://ccaloha.cc/"/>
+  <updated>2014-07-11T19:53:39+08:00</updated>
+  <id>http://ccaloha.cc/</id>
+  <author>
+    <name><![CDATA[Aloha]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[Virtual Fire]]></title>
+    <link href="http://ccaloha.cc/blog/2013/11/15/virtual-fire/"/>
+    <updated>2013-11-15T19:00:15+08:00</updated>
+    <id>http://ccaloha.cc/blog/2013/11/15/virtual-fire</id>
+    <content type="html"><![CDATA[<h2>Virtual Fire</h2>
+
+<blockquote><p>Virtual Fire was a mobile speedball game.</p></blockquote>
+
+<p>We were trying to use infrared technology as emitter via Arduino, allowing users to play in any space.</p>
+
+<blockquote><p>Virtual Fire is not only a safe game but also easy to access. Players are able to play paintball games with their nearby friends on the street or in the campus.</p></blockquote>
+
+<p>see the introduction video filmed by <em>Aloha Chen, Jeff Hung, Dr. Chang, Wuderis Wu.</em></p>
+
+<!--more-->
+
+
+
+
+<iframe width="640" height="360" src="http://ccaloha.cc//www.youtube.com/embed/_EvVpT9qfno" frameborder="0" allowfullscreen></iframe>
+
+
+
+]]></content>
+  </entry>
+  
+</feed>

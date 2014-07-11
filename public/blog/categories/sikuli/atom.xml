@@ -1,0 +1,530 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: Sikuli | AlohaCC]]></title>
+  <link href="http://ccaloha.cc/blog/categories/sikuli/atom.xml" rel="self"/>
+  <link href="http://ccaloha.cc/"/>
+  <updated>2014-07-11T19:53:39+08:00</updated>
+  <id>http://ccaloha.cc/</id>
+  <author>
+    <name><![CDATA[Aloha]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[How to Setup Jenkins Slave VM(WinXP) which support Sikuli Testing]]></title>
+    <link href="http://ccaloha.cc/blog/2012/11/07/how-to-setup-jenkins-slave-vm-winxp-which-support-sikuli-testing/"/>
+    <updated>2012-11-07T18:28:00+08:00</updated>
+    <id>http://ccaloha.cc/blog/2012/11/07/how-to-setup-jenkins-slave-vm-winxp-which-support-sikuli-testing</id>
+    <content type="html"><![CDATA[<p>Reference Topics:</p>
+
+<p><a href="http://technicaltesting.wordpress.com/2012/05/07/setting-up-a-jenkins-slave-for-sikuli-based-tests/">Setting up a Jenkins slave for Sikuli based tests</a></p>
+
+<p>作者環境是win7，我按造上面的設定修改</p>
+
+<h3>1.設定User 永遠不會被logout</h3>
+
+<p><strong>點選執行</strong>
+<a href="http://www.flickr.com/photos/alohacc/8163442105/" title="Flickr 上 aloooooooooooha 的 sikuli_vm_setup_step1"><img src="http://farm8.staticflickr.com/7129/8163442105_a1dabc5168.jpg" width="374" height="500" alt="sikuli_vm_setup_step1"></a></p>
+
+<p><strong>輸入regedit</strong></p>
+
+<p><a href="http://www.flickr.com/photos/alohacc/8163442169/" title="Flickr 上 aloooooooooooha 的 sikuli_vm_setup_step2"><img src="http://farm9.staticflickr.com/8061/8163442169_ea1e39d3c4.jpg" width="337" height="167" alt="sikuli_vm_setup_step2"></a></p>
+
+<!--more-->
+
+
+<p></p>
+
+<p><strong>點到HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Policies\System</strong></p>
+
+<p><a href="http://www.flickr.com/photos/alohacc/8163475730/" title="Flickr 上 aloooooooooooha 的 sikuli_vm_setup_step3"><img src="http://farm8.staticflickr.com/7106/8163475730_07772dc6b9_m.jpg" width="204" height="189" alt="sikuli_vm_setup_step3"></a></p>
+
+<p><a href="http://www.flickr.com/photos/alohacc/8163475788/" title="Flickr 上 aloooooooooooha 的 sikuli_vm_setup_step4"><img src="http://farm9.staticflickr.com/8479/8163475788_7b21b7497b.jpg" width="500" height="275" alt="sikuli_vm_setup_step4"></a></p>
+
+<p><strong>新增DWORD值</strong></p>
+
+<p><a href="http://www.flickr.com/photos/alohacc/8163442301/" title="Flickr 上 aloooooooooooha 的 sikuli_vm_setup_step5"><img src="http://farm9.staticflickr.com/8484/8163442301_7d7ce36f38.jpg" width="345" height="209" alt="sikuli_vm_setup_step5"></a></p>
+
+<p><strong>新增DisableLockWorkstation，設定為1</strong></p>
+
+<p><a href="http://www.flickr.com/photos/alohacc/8163475866/" title="Flickr 上 aloooooooooooha 的 sikuli_vm_setup_step6"><img src="http://farm8.staticflickr.com/7111/8163475866_f210b0fba8.jpg" width="322" height="184" alt="sikuli_vm_setup_step6"></a></p>
+
+<p>因為有查到這篇文章<a href="http://superuser.com/questions/96228/disabling-lock-workstation-in-windows-xp">Disabling Lock Workstation in Windows XP</a>,所以還要在設定一個參數</p>
+
+<p><strong>用尋找功能</strong></p>
+
+<p><a href="http://www.flickr.com/photos/alohacc/8163442715/" title="Flickr 上 aloooooooooooha 的 sikuli_vm_setup_step13"><img src="http://farm9.staticflickr.com/8479/8163442715_7693c918ba_m.jpg" width="211" height="210" alt="sikuli_vm_setup_step13"></a></p>
+
+<p><strong>尋找AllowMultipleTSSessions，並修改成0</strong></p>
+
+<p>ps.他在HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon裡面</p>
+
+<p><a href="http://www.flickr.com/photos/alohacc/8163476260/" title="Flickr 上 aloooooooooooha 的 sikuli_vm_setup_step14"><img src="http://farm8.staticflickr.com/7246/8163476260_266a58d497_m.jpg" width="240" height="104" alt="sikuli_vm_setup_step14"></a></p>
+
+<h3>2.設定使用者，重開機時，可以自行登入</h3>
+
+<p><strong>點到HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon</strong></p>
+
+<p><a href="http://www.flickr.com/photos/alohacc/8163475918/" title="Flickr 上 aloooooooooooha 的 sikuli_vm_setup_step7"><img src="http://farm9.staticflickr.com/8066/8163475918_009161e433.jpg"
+width="500" height="261" alt="sikuli_vm_setup_step7"></a></p>
+
+<p><strong>新增字串</strong></p>
+
+<p><a href="http://www.flickr.com/photos/alohacc/8163475960/" title="Flickr 上 aloooooooooooha 的 sikuli_vm_setup_step7-5"><img src="http://farm8.staticflickr.com/7272/8163475960_74bdb0b74a.jpg" width="342" height="234" alt="sikuli_vm_setup_step7-5"></a></p>
+
+<p><strong>新增DefaultPassword，輸入你的密碼</strong></p>
+
+<p><a href="http://www.flickr.com/photos/alohacc/8163475998/" title="Flickr 上 aloooooooooooha 的 sikuli_vm_setup_step8"><img src="http://farm8.staticflickr.com/7274/8163475998_c98a8c4c0f.jpg" width="379" height="146" alt="sikuli_vm_setup_step8"></a></p>
+
+<p><strong>修改DefaultUsername</strong></p>
+
+<p><a href="http://www.flickr.com/photos/alohacc/8163476034/" title="Flickr 上 aloooooooooooha 的 sikuli_vm_setup_step9"><img src="http://farm9.staticflickr.com/8487/8163476034_736554f892.jpg" width="383" height="154" alt="sikuli_vm_setup_step9"></a></p>
+
+<p><strong>修改AutoAdminLogon，設定為1</strong></p>
+
+<p><a href="http://www.flickr.com/photos/alohacc/8163476080/" title="Flickr 上 aloooooooooooha 的 sikuli_vm_setup_step10"><img src="http://farm9.staticflickr.com/8204/8163476080_fc059350a4.jpg" width="378" height="154" alt="sikuli_vm_setup_step10"></a></p>
+
+<h3>3.取消螢幕保護</h3>
+
+<p><strong>點到HKEY_CURRENT_USER\Control Panel\Desktop</strong></p>
+
+<p><a href="http://www.flickr.com/photos/alohacc/8163476112/" title="Flickr 上 aloooooooooooha 的 sikuli_vm_setup_step11"><img src="http://farm9.staticflickr.com/8489/8163476112_121e07519d.jpg" width="355" height="499" alt="sikuli_vm_setup_step11"></a></p>
+
+<p><strong>修改ScreenSaveActive為0</strong></p>
+
+<p><a href="http://www.flickr.com/photos/alohacc/8163476166/" title="Flickr 上 aloooooooooooha 的 sikuli_vm_setup_step12"><img src="http://farm8.staticflickr.com/7271/8163476166_021f20ef99.jpg" width="381" height="159" alt="sikuli_vm_setup_step12"></a></p>
+
+<h3>4. 重開機</h3>
+
+<h3>5. 最後也是最重要的一步！！清掉上次RDP所鎖定的畫面，在Jenkins Script加上</h3>
+
+<pre><code>    tscon.exe 0 /dest:console
+</code></pre>
+
+<p><strong>thanks to Mac support</strong></p>
+
+<p><a href="http://www.flickr.com/photos/alohacc/8163451817/" title="Flickr 上 aloooooooooooha 的 sikuli_vm_setup_step15"><img src="http://farm8.staticflickr.com/7260/8163451817_16141e0d28_b.jpg" width="1024" height="86" alt="sikuli_vm_setup_step15"></a></p>
+
+<p>Reference</p>
+
+<p><a href="http://www.pctools.com/guides/registry/detail/973/">參數: AllowMultipleTSSessions</a></p>
+
+<p><a href="http://www.pctools.com/guides/registry/detail/264/">參數: DisableLockWorkstation</a></p>
+
+<p><a href="http://www.pctools.com/guides/registry/detail/1190/">參數: ScreenSaveActive</a></p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[HOW-TO: Using Sikuli and RobotFramework in Linux Platform ]]></title>
+    <link href="http://ccaloha.cc/blog/2012/01/05/how-to-using-sikuli-and-robotframework-in-linux-platform/"/>
+    <updated>2012-01-05T13:38:00+08:00</updated>
+    <id>http://ccaloha.cc/blog/2012/01/05/how-to-using-sikuli-and-robotframework-in-linux-platform</id>
+    <content type="html"><![CDATA[<blockquote><p>首先，你必須先看過這篇文章 抓好 Sikuli <a href="http://ccaloha.cc/blog/2011/12/17/install-sikuli-in-ubuntu/">搞搞 Sikuli 在你的 Ubuntu</a></p></blockquote>
+
+<p><strong>我會使用 windows RDP, 作為一個範例,在這之前,請先確保你的linux可以使用 # rdesktop</strong></p>
+
+<blockquote><p>以下為我的簡單感想 , 在robot framework底下使用sikuli , 就是使用一個擴充的library</p></blockquote>
+
+<!--more-->
+
+
+<p></p>
+
+<h2>目標 使用Sikuli，遠端登入到window桌面，進行format volume的動作</h2>
+
+<ol>
+<li><p>使用sikuli ide 把要點選的照片拍下來 (我個人覺得這個很費工....囧)</p>
+
+<pre><code> sh /你的sikuli路徑/sikuli-ide.ti
+</code></pre></li>
+<li><p>建立個資料夾吧</p>
+
+<pre><code> mkdir RobotSikuli
+</code></pre></li>
+<li><p>把剛剛拍的照片放到winFormatImage裡</p>
+
+<pre><code>cd RobotSikuli
+mkdir winFormatImage
+mv 你剛剛用sikuli拍的照片檔路徑 winFormatImage   
+</code></pre></li>
+<li><p>開始撰寫你的library (因為要run在不同的三種window版本，所以寫得比較麻煩…科科)</p>
+
+<pre><code> cd ..
+ cd RobotSikuli
+ mkdir WindowRDPFormatLibrary
+ vim Format.py
+</code></pre></li>
+</ol>
+
+
+<p><strong>python程式碼如下(這是小弟第一次寫python,請見諒)</strong></p>
+
+<pre><code>    #coding=utf-8
+    from __future__ import with_statement
+    from sikuli.Sikuli import *
+
+    addImagePath("winFormatImage")
+
+"""
+1. 在python2.6中，with正式成為了關鍵字所以在python2.5以前,要利用with的話,需要使用:Python代碼from __future__ import with_statement 
+from __future__ import with_statement 它的原理如下:所有實現上下文協議的對像都包含以下三種方法:__context__()它返回一個自我管理的上下文對象
+或者一個真正意義的上下文管理器__enter()__進入上下文管理器,開始迭代當with語句結束的時候,無論是正常結束還是拋出異常,都會執行__exit__(),該方法用於關閉資源連接
+2. Your project is created. Add at least one you-name-it.py file to the source folder and put from sikuli.Sikuli import * as the first line.
+
+"""
+__version__ = '0.1'
+
+class VolumeFormat(object):
+    ROBOT_LIBRARY_SCOPE = 'GLOBAL'
+    ROBOT_LIBRARY_VERSION = __version__
+
+def __init__(self, platform):
+
+    self.start_pictures = {'win2003' : "start2003.png" , 'winxp' : "startxp.png" , 'win2008' : "start2008.png"}
+    self.start_picture = self.start_pictures[platform]
+
+    self.control_panels = {'win2003' : "control_panel_2003.png" , "winxp" : "control_panel_xp.png" , 'win2008' : "control_panel_2008.png"}
+    self.control_panel  = self.control_panels[platform]
+
+    self.administrator_tools = {'win2003' : "administrator_tool2003.png" , 'winxp' : "administrator_toolxp.png" , 'win2008' : "administrator_tool2008.png"}
+    self.administrator_tool = self.administrator_tools[platform]
+
+    self.computer_managements = {'win2003' : "computer_management2003.png" , 'winxp' : "computer_managementxp.png" , 'win2008' : "computer_management2008.png"}
+    self.computer_management = self.computer_managements[platform]
+
+    self.disk_management =  {'win2003' : "disk_management2003.png" , 'winxp' : "disk_managementxp.png" , 'win2008' : "disk_management2008.png"} 
+    self.disk_management = self.disk_management[platform]
+
+    self.full_screens = {'win2003' : "full_screen2003.png" , 'winxp' : "full_screenxp.png" , 'win2008' : "full_screen2008.png"}
+    self.full_screen = self.full_screens[platform]
+
+    self.disk_unknowns = {'win2003' : "disk_unknown2003.png" , 'winxp' : "disk_unknownxp.png" , 'win2008' : "disk_unknown2008.png"}
+    self.disk_unknown = self.disk_unknowns[platform]
+
+    self.initial_disks = {'win2003' : "initial_disk2003.png" , 'winxp' : "initial_diskxp.png" , 'win2008' : "initial_disk2008.png"}
+    self.initial_disk = self.initial_disks[platform]
+
+    self.oks = {'win2003' : "ok2003.png" , 'winxp' : "okxp.png" , 'win2008' : "ok2008.png"}
+    self.ok = self.oks[platform]
+
+    self.link_volumes = {'win2003' : "link_vol2003.png" , 'winxp' : "link_volxp.png" , 'win2008' : "link_vol2008.png"}
+    self.link_volume = self.link_volumes[platform]
+
+    self.unformat_infos = {'win2003' : "unformat_info2003.png" , 'winxp' : "unformat_infoxp.png" , 'win2008' : "unformat_info2008.png"}
+    self.unformat_info = self.unformat_infos[platform]
+
+    self.new_partitions = {'win2003' : "new_partition2003.png" , 'winxp' : "new_partitionxp.png" , 'win2008' : "new_partition2008.png"}
+    self.new_partition = self.new_partitions[platform]
+
+    self.cancel_auto_partitions = {'win2003' : "cancel_auto_partition2003.png" , 'winxp' : "cancel_auto_partitionxp.png" , 'win2008' : "cancel_auto_partition2008.png"}
+            self.cancel_auto_partition = self.cancel_auto_partitions[platform]
+
+    self.next_bottoms = {'win2003' : "next2003.png" , 'winxp' : "nextxp.png" , 'win2008' : "next2008.png"}
+    self.next_bottom = self.next_bottoms[platform]
+
+    self.finishs = {'win2003' : "finish2003.png" , 'winxp' : "finishxp.png" , 'win2008' : "finish2008.png"}
+    self.finish = self.finishs[platform]
+
+    self.closes = {'win2003' : "close2003.png" , 'winxp' : "closexp.png" , 'win2008' : "close2008.png"}
+    self.close = self.closes[platform]
+
+def click_start(self):
+    self._click(self.start_picture)
+
+def click_control_panel(self):
+    self._click(self.control_panel)
+
+def click_administrator_tool(self, how_to_click = "click"):
+    self._click(self.administrator_tool, how_to_click)
+
+def click_computer_manager(self):
+    self._click(self.computer_management)
+
+def click_disk_management(self):
+    self._click(self.disk_management)
+
+def click_cancel_initial(self):
+    self._click(self.cancel_auto_partition)
+
+def click_full_screen(self):
+    self._click(self.full_screen)
+
+def click_link_vol(self):
+    self._click(self.link_volume)
+
+def click_right_for_initail_info(self):
+    self._click(self.disk_unknown, how_to_click = "rightClick") 
+
+def click_initial_Disk(self):
+    self._click(self.initial_disk)
+
+def click_ok(self):
+    self._click(self.ok)
+
+def click_right_for_new_partition(self):
+    self._click(self.unformat_info, how_to_click = "rightClick")
+
+def click_new_partion(self):
+    self._click(self.new_partition)
+
+def click_next(self):
+    self._click(self.next_bottom)
+
+
+def click_finish(self):
+    self._click(self.finish)    
+
+def click_close(self):
+    self._click(self.close)
+
+def click_what(self , image_name):
+    self._click(image_name)
+
+def _click(self,icon,icon_2 = None ,how_to_click="click"):
+
+    findAll(Pattern(icon).similar(0.9))       
+    allmatchs = getLastMatches()
+    sort_allmatchs = sorted(allmatchs,key=lambda allmatchs:allmatchs.getScore())
+    sort_allmatchs.reverse()
+    match = sort_allmatchs[0]
+    self.appCoordinates = (match.getX(), match.getY(), match.getW(), match.getH())
+            appRegion = Region(*self.appCoordinates)        
+
+    if how_to_click == "click":
+        appRegion.click(icon)
+            elif how_to_click == "doubleclick":
+                    appRegion.doubleClick(icon)
+    elif how_to_click == "rightClick": 
+        appRegion.rightClick(icon)
+    elif how_to_click == "hover":
+        appRegion.hover(icon)
+    elif how_to_click == "dragDrop":
+        appRegion.doubleClick(icon_start,icon_stop)
+</code></pre>
+
+<ol>
+<li><p>建立robotframework的測試碼</p>
+
+<pre><code> cd ..
+ mkdir robotCode
+ cd robotCode
+ vim format_win2008.txt
+</code></pre></li>
+</ol>
+
+
+<p>程式碼如下：</p>
+
+<p>因為我在python檔有寫__int__ 所以我在一開始就先丟個初始值給他(請看下句)</p>
+
+<p>Library  Format.VolumeFormat  win2008</p>
+
+<pre><code>    ***Settings***
+    Library  Format.VolumeFormat  win2008
+    Library  OperatingSystem
+
+    ***Test Cases***
+    Format Win2008 Volume
+        Start Process  rdesktop -u 遠端VM的名字 -p 你的密碼 遠端的IP位置
+        sleep  30
+        click_start
+        click_administrator_tool
+        click_computer_manager
+        sleep  10
+        click_disk_management
+        sleep  10
+        [Documentation]  click_cancel_initial
+        click_cancel_initial
+        click_right_for_initail_info
+        click_link_vol
+        click_right_for_initail_info
+        click_initial_Disk
+        click_ok
+        click_right_for_new_partition
+        click_new_partion
+        click_next
+        click_next
+        click_next
+        click_next
+        click_finish
+        click_close
+        [Teardown]      Stop All Processes
+</code></pre>
+
+<p><strong>重要的來了</strong></p>
+
+<ol>
+<li><p>寫執行檔！！！！這邊就是要告訴robot我還有其他lib要用～還有sikuli的jar檔要include進來</p>
+
+<pre><code> vim run.sh
+</code></pre></li>
+</ol>
+
+
+<p>程式碼如下：</p>
+
+<pre><code>    #!/bin/bash
+    export CLASSPATH="/home/alohacc/Sikuli-X-1.0rc3-r905-linux-i686/Sikuli-IDE/sikuli-script.jar"  
+
+    export JYTHONPATH="$CLASSPATH/Lib"
+
+    jybot --pythonpath WindowRDPFormatLibrary --outputdir results --loglevel TRACE -l Format_log -r Format_report -o Format_output $* robotCode
+</code></pre>
+
+<ol>
+<li><p>我run.sh的程式碼 有一個輸出的dir位置，我先建一個給他</p>
+
+<pre><code> mkdir results
+</code></pre></li>
+</ol>
+
+
+<p>To sum up :</p>
+
+<p>資料夾結構如下：</p>
+
+<pre><code>RobotSikuli
+  -&gt;results
+  -&gt;WindowRDPFormatLibrary
+        -&gt; Format.py
+  -&gt;robotCode
+        -&gt; format_win2008.txt
+        -&gt; run.sh
+  -&gt;winFormatImage
+        -&gt; administrator_tool2003.png 
+           change_to_original_view.png  
+           control_panel_xp.png                             
+            ……etc 
+</code></pre>
+
+<p>執行的話，就是下</p>
+
+<pre><code>sh robotCode/run.sh
+</code></pre>
+
+<p>恭喜完成！！！</p>
+
+<p>主要參考為</p>
+
+<p><a href="http://blog.mykhailo.com/2011/02/how-to-sikuli-and-robot-framework.html">How-To: Sikuli and Robot Framework Integration</a></p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[搞搞 Sikuli 在你的 Ubuntu]]></title>
+    <link href="http://ccaloha.cc/blog/2011/12/17/install-sikuli-in-ubuntu/"/>
+    <updated>2011-12-17T19:41:00+08:00</updated>
+    <id>http://ccaloha.cc/blog/2011/12/17/install-sikuli-in-ubuntu</id>
+    <content type="html"><![CDATA[<p><strong>安裝</strong>
+一開始我看官網，我以為只要一行指令碼就ＯＫ了～</p>
+
+<p>誰知道…試了超久，問題還是沒有解決，例如要灌openCV啦、python版本太舊啦…等等</p>
+
+<p>但是我想如果之後有更新的話，下面那行應該就灌好了～(所以我還是保留一下)</p>
+
+<pre><code>apt-get install sikuli-ide  
+</code></pre>
+
+<p>另外一個方法，也是我現在在用的方法！</p>
+
+<!--more-->
+
+
+<p></p>
+
+<p>其實只要先安裝</p>
+
+<pre><code>sudo apt-get wmctrl
+
+sudo apt-get xdotool
+</code></pre>
+
+<p><strong>直接來操作</strong></p>
+
+<p>之後下載source code (Sikuli X-1.0rc3(r905))來用</p>
+
+<pre><code>wget http://launchpad.net/sikuli/sikuli-x/x1.0-rc3/+download/Sikuli-X-1.0rc3%20%28r905%29-linux-x86_64.zip
+
+unzip XXX.zip
+</code></pre>
+
+<p>可以先用下面的指令開啓ide來編寫程式</p>
+
+<pre><code>PATH-TO-SIKULI-FOLDER/sikuli-ide.sh 
+</code></pre>
+
+<p>要執行的話，指令這樣下</p>
+
+<pre><code>PATH-TO-SIKULI-FOLDER/sikuli-ide.sh -r 你的sikuli程式資料夾
+</code></pre>
+
+<p>恭喜你～踏出自動化的一步～</p>
+
+<p>TODO: Link to RobotFrameWork</p>
+
+<blockquote><p>=================參考，說不定有用================</p></blockquote>
+
+<p>我因為參考下面的東東 我在東試西試時，下過這些指令</p>
+
+<pre><code>apt-get install build-essential
+
+apt-get install cmake
+
+apt-get install pkg-config
+
+apt-get install libpng12-0 libpng12-dev libpng++-dev libpng3
+
+apt-get install libpnglite-dev libpngwriter0-dev libpngwriter0c2
+
+apt-get install zlib1g-dbg zlib1g zlib1g-dev
+
+apt-get install libjasper-dev libjasper-runtime libjasper1
+
+apt-get install pngtools libtiff4-dev libtiff4 libtiffxx0c2 libtiff-tools
+
+apt-get install libjpeg8 libjpeg8-dev libjpeg8-dbg libjpeg-prog
+
+apt-get install ffmpeg libavcodec-dev libavcodec52 libavformat52 libavformat-dev
+
+apt-get install libgstreamer0.10-0-dbg libgstreamer0.10-0  libgstreamer0.10-dev
+
+apt-get install libxine1-ffmpeg  libxine-dev libxine1-bin
+
+apt-get install libunicap2 libunicap2-dev
+
+apt-get install libdc1394-22-dev libdc1394-22 libdc1394-utils
+
+apt-get install swig
+
+apt-get install libv4l-0 libv4l-dev
+
+apt-get install python-numpy
+
+apt-get install libcvaux-dev
+</code></pre>
+
+<blockquote><p>＝＝＝＝＝＝＝＝＝＝＝＝以下就是我參考的東東＝＝＝＝＝＝＝＝＝＝＝＝</p></blockquote>
+
+<p><a href="http://sikuli.org/docx/faq/010-command-line.html">How to run Sikuli from Command Line</a></p>
+
+<p><a href="http://www.samontab.com/web/2010/04/installing-opencv-2-1-in-ubuntu/">install OpenCV 2.1 in Ubuntu</a></p>
+
+<p><a href="https://answers.launchpad.net/sikuli/+faq/1110">Building Large-scale Testing framework Using Sikuli</a></p>
+
+<p><a href="http://opencv.willowgarage.com/wiki/InstallGuide%20%3A%20Debian">OpenCV Installation Guide on Debian and Ubuntu</a></p>
+
+<p><a href="http://www.51testing.com/?uid-49689-action-spacelist-type-blog-itemtypeid-19557">Sikuli+RobotFramework集成</a></p>
+
+<p><a href="http://thebitbangtheory.wordpress.com/2011/10/23/how-to-install-opencv-2-3-1-in-ubuntu-11-10-oneiric-ocelot-with-python-support/">HOW TO INSTALL OPENCV 2.3.1 IN UBUNTU 11.10 ONEIRIC OCELOT WITH PYTHON SUPPORT</a></p>
+
+<p><a href="https://answers.launchpad.net/sikuli/+question/139540">之前遇到的問題1</a></p>
+
+<p><a href="https://bugs.launchpad.net/ubuntu/+source/sikuli/+bug/829757">之前遇到問題2</a></p>
+]]></content>
+  </entry>
+  
+</feed>

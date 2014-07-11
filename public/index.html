@@ -1,0 +1,671 @@
+
+<!DOCTYPE HTML>
+<html>
+<head>
+	<script data-cfasync="false" type="text/javascript" src="//use.typekit.net/axj3cfp.js"></script>
+	<script data-cfasync="false" type="text/javascript">try{Typekit.load();}catch(e){}</script>
+	<meta charset="utf-8">
+	<title>Try to Make Something Diff | Just For Fun |  | AlohaCC</title>
+
+<meta name="author" content="Aloha"> 
+
+<meta name="description" content="Share Ruby on Rail and all about 'Chun Yu, Chen AlohaCC'"> <meta name="keywords" content="Aloha, Ruby on Rails, Blog, Web Developer, Taiwan, Chun-Yu Chen, Design Pattern, Action Scripts, Robotframework, Sikuli">
+
+	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+	<link href="http://feeds.feedburner.com/Alohacc" rel="alternate" title="AlohaCC" type="application/atom+xml">
+	<link rel="canonical" href="">
+	<link href="/favicon.png" rel="shortcut icon">
+	<link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+	<!--[if lt IE 9]><script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
+	<script src="//ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
+	<script type="text/javascript" src="/javascripts/jquery.fancybox.pack.js"></script>
+
+<script language="Javascript" type="text/javascript">
+$(document).ready(
+  function() {
+    (function($) {
+      $(".fancybox[data-content-id]").each(function() {
+        this.href = $(this).data('content-id');
+      });
+      $(".fancybox").fancybox({
+        beforeLoad: function() {
+          var el, 
+              id = $(this.element).data('title-id');
+
+          if (id) {
+            el = $('#' + id);
+
+            if (el.length) {
+              this.title = el.html();
+            }
+          }
+          if ($(this).data('content')) {
+            this.content = $(this).data('content');
+          }
+        },
+        helpers: {
+          title: {
+            type: 'inside'
+          }
+        }
+      });
+    })(jQuery);
+  }
+);
+</script>
+
+	
+</head>
+
+
+
+<body>
+	<header id="header" class="inner"><h1><a href="/">AlohaCC</a></h1>
+<h4>Try to Make Something Diff | Just For Fun |</h4>
+<nav id="main-nav"><ul>
+	<li><a href="/">Blog</a></li>
+	<li><a href="/About">About</a></li>
+	<li><a href="/presentation">Presentation</a></li>
+  	<li><a href="/RoR">Ruby on Rails</a></li>
+  	<li><a href="/ActionScript">Action Scripts</a></li>
+  	<li><a href="/DesignPattern">Design Pattern</a></li>
+	<li><a href="/archives">Archive</a></li>
+</ul>
+</nav>
+<nav id="mobile-nav">
+	<div class="alignleft menu">
+		<a class="button">Menu</a>
+		<div class="container"><ul>
+	<li><a href="/">Blog</a></li>
+	<li><a href="/About">About</a></li>
+	<li><a href="/presentation">Presentation</a></li>
+  	<li><a href="/RoR">Ruby on Rails</a></li>
+  	<li><a href="/ActionScript">Action Scripts</a></li>
+  	<li><a href="/DesignPattern">Design Pattern</a></li>
+	<li><a href="/archives">Archive</a></li>
+</ul>
+</div>
+	</div>
+	<div class="alignright search">
+		<a class="button"></a>
+		<div class="container">
+			<form action="http://google.com/search" method="get">
+				<input type="text" name="q" results="0">
+				<input type="hidden" name="q" value="site:ccaloha.cc">
+			</form>
+		</div>
+	</div>
+</nav>
+
+
+</header>
+
+	<div id="content" class="inner">
+
+
+    <article class="post">
+	<h2 class="title">
+		
+		<a href="/blog/2014/06/30/dynamic-roles-and-permissions-management-using-cancan/">
+		
+			如何動態管理權限-使用cancan</a>
+	</h2>
+	<div class="entry-content">
+		<p>這篇是參考自<a href="http://blog.joshsoftware.com/2012/10/23/dynamic-roles-and-permissions-using-cancan/">Dynamic roles and permissions using cancan</a></p>
+
+<p>大概分成幾個流程：</p>
+
+<ol>
+<li>建立Gemfile</li>
+<li>建立需要的Model</li>
+<li>寫rake爬controller的action(懶惰專用，不想要資料庫一個一個建權限)</li>
+<li>設定Ability => 這邊是關鍵，他會去抓user的role底下的權限</li>
+<li>設定Controller => 用來擋權限,設定權限</li>
+<li>設定route</li>
+<li>建立View</li>
+</ol>
+
+
+<h1>前言</h1>
+
+<p>網站後台往往可能有多個員工進去作業，但是有些功能並不希望開放給低層級的員工使用，</p>
+
+<p>所以後台也需要做權限管理～</p>
+
+<p>但是人員進進出出，陞遷、轉職相對應的職務也會調整，總不能每次都要去改hard code吧～～</p>
+
+<p>所以才有動態權限設定的需求！</p>
+
+<h1>Step 1. Gemfile</h1>
+
+<p>因為我們要使用Railscast網站開發者兼Boss Ryanb寫的<a href="https://github.com/ryanb/cancan">cancan</a>，提供權限管理的服務</p>
+
+<p><strong>[手做]</strong> 所以，要在Gemfile寫入</p>
+
+<pre><code>gem 'cancan'
+</code></pre>
+
+<p><strong>[手做]</strong> 在terminal執行</p>
+
+<pre><code>bundle install
+</code></pre>
+
+
+		
+		<a href="/blog/2014/06/30/dynamic-roles-and-permissions-management-using-cancan/" class="more-link">Read on &rarr;</a>
+	</div>
+
+
+<div class="meta">
+	<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2014-06-30T15:27:55+08:00" pubdate data-updated="true">Jun 30<span>th</span>, 2014</time></div>
+	
+
+<div class="tags">
+
+	<a class='category' href='/blog/categories/ruby-on-rails-cancan/'>Ruby_on_Rails,cancan</a>
+
+</div>
+
+
+	
+		<span class="comments"><a href="/blog/2014/06/30/dynamic-roles-and-permissions-management-using-cancan//index.html#disqus_thread">Comments</a></span>
+	
+</div></article>
+
+
+    <article class="post">
+	<h2 class="title">
+		
+		<a href="/blog/2014/05/14/fight-invalid-utf-8-bytes-when-csv-importing/">
+		
+			CSV匯入中文編碼問題</a>
+	</h2>
+	<div class="entry-content">
+		<blockquote><p>情境ㄧ：若是使用者(window平台)先從自己系統download資料，之後要再匯入</p></blockquote>
+
+<p>對於CSV檔案本身解決方法&#8230;.</p>
+
+<h3>=>  請他先用google drive 上傳他的CSV檔，再從google抓下來</h3>
+
+<p>程式端醜陋的解法</p>
+
+<pre><code>def import(file)
+  csv_text = File.read(file.csv_textpath)
+  begin  
+    csv_text_new = Iconv.conv('utf-8','big5',csv_text) #若是使用者使用自己excel轉csv匯入
+  rescue  
+    #do nothing just keep going
+    csv_text_new = csv_text #使用者使用google線上轉換下來的csv
+  end 
+  csv = CSV.parse(csv_text_new, headers: false, quote_char: "\x00", col_sep: "\t")
+  header = csv.first.first.split(',')
+  counter = 0
+  csv.each do |row|
+    unless counter == 0
+      row = Hash[[header,row.first.split(',',header.count)].transpose]
+      order = where(order_no: row["order_no"]).first
+      if order.present?
+        order.attributes = row.to_hash
+        order.save!
+      else
+        Order.create!(row.to_hash)
+      end
+    end
+      counter+=1
+  end
+end
+</code></pre>
+
+<blockquote><p>情境二 若是使用者直接拿外部產生的csv要匯入的話</p></blockquote>
+
+<pre><code>def importingrt(file)
+  CSV.foreach(file.path, :headers =&gt; true, :col_sep =&gt; ',',encoding:'Big5:utf-8') do |row|
+      order = where(order_no: rescueow["系統訂單編號"]).first
+      if order.present?
+               if row["訂單狀態"] == '已出貨'
+          order.ship!
+            end
+      else
+        #do what you want
+      end
+    end
+</code></pre>
+
+<p>附錄：Ruby 的編碼清單</p>
+
+<pre><code>Encoding.list.map {|a| a.name}
+</code></pre>
+
+<p>=> [&#8220;ASCII-8BIT&#8221;, &#8220;UTF-8&#8221;, &#8220;US-ASCII&#8221;, &#8220;Big5&#8221;, &#8220;Big5-HKSCS&#8221;, &#8220;Big5-UAO&#8221;,
+ &#8220;CP949&#8221;, &#8220;Emacs-Mule&#8221;, &#8220;EUC-JP&#8221;, &#8220;EUC-KR&#8221;, &#8220;EUC-TW&#8221;, &#8220;GB18030&#8221;,
+ &#8220;GBK&#8221;, &#8220;ISO-8859-1&#8221;, &#8220;ISO-8859-2&#8221;, &#8220;ISO-8859-3&#8221;, &#8220;ISO-8859-4&#8221;,
+ &#8220;ISO-8859-5&#8221;, &#8220;ISO-8859-6&#8221;, &#8220;ISO-8859-7&#8221;, &#8220;ISO-8859-8&#8221;, &#8220;ISO-8859-9&#8221;,
+ &#8220;ISO-8859-10&#8221;, &#8220;ISO-8859-11&#8221;,
+ &#8220;ISO-8859-13&#8221;,
+ &#8220;ISO-8859-14&#8221;,
+ &#8220;ISO-8859-15&#8221;,
+ &#8220;ISO-8859-16&#8221;,
+ &#8220;KOI8-R&#8221;,
+ &#8220;KOI8-U&#8221;,
+ &#8220;Shift_JIS&#8221;,
+ &#8220;UTF-16BE&#8221;,
+ &#8220;UTF-16LE&#8221;,
+ &#8220;UTF-32BE&#8221;,
+ &#8220;UTF-32LE&#8221;,
+ &#8220;Windows-31J&#8221;,
+ &#8220;Windows-1251&#8221;,
+ &#8220;IBM437&#8221;,
+ &#8220;IBM737&#8221;,
+ &#8220;IBM775&#8221;,
+ &#8220;CP850&#8221;,
+ &#8220;IBM852&#8221;,
+ &#8220;CP852&#8221;,
+ &#8220;IBM855&#8221;,
+ &#8220;CP855&#8221;,
+ &#8220;IBM857&#8221;,
+ &#8220;IBM860&#8221;,
+ &#8220;IBM861&#8221;,
+ &#8220;IBM862&#8221;,
+ &#8220;IBM863&#8221;,
+ &#8220;IBM864&#8221;,
+ &#8220;IBM865&#8221;,
+ &#8220;IBM866&#8221;,
+ &#8220;IBM869&#8221;,
+ &#8220;Windows-1258&#8221;,
+ &#8220;GB1988&#8221;,
+ &#8220;macCentEuro&#8221;,
+ &#8220;macCroatian&#8221;,
+ &#8220;macCyrillic&#8221;,
+ &#8220;macGreek&#8221;,
+ &#8220;macIceland&#8221;,
+ &#8220;macRoman&#8221;,
+ &#8220;macRomania&#8221;,
+ &#8220;macThai&#8221;,
+ &#8220;macTurkish&#8221;,
+ &#8220;macUkraine&#8221;,
+ &#8220;CP950&#8221;,
+ &#8220;CP951&#8221;,
+ &#8220;stateless-ISO-2022-JP&#8221;,
+ &#8220;eucJP-ms&#8221;,
+ &#8220;CP51932&#8221;,
+ &#8220;EUC-JP-2004&#8221;,
+ &#8220;GB2312&#8221;,
+ &#8220;GB12345&#8221;,
+ &#8220;ISO-2022-JP&#8221;,
+ &#8220;ISO-2022-JP-2&#8221;,
+ &#8220;CP50220&#8221;,
+ &#8220;CP50221&#8221;,
+ &#8220;Windows-1252&#8221;,
+ &#8220;Windows-1250&#8221;,
+ &#8220;Windows-1256&#8221;,
+ &#8220;Windows-1253&#8221;,
+ &#8220;Windows-1255&#8221;,
+ &#8220;Windows-1254&#8221;,
+ &#8220;TIS-620&#8221;,
+ &#8220;Windows-874&#8221;,
+ &#8220;Windows-1257&#8221;,
+ &#8220;MacJapanese&#8221;,
+ &#8220;UTF-7&#8221;,
+ &#8220;UTF8-MAC&#8221;,
+ &#8220;UTF-16&#8221;,
+ &#8220;UTF-32&#8221;,
+ &#8220;UTF8-DoCoMo&#8221;,
+ &#8220;SJIS-DoCoMo&#8221;,
+ &#8220;UTF8-KDDI&#8221;,
+ &#8220;SJIS-KDDI&#8221;,
+ &#8220;ISO-2022-JP-KDDI&#8221;,
+ &#8220;stateless-ISO-2022-JP-KDDI&#8221;,
+ &#8220;UTF8-SoftBank&#8221;,
+ &#8220;SJIS-SoftBank&#8221;</p>
+
+		
+		
+	</div>
+
+
+<div class="meta">
+	<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2014-05-14T11:17:11+08:00" pubdate data-updated="true">May 14<span>th</span>, 2014</time></div>
+	
+
+<div class="tags">
+
+	<a class='category' href='/blog/categories/ruby-on-rails-csv/'>Ruby_on_Rails,CSV</a>
+
+</div>
+
+
+	
+		<span class="comments"><a href="/blog/2014/05/14/fight-invalid-utf-8-bytes-when-csv-importing//index.html#disqus_thread">Comments</a></span>
+	
+</div></article>
+
+
+    <article class="post">
+	<h2 class="title">
+		
+		<a href="/blog/2014/04/30/howto-setup-sunspot-in-rails4-and-deploy-to-ubuntu12-dot-04-using-capistrano/">
+		
+			[HowTo] Setup Sunspot in Rails 4 and Deploy to Ubuntu12.04 Using Capistrano 3</a>
+	</h2>
+	<div class="entry-content">
+		<h1>[HOWTO] Setup Sunspot in Rails 4 and Deploy to Ubuntu 12.04 using</h1>
+
+<p>Capistrano3.</p>
+
+<p>最近利用空閒時間，練習自己架設一個購物網站，其中，我想說一般網站都會有搜尋的功能，</p>
+
+<p>如果在後台，可以使用Ransack來實作，但是那是給管理者搜尋某些表相關欄位所使用，</p>
+
+<p>換句話說，在訂單的table中，你可以使用Ransack搜尋，建立每一個獨立欄位搜尋input，或是建立和這訂單table相關的每個獨立欄位的搜尋input</p>
+
+<p>但是，如果想要在網站建立一個搜尋引擎，該要怎麼做？</p>
+
+<p>搜尋引擎是只要輸入一個資料，你就可以搜尋到搜尋不同欄位，</p>
+
+<p>我查了The Ruby toolbox，第一名被使用的就是Sunspot:
+<a href="https://github.com/outoftime/sunspot">https://github.com/outoftime/sunspot</a> !</p>
+
+<p>於是乎，就來try and error吧</p>
+
+
+		
+		<a href="/blog/2014/04/30/howto-setup-sunspot-in-rails4-and-deploy-to-ubuntu12-dot-04-using-capistrano/" class="more-link">Read on &rarr;</a>
+	</div>
+
+
+<div class="meta">
+	<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2014-04-30T10:26:44+08:00" pubdate data-updated="true">Apr 30<span>th</span>, 2014</time></div>
+	
+
+<div class="tags">
+
+	<a class='category' href='/blog/categories/ruby-on-rails-capistrano-ubuntu/'>Ruby_on_Rails,Capistrano,Ubuntu</a>
+
+</div>
+
+
+	
+		<span class="comments"><a href="/blog/2014/04/30/howto-setup-sunspot-in-rails4-and-deploy-to-ubuntu12-dot-04-using-capistrano//index.html#disqus_thread">Comments</a></span>
+	
+</div></article>
+
+
+    <article class="post">
+	<h2 class="title">
+		
+		<a href="/blog/2014/04/11/setup-both-ssh-and-sftp-are-able-to-login-at-same-time-in-ubuntu/">
+		
+			Setup Both SSH and SFTP Are Able to Login at Same Time in Ubuntu</a>
+	</h2>
+	<div class="entry-content">
+		<p>這篇文章主要是參考自
+<a href="http://blog.srmklive.com/2013/04/24/how-to-setup-sftp-server-ftp-over-ssh-in-ubuntu/">http://blog.srmklive.com/2013/04/24/how-to-setup-sftp-server-ftp-over-ssh-in-ubuntu/</a>
+但是，我沒辦法同時使用ssh和sftp</p>
+
+
+		
+		<a href="/blog/2014/04/11/setup-both-ssh-and-sftp-are-able-to-login-at-same-time-in-ubuntu/" class="more-link">Read on &rarr;</a>
+	</div>
+
+
+<div class="meta">
+	<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2014-04-11T12:24:15+08:00" pubdate data-updated="true">Apr 11<span>th</span>, 2014</time></div>
+	
+
+<div class="tags">
+
+	<a class='category' href='/blog/categories/ubuntu/'>Ubuntu</a>
+
+</div>
+
+
+	
+		<span class="comments"><a href="/blog/2014/04/11/setup-both-ssh-and-sftp-are-able-to-login-at-same-time-in-ubuntu//index.html#disqus_thread">Comments</a></span>
+	
+</div></article>
+
+
+    <article class="post">
+	<h2 class="title">
+		
+		<a href="/blog/2014/03/27/howto-transfer-capistrano-2-to-capistrano-3-using-ruby-on-rails/">
+		
+			[HOWTO] Transfer Capistrano 2 to Capistrano 3 Using Ruby on Rails</a>
+	</h2>
+	<div class="entry-content">
+		<p>At First, Why I want to transfer from Capistrano2 to Capistrano3?</p>
+
+<ol>
+<li>Stability</li>
+<li>Performance</li>
+</ol>
+
+
+<p>In Capistrano2,</p>
+
+<p>First, I often stuck at precompile&#8230;</p>
+
+<p>and sometimes I get <strong>[deploy:update_code] exception while rolling back:
+Net::SSH::Disconnect, connection closed by remote host&#8221;</strong></p>
+
+<p>Third, every deployments take about 10~15 minuates.</p>
+
+<p>So&#8230;. that&#8217;s why I want to change to capistrano 3.</p>
+
+
+		
+		<a href="/blog/2014/03/27/howto-transfer-capistrano-2-to-capistrano-3-using-ruby-on-rails/" class="more-link">Read on &rarr;</a>
+	</div>
+
+
+<div class="meta">
+	<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2014-03-27T11:13:09+08:00" pubdate data-updated="true">Mar 27<span>th</span>, 2014</time></div>
+	
+
+<div class="tags">
+
+	<a class='category' href='/blog/categories/ruby-on-rails/'>Ruby_on_Rails</a>, <a class='category' href='/blog/categories/capistrano/'>capistrano</a>
+
+</div>
+
+
+	
+		<span class="comments"><a href="/blog/2014/03/27/howto-transfer-capistrano-2-to-capistrano-3-using-ruby-on-rails//index.html#disqus_thread">Comments</a></span>
+	
+</div></article>
+
+
+    <article class="post">
+	<h2 class="title">
+		
+		<a href="/blog/2014/03/07/howto-seo-for-octopress/">
+		
+			HOWTO- 公司需要CEO, Blog也需要SEO！- Using Octopress</a>
+	</h2>
+	<div class="entry-content">
+		<p>這篇其實是學習(翻譯)自
+<a href="http://xit0.org/2013/05/seo-for-octopress-websites">http://xit0.org/2013/05/seo-for-octopress-websites</a></p>
+
+<h2>第一步- 文章SEO: 更改你Octopress產生文章引擎的 Rakefile</h2>
+
+<pre><code>desc "Begin a new post in #{source_dir}/#{posts_dir}"
+task :new_post, :title do |t, args|
+  if args.title
+    title = args.title
+  else
+    title = get_stdin("Enter a title for your post: ")
+  end
+  raise "### You haven't set anything up yet. First run `rake install` to set up an Octopress theme." unless File.directory?(source_dir)
+  mkdir_p "#{source_dir}/#{posts_dir}"
+  filename = "#{source_dir}/#{posts_dir}/#{Time.now.strftime('%Y-%m-%d')}-#{title.to_url}.#{new_post_ext}"
+  if File.exist?(filename)
+    abort("rake aborted!") if ask("#{filename} already exists. Do you want to overwrite?", ['y', 'n']) == 'n'
+  end
+  puts "Creating new post: #{filename}"
+  open(filename, 'w') do |post|
+    post.puts "---"
+    post.puts "layout: post"
+    post.puts "title: \"#{title.gsub(/&amp;/,'&amp;amp;')}\""
+    post.puts "date: #{Time.now.strftime('%Y-%m-%d %H:%M')}"
+    post.puts "comments: true"
+    post.puts "categories: "
+    post.puts "keywords: "      # 加在這邊
+    post.puts "description: "   # 加在這邊
+    post.puts "---"
+  end
+end
+</code></pre>
+
+
+		
+		<a href="/blog/2014/03/07/howto-seo-for-octopress/" class="more-link">Read on &rarr;</a>
+	</div>
+
+
+<div class="meta">
+	<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2014-03-07T10:32:20+08:00" pubdate data-updated="true">Mar 7<span>th</span>, 2014</time></div>
+	
+
+<div class="tags">
+
+	<a class='category' href='/blog/categories/seo/'>SEO</a>
+
+</div>
+
+
+	
+		<span class="comments"><a href="/blog/2014/03/07/howto-seo-for-octopress//index.html#disqus_thread">Comments</a></span>
+	
+</div></article>
+
+<nav id="pagenavi">
+    
+    
+        <a href="/blog/page/2/" class="next">Next</a>
+    
+    <div class="center"><a href="/archives">Blog Archives</a></div>
+</nav></div>
+	<footer id="footer" class="inner">Copyright &copy; 2014
+
+    Aloha
+
+<br>
+Powered by Octopress.
+</footer>
+	<script src="/javascripts/slash.js"></script>
+<script src="/javascripts/jquery.fancybox.pack.js"></script>
+<script type="text/javascript">
+(function($){
+	$('.fancybox').fancybox();
+})(jQuery);
+</script> <!-- Delete or comment this line to disable Fancybox -->
+
+
+<script type="text/javascript">
+      var disqus_shortname = 'ccaloha';
+      
+        
+        var disqus_script = 'count.js';
+      
+    (function () {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/' + disqus_script;
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script>
+
+
+
+	<script type="text/javascript">
+		var _gaq = _gaq || [];
+		_gaq.push(['_setAccount', 'UA-29608372-1']);
+		_gaq.push(['_trackPageview']);
+
+		(function() {
+			var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+			ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+			var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+		})();
+	</script>
+
+
+<a title="Google Analytics Alternative" href="http://clicky.com/100753071"><img alt="Google Analytics Alternative" src="//static.getclicky.com/media/links/badge.gif" border="0" /></a>
+<script src="//static.getclicky.com/js" type="text/javascript"></script>
+<script type="text/javascript">try{ clicky.init(100753071); }catch(e){}</script>
+<noscript><p><img alt="Clicky" width="1" height="1" src="//in.getclicky.com/100753071ns.gif" /></p></noscript>
+
+</body>
+</html>

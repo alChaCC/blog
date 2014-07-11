@@ -1,0 +1,1009 @@
+
+<!DOCTYPE HTML>
+<html>
+<head>
+	<script data-cfasync="false" type="text/javascript" src="//use.typekit.net/axj3cfp.js"></script>
+	<script data-cfasync="false" type="text/javascript">try{Typekit.load();}catch(e){}</script>
+	<meta charset="utf-8">
+	<title>我的RoR學習專案-Day 2  | AlohaCC</title>
+
+<meta name="author" content="Aloha"> 
+
+<meta name="description" content="Share Ruby on Rail and all about 'Chun Yu, Chen AlohaCC'"> <meta name="keywords" content="Aloha, Ruby on Rails, Blog, Web Developer, Taiwan, Chun-Yu Chen, Design Pattern, Action Scripts, Robotframework, Sikuli">
+
+	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+	<link href="http://feeds.feedburner.com/Alohacc" rel="alternate" title="AlohaCC" type="application/atom+xml">
+	<link rel="canonical" href="">
+	<link href="/favicon.png" rel="shortcut icon">
+	<link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+	<!--[if lt IE 9]><script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
+	<script src="//ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
+	<script type="text/javascript" src="/javascripts/jquery.fancybox.pack.js"></script>
+
+<script language="Javascript" type="text/javascript">
+$(document).ready(
+  function() {
+    (function($) {
+      $(".fancybox[data-content-id]").each(function() {
+        this.href = $(this).data('content-id');
+      });
+      $(".fancybox").fancybox({
+        beforeLoad: function() {
+          var el, 
+              id = $(this.element).data('title-id');
+
+          if (id) {
+            el = $('#' + id);
+
+            if (el.length) {
+              this.title = el.html();
+            }
+          }
+          if ($(this).data('content')) {
+            this.content = $(this).data('content');
+          }
+        },
+        helpers: {
+          title: {
+            type: 'inside'
+          }
+        }
+      });
+    })(jQuery);
+  }
+);
+</script>
+
+	
+</head>
+
+
+
+<body>
+	<header id="header" class="inner"><h1><a href="/">AlohaCC</a></h1>
+<h4>Try to Make Something Diff | Just For Fun |</h4>
+<nav id="main-nav"><ul>
+	<li><a href="/">Blog</a></li>
+	<li><a href="/About">About</a></li>
+	<li><a href="/presentation">Presentation</a></li>
+  	<li><a href="/RoR">Ruby on Rails</a></li>
+  	<li><a href="/ActionScript">Action Scripts</a></li>
+  	<li><a href="/DesignPattern">Design Pattern</a></li>
+	<li><a href="/archives">Archive</a></li>
+</ul>
+</nav>
+<nav id="mobile-nav">
+	<div class="alignleft menu">
+		<a class="button">Menu</a>
+		<div class="container"><ul>
+	<li><a href="/">Blog</a></li>
+	<li><a href="/About">About</a></li>
+	<li><a href="/presentation">Presentation</a></li>
+  	<li><a href="/RoR">Ruby on Rails</a></li>
+  	<li><a href="/ActionScript">Action Scripts</a></li>
+  	<li><a href="/DesignPattern">Design Pattern</a></li>
+	<li><a href="/archives">Archive</a></li>
+</ul>
+</div>
+	</div>
+	<div class="alignright search">
+		<a class="button"></a>
+		<div class="container">
+			<form action="http://google.com/search" method="get">
+				<input type="text" name="q" results="0">
+				<input type="hidden" name="q" value="site:ccaloha.cc">
+			</form>
+		</div>
+	</div>
+</nav>
+
+
+</header>
+
+	<div id="content" class="inner"><article class="post">
+	<h2 class="title">我的RoR學習專案-Day 2</h2>
+	<div class="entry-content"><p>幹&#8230;..問題是&#8230;.我要怎麼到一個forum然後秀出裡頭的post勒？</p>
+
+<p>然後又要像要求 http://forum.local/forums/1/posts/2這樣的格式的網頁，</p>
+
+<p>我們必須到/config/routes.rb 加東西～不過在這之前我必須先產生post的controller</p>
+
+<pre><code>rails g controller posts
+</code></pre>
+
+<!--more-->
+
+
+<p></p>
+
+<p>之後我們回到 /config/routes.rb 加入</p>
+
+<pre><code>resources :forums do
+    resources :posts
+end
+</code></pre>
+
+<p>OK~我們先hold住 先回到剛剛卡住的地方，剛剛在app/views/forums/show.html.erb卡住的原因是&#8230;.</p>
+
+<p>我希望可以show出所有在這個文章分區內包含的文章有哪些～那這樣的話在show.html.erb就必須要有post的資料，</p>
+
+<p>所以我想我必須在forum的controller內的show加讀取Post資料庫的指令~</p>
+
+<pre><code> @posts = Post.where(:forum_id =&gt; @forum.id).order("created_at DESC")
+</code></pre>
+
+<p>加了之後～那我就來改/app/views/forums/show.html.erb加上</p>
+
+<pre><code>&lt;ul&gt;
+    &lt;%@posts.each do |post|%&gt;
+    &lt;%= post.post_title%&gt;
+    &lt;%= post.poster_name%&gt;
+    &lt;%= link_to '看三小', post_path(post) %&gt;     
+    &lt;%end%&gt;
+&lt;/ul&gt;
+</code></pre>
+
+<p> Yes! 我們現在終於到了post的部份，不過今天我想先來玩玩git和github，因為我想要備份一下我的檔案，</p>
+
+<pre><code>cd ~/Sites/ccalohacc
+git add .
+git commit -a
+（編輯你要說明的變動）
+git push
+</code></pre>
+
+<p>大功告成，我把這幾天打得都給他放到github上了！</p>
+
+<p>下次來試試 branch!!!</p>
+
+<p>ＯＫ～讓我們回到post,先來改post的controller吧，應該會跟forum很像吧&#8230;.</p>
+
+<p>正要cpoy forums的controller時才發現，我forums_controller還沒寫完&#8230;.靠背～</p>
+
+<p>先來改edit好了</p>
+
+<pre><code>def edit
+  @forum = Forum.find(params[:id])
+end
+</code></pre>
+
+<p>我想edit的重點是知道使用者點了哪個論壇～然後在到view提供表單給他修改～～</p>
+
+<p>沒錯就來到/app/views/forums/ 建立一個edit.html.erb吧</p>
+
+<p>內容基本上和new一樣，不過&#8230;&#8230;url要導向哪裡！！！ 沒錯controller要有更新的動作</p>
+
+<pre><code>    &lt;%= form_for @forum, :url =&gt;  do |f| %&gt;
+        &lt;%= f.label :forum_name, "版名" %&gt;
+        &lt;%= f.text_field :forum_name %&gt;
+    &lt;%= f.label :admin_forum_user, " 管理者 " %&gt;
+        &lt;%= f.text_field :admin_forum_user %&gt;
+        &lt;%= f.label :description, "介紹" %&gt;
+        &lt;%= f.text_area :description %&gt;
+        &lt;%= f.submit "更新" %&gt;
+&lt;% end %&gt;
+</code></pre>
+
+<p> 在forums_controller.rb加入</p>
+
+<pre><code>def update
+        @forum = Forum.find(params[:id])
+        @forum.update_attributes(params[:forum])
+        redirect_to forum_url(@forum)
+    end
+</code></pre>
+
+<p>在update Action裡，Rails一樣透過params[:id]參數找到要編輯的資料。</p>
+
+<p>接著update_attributes方法會根據表單傳進來的參數修改到資料上。完成後，會被導向到的show那邊去。</p>
+
+<p>幫edit.html.erb的url補上forum_path(@forum)吧，我想你可能會問那個update_attributes是三小～請參考<a href="http://ihower.tw/rails3/activerecord.html">這篇</a></p>
+
+<p>ok~改完edit最後來改destroy吧～非常簡單就加個</p>
+
+<pre><code>def destroy
+        @forum = Forum.find(params[:id])
+        @forum.destroy
+        redirect_to forums_url
+    end
+</code></pre>
+
+<p>因為要導向forum 的index 的動作～所以forum那邊要用複數->forums_usl</p>
+
+<p>forum全部改完之後，我們來把他全部copy然後past到post的controller吧～因為幾乎都差不多</p>
+
+<pre><code>class PostsController &lt; ApplicationController
+    # show all posts
+        def index
+            @posts = Post.all
+            @forum = Forum.find(params[:forum_id])
+            redirect_to forum_path(@forum)
+        end
+
+        # new a post
+        def new
+            @post = Post.new
+            @forum = Forum.find(params[:forum_id])
+            @post = @forum.posts.build
+        end
+
+     # when you click new , ROR will give you form to fill up.
+         # when user click submit, it will direct to here
+        def create
+            @post = Post.new(params[:post])
+            @forum = Forum.find(params[:forum_id])
+            @post = @forum.posts.build(params[:post])
+            @post.save
+            redirect_to posts_url
+        end  
+
+        # show this post have what post
+        def show
+            @post = Post.find(params[:id])
+            @forum = Forum.find(params[:forum_id])
+            @post = @forum.posts.find(params[:id])
+        end
+
+        # edit this post's name , manager...etc 
+        def edit
+            @post = Post.find(params[:id])
+            @forum = Forum.find(params[:forum_id])
+            @post = @forum.posts.find(params[:id])
+        end
+
+     # kill this post
+        def destroy
+            @post = Post.find(params[:id])
+            @forum = Forum.find(params[:forum_id])
+            @post = @forum.posts.find(params[:id])
+            @post.destroy
+            redirect_to posts_url
+        end
+
+    def update
+            @post = Post.find(params[:id])
+            @forum = Forum.find(params[:forum_id])
+            @post = @forum.posts.find(params[:id]) 
+            @post.update_attributes(params[:post])
+            redirect_to post_url(@post)
+        end
+
+end
+</code></pre>
+
+<p>這邊我加了一些東東</p>
+
+<p>我的解釋是因為post會和forum有關，所以在controller這邊要先跟model要forum的資訊～</p>
+
+<p>這樣到時候view時，才可以秀資料</p>
+
+<p>今天看了一下影片赫然發現！如果用戶在create時！如果發現錯誤&#8230;.那&#8230;.怎麼辦&#8230;.</p>
+
+<p>靠邀～都沒有想到如果用戶發現錯誤的話，要有一些error handle，沒錯～所以我們得加一些東西</p>
+
+<pre><code>    def create
+            @forum = Forum.new(params[:forum])
+            if @forum.save
+                redirect_to forums_url
+            else
+            render('new')
+            end
+        end  
+</code></pre>
+
+<p>當然post也要加</p>
+
+<pre><code>    if @post.save
+            redirect_to posts_url
+        else
+            render('new')
+        end
+</code></pre>
+
+<p>不過，你不覺得在post那邊一直出現@forum = Forum.find(params[:id])嗎？！</p>
+
+<p>你不覺得很靠邀～～</p>
+
+<p>ＯＫ～根據教學影片～我們可以這樣解</p>
+
+<p>加一個private function就專門找forum_id</p>
+
+<pre><code>    private 
+    def find_forum
+            if params[:forum_id]
+            @forum = Forum.find_by_id(params[:forum_id])
+        end
+    end
+</code></pre>
+
+<p>不過好好想想，posts這邊應該改成這樣</p>
+
+<pre><code>    class PostsController &lt; ApplicationController
+
+    # 使用這個先抓到屬於這個post得form_id   
+    before_filter :find_forum
+
+    #展現出Post table裡面forum_id為我們所要得id並依照創立時間遞減排序
+        def index
+            @posts = Post.where(:forum_id =&gt; @forum.id).order("created_at DESC")
+        end
+    ＃新增一篇文章，先new給他，並指派給他forum_id
+
+        def new
+            @post = Post.new(:forum_id =&gt; @forum.id)
+        end
+
+        # when you click new , ROR will give you form to fill up.
+        # when user click submit, it will direct to here
+        def create
+            @post = Post.new(params[:post])
+            if @post.save
+                flash[:notice] = "文章發表成功"
+                redirect_to posts_url
+            else
+                render('new')
+            end
+        end  
+
+        # show this post have what post
+        def show
+            @post = Post.find(params[:id])
+        end
+
+        # edit this post's name , manager...etc 
+        def edit
+            @post = Post.find(params[:id])
+        end
+
+        # kill this post
+        def destroy
+            @post = Post.find(params[:id]).destroy
+            flash[:notice] = "文章刪除完成"
+            redirect_to posts_url
+        end
+
+        def update
+            @post = Post.find(params[:id]) 
+            if @post.update_attributes(params[:post])
+            flash[:notice] = "文章修改完成"
+            redirect_to post_url(@post)
+        end
+
+    private 
+        def find_forum
+                if params[:forum_id]
+                @forum = Forum.find_by_id(params[:forum_id])
+        end
+    end
+end
+</code></pre>
+
+<p>開始來建view吧～～</p>
+
+<p>首先先來建index~就是會秀出這個論壇分類區內的文章</p>
+
+<pre><code>&lt;ul&gt;
+    &lt;% @posts.each do |post| %&gt;
+    &lt;li&gt;
+    &lt;%= post.post_title %&gt;
+    &lt;%= post.poster_name%&gt;
+    &lt;%= post.content%&gt;
+    &lt;%= post.position%&gt;
+    &lt;%= link_to '觀看文章', post_path(post) %&gt;
+    &lt;%= link_to '編輯文章', edit_post_path(post) %&gt;
+    &lt;%= button_to '刪除文章', post_path(post) , :method =&gt; :delete %&gt;
+    &lt;/li&gt;
+    &lt;% end %&gt;
+&lt;/ul&gt;
+
+&lt;%= link_to '新增文章', new_post_path %&gt;
+</code></pre>
+
+<p>在這邊有個issue以後別忘記去瞭解他～</p>
+
+<p>就是Post有個欄位是is_public，我是想如果是true的話～那所有人都看得到～如果是false的話～那就是必須要登入才可以看到，在看看要怎麼寫</p>
+
+<p>再來增加new.html.erb</p>
+
+<pre><code>&lt;%= form_for @post, :url =&gt; posts_path  do |f| %&gt;
+        &lt;%= f.label :post_title, "文章標題" %&gt;
+        &lt;%= f.text_field :post_title %&gt;
+    &lt;%= f.label :poster_name, " 撰寫人 " %&gt;
+        &lt;%= f.text_field :poster_name %&gt;
+        &lt;%= f.label :content, "內容" %&gt;
+        &lt;%= f.text_area :content %&gt;
+        &lt;%= f.submit "新增文章" %&gt;
+&lt;% end %&gt;
+    &lt;%= link_to '取消新增', posts_path %&gt;
+</code></pre>
+
+<p>再來是edit.html.erb</p>
+
+<pre><code>&lt;%= form_for @post, :url =&gt; post_path(@post)  do |f| %&gt;
+        &lt;%= f.label :post_title, "文章標題" %&gt;
+    &lt;%= f.text_field :post_title %&gt;
+    &lt;%= f.label :poster_name, " 撰寫人 " %&gt;
+        &lt;%= f.text_field :poster_name %&gt;
+        &lt;%= f.label :content, "內容" %&gt;
+        &lt;%= f.text_area :content %&gt;
+        &lt;%= f.submit "更新文章" %&gt;
+&lt;% end %&gt;
+
+    &lt;%= link_to '取消更新', post_path(@post) %&gt;
+</code></pre>
+
+<p> 再來是show.html.erb</p>
+
+<pre><code>&lt;%= @forum.forum_name %&gt;
+&lt;ul&gt;
+    &lt;%@posts.each do |post|%&gt;
+    &lt;%= post.post_title%&gt;
+    &lt;%= post.poster_name%&gt;
+    &lt;%= link_to '看三小', post_path(post) %&gt;     
+    &lt;%end%&gt;
+&lt;/ul&gt;
+&lt;p&gt;&lt;%= link_to '回到主論壇', forums_path %&gt;&lt;/p&gt;
+</code></pre>
+
+<p>應該可以run了歐～～試一下吧！回到terminal~</p>
+
+<pre><code>cd Sites/ccaloha/
+rails server
+</code></pre>
+
+<p>打開firefox&#8230;.輸入 localhost:3000
+&#8230;.囧&#8230;.怎麼沒有論壇的導覽列，應該這樣說&#8230;這個論壇是我的project裡頭一個～～所以應該要create projects的controller可連結到各個project!!!</p>
+
+<pre><code>rails g controller projects 
+</code></pre>
+
+<p>這個projects我想可以不用使用resource的導向，因為我也不知道怎麼用ＸＤ，直接加導引就好了，不過&#8230;.因為他有index所以我想我還是在route.rb加上</p>
+
+<pre><code>resources :projects
+</code></pre>
+
+<p>我在projects_controller只放了</p>
+
+<pre><code>def index
+end
+</code></pre>
+
+<p> 之後來編輯index.html.erb</p>
+
+<pre><code>&lt;!DOCTYPE html&gt;
+&lt;html&gt;
+&lt;head&gt;
+&lt;title&gt;CCALOHA-Projects&lt;/title&gt;
+&lt;/head&gt;
+&lt;body&gt;
+&lt;h1&gt;Projects&lt;/h1&gt;
+
+&lt;colgroup class="nav_bar"&gt;
+    &lt;nav&gt;
+         &lt;%= link_to "Ruby on Rails - 論壇練習" , forums_path %&gt;
+    &lt;/nav&gt;
+    &lt;nav&gt;
+         Action Script 3
+    &lt;/nav&gt;
+    &lt;nav&gt;
+         Android
+    &lt;/nav&gt;
+    &lt;nav&gt;
+         Linux
+    &lt;/nav&gt;
+    &lt;nav&gt;
+        HTML 5
+    &lt;/nav&gt;
+
+    &lt;nav&gt;
+        &lt;%= link_to "Github" , "https://github.com/alChaCC" %&gt;
+    &lt;/nav&gt;
+&lt;/hgroup&gt;
+
+&lt;/body&gt;
+&lt;/html&gt;
+</code></pre>
+
+<p>重新更新頁面～～看來都ＯＫ歐～</p>
+
+<p>連到論壇，建立新論壇～看來是ＯＫ歐～～再來建立post~</p>
+
+<p>靠邀跳出error</p>
+
+<pre><code>/Users/aloha/Sites/ccaloha/app/models/post.rb:2: syntax error, unexpected ':', expecting kEND
+belongs_to : forum
+                ^
+</code></pre>
+
+<p>幹～應該是我多一個空格&#8230;靠背 自己去改黑</p>
+
+<p>ＯＫ～work了！不過&#8230;.幹&#8230;.沒有增加文章的連結</p>
+
+<p>於是我到了views/forums/show.html.erb去增加了一行</p>
+
+<pre><code>&lt;p&gt;&lt;%= link_to '新增文章', new_post_path %&gt;&lt;/p&gt;
+</code></pre>
+
+<p>結果&#8230;..ＯＫ歐～～不過～點下新增文章的連結～幹</p>
+
+<p>出現error~~他無法解析這段話～</p>
+
+<p>所以我必須到route.rb去新增 resources :posts</p>
+
+<p>就ＯＫ了</p>
+
+<p>結果我點新增文章&#8230;.幹&#8230;.又有bug</p>
+
+<pre><code>/Users/aloha/Sites/ccaloha/app/controllers/posts_controller.rb:56: syntax error, unexpected $end, expecting kEND
+</code></pre>
+
+<p>應該是我多了還是少了一個end</p>
+
+<p>幹&#8230;.</p>
+
+<p>def updates那邊少了一個end</p>
+
+<p>應該是長這樣子的</p>
+
+<pre><code>def update
+        @post = Post.find(params[:id])
+        if @post.update_attributes(params[:post])
+            flash[:notice] = "文章修改完成"
+            redirect_to post_url(@post)
+        end
+    end
+</code></pre>
+
+<p>  ＯＫ～改完了 refrash一下</p>
+
+<p>囧&#8230;.</p>
+
+<p>Called id for nil, which would mistakenly be 4 &#8211; if you really wanted the id of nil, use object_id</p>
+
+<p>靠&#8230;..</p>
+
+<pre><code>def find_forum
+        if params[:forum_id]
+            @forum = Forum.find(params[:forum_id])
+        else
+            flash.now[:notice] = "no id"
+    end
+</code></pre>
+
+<p>  end</p>
+
+<p>這個 params[:forum_id]是nil！！！</p>
+
+<p>各位～sorry~ 其實 params[:forum_id]的意思從書上看來是</p>
+
+<p>http://forum_demo.dev/board/1 params[:id] 是1</p>
+
+<p>http://forum_demo.dev/board/1/post/2 params[:id] 是2 param[:board_id] 是 1</p>
+
+<p>意思就是&#8230;..其實照理說網址應該就要帶有這些資訊，那因為我現在寫的這一行</p>
+
+<p>在views/forums/show.html.erb增加的那一行</p>
+
+<pre><code>&lt;p&gt;&lt;%= link_to '新增文章', new_post_path %&gt;&lt;/p&gt;
+</code></pre>
+
+<p>所以當我們按新增文章時，因為我右手賤把到route.rb去新增 resources :posts</p>
+
+<p>所以他是直接導入controller=> post 的new 這個動作～所以基本上他的網址是http:localhost:3000/posts/new</p>
+
+<p>那他當然找不到，這時候我需要的是兩層的resourse～不知道還記不記得我n百年之前在config.rb加了一個</p>
+
+<pre><code>resourecs :forums do
+    resources :posts 
+</code></pre>
+
+<p>沒錯！！！所以只要和restfull有關的都要改～～不過也因為這樣讓我學到Nested Resource</p>
+
+<p>我們可以參考<a href="http://guides.rubyonrails.org/routing.html">這篇</a> 知道有這幾種寫法</p>
+
+<p>若像下面那樣寫法呢</p>
+
+<pre><code>resources :magazines do
+</code></pre>
+
+<p>          resources :ads</p>
+
+<pre><code>end
+</code></pre>
+
+<p>你要怎麼使用呢？ 請看文章敘述</p>
+
+<p>When using magazine_ad_path, you can pass in instances of Magazine and Ad instead of the numeric IDs.</p>
+
+<pre><code>&lt;%= link_to "Ad details", magazine_ad_path(@magazine, @ad) %&gt;
+</code></pre>
+
+<p>You can also use url_for with a set of objects, and Rails will automatically determine which route you want:</p>
+
+<pre><code>&lt;%= link_to "Ad details", url_for([@magazine, @ad]) %&gt;
+</code></pre>
+
+<p>所以我改了很多地方～包括forum的show也有地方要改～～～一個一個來看吧</p>
+
+<p>首先先來看～forums_controller</p>
+
+<p>我的show 動作有改～～改成</p>
+
+<pre><code>@posts = Post.where(:forum_id =&gt; @forum.id)  
+</code></pre>
+
+<p>之前是@posts = Post.where(:forum_id => @forum.id) .order(“create_at DESC”)</p>
+
+<p>為甚麼要改是因為～我發現整個都完成之後～在forum 底下show出所有post時～～id和forum_id會顛倒&#8230;..囧，好怪～不過我把他刪掉之後～就ＯＫ了～～這個要在好好想想</p>
+
+<p>再來改show.html.erb改成下面這樣</p>
+
+<pre><code>&lt;%= @forum.forum_name %&gt;
+
+&lt;ul&gt;
+    &lt;%@posts.each do |post|%&gt;
+    &lt;%= post.post_title%&gt;
+    &lt;%= post.poster_name%&gt;
+    &lt;%= link_to '看三小', forum_post_path(@forum,post) %&gt;        
+    &lt;%end%&gt;
+&lt;/ul&gt;
+
+    &lt;p&gt;&lt;%= link_to '新增文章', new_forum_post_path(@forum) %&gt;&lt;/p&gt;
+    &lt;p&gt;&lt;%= link_to '回到主論壇', forums_path %&gt;&lt;/p&gt;
+</code></pre>
+
+<p>new_forum_post_path(@forum)會連到http://localhost:3000/forums/1/posts/new</p>
+
+<p>forum_post_path(@forum,post)會連到http://localhost:3000/forums/1/posts/1</p>
+
+<p>再來大改～posts_controller那邊吧，改成下面這樣～</p>
+
+<pre><code>class PostsController &lt; ApplicationController
+    before_filter :find_forum
+
+        def index
+             @posts = Post.where(:forum_id =&gt; @forum.id).order("created_at DESC")
+        end
+
+        def new
+            @post = @forum.posts.build
+        end
+
+        def create
+            @post = @forum.posts.build(params[:post])
+            if @post.save
+                flash[:notice] = "文章發表成功"
+                redirect_to forum_posts_url
+            else
+                render('new')
+            end
+    end  
+
+        def show
+            @post = Post.find(params[:id])
+        end
+
+        def edit
+            @post = Post.find(params[:id])
+        end
+
+        def destroy
+            @post = Post.find(params[:id]).destroy
+            flash[:notice] = "文章刪除完成"
+            redirect_to forum_posts_path
+        end
+
+        def update
+            @post = Post.find(params[:id]) 
+            if @post.update_attributes(params[:post])
+                flash[:notice] = "文章修改完成"
+                redirect_to forum_post_url(@forum,@post)
+            end
+        end
+
+ private 
+
+    def find_forum
+            @forum = Forum.find(params[:forum_id])
+    end
+end
+</code></pre>
+
+<p>一個一個來說～為甚麼new改成</p>
+
+<pre><code>@post = @forum.posts.build
+</code></pre>
+
+<p>是因為如果不改寫成這樣～我們必須寫成這樣</p>
+
+<pre><code>@post = Post.new
+@post.forum_id = @forum.id
+</code></pre>
+
+<p>同理～create也是，另外只要有restful全部都要改～</p>
+
+<p>再來改view吧～～</p>
+
+<p>edit.html.erb :</p>
+
+<pre><code>&lt;%= form_for @post, :url =&gt; forum_post_path(@forum,@post)  do |f| %&gt;
+        &lt;%= f.label :post_title, "文章標題" %&gt;
+        &lt;%= f.text_field :post_title %&gt;
+    &lt;%= f.label :poster_name, " 撰寫人 " %&gt;
+    &lt;%= f.text_field :poster_name %&gt;
+        &lt;%= f.label :content, "內容" %&gt;
+    &lt;%= f.text_area :content %&gt;
+        &lt;%= f.submit "更新文章" %&gt;
+&lt;% end %&gt;
+
+&lt;%= link_to '取消更新', forum_post_path(@forum,@post) %&gt;
+</code></pre>
+
+<p>index.html.erb:</p>
+
+<pre><code>&lt;%= @forum.forum_name %&gt;
+    &lt;ul&gt;
+    &lt;% @posts.each do |post| %&gt;
+      &lt;li&gt;
+        &lt;%= post.post_title %&gt;
+        &lt;%= post.poster_name%&gt;
+        &lt;%= post.content%&gt;
+        &lt;%= post.position%&gt;
+        &lt;%= link_to '觀看文章', forum_post_path(@forum,post) %&gt;
+        &lt;%= link_to '編輯文章', edit_forum_post_path(@forum,post) %&gt;
+        &lt;%= button_to '刪除文章', forum_post_path(@forum,post) , :method =&gt; :delete %&gt;
+      &lt;/li&gt;
+    &lt;% end %&gt;
+    &lt;/ul&gt;
+    &lt;p&gt;&lt;%= link_to '新增文章', new_forum_post_path(@forum) %&gt;&lt;/p&gt;
+    &lt;%= link_to '回到論壇首頁' , forums_path %&gt;
+</code></pre>
+
+<p>show.html.erb:</p>
+
+<pre><code>    &lt;%= @post.post_title %&gt;
+    &lt;%= @post.poster_name%&gt;
+    &lt;%= @post.content %&gt;        
+    &lt;p&gt;&lt;%= link_to '回到主論壇分類', forum_posts_path %&gt;&lt;/p&gt;
+</code></pre>
+
+<p>new.html.erb:</p>
+
+<pre><code>    &lt;%= form_for @post, :url =&gt; forum_posts_path(@forum)  do |f| %&gt;
+            &lt;%= f.label :post_title, "文章標題" %&gt;
+            &lt;%= f.text_field :post_title %&gt;  
+        &lt;%= f.label :poster_name, " 撰寫人 " %&gt;
+        &lt;%= f.text_field :poster_name %&gt;
+            &lt;%= f.label :content, "內容" %&gt;
+            &lt;%= f.text_area :content %&gt;
+            &lt;%= f.submit "新增文章" %&gt;
+    &lt;% end %&gt;
+    &lt;%= link_to '取消新增', forum_posts_path(@forum) %&gt;
+</code></pre>
+
+<p>OK~讓我們先save，先儲存版本吧～之後就要開branch～～因為要增加功能啦～～</p>
+
+<p>這邊我使用一個工具叫做 git-flow</p>
+
+<p>首先在我的專案底下～</p>
+
+<pre><code>cd Sites/ccaloha/
+git flow init
+git flow feature start user_register_and_manager
+</code></pre>
+
+<p>然後就可以開始寫～～～～</p>
+
+<p>寫完之後在用</p>
+
+<pre><code>git flow feature finish user_register_and_manager
+</code></pre>
+
+<p>之後再用</p>
+
+<pre><code>git flow feature publish user_register_and_manager
+</code></pre>
+
+<p>把他給放到github~~~</p>
+
+<p>那我們先來做些事情～等一下在試看看新加功能，在放上去～branch</p>
+
+<p>follow up ihower的<a href="http://ihower.tw/rails3/auth.html">教學</a></p>
+
+<p>首先在file 加上</p>
+
+<pre><code>gem ‘devise’
+</code></pre>
+
+<p>各位～只要想要用一些套件～就要用這個方式先把人家寫好的東西套來用！</p>
+
+<p>在terminal輸入</p>
+
+<pre><code>bundle install
+</code></pre>
+
+<p>輸入</p>
+
+<pre><code>rails g devise:install
+</code></pre>
+
+<p>建立設定檔，之後再輸入</p>
+
+<pre><code>rails g devise user
+</code></pre>
+
+<p>建立user model 和migration 還有route加上了devise_for :users</p>
+
+<p>因為我希望有email認證～</p>
+
+<p>所以我要編輯app/models/user.rb 把devise 多增加一個模組～～：confirmable</p>
+
+<pre><code>class User &lt; ActiveRecord::Base
+    # Include default devise modules. Others available are:
+    # :token_authenticatable, :encryptable, :confirmable, :lockable, :timeoutable and :omniauthable
+
+    devise :database_authenticatable, :registerable,:confirmable,
+        :recoverable, :rememberable, :trackable, :validatable
+
+     # Setup accessible (or protected) attributes for your model
+    attr_accessible :email, :password, :password_confirmation, :remember_me
+end
+</code></pre>
+
+<p>還有要編輯migration 檔</p>
+
+<pre><code>class DeviseCreateUsers &lt; ActiveRecord::Migration
+    def self.up
+            create_table(:users) do |t|
+            t.database_authenticatable :null =&gt; false
+            t.recoverable
+            t.rememberable
+            t.trackable
+            t.confirmable
+            t.timestamps
+            end
+        add_index :users, :email,                :unique =&gt; true
+        add_index :users, :reset_password_token, :unique =&gt; true
+    end
+
+    def self.down
+            drop_table :users
+    end
+end
+</code></pre>
+
+<p>把confirmable的table打開</p>
+
+<p>之後再建立樣板</p>
+
+<pre><code>rails g devise:views
+</code></pre>
+
+<p>最後建立資料表</p>
+
+<pre><code>rake db:migrate
+</code></pre>
+
+<p>OK~該睡覺了～～把檔案做個備份吧～</p>
+
+<pre><code>git add .
+git commit -a
+git flow feature finish user_register_and_manager
+git push origin develop
+</code></pre>
+
+<p>(因為 git flow feature start 他是開feature這個branch)</p>
+
+<p>但是當你把他做finish時～他就會把他merge回develope這個branch~</p>
+
+<p>所以我在push時～要改成develop</p>
+</div>
+
+
+<div class="meta">
+	<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2011-11-13T23:26:00+08:00" pubdate data-updated="true">Nov 13<span>th</span>, 2011</time></div>
+	
+
+<div class="tags">
+
+	<a class='category' href='/blog/categories/ruby-on-rails/'>Ruby_on_Rails</a>
+
+</div>
+
+
+	
+		<span class="comments"><a href="/blog/2011/11/13/my-learning-ror-project-day-2/#disqus_thread">Comments</a></span>
+	
+</div></article>
+
+	<div class="share">
+	<div class="addthis_toolbox addthis_default_style ">
+	
+	<a class="addthis_button_facebook_like" fb:like:layout="button_count"></a>
+	
+	
+	<a class="addthis_button_tweet"></a>
+	
+	
+	<a class="addthis_button_google_plusone" g:plusone:size="medium"></a>
+	
+<!---	<a class="addthis_counter addthis_pill_style"></a> --->
+	</div>
+  <script type="text/javascript" src="http://s7.addthis.com/js/250/addthis_widget.js#pubid="></script>
+</div>
+
+
+
+<section id="comment">
+    <h2 class="title">Comments</h2>
+    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+</section>
+</div>
+	<footer id="footer" class="inner">Copyright &copy; 2014
+
+    Aloha
+
+<br>
+Powered by Octopress.
+</footer>
+	<script src="/javascripts/slash.js"></script>
+<script src="/javascripts/jquery.fancybox.pack.js"></script>
+<script type="text/javascript">
+(function($){
+	$('.fancybox').fancybox();
+})(jQuery);
+</script> <!-- Delete or comment this line to disable Fancybox -->
+
+
+<script type="text/javascript">
+      var disqus_shortname = 'ccaloha';
+      
+        
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://ccaloha.cc/blog/2011/11/13/my-learning-ror-project-day-2/';
+        var disqus_url = 'http://ccaloha.cc/blog/2011/11/13/my-learning-ror-project-day-2/';
+        var disqus_script = 'embed.js';
+      
+    (function () {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/' + disqus_script;
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script>
+
+
+
+	<script type="text/javascript">
+		var _gaq = _gaq || [];
+		_gaq.push(['_setAccount', 'UA-29608372-1']);
+		_gaq.push(['_trackPageview']);
+
+		(function() {
+			var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+			ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+			var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+		})();
+	</script>
+
+
+<a title="Google Analytics Alternative" href="http://clicky.com/100753071"><img alt="Google Analytics Alternative" src="//static.getclicky.com/media/links/badge.gif" border="0" /></a>
+<script src="//static.getclicky.com/js" type="text/javascript"></script>
+<script type="text/javascript">try{ clicky.init(100753071); }catch(e){}</script>
+<noscript><p><img alt="Clicky" width="1" height="1" src="//in.getclicky.com/100753071ns.gif" /></p></noscript>
+
+</body>
+</html>

@@ -1,0 +1,1335 @@
+
+<!DOCTYPE HTML>
+<html>
+<head>
+	<script data-cfasync="false" type="text/javascript" src="//use.typekit.net/axj3cfp.js"></script>
+	<script data-cfasync="false" type="text/javascript">try{Typekit.load();}catch(e){}</script>
+	<meta charset="utf-8">
+	<title>Learning on Ruby on Rails Tutorial-CH6 User model  | AlohaCC</title>
+
+<meta name="author" content="Aloha"> 
+
+<meta name="description" content="Share Ruby on Rail and all about 'Chun Yu, Chen AlohaCC'"> <meta name="keywords" content="Aloha, Ruby on Rails, Blog, Web Developer, Taiwan, Chun-Yu Chen, Design Pattern, Action Scripts, Robotframework, Sikuli">
+
+	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+	<link href="http://feeds.feedburner.com/Alohacc" rel="alternate" title="AlohaCC" type="application/atom+xml">
+	<link rel="canonical" href="">
+	<link href="/favicon.png" rel="shortcut icon">
+	<link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+	<!--[if lt IE 9]><script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
+	<script src="//ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
+	<script type="text/javascript" src="/javascripts/jquery.fancybox.pack.js"></script>
+
+<script language="Javascript" type="text/javascript">
+$(document).ready(
+  function() {
+    (function($) {
+      $(".fancybox[data-content-id]").each(function() {
+        this.href = $(this).data('content-id');
+      });
+      $(".fancybox").fancybox({
+        beforeLoad: function() {
+          var el, 
+              id = $(this.element).data('title-id');
+
+          if (id) {
+            el = $('#' + id);
+
+            if (el.length) {
+              this.title = el.html();
+            }
+          }
+          if ($(this).data('content')) {
+            this.content = $(this).data('content');
+          }
+        },
+        helpers: {
+          title: {
+            type: 'inside'
+          }
+        }
+      });
+    })(jQuery);
+  }
+);
+</script>
+
+	
+</head>
+
+
+
+<body>
+	<header id="header" class="inner"><h1><a href="/">AlohaCC</a></h1>
+<h4>Try to Make Something Diff | Just For Fun |</h4>
+<nav id="main-nav"><ul>
+	<li><a href="/">Blog</a></li>
+	<li><a href="/About">About</a></li>
+	<li><a href="/presentation">Presentation</a></li>
+  	<li><a href="/RoR">Ruby on Rails</a></li>
+  	<li><a href="/ActionScript">Action Scripts</a></li>
+  	<li><a href="/DesignPattern">Design Pattern</a></li>
+	<li><a href="/archives">Archive</a></li>
+</ul>
+</nav>
+<nav id="mobile-nav">
+	<div class="alignleft menu">
+		<a class="button">Menu</a>
+		<div class="container"><ul>
+	<li><a href="/">Blog</a></li>
+	<li><a href="/About">About</a></li>
+	<li><a href="/presentation">Presentation</a></li>
+  	<li><a href="/RoR">Ruby on Rails</a></li>
+  	<li><a href="/ActionScript">Action Scripts</a></li>
+  	<li><a href="/DesignPattern">Design Pattern</a></li>
+	<li><a href="/archives">Archive</a></li>
+</ul>
+</div>
+	</div>
+	<div class="alignright search">
+		<a class="button"></a>
+		<div class="container">
+			<form action="http://google.com/search" method="get">
+				<input type="text" name="q" results="0">
+				<input type="hidden" name="q" value="site:ccaloha.cc">
+			</form>
+		</div>
+	</div>
+</nav>
+
+
+</header>
+
+	<div id="content" class="inner"><article class="post">
+	<h2 class="title">Learning on Ruby on Rails Tutorial-CH6 User Model</h2>
+	<div class="entry-content"><p>Sorry 最近有點忙碌 一口氣補完全部好了～</p>
+
+<p>當然一開始</p>
+
+<p>我們來開一個Branch吧</p>
+
+<pre><code>git checkout -b modeling-users
+</code></pre>
+
+<p>讓我們來gen出user model吧</p>
+
+<pre><code>rails generate model User name:string email:string
+</code></pre>
+
+<p>耶～ 建出了db/migrate/[時間註記]_create_users.rb</p>
+
+<!--more-->
+
+
+<p></p>
+
+<p>長這樣</p>
+
+<pre><code>class CreateUsers &lt; ActiveRecord::Migration
+  def change
+    create_table :users do |t|
+      t.string :name
+      t.string :email
+
+      t.timestamps
+    end
+  end
+end
+</code></pre>
+
+<p>其中migration本身有change這個方法，決定資料庫的改變！</p>
+
+<p>而這個change方法，又呼叫了create_table 建立資料表再資料庫內</p>
+
+<p>之後，我們就可以執行</p>
+
+<pre><code> bundle exec rake db:migrate
+</code></pre>
+
+<p>如果要rollback的話執行</p>
+
+<pre><code>bundle exec rake db:rollback
+</code></pre>
+
+<p>接下來我們要改Gemfile新增</p>
+
+<pre><code>gem 'annotate', '~&gt; 2.4.1.beta'
+</code></pre>
+
+<p>在
+group :development, :test do</p>
+
+<p>end
+裡面放</p>
+
+<p>之後別忘了</p>
+
+<pre><code>bundle install 
+</code></pre>
+
+<p>這樣我們就可以看資料庫的變化</p>
+
+<pre><code>bundle exec annotate --position before
+</code></pre>
+
+<p>於是乎在app/models/user.rb 就出現了</p>
+
+<pre><code># == Schema Information
+#
+# Table name: users
+#
+#  id         :integer         not null, primary key
+#  name       :string(255)
+#  email      :string(255)
+#  created_at :datetime        not null
+#  updated_at :datetime        not null
+#
+
+class User &lt; ActiveRecord::Base
+   attr_accessible :name, :email
+end
+</code></pre>
+
+<p>之後 你想要看資料庫最新狀況都可以再輸入一次</p>
+
+<p>讓我們來重新看app/models/user.rb</p>
+
+<p>using attr_accessible is important for preventing a mass assignment vulnerability, a distressingly common and often serious security hole in many Rails applications.</p>
+
+<p>所以這很重要！</p>
+
+<p>接著我們來看Model上的操作</p>
+
+<p>先來開個console來</p>
+
+<pre><code>rails console --sandbox
+</code></pre>
+
+<h2>增</h2>
+
+<p>新增</p>
+
+<pre><code>User.new
+＃When called with no arguments, User.new returns an object with all nil attributes.
+
+user = User.new(name: "Michael Hartl", email: "mhartl@example.com")
+</code></pre>
+
+<p>儲存</p>
+
+<pre><code>user.save
+</code></pre>
+
+<p>更方便的新增</p>
+
+<pre><code>User.create(name: "A Nother", email: "another@example.org")
+</code></pre>
+
+<h2>刪</h2>
+
+<p>刪除</p>
+
+<pre><code>foo.destroy
+</code></pre>
+
+<h2>修</h2>
+
+<pre><code>user
+user.email = "mhartl@example.net"
+user.save   
+</code></pre>
+
+<p>使用reload回到先前未儲存狀況</p>
+
+<pre><code>user.email
+user.email = "foo@bar.com"
+user.reload.email
+</code></pre>
+
+<p>使用update_attributes修改</p>
+
+<pre><code>user.update_attributes(name: "The Dude", email: "dude@abides.org") 
+</code></pre>
+
+<h2>查</h2>
+
+<p>找尋 - by ID</p>
+
+<pre><code>User.find(1)
+</code></pre>
+
+<p>找尋 - by XXX</p>
+
+<p>這個方法是從Active Recoed內建的東西(depend on 你的table)</p>
+
+<pre><code>User.find_by_email("mhartl@example.com")
+</code></pre>
+
+<p>找尋 - 找第一個</p>
+
+<pre><code>User.first
+</code></pre>
+
+<p>找尋 - 找所有</p>
+
+<pre><code>User.all
+</code></pre>
+
+<p>某筆資料的看詳細資訊</p>
+
+<pre><code>user.name
+
+user.email
+
+user.updated_at
+</code></pre>
+
+<h2>使用者驗證</h2>
+
+<p>OK~~讓我們來開始測試驅動開發八～</p>
+
+<p>我們剛剛在gen user時，因為我們沒有帶&#8211;no-test-framework</p>
+
+<p>所以她有自動幫我們建了測試的code在</p>
+
+<p>/spec/models/user_spec.rb</p>
+
+<p>如果你執行</p>
+
+<pre><code>bundle exec rspec spec/models/user_spec.rb 
+</code></pre>
+
+<p>會得到pending的結果</p>
+
+<p>因為它裡頭寫了</p>
+
+<pre><code>pending "add some examples to (or delete) #{__FILE__}"
+</code></pre>
+
+<p>OK~</p>
+
+<p>那我們來改寫吧</p>
+
+<pre><code>require 'spec_helper'
+
+describe User do
+
+  before { @user = User.new(name: "Example User", email: "user@example.com") }
+
+  subject { @user }
+
+  it { should respond_to(:name) }
+  it { should respond_to(:email) }
+end
+</code></pre>
+
+<p>首先那個before就是在做測試之前我們會先create一個instace varibale @user</p>
+
+<p>並透過subject{@user} 定義@user為default的test的subject</p>
+
+<p>然後那個respond_to(:name)</p>
+
+<p>代表的是裡頭是否有這個屬性！</p>
+
+<p>(Recall from Section 4.2.3 that Ruby uses a question mark to indicate such true/false boolean methods.) The tests themselves rely on the boolean convention used by RSpec: the code</p>
+
+<pre><code>@user.respond_to?(:name)
+</code></pre>
+
+<p>can be tested using the RSpec code</p>
+
+<pre><code>@user.should respond_to(:name)
+</code></pre>
+
+<p>Because of subject { @user }, we can leave off @user in the test, yielding</p>
+
+<pre><code>it { should respond_to(:name) }
+</code></pre>
+
+<p>這時候～我就高興的執行了</p>
+
+<pre><code>bundle exec rspec spec/
+</code></pre>
+
+<p>但是&#8230;.囧  怎麼有錯～</p>
+
+<p>原來是因為 即使我們用<strong>rake db:migrate</strong>建立開發用的資料庫，但是測試時，測試資料庫並不會知道資料的模型(事實上，根本還不存在)</p>
+
+<p>所以我們要建立正確結構的test db，讓測試通過，我們必須使用<strong>db:test:prepare</strong></p>
+
+<p>所以</p>
+
+<pre><code> bundle exec rake db:test:prepare
+</code></pre>
+
+<p>然後在執行</p>
+
+<pre><code>bundle exec rspec spec/
+</code></pre>
+
+<p>過了耶！！</p>
+
+<h3>驗證資料是否有存在</h3>
+
+<p>當然要來寫一下測試拉！ 加上下面那些</p>
+
+<pre><code> it { should be_valid }
+
+  describe "when name is not present" do
+    before { @user.name = " " }
+    it { should_not be_valid }
+  end
+</code></pre>
+
+<p>為甚麼可以寫成should be_valid</p>
+
+<p>原因是一個物件若有定應到boolean的方法例如foo?的話</p>
+
+<p>就會自動對應到測試方法&#8221;be_foo&#8221;</p>
+
+<p>所以be_valid就是從</p>
+
+<p>@user.valid？來的</p>
+
+<p>然後變成</p>
+
+<pre><code>@user.should be_valid
+</code></pre>
+
+<p>因為我們有用subject所以…可以改寫成</p>
+
+<pre><code>it { should be_valid }
+</code></pre>
+
+<p>也完驗證～在來寫validates吧～</p>
+
+<p>只要在<strong>app/models/user.rb</strong>加入</p>
+
+<pre><code>validates :name, presence: true
+</code></pre>
+
+<p>看起來很酷～但是事實上就是使用一個function
+就像下面那樣</p>
+
+<pre><code>class User &lt; ActiveRecord::Base 
+  attr_accessible(:name, :email)
+
+  validates(:name, presence: true)
+end
+</code></pre>
+
+<p>ＯＫ～pass了！</p>
+
+<p>之後我們再補上下面的東東到<strong>spec/models/user_spec.rb</strong></p>
+
+<pre><code>describe "when email is not present" do
+    before { @user.email = " " }
+    it { should_not be_valid }
+  end
+</code></pre>
+
+<p>還有在 <strong>app/models/user.rb
+</strong></p>
+
+<p>加上</p>
+
+<pre><code>validates :email, presence: true
+</code></pre>
+
+<h3>驗證資料長度是否有存在</h3>
+
+<p>先來寫名字長度驗證的測試<strong>spec/models/user_spec.rb</strong></p>
+
+<pre><code>describe "when name is too long" do
+    before { @user.name = "a" * 51 }
+    it { should_not be_valid }
+  end
+</code></pre>
+
+<p>在補寫程式</p>
+
+<pre><code> validates :name, presence: true , length: { maximum: 50}
+</code></pre>
+
+<h3>驗證資料格式是否有正確</h3>
+
+<p>先寫測試</p>
+
+<pre><code> describe "when email format is invalid" do
+    it "should be invalid" do
+      addresses = %w[user@foo,com user_at_foo.org example.user@foo.]
+      addresses.each do |invalid_address|
+        @user.email = invalid_address
+        @user.should_not be_valid
+      end      
+    end
+  end
+
+  describe "when email format is valid" do
+    it "should be valid" do
+      addresses = %w[user@foo.com A_USER@f.b.org frst.lst@foo.jp a+b@baz.cn]
+      addresses.each do |valid_address|
+        @user.email = valid_address
+        @user.should be_valid
+      end      
+    end
+</code></pre>
+
+<p>那個%w[] 可以做字串的array</p>
+
+<p>再來寫 比對的正則表示式</p>
+
+<pre><code>VALID_EMAIL_REGEX = /\A[\w+\-.]+@[a-z\d\-.]+\.[a-z]+\z/i
+validates :email, presence: true, format: { with: VALID_EMAIL_REGEX }
+</code></pre>
+
+<p> 全部的意思是：</p>
+
+<pre><code> Expression Meaning
+</code></pre>
+
+<p>full regex</p>
+
+<pre><code>/\A[\w+\-.]+@[a-z\d\-.]+\.[a-z]+\z/i    
+</code></pre>
+
+<p>start of regex</p>
+
+<pre><code>/                                       
+</code></pre>
+
+<p>match start of a string</p>
+
+<pre><code>\A                                      
+</code></pre>
+
+<p>at least one word character, plus, hyphen, or dot</p>
+
+<pre><code>[\w+\-.]+   
+</code></pre>
+
+<p>literal “at sign”</p>
+
+<pre><code>@   
+</code></pre>
+
+<p>at least one letter, digit, hyphen, or dot</p>
+
+<pre><code>[a-z\d\-.]+ 
+</code></pre>
+
+<p>literal dot</p>
+
+<pre><code>\.  
+</code></pre>
+
+<p>at least one letter</p>
+
+<pre><code>[a-z]+  
+</code></pre>
+
+<p>match end of a string</p>
+
+<pre><code>\z  
+</code></pre>
+
+<p>end of regex</p>
+
+<pre><code>/   
+</code></pre>
+
+<p>case insensitive</p>
+
+<pre><code>i   
+</code></pre>
+
+<p>如果不知道怎麼寫 可以參考</p>
+
+<p>http://www.rubular.com/</p>
+
+<h3>驗證獨特性</h3>
+
+<p> A test for the rejection of duplicate email addresses.
+<strong>spec/models/user_spec.rb</strong></p>
+
+<p>新增</p>
+
+<pre><code>describe "when email address is already taken" do
+       before do
+         user_with_same_email = @user.dup
+         user_with_same_email.save
+       end
+       it { should_not be_valid }
+    end
+</code></pre>
+
+<p> 然後<strong>app/models/user.rb</strong></p>
+
+<p> 加上</p>
+
+<pre><code>validates :email, presence: true, format: { with: VALID_EMAIL_REGEX },
+                uniqueness: true
+</code></pre>
+
+<p>但是我們尚未完成！</p>
+
+<p>因為&#8230;.如果email只有在大小寫上有所不同 這樣就會有問題</p>
+
+<p>先寫test case</p>
+
+<pre><code>describe "when email address is already taken" do
+       before do
+         user_with_same_email = @user.dup
+         user_with_same_email.save
+       end
+       it { should_not be_valid }
+    end
+</code></pre>
+
+<p>好佳在～ :uniqueness accepts an option, :case_sensitive, for just this purpose</p>
+
+<p>所以我們可加上</p>
+
+<pre><code>uniqueness: { case_sensitive: false }
+</code></pre>
+
+<p>但是&#8230;..實際上…這個uniqueness並不是完成 可以達成獨特性的驗證</p>
+
+<p>詳細為啥請看網站舉例</p>
+
+<p>we just need to enforce uniqueness at the database level as well. Our method is to create a database index on the email column, and then require that the index be unique.</p>
+
+<p>所以我們來加上一些index來確保這個問題不會發生</p>
+
+<pre><code> rails generate migration add_index_to_users_email
+</code></pre>
+
+<p>加上一句話</p>
+
+<pre><code>class AddIndexToUsersEmail &lt; ActiveRecord::Migration
+  def change
+    add_index :users, :email, unique: true
+  end
+end
+</code></pre>
+
+<p>他會加上一個index在users資料表的email欄位上</p>
+
+<p>別忘了執行</p>
+
+<pre><code>bundle exec rake db:migrate
+</code></pre>
+
+<p>最後還有一個特別的地方就是</p>
+
+<p>在儲存email之前 必須把它全部轉成小寫！</p>
+
+<p>原因是</p>
+
+<p>The reason is that not all database adapters use case-sensitive indices.</p>
+
+<p>所以我們可以使用一個callback的方法，which is a method that gets invoked at a particular point in the lifetime of an Active Record object</p>
+
+<p>在<strong>app/models/user.rb</strong>加上</p>
+
+<pre><code>before_save { |user| user.email = email.downcase }
+</code></pre>
+
+<h2>增加密碼的保密</h2>
+
+<p>加密的密碼！</p>
+
+<p>為了要讓密碼加密，我們會使用state-of-the-art hash 函式，又稱作bcrypt,他會將密碼不可逆做雜湊加密</p>
+
+<p>所以加上下面到<strong>Gemfile</strong></p>
+
+<pre><code>gem 'bcrypt-ruby', '3.0.1'
+</code></pre>
+
+<p>寫測試！我們要確保User物件有<strong>encrypted_password</strong>這個欄位</p>
+
+<p><strong>spec/models/user_spec.rb</strong></p>
+
+<pre><code>#在it { should respond_to(:name) }和it { should respond_to(:email) }底下加上
+  it { should respond_to(:password_digest) }
+</code></pre>
+
+<p>要通過測試，我們必須要加資料庫東西了！</p>
+
+<pre><code>＄rails generate migration add_password_digest_to_users password_digest:string
+
+#加完別忘了
+$ bundle exec rake db:migrate
+$ bundle exec rake db:test:prepare
+
+#還有測試
+$ bundle exec rspec spec/
+</code></pre>
+
+<h3>密碼與確認</h3>
+
+<p>要讓使用者確認密碼，所以必需要在User這邊，加上兩個屬性！password和password_confirmation</p>
+
+<p>一樣先加到測試裡面！<strong>spec/models/user_spec.rb</strong></p>
+
+<pre><code> it { should respond_to(:password) }
+ it { should respond_to(:password_confirmation) }
+</code></pre>
+
+<p> 因為加了上面兩行！所以&#8230;.. before do這個block要加點東西</p>
+
+<pre><code>before do
+@user = User.new(name: "Example User", email: "user@example.com", 
+                 password: "foobar", password_confirmation: "foobar")
+end
+</code></pre>
+
+<p>另外，也不希望使用者輸入空的密碼，所以測試再加上</p>
+
+<pre><code>describe "when password is not present" do
+  before { @user.password = @user.password_confirmation = " " }
+  it { should_not be_valid }
+end
+</code></pre>
+
+<p>也不希望使用者沒有輸入confirmation</p>
+
+<pre><code>describe "when password confirmation is nil" do
+  before { @user.password_confirmation = nil }
+  it { should_not be_valid }
+end
+</code></pre>
+
+<p>不希望使用者密碼太短(實作寫在下面)</p>
+
+<pre><code>describe "with a password that's too short" do
+  before { @user.password = @user.password_confirmation = "a" * 5 }
+  it { should be_invalid }
+end
+</code></pre>
+
+<h3>使用者認證機制</h3>
+
+<p>要認證的話，預計flow是這樣做</p>
+
+<pre><code>user = User.find_by_email(email)
+current_user = user.authenticate(password)
+</code></pre>
+
+<p>那個authenticate是判斷使用者輸入的密碼，如果true的話就會return user不是的話，就會return false，所以User必須要用這個function，所以來寫測試吧<strong>spec/models/user_spec.rb</strong></p>
+
+<pre><code>#在前面加上這句
+it { should respond_to(:authenticate) }
+
+#在底下加上
+describe "return value of authenticate method" do
+  before { @user.save }
+  let(:found_user) { User.find_by_email(@user.email) }
+
+  describe "with valid password" do
+    it { should == found_user.authenticate(@user.password) }
+  end
+
+  describe "with invalid password" do
+    let(:user_for_invalid_password) { found_user.authenticate("invalid") }
+
+    it { should_not == user_for_invalid_password }
+    specify { user_for_invalid_password.should be_false }
+  end
+end
+</code></pre>
+
+<p>let 就是讓found_user 等同於 User.find_by_email(@user.email)</p>
+
+<p>specify就是it的代名詞(用在當it念起來怪怪的時候XD)</p>
+
+<p>舉例來說：</p>
+
+<p>it(別忘了就是@user) should not equal wrong user  => 順！</p>
+
+<p>user: user with invalid password should be false => 怪&#8230;.</p>
+
+<p>所以才用specify</p>
+
+<p>變成</p>
+
+<p>“specify: user with invalid password should be false =>順！</p>
+
+<h3>User has secure password</h3>
+
+<p>先看一下觀念</p>
+
+<p>我們希望讓password和password_confirmation欄位變成accessible，讓我們可以實例化新的用戶一個初始雜湊</p>
+
+<p><strong>網路上查的資訊</strong>
+attr_accessor :password</p>
+
+<p>表示在user model中加入一個virtual attribute稱為password，virtual attribute的意思是password不對應於資料庫裡的欄位，只用在程式類似變數的角色。</p>
+
+<p>attr_accessible :name, :email, :password, :password_confirmation
+表示將password與password_confirmation加入到attr_accessible的list中，加到list中的變數意味著這個變數可以從外部去修改它，例如可以做一個頁面來重設password等。加到list的另一個好處是可以防止不當的hacker行為(mass assignment)。</p>
+
+<p>所以我們在 <strong>app/models/user.rb</strong>需要這句</p>
+
+<pre><code>attr_accessible :name, :email, :password, :password_confirmation
+</code></pre>
+
+<p>再來我們希望密碼不要太短(還記得上面～寫的測試媽)</p>
+
+<pre><code>validates :password, length: { minimum: 6 }
+</code></pre>
+
+<p><strong>password_confirmation</strong>要有</p>
+
+<pre><code>validates :password_confirmation, presence: true
+</code></pre>
+
+<p>最後我們需要新加password和password_confirmation屬性，也需要加authenticate方法去比較加密的密碼是否和密碼一致，所以我們要整合到一個function裡面 就叫他為</p>
+
+<pre><code>has_secure_password
+</code></pre>
+
+<p>他其實是Rails內建的funciton，請看下面</p>
+
+<pre><code>module ActiveModel
+  module SecurePassword
+    extend ActiveSupport::Concern
+
+    module ClassMethods
+        def has_secure_password
+        # Load bcrypt-ruby only when has_secure_password is used.
+        # This is to avoid ActiveModel (and by extension the entire framework) being dependent on a binary library.
+        gem 'bcrypt-ruby', '~&gt; 3.0.0'
+        require 'bcrypt'
+
+        attr_reader :password
+
+        validates_confirmation_of :password
+        validates_presence_of     :password_digest
+
+        include InstanceMethodsOnActivation
+
+        if respond_to?(:attributes_protected_by_default)
+          def self.attributes_protected_by_default
+            super + ['password_digest']
+          end
+        end
+      end
+    end
+
+  module InstanceMethodsOnActivation
+  # Returns self if the password is correct, otherwise false.
+  def authenticate(unencrypted_password)
+    BCrypt::Password.new(password_digest) == unencrypted_password &amp;&amp; self
+  end
+
+  # Encrypts the password into the password_digest attribute, only if the
+  # new password is not blank.
+  def password=(unencrypted_password)
+    unless unencrypted_password.blank?
+      @password = unencrypted_password
+      self.password_digest = BCrypt::Password.create(unencrypted_password)
+                end
+            end
+        end
+    end
+end     
+</code></pre>
+
+<p>傑克！這真的是太神奇了！！！！！</p>
+
+<pre><code>$ git add .
+$ git commit -m "Make a basic User model (including secure passwords)"
+Then merge back into the master branch:
+
+$ git checkout master
+$ git merge modeling-users
+</code></pre>
+
+<p>＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝底下是之前版本的&#8230;.你就知道為甚麼我說這太神奇了！！！＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝</p>
+
+<h3>驗證密碼</h3>
+
+<p>首先我們先來寫測試程式</p>
+
+<p>要先修改內容 ，把</p>
+
+<pre><code>before { @user = User.new(name: "Example User", email: "user@example.com") }
+</code></pre>
+
+<p>改成這樣</p>
+
+<pre><code>before(:each) do
+@attr = {
+  :name =&gt; "Example User",
+  :email =&gt; "user@example.com",
+  :password =&gt; "foobar",
+  :password_confirmation =&gt; "foobar"
+}
+end
+
+it "should create a new instance given valid attributes" do
+    User.create!(@attr)
+end
+</code></pre>
+
+<p> 然後後面加上</p>
+
+<pre><code> describe "password validations" do
+
+    it "should require a password" do
+      User.new(@attr.merge(:password =&gt; "", :password_confirmation =&gt; "")).
+        should_not be_valid
+    end
+
+    it "should require a matching password confirmation" do
+      User.new(@attr.merge(:password_confirmation =&gt; "invalid")).
+        should_not be_valid
+    end
+
+    it "should reject short passwords" do
+      short = "a" * 5
+      hash = @attr.merge(:password =&gt; short, :password_confirmation =&gt; short)
+      User.new(hash).should_not be_valid
+    end
+
+    it "should reject long passwords" do
+      long = "a" * 41
+      hash = @attr.merge(:password =&gt; long, :password_confirmation =&gt; long)
+      User.new(hash).should_not be_valid
+    end
+  end
+</code></pre>
+
+<p>OK寫好測試後，來讓我們的程式通過測試吧～</p>
+
+<p>先到<strong>app/models/user.rb</strong></p>
+
+<pre><code>#改這些，這是因為流程上我們會接受密碼還有密碼的確認，所以我們必須加上這個
+attr_accessor :password
+attr_accessible :name, :email, :password, :password_confirmation
+ #還有下面那些，這個還會自動幫你產生虛擬的屬性"password_confirmation"
+validates :password, :presence     =&gt; true,
+                   :confirmation =&gt; true,
+                   :length       =&gt; { :within =&gt; 6..40 }
+</code></pre>
+
+<p>現在讓我們計畫 使用encrypted_password這個屬性來儲存有加密的密碼</p>
+
+<p>首先我們先用console來先試玩一下</p>
+
+<pre><code>$rails console --sandbox 
+$ user = User.new
+$ user.respond_to?(:password)   =&gt;你會得到true
+$ user.respond_to?(:encrypted_password)  =&gt;你會得到False!
+</code></pre>
+
+<p>科科&#8230;.</p>
+
+<p>所以我們加個測試<strong>spec/models/user_spec.rb</strong>好了！確保程式會respond_to  “encrypted_password”</p>
+
+<pre><code>describe "password encryption" do
+
+    before(:each) do
+      @user = User.create!(@attr)
+    end
+
+    it "should have an encrypted password attribute" do
+      @user.should respond_to(:encrypted_password)
+    end
+  end
+</code></pre>
+
+<p>上面我們會什麼不用User.new (其實用User.new也可以)，但是因為要設定加密的密碼，是必須在使用者資料寫到資料庫時，在做的動作，所以使用create! 還有把它放在 before(:each) 裡面可以確保所有的加密的密碼都會在這個describe區塊內work</p>
+
+<p>所以要通過測試，我們必須要加資料庫東西了！</p>
+
+<pre><code>＄rails generate migration add_password_to_users encrypted_password:string
+</code></pre>
+
+<p>改<strong>db/migrate/<timestamp>_add_password_to_users.rb</strong></p>
+
+<pre><code>class AddPasswordToUsers &lt; ActiveRecord::Migration
+  def self.up
+    add_column :users, :encrypted_password, :string
+  end
+
+  def self.down
+    remove_column :users, :encrypted_password
+  end
+end
+</code></pre>
+
+<p>接下來，執行</p>
+
+<pre><code>$bundle exec rake db:migrate
+$bundle exec rake db:test:prepare
+#rake db:test:prepare - 建立一個資料庫給測試環境使用(當新增或修改migrate檔案時，要重新下這個指令)
+</code></pre>
+
+<p>ＯＫ來跑測試吧</p>
+
+<pre><code>$ bundle exec rspec spec/models/user_spec.rb -e "should have an encrypted password attribute"
+</code></pre>
+
+<p>接下來，我們還必須要加入測試，因為不希望再加入密碼時，是空的</p>
+
+<p>所以先加入測試<strong>spec/models/user_spec.rb</strong></p>
+
+<p>在<strong>describe &#8220;password encryption&#8221; do</strong>這個block裡面</p>
+
+<p>加入</p>
+
+<pre><code>it "should set the encrypted password" do
+  @user.encrypted_password.should_not be_blank
+end
+</code></pre>
+
+<p>為了讓測試可以通過，我們寫一個callback function叫做是<strong>encrypt_password</strong>用在before_save方法，他的工作就是加密</p>
+
+<p>寫在<strong>app/models/user.rb</strong></p>
+
+<pre><code>private
+def encrypt_password
+    self.encrypted_password = encrypt(password)
+    #加個self是確保寫到User類別的self.encrypted_password
+end
+
+def encrypt(string)
+    string # Only a temporary implementation!
+end
+</code></pre>
+
+<p>在Ruby類別內，<strong>private</strong>這個keyword之後的function，都只能用在本身的class內</p>
+
+<h2>機密的密碼</h2>
+
+<p>我們在<strong>app/models/user.rb</strong>加一個public 的方法，
+has_password?，他的功能就是比對user輸入的密碼和資料庫的密碼是否一致，對於這個方法，我們可以寫一個測試for that，測試他會return 正確的true 或 false</p>
+
+<p>請看測試程式，我們把它寫在describe &#8220;password encryption&#8221; do這個block 裡頭<strong>spec/models/user_spec.rb</strong></p>
+
+<pre><code> describe "has_password? method" do
+
+      it "should be true if the passwords match" do
+        @user.has_password?(@attr[:password]).should be_true
+      end    
+
+      it "should be false if the passwords don't match" do
+        @user.has_password?("invalid").should be_false
+      end 
+    end
+</code></pre>
+
+<p>在寫程式之前，我們來看下console</p>
+
+<pre><code>$rails console
+&gt;&gt; require 'digest'
+&gt;&gt; def secure_hash(string)
+&gt;&gt;   Digest::SHA2.hexdigest(string)
+&gt;&gt; end
+&gt;&gt; require 'digest'
+=&gt; false
+&gt;&gt; def secure_hash(string)
+&gt;&gt;   Digest::SHA2.hexdigest(string)
+&gt;&gt; end
+=&gt; nil
+&gt;&gt; password = "secret"
+=&gt; "secret"
+&gt;&gt; encrypted_password = secure_hash(password)
+=&gt; "2bb80d537b1da3e38bd30361aa855686bde0eacd7162fef6a25fe97bf527a25b"
+&gt;&gt; submitted_password = "secret"
+=&gt; "secret"
+&gt;&gt; encrypted_password == secure_hash(submitted_password)
+=&gt; true
+</code></pre>
+
+<p>我們使用Ruby的digest library的SHA2來作加密，但是如果攻擊者去try密碼，可能會給他猜到密碼，所以為了讓密碼更加保密，我們會使用salt這個方法，最簡單的方法就是把現在的時間加到密碼內，所以只有當使用者在同一時間製作同一密碼，才有可能得到一樣的加密</p>
+
+<p>我們一樣在console試試</p>
+
+<pre><code>Time.now.utc
+ =&gt; 2012-05-06 09:45:08 UTC 
+  salt = secure_hash("#{Time.now.utc}--#{password}")
+ =&gt; "1c63c82c6d9795c3c81762082392df1f238bb929d7fefaab4ea14779ec71e15a" 
+
+ encrypted_password =secure_hash("#{salt}--#{password}")
+ =&gt; "2ffa2d908d96bd8b94b53d5a8ee1e3632fc1d16dbd0cdb05860c1b053759b631" 
+</code></pre>
+
+<p>為了要記錄salt我們必須在資料表上增加一個欄位</p>
+
+<pre><code> $ rails generate migration add_salt_to_users salt:string
+</code></pre>
+
+<p>編輯<strong>db/migrate/<timestamp>_add_salt_to_users.rb</strong></p>
+
+<pre><code>  def self.up
+    add_column :users, :salt, :string
+  end
+
+  def self.down
+    remove_column :users, :salt
+  end
+</code></pre>
+
+<p>執行</p>
+
+<pre><code>$ bundle exec rake db:migrate
+$ bundle exec rake db:test:prepare
+</code></pre>
+
+<p>再來寫<strong>app/models/user.rb</strong>吧</p>
+
+<pre><code>require 'digest'
+class User &lt; ActiveRecord::Base
+  .
+  .
+  .
+  before_save :encrypt_password
+
+  def has_password?(submitted_password)
+    encrypted_password == encrypt(submitted_password)
+  end
+
+  private
+
+    def encrypt_password
+      self.salt = make_salt unless has_password?(password)
+      self.encrypted_password = encrypt(password)
+    end
+
+    def encrypt(string)
+      secure_hash("#{salt}--#{string}")
+    end
+
+    def make_salt
+      secure_hash("#{Time.now.utc}--#{password}")
+    end
+
+    def secure_hash(string)
+      Digest::SHA2.hexdigest(string)
+    end
+end
+</code></pre>
+
+<p>OK~來執行測試程式吧</p>
+
+<pre><code>$ bundle exec rspec spec/models/user_spec.rb  -e "should be false if the passwords don't match"
+
+$  bundle exec rspec spec/models/user_spec.rb -e "should be true if the passwords match"
+
+＃當然你也可以run所有在某個**describe**裡面的examples
+＃但是別忘了加上跳脫字元
+
+$ bundle exec rspec spec/models/user_spec.rb -e "has_password\? method"
+</code></pre>
+
+<h3>認證方法</h3>
+
+<p>對於每個使用者使用<strong>has_password?</strong> 看起來還不錯，但是它本身並不是那個有用，在第九章，當使用者登入時，會使用&#8221;<strong>authenticate</strong>&#8220;這個方法</p>
+
+<p>我們希望可以有一個方法，會return 登入使用者密碼是否正確，希望可以用一個<strong>類別方法</strong>，像這樣</p>
+
+<pre><code>User.authenticate(email, submitted_password)
+</code></pre>
+
+<p>希望有這個方法的話，我們先來寫測試吧～～</p>
+
+<p>在<strong>spec/models/user_spec.rb</strong> 寫在 describe &#8220;password encryption&#8221; do這個block裡面</p>
+
+<pre><code> describe "authenticate method" do
+
+      it "should return nil on email/password mismatch" do
+        wrong_password_user = User.authenticate(@attr[:email], "wrongpass")
+        wrong_password_user.should be_nil
+      end
+
+      it "should return nil for an email address with no user" do
+        nonexistent_user = User.authenticate("bar@foo.com", @attr[:password])
+        nonexistent_user.should be_nil
+      end
+
+      it "should return the user on email/password match" do
+        matching_user = User.authenticate(@attr[:email], @attr[:password])
+        matching_user.should == @user
+      end
+    end
+</code></pre>
+
+<p>要如何寫一個類別方法呢？(類別方法就是直接透過類別名稱呼叫到的函式，不用說一定要new出來，或是找到物件之類的)</p>
+
+<p>很簡單&#8230;.請參考 寫在<strong>app/models/user.rb</strong></p>
+
+<pre><code>def self.authenticate(email, submitted_password)
+    user = find_by_email(email)
+    return nil  if user.nil?
+    return user if user.has_password?(submitted_password)
+end
+</code></pre>
+
+<p>這樣，我們就來改一下</p>
+
+<p><strong>spec/controllers/users_controller_spec.rb</strong></p>
+
+<p>新增在describe UsersController do這個block底下</p>
+
+<pre><code>describe "GET 'show'" do
+
+before(:each) do
+  @user = Factory(:user)
+end
+
+it "should be successful" do
+  get :show, :id =&gt; @user
+  response.should be_success
+end
+
+it "should find the right user" do
+  get :show, :id =&gt; @user
+  assigns(:user).should == @user
+ end
+end
+</code></pre>
+
+<p>幾個問題
+ assigns(:user) 是啥！？</p>
+
+<p>就文章指出，這是RSpec的Function
+The assigns method takes in a symbol argument and returns the value of the corresponding instance variable in the controller action</p>
+
+<p>所以assigns(:user)這句話，會return <strong>@user</strong></p>
+
+<p>接下來，有一個issue，就是要不要用RSpec的stub方法，(Stub回傳設定好的回傳值)</p>
+
+<pre><code>before(:each)
+    @user = Factory(:user)
+    User.stub!(:find, @user.id).and_return(@user)
+  end
+</code></pre>
+
+<p>這個程式確保任何呼叫User.find(用id找） 找到之後會return @user，Many Rails programmers, especially RSpec users, prefer this stubbing approach because it separates the controller tests from the model layer.</p>
+
+<p>Figuring out exactly when to stub things out is difficult, and message expectations are incredibly subtle and error-prone (see, e.g., Box 8.1 in the Rails 2.3 Tutorial book). To the common objection, “But now the controller tests hit the test database!”, I now find myself saying: “So what?” In my experience it has never mattered. I see no compelling reason not to hit the model layer in the controller tests, especially when it leads to much simpler tests. If you are interested in learning stubbing and message expectation techniques, I recommend reading the Ruby on Rails 2.3 Tutorial book. Otherwise, I suggest not worrying about enforcing a full separation of the model and controller layers in Rails tests. Although the controller tests in the rest of this book will hit the test database, at a conceptual level it will always be clear which part of MVC is being tested.</p>
+
+<p>By the way, in principle the tests should run faster when the controllers don’t hit the database, and for the full Rails Tutorial sample application test suite they do—by around two-tenths of a second.</p>
+
+<p>總之就是本來考量會cover到其他的測試，作者是認為so what ?</p>
+
+<p>再來繼續看其他issue，</p>
+
+<p>get :show 和 get &#8216;show&#8217;</p>
+
+<p>其實這兩個做的是同一件事情 ，只不過用get :show 看起來比較爽，另外，get :show, :id => @user 其實就等於 get :show, :id => @user.id</p>
+
+<p>因為Rails會自動轉換物件去對應@id</p>
+</div>
+
+
+<div class="meta">
+	<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2012-08-10T10:59:00+08:00" pubdate data-updated="true">Aug 10<span>th</span>, 2012</time></div>
+	
+
+<div class="tags">
+
+	<a class='category' href='/blog/categories/reading/'>Reading</a>, <a class='category' href='/blog/categories/ruby-on-rails/'>Ruby_on_Rails</a>
+
+</div>
+
+
+	
+		<span class="comments"><a href="/blog/2012/08/10/learning-on-ruby-on-rails-tutorial-ch6-user-model/#disqus_thread">Comments</a></span>
+	
+</div></article>
+
+	<div class="share">
+	<div class="addthis_toolbox addthis_default_style ">
+	
+	<a class="addthis_button_facebook_like" fb:like:layout="button_count"></a>
+	
+	
+	<a class="addthis_button_tweet"></a>
+	
+	
+	<a class="addthis_button_google_plusone" g:plusone:size="medium"></a>
+	
+<!---	<a class="addthis_counter addthis_pill_style"></a> --->
+	</div>
+  <script type="text/javascript" src="http://s7.addthis.com/js/250/addthis_widget.js#pubid="></script>
+</div>
+
+
+
+<section id="comment">
+    <h2 class="title">Comments</h2>
+    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+</section>
+</div>
+	<footer id="footer" class="inner">Copyright &copy; 2014
+
+    Aloha
+
+<br>
+Powered by Octopress.
+</footer>
+	<script src="/javascripts/slash.js"></script>
+<script src="/javascripts/jquery.fancybox.pack.js"></script>
+<script type="text/javascript">
+(function($){
+	$('.fancybox').fancybox();
+})(jQuery);
+</script> <!-- Delete or comment this line to disable Fancybox -->
+
+
+<script type="text/javascript">
+      var disqus_shortname = 'ccaloha';
+      
+        
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://ccaloha.cc/blog/2012/08/10/learning-on-ruby-on-rails-tutorial-ch6-user-model/';
+        var disqus_url = 'http://ccaloha.cc/blog/2012/08/10/learning-on-ruby-on-rails-tutorial-ch6-user-model/';
+        var disqus_script = 'embed.js';
+      
+    (function () {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/' + disqus_script;
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script>
+
+
+
+	<script type="text/javascript">
+		var _gaq = _gaq || [];
+		_gaq.push(['_setAccount', 'UA-29608372-1']);
+		_gaq.push(['_trackPageview']);
+
+		(function() {
+			var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+			ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+			var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+		})();
+	</script>
+
+
+<a title="Google Analytics Alternative" href="http://clicky.com/100753071"><img alt="Google Analytics Alternative" src="//static.getclicky.com/media/links/badge.gif" border="0" /></a>
+<script src="//static.getclicky.com/js" type="text/javascript"></script>
+<script type="text/javascript">try{ clicky.init(100753071); }catch(e){}</script>
+<noscript><p><img alt="Clicky" width="1" height="1" src="//in.getclicky.com/100753071ns.gif" /></p></noscript>
+
+</body>
+</html>

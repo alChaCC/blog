@@ -1,0 +1,605 @@
+
+<!DOCTYPE HTML>
+<html>
+<head>
+	<script data-cfasync="false" type="text/javascript" src="//use.typekit.net/axj3cfp.js"></script>
+	<script data-cfasync="false" type="text/javascript">try{Typekit.load();}catch(e){}</script>
+	<meta charset="utf-8">
+	<title>Learning on RoR Tutorial - CH3 - Static Page and Add Testing  | AlohaCC</title>
+
+<meta name="author" content="Aloha"> 
+
+<meta name="description" content="Share Ruby on Rail and all about 'Chun Yu, Chen AlohaCC'"> <meta name="keywords" content="Aloha, Ruby on Rails, Blog, Web Developer, Taiwan, Chun-Yu Chen, Design Pattern, Action Scripts, Robotframework, Sikuli">
+
+	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+	<link href="http://feeds.feedburner.com/Alohacc" rel="alternate" title="AlohaCC" type="application/atom+xml">
+	<link rel="canonical" href="">
+	<link href="/favicon.png" rel="shortcut icon">
+	<link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+	<!--[if lt IE 9]><script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
+	<script src="//ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
+	<script type="text/javascript" src="/javascripts/jquery.fancybox.pack.js"></script>
+
+<script language="Javascript" type="text/javascript">
+$(document).ready(
+  function() {
+    (function($) {
+      $(".fancybox[data-content-id]").each(function() {
+        this.href = $(this).data('content-id');
+      });
+      $(".fancybox").fancybox({
+        beforeLoad: function() {
+          var el, 
+              id = $(this.element).data('title-id');
+
+          if (id) {
+            el = $('#' + id);
+
+            if (el.length) {
+              this.title = el.html();
+            }
+          }
+          if ($(this).data('content')) {
+            this.content = $(this).data('content');
+          }
+        },
+        helpers: {
+          title: {
+            type: 'inside'
+          }
+        }
+      });
+    })(jQuery);
+  }
+);
+</script>
+
+	
+</head>
+
+
+
+<body>
+	<header id="header" class="inner"><h1><a href="/">AlohaCC</a></h1>
+<h4>Try to Make Something Diff | Just For Fun |</h4>
+<nav id="main-nav"><ul>
+	<li><a href="/">Blog</a></li>
+	<li><a href="/About">About</a></li>
+	<li><a href="/presentation">Presentation</a></li>
+  	<li><a href="/RoR">Ruby on Rails</a></li>
+  	<li><a href="/ActionScript">Action Scripts</a></li>
+  	<li><a href="/DesignPattern">Design Pattern</a></li>
+	<li><a href="/archives">Archive</a></li>
+</ul>
+</nav>
+<nav id="mobile-nav">
+	<div class="alignleft menu">
+		<a class="button">Menu</a>
+		<div class="container"><ul>
+	<li><a href="/">Blog</a></li>
+	<li><a href="/About">About</a></li>
+	<li><a href="/presentation">Presentation</a></li>
+  	<li><a href="/RoR">Ruby on Rails</a></li>
+  	<li><a href="/ActionScript">Action Scripts</a></li>
+  	<li><a href="/DesignPattern">Design Pattern</a></li>
+	<li><a href="/archives">Archive</a></li>
+</ul>
+</div>
+	</div>
+	<div class="alignright search">
+		<a class="button"></a>
+		<div class="container">
+			<form action="http://google.com/search" method="get">
+				<input type="text" name="q" results="0">
+				<input type="hidden" name="q" value="site:ccaloha.cc">
+			</form>
+		</div>
+	</div>
+</nav>
+
+
+</header>
+
+	<div id="content" class="inner"><article class="post">
+	<h2 class="title">Learning on RoR Tutorial - CH3 - Static Page and Add Testing</h2>
+	<div class="entry-content"><p>原文請參考<a href="http://ruby.railstutorial.org/chapters/static-pages?version=3.2#top">Ruby on Rails Tutorial Learn Rails by Example - Michael Hartl</a></p>
+
+<p>新增專案三</p>
+
+<pre><code>$ cd ~/rails_projects
+$ rails new sample_app --skip-test-unit
+$ mate sample_app
+</code></pre>
+
+<!--more-->
+
+
+<p>在做sample_app時，使用&#8211;skip-test-unit是因為不用Rails的Test::Unit這個framework
+要改用RSpec，來寫測試！</p>
+
+<!--more-->
+
+
+<p>
+當然先來改一下Gemfile</p>
+
+<pre><code>source 'https://rubygems.org'
+
+gem 'rails', '3.2.2'
+
+group :development, :test do
+    gem 'sqlite3', '1.3.5'
+    gem 'rspec-rails', '2.8.1'
+end
+
+# Gems used only for assets and not required
+# in production environments by default.
+group :assets do
+    gem 'sass-rails',   '3.2.4'
+    gem 'coffee-rails', '3.2.2'
+    gem 'uglifier', '1.2.3'
+end
+
+gem 'jquery-rails', '2.0.0'
+
+group :test do
+    gem 'capybara', '1.1.2'
+end
+
+group :production do
+    gem 'pg', '0.12.2'
+end
+</code></pre>
+
+<p>多了兩個gem :gem &#8216;rspec-rails&#8217;, &#8216;2.8.1&#8217; 和  gem &#8216;capybara&#8217;, &#8216;1.1.2&#8217;</p>
+
+<p>為甚麼呢？請看：</p>
+
+<ol>
+<li><p>This includes rspec-rails in development mode so that we have access to RSpec-specific generators, and it includes it in test mode in order to run the tests.</p></li>
+<li><p>We also include the Capybara gem, which allows us to simulate a user’s interaction with the sample application using a natural English-like syntax.</p></li>
+<li><p>we also must include the PostgreSQL gem in production for deployment to Heroku</p></li>
+</ol>
+
+
+<p>OK~</p>
+
+<pre><code> $bundle install --without production
+</code></pre>
+
+<p>接下來，我們必須告訴Rails使用RSpec 取代Test::Unit</p>
+
+<pre><code>$rails generate rspec:install
+</code></pre>
+
+<p>之後把code家到版本控制</p>
+
+<pre><code>$ cp ~/rails_projects/first_app/.gitignore ~/rails_projects/sample_app/
+$ git init
+$ git add .
+$ git commit -m "Initial commit"
+</code></pre>
+
+<p>改README</p>
+
+<pre><code>$ git mv README.rdoc README.md
+$ git commit -a -m "Improve the README"
+</code></pre>
+
+<p>現在來加一些靜態頁面進來！加上關於我、help、首頁</p>
+
+<p>首先我們先checkout到新的branch</p>
+
+<pre><code>$git checkout -b static-pages 
+</code></pre>
+
+<p>先來產生首頁和Help頁,並用Static Pages controller來控制！</p>
+
+<pre><code>$rails generate controller StaticPages home help --no-test-framework
+</code></pre>
+
+<p>OK~</p>
+
+<pre><code>$git add .
+$git commit -m "Add a Static Pages controller"
+</code></pre>
+
+<p>接下來重頭戲了！ 這也是我完全不會的東東</p>
+
+<p><strong>寫測試！</strong></p>
+
+<p>主要的測試有兩種</p>
+
+<p>test-driven development (TDD) 也可以叫做 behavior-driven development (BDD).</p>
+
+<p>和</p>
+
+<p>unit test</p>
+
+<p>TDD的意涵是：</p>
+
+<p>先寫測試在寫程式，但是TDD並不完全適用在某些開發上，例如你並不確定如何解決程式問題！
+it’s often useful to skip the tests and write only application code, just to get a sense of what the solution will look like. Once you see the general shape of the solution, you can then use TDD to implement a more polished version.</p>
+
+<p>OK! 讓我們來測試驅動開發八！</p>
+
+<pre><code>$rails generate integration_test static_pages
+</code></pre>
+
+<p>編輯測試文件spec/requests/static_pages_spec.rb，就好像在寫敘述一樣(這是因為RSpec uses the general malleability of Ruby to define a domain-specific language (DSL) built just for testing.) (就好像RobotFramework?!)</p>
+
+<pre><code>require 'spec_helper'
+
+describe "Static Pages" do
+    describe "Home page" do
+        it "should have the content 'Sample App'" do
+            visit '/static_pages/home'
+            page.should have_content('Sample App')
+        end
+    end
+end
+</code></pre>
+
+<p>跑測試(別忘了要先rails s)</p>
+
+<pre><code>$bundle exec rspec spec/requests/static_pages_spec.rb
+</code></pre>
+
+<p>咦！測試結果是錯的耶！</p>
+
+<pre><code>Alohas-MBP:sample_app aloha$ bundle exec rspec spec/requests/static_pages_spec.rb
+F
+
+Failures:
+
+1) Static Pages Home page should have the content 'Sample App'
+ Failure/Error: page.should have_content('Sample App')
+   expected there to be content "Sample App" in "SampleApp\n\nStaticPages#home\nFind me in app/views/static_pages/home.html.erb\n\n\n"
+ # ./spec/requests/static_pages_spec.rb:7:in `block (3 levels) in &lt;top (required)&gt;'
+
+Finished in 0.41231 seconds
+1 example, 1 failure
+
+Failed examples:
+
+rspec ./spec/requests/static_pages_spec.rb:5 # Static Pages Home page should have the content 'Sample App'
+</code></pre>
+
+<p>OK來改一下Home Page八！</p>
+
+<pre><code>&lt;h1&gt;Sample App&lt;/h1&gt;
+&lt;p&gt;
+    This is the home page for the
+    &lt;a href="http://railstutorial.org/"&gt;Ruby on Rails Tutorial&lt;/a&gt;
+    sample application.
+&lt;/p&gt;
+</code></pre>
+
+<p>在繼續寫測試 在剛剛那個spec/requests/static_pages_spec.rb</p>
+
+<p>加上</p>
+
+<pre><code>describe "Help page" do
+
+    it "should have the content 'Help'" do
+        visit '/static_pages/help'
+        page.should have_content('Help')
+    end
+end
+</code></pre>
+
+<p> 在執行一次！發現有錯～ 這時候再去改Help.erb</p>
+
+<p> OK~那繼續在寫測試吧！ 請加上</p>
+
+<pre><code> describe "About page" do
+    it "should have the content 'About Us'" do
+        visit '/static_pages/about'
+        page.should have_content('About Us')
+    end
+end
+</code></pre>
+
+<p> 再來執行測試！</p>
+
+<p> 靠么</p>
+
+<pre><code>Failure/Error: visit '/static_pages/about'
+ ActionController::RoutingError:
+   No route matches [GET] "/static_pages/about"
+</code></pre>
+
+<p> 那我就去config/routes.rb加上</p>
+
+<pre><code>get "static_pages/about"
+</code></pre>
+
+<p>在測試一次！</p>
+
+<p>囧…</p>
+
+<pre><code>The action 'about' could not be found for StaticPagesController
+</code></pre>
+
+<p>那我再去app/controllers/static_pages_controller.rb 加上</p>
+
+<pre><code>def about
+end
+</code></pre>
+
+<p>再測試&#8230;..囧&#8230;..</p>
+
+<pre><code> Failure/Error: visit '/static_pages/about'
+ ActionView::MissingTemplate:
+   Missing template static_pages/about, application/about with {:locale=&gt;[:en], :formats=&gt;[:html], :handlers=&gt;[:erb, :builder, :coffee]}. Searched in:
+     * "/Users/aloha/rails_projects/sample_app/app/views"
+</code></pre>
+
+<p>再測試！</p>
+
+<p>終於過了！！！</p>
+
+<p>現在我們來寫標題的測試在spec/requests/static_pages_spec.rb</p>
+
+<pre><code> it "should have the right title" do
+  visit '/static_pages/home'
+  page.should have_selector('title',
+                    :text =&gt; "Ruby on Rails Tutorial Sample App | Home")
+end
+</code></pre>
+
+<p> This uses the have_selector method, which checks for an HTML element (the “selector”) with the given content. In other words, the code</p>
+
+<p> checks to see that the content inside the <title></title> tags is &#8220;Ruby on Rails Tutorial Sample App | Home&#8221;.</p>
+
+<p>所以我們將改寫所有測試</p>
+
+<p>改成</p>
+
+<pre><code>require 'spec_helper'
+
+describe "Static pages" do
+
+describe "Home page" do
+
+it "should have the h1 'Sample App'" do
+  visit '/static_pages/home'
+  page.should have_selector('h1', :text =&gt; 'Sample App')
+end
+
+it "should have the title 'Home'" do
+  visit '/static_pages/home'
+  page.should have_selector('title',
+                    :text =&gt; "Ruby on Rails Tutorial Sample App | Home")
+end
+end
+
+describe "Help page" do
+
+it "should have the h1 'Help'" do
+  visit '/static_pages/help'
+  page.should have_selector('h1', :text =&gt; 'Help')
+end
+
+it "should have the title 'Help'" do
+  visit '/static_pages/help'
+  page.should have_selector('title',
+                    :text =&gt; "Ruby on Rails Tutorial Sample App | Help")
+end
+end
+
+describe "About page" do
+
+it "should have the h1 'About'" do
+  visit '/static_pages/about'
+  page.should have_selector('h1', :text =&gt; 'About Us')
+end
+
+it "should have the title 'About Us'" do
+  visit '/static_pages/about'
+  page.should have_selector('title',
+                :text =&gt; "Ruby on Rails Tutorial Sample App | About Us")
+end
+end
+
+it "should have the h1 'Contact'" do
+  visit '/static_pages/contact'
+  page.should have_selector('h1', :text =&gt; 'Contact')
+end
+
+it "should have the title 'Contact'" do
+  visit '/static_pages/Contact'
+  page.should have_selector('title',
+                :text =&gt; "Ruby on Rails Tutorial Sample App | Contact")
+end
+end
+
+
+end
+</code></pre>
+
+<p> 因為希望每個頁面的長的很類似！</p>
+
+<p> 所以直接改application.html.erb比較快！</p>
+
+<p> 改成</p>
+
+<pre><code>&lt;!DOCTYPE html&gt;
+&lt;html&gt;
+    &lt;head&gt;
+    &lt;title&gt;Ruby on Rails Tutorial Sample App | &lt;%= yield(:title) %&gt;&lt;/title&gt;
+    &lt;%= stylesheet_link_tag    "application", :media =&gt; "all" %&gt;
+    &lt;%= javascript_include_tag "application" %&gt;
+    &lt;%= csrf_meta_tags %&gt;
+    &lt;/head&gt;
+    &lt;body&gt;
+        &lt;%= yield %&gt;
+    &lt;/body&gt;
+&lt;/html&gt;
+</code></pre>
+
+<p>因為你可以把它想成，StaticPage是繼承至Application</p>
+
+<p>所以每個View分別可以改成</p>
+
+<p><strong>Home Page</strong> app/views/static_pages/home.html.erb</p>
+
+<pre><code>&lt;% provide(:title, 'Home') %&gt;
+&lt;h1&gt;Sample App&lt;/h1&gt;
+&lt;p&gt;
+  This is the home page for the
+  &lt;a href="http://railstutorial.org/"&gt;Ruby on Rails Tutorial&lt;/a&gt;
+  sample application.
+&lt;/p&gt;
+</code></pre>
+
+<p><strong>Help Page</strong> app/views/static_pages/help.html.erb</p>
+
+<pre><code>&lt;% provide(:title, 'Help') %&gt;
+&lt;h1&gt;Help&lt;/h1&gt;
+&lt;p&gt;
+    Get help on the Ruby on Rails Tutorial at the
+    &lt;a href="http://railstutorial.org/help"&gt;Rails Tutorial help page&lt;/a&gt;.
+    To get help on this sample app, see the
+    &lt;a href="http://railstutorial.org/book"&gt;Rails Tutorial book&lt;/a&gt;.
+&lt;/p&gt;
+</code></pre>
+
+<p><strong>About Us Page</strong> app/views/static_pages/about.html.erb</p>
+
+<pre><code>&lt;% provide(:title, 'About Us') %&gt;
+&lt;h1&gt;About Us&lt;/h1&gt;
+&lt;p&gt;
+    The &lt;a href="http://railstutorial.org/"&gt;Ruby on Rails Tutorial&lt;/a&gt;
+    is a project to make a book and screencasts to teach web development
+    with &lt;a href="http://rubyonrails.org/"&gt;Ruby on Rails&lt;/a&gt;. This
+    is the sample application for the tutorial.
+&lt;/p&gt;
+</code></pre>
+
+<p> 這樣我就會將title這個屬性的值丟到繼承至application.html.erb的裡面！</p>
+
+<p> 免去我改一堆一模一樣的code~</p>
+
+<p> 耶！ 來測試吧！</p>
+
+<pre><code>$bundle exec rspec spec/requests/static_pages_spec.rb
+</code></pre>
+
+<p> 耶～成功！ OK~可以版本控制一下並merge回來了！</p>
+
+<pre><code>$ git add .
+$ git commit -m "Finish static pages"
+$ git checkout master
+$ git merge static-pages
+</code></pre>
+</div>
+
+
+<div class="meta">
+	<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2012-06-03T12:48:00+08:00" pubdate data-updated="true">Jun 3<span>rd</span>, 2012</time></div>
+	
+
+<div class="tags">
+
+	<a class='category' href='/blog/categories/reading/'>Reading</a>, <a class='category' href='/blog/categories/ruby-on-rails/'>Ruby_on_Rails</a>
+
+</div>
+
+
+	
+		<span class="comments"><a href="/blog/2012/06/03/learning-on-ror-tutorial-ch3-static-page-and-add-testing/#disqus_thread">Comments</a></span>
+	
+</div></article>
+
+	<div class="share">
+	<div class="addthis_toolbox addthis_default_style ">
+	
+	<a class="addthis_button_facebook_like" fb:like:layout="button_count"></a>
+	
+	
+	<a class="addthis_button_tweet"></a>
+	
+	
+	<a class="addthis_button_google_plusone" g:plusone:size="medium"></a>
+	
+<!---	<a class="addthis_counter addthis_pill_style"></a> --->
+	</div>
+  <script type="text/javascript" src="http://s7.addthis.com/js/250/addthis_widget.js#pubid="></script>
+</div>
+
+
+
+<section id="comment">
+    <h2 class="title">Comments</h2>
+    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+</section>
+</div>
+	<footer id="footer" class="inner">Copyright &copy; 2014
+
+    Aloha
+
+<br>
+Powered by Octopress.
+</footer>
+	<script src="/javascripts/slash.js"></script>
+<script src="/javascripts/jquery.fancybox.pack.js"></script>
+<script type="text/javascript">
+(function($){
+	$('.fancybox').fancybox();
+})(jQuery);
+</script> <!-- Delete or comment this line to disable Fancybox -->
+
+
+<script type="text/javascript">
+      var disqus_shortname = 'ccaloha';
+      
+        
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://ccaloha.cc/blog/2012/06/03/learning-on-ror-tutorial-ch3-static-page-and-add-testing/';
+        var disqus_url = 'http://ccaloha.cc/blog/2012/06/03/learning-on-ror-tutorial-ch3-static-page-and-add-testing/';
+        var disqus_script = 'embed.js';
+      
+    (function () {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/' + disqus_script;
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script>
+
+
+
+	<script type="text/javascript">
+		var _gaq = _gaq || [];
+		_gaq.push(['_setAccount', 'UA-29608372-1']);
+		_gaq.push(['_trackPageview']);
+
+		(function() {
+			var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+			ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+			var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+		})();
+	</script>
+
+
+<a title="Google Analytics Alternative" href="http://clicky.com/100753071"><img alt="Google Analytics Alternative" src="//static.getclicky.com/media/links/badge.gif" border="0" /></a>
+<script src="//static.getclicky.com/js" type="text/javascript"></script>
+<script type="text/javascript">try{ clicky.init(100753071); }catch(e){}</script>
+<noscript><p><img alt="Clicky" width="1" height="1" src="//in.getclicky.com/100753071ns.gif" /></p></noscript>
+
+</body>
+</html>

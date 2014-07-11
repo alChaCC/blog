@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: NAS | AlohaCC]]></title>
+  <link href="http://ccaloha.cc/blog/categories/nas/atom.xml" rel="self"/>
+  <link href="http://ccaloha.cc/"/>
+  <updated>2014-07-11T19:53:39+08:00</updated>
+  <id>http://ccaloha.cc/</id>
+  <author>
+    <name><![CDATA[Aloha]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[HOWTO: Setup your NAS server and connect to internet using PPPoE]]></title>
+    <link href="http://ccaloha.cc/blog/2012/03/01/howto-setup-your-nas-server/"/>
+    <updated>2012-03-01T13:15:00+08:00</updated>
+    <id>http://ccaloha.cc/blog/2012/03/01/howto-setup-your-nas-server</id>
+    <content type="html"><![CDATA[<p>裝備：</p>
+
+<ol>
+<li>Synology DiskStation DS411slim  (之後簡稱d4s)</li>
+<li>中華電信撥接</li>
+<li>Linux server</li>
+<li>WD 1TB 2.5吋SATAII 硬碟(WD10JPVT) *2</li>
+</ol>
+
+
+<h2>把硬碟裝進去d4s&lt;-這不是廢話</h2>
+
+<!--more-->
+
+
+<h2>將d4s開機後，將網路線先連到linux server的其中一個孔</h2>
+
+<p>ps. 為啥我這樣做?</p>
+
+<p>是因為我linux server抓不到d4s server，
+明明就一個插在中華電信的機器port1，一個插在port2</p>
+
+<p>所以只好先把d4s的網路線，先接在我linux server的其中一個孔，這樣他們就會在同一個區網了！</p>
+
+<h2>放入光碟，安裝Synology Assistant</h2>
+
+<p><div class='bogus-wrapper'><notextile><figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>mkdir NAS_sever
+</span><span class='line'>mkdir /mnt/tmp_cdRom
+</span><span class='line'>mount /dev/你剛剛掛上去抓到的位址  /mnt/tmp_cdRom
+</span><span class='line'>cp /mnt/tmp_cdRom/Linux/* NAS_server
+</span><span class='line'>cd NAS_server
+</span><span class='line'>sh install.sh</span></code></pre></td></tr></table></div></figure></notextile></div></p>
+
+<blockquote><p>不知道為啥…我遇到GLIBCXX_3.4.9' not found
+，我抓了libstdc++ so 6.0 10然後重新鏈結，就OK了！</p></blockquote>
+
+<h2>使用Synology Assistant連線到d4s</h2>
+
+<p>因為是新的機器，所以要先安裝DSM</p>
+
+<p>一進去畫面，會問你安裝檔在哪裡</p>
+
+<blockquote><p>它就放在光碟內的DSM資料夾內</p></blockquote>
+
+<p>之後就等他跑完摟～</p>
+
+<h2>連進去之後，就看你要幹嘛，然後設定！</h2>
+
+<ol>
+<li>硬碟格式化 ->超久....</li>
+<li>開服務(注意先不要設定網路！)</li>
+<li>…etc</li>
+</ol>
+
+
+<h2>重要的來了！ 使用有網路的電腦，先上網申請no-ip的帳號密碼</h2>
+
+<p>請參考<a href="http://www.wretch.cc/blog/lovebcat/23350295">浮動ip轉固定ip no-ip教學</a></p>
+
+<h2>設定d4s網路連線！</h2>
+
+<ol>
+<li>登入d4s</li>
+<li>點選左上角"向下的箭頭"</li>
+<li>點選 "EZ-Internet"</li>
+<li>下一步</li>
+<li>選擇寬頻網路PPPoE</li>
+<li>輸入帳號密碼</li>
+<li>選擇你要開啓的服務</li>
+<li>選擇"使用DDNS服務供應商提供的現有伺服器名稱"</li>
+<li>輸入你剛剛在no-ip.com設定的hostname(也就是你的網址)，還有你的登入"no-ip"的帳號/密碼  &lt;-這步我覺得最重要！</li>
+<li>完成！</li>
+</ol>
+
+
+<h2>這時候，只要將本來插在server的線，轉插到中華電信的機器就大功告成啦！</h2>
+
+<p>只要輸入你剛剛寫的網址在browser</p>
+
+<p>ex: alohaXDXD.no-ip.biz</p>
+
+<p>恭喜你～你的NAS 完成對外連線了！</p>
+]]></content>
+  </entry>
+  
+</feed>

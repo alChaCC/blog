@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: Ubuntu | AlohaCC]]></title>
+  <link href="http://ccaloha.cc/blog/categories/ubuntu/atom.xml" rel="self"/>
+  <link href="http://ccaloha.cc/"/>
+  <updated>2014-07-11T19:53:39+08:00</updated>
+  <id>http://ccaloha.cc/</id>
+  <author>
+    <name><![CDATA[Aloha]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[Setup both SSH and SFTP are able to login at same time in Ubuntu]]></title>
+    <link href="http://ccaloha.cc/blog/2014/04/11/setup-both-ssh-and-sftp-are-able-to-login-at-same-time-in-ubuntu/"/>
+    <updated>2014-04-11T12:24:15+08:00</updated>
+    <id>http://ccaloha.cc/blog/2014/04/11/setup-both-ssh-and-sftp-are-able-to-login-at-same-time-in-ubuntu</id>
+    <content type="html"><![CDATA[<p>這篇文章主要是參考自
+<a href="http://blog.srmklive.com/2013/04/24/how-to-setup-sftp-server-ftp-over-ssh-in-ubuntu/">http://blog.srmklive.com/2013/04/24/how-to-setup-sftp-server-ftp-over-ssh-in-ubuntu/</a>
+但是，我沒辦法同時使用ssh和sftp</p>
+
+<!--more-->
+
+
+<h1>Edit ssh config</h1>
+
+<pre><code>sudo vim /etc/ssh/sshd_config
+</code></pre>
+
+<h1>將底下那行貼上</h1>
+
+<pre><code>PasswordAuthentication no
+Subsystem sftp internal-sftp -f AUTH -1 VERBOSE
+AllowGroups newuser 
+AllowTCPForwarding no
+X11Forwarding no
+</code></pre>
+
+<h1>Configure IPtable(讓ssh可以通過)</h1>
+
+<pre><code>sudo iptables -A INPUT -p tcp --dport 22 -j ACCEPT
+</code></pre>
+
+<h2>新增User</h2>
+
+<pre><code>sudo adduser newuser
+</code></pre>
+
+<h2>將你要用來ssh或SFTP的電腦public key輸入到...</h2>
+
+<p>In local machine(我是用Mac)</p>
+
+<pre><code>scp ~/.ssh/id_rsa.pub newuser@ip:~/
+</code></pre>
+
+<p>In server</p>
+
+<pre><code>mkdir .ssh
+cat ~/id_rsa.pub &gt;&gt; ~/.ssh/authorized_keys
+</code></pre>
+
+<p>這樣就可以了！</p>
+]]></content>
+  </entry>
+  
+</feed>

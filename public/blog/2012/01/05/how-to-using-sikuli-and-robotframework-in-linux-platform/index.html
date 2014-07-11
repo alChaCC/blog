@@ -1,0 +1,502 @@
+
+<!DOCTYPE HTML>
+<html>
+<head>
+	<script data-cfasync="false" type="text/javascript" src="//use.typekit.net/axj3cfp.js"></script>
+	<script data-cfasync="false" type="text/javascript">try{Typekit.load();}catch(e){}</script>
+	<meta charset="utf-8">
+	<title>HOW-TO: Using Sikuli and RobotFramework in Linux Platform   | AlohaCC</title>
+
+<meta name="author" content="Aloha"> 
+
+<meta name="description" content="Share Ruby on Rail and all about 'Chun Yu, Chen AlohaCC'"> <meta name="keywords" content="Aloha, Ruby on Rails, Blog, Web Developer, Taiwan, Chun-Yu Chen, Design Pattern, Action Scripts, Robotframework, Sikuli">
+
+	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+	<link href="http://feeds.feedburner.com/Alohacc" rel="alternate" title="AlohaCC" type="application/atom+xml">
+	<link rel="canonical" href="">
+	<link href="/favicon.png" rel="shortcut icon">
+	<link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+	<!--[if lt IE 9]><script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
+	<script src="//ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
+	<script type="text/javascript" src="/javascripts/jquery.fancybox.pack.js"></script>
+
+<script language="Javascript" type="text/javascript">
+$(document).ready(
+  function() {
+    (function($) {
+      $(".fancybox[data-content-id]").each(function() {
+        this.href = $(this).data('content-id');
+      });
+      $(".fancybox").fancybox({
+        beforeLoad: function() {
+          var el, 
+              id = $(this.element).data('title-id');
+
+          if (id) {
+            el = $('#' + id);
+
+            if (el.length) {
+              this.title = el.html();
+            }
+          }
+          if ($(this).data('content')) {
+            this.content = $(this).data('content');
+          }
+        },
+        helpers: {
+          title: {
+            type: 'inside'
+          }
+        }
+      });
+    })(jQuery);
+  }
+);
+</script>
+
+	
+</head>
+
+
+
+<body>
+	<header id="header" class="inner"><h1><a href="/">AlohaCC</a></h1>
+<h4>Try to Make Something Diff | Just For Fun |</h4>
+<nav id="main-nav"><ul>
+	<li><a href="/">Blog</a></li>
+	<li><a href="/About">About</a></li>
+	<li><a href="/presentation">Presentation</a></li>
+  	<li><a href="/RoR">Ruby on Rails</a></li>
+  	<li><a href="/ActionScript">Action Scripts</a></li>
+  	<li><a href="/DesignPattern">Design Pattern</a></li>
+	<li><a href="/archives">Archive</a></li>
+</ul>
+</nav>
+<nav id="mobile-nav">
+	<div class="alignleft menu">
+		<a class="button">Menu</a>
+		<div class="container"><ul>
+	<li><a href="/">Blog</a></li>
+	<li><a href="/About">About</a></li>
+	<li><a href="/presentation">Presentation</a></li>
+  	<li><a href="/RoR">Ruby on Rails</a></li>
+  	<li><a href="/ActionScript">Action Scripts</a></li>
+  	<li><a href="/DesignPattern">Design Pattern</a></li>
+	<li><a href="/archives">Archive</a></li>
+</ul>
+</div>
+	</div>
+	<div class="alignright search">
+		<a class="button"></a>
+		<div class="container">
+			<form action="http://google.com/search" method="get">
+				<input type="text" name="q" results="0">
+				<input type="hidden" name="q" value="site:ccaloha.cc">
+			</form>
+		</div>
+	</div>
+</nav>
+
+
+</header>
+
+	<div id="content" class="inner"><article class="post">
+	<h2 class="title">HOW-TO: Using Sikuli and RobotFramework in Linux Platform</h2>
+	<div class="entry-content"><blockquote><p>首先，你必須先看過這篇文章 抓好 Sikuli <a href="http://ccaloha.cc/blog/2011/12/17/install-sikuli-in-ubuntu/">搞搞 Sikuli 在你的 Ubuntu</a></p></blockquote>
+
+<p><strong>我會使用 windows RDP, 作為一個範例,在這之前,請先確保你的linux可以使用 # rdesktop</strong></p>
+
+<blockquote><p>以下為我的簡單感想 , 在robot framework底下使用sikuli , 就是使用一個擴充的library</p></blockquote>
+
+<!--more-->
+
+
+<p></p>
+
+<h2>目標 使用Sikuli，遠端登入到window桌面，進行format volume的動作</h2>
+
+<ol>
+<li><p>使用sikuli ide 把要點選的照片拍下來 (我個人覺得這個很費工&#8230;.囧)</p>
+
+<pre><code> sh /你的sikuli路徑/sikuli-ide.ti
+</code></pre></li>
+<li><p>建立個資料夾吧</p>
+
+<pre><code> mkdir RobotSikuli
+</code></pre></li>
+<li><p>把剛剛拍的照片放到winFormatImage裡</p>
+
+<pre><code>cd RobotSikuli
+mkdir winFormatImage
+mv 你剛剛用sikuli拍的照片檔路徑 winFormatImage   
+</code></pre></li>
+<li><p>開始撰寫你的library (因為要run在不同的三種window版本，所以寫得比較麻煩…科科)</p>
+
+<pre><code> cd ..
+ cd RobotSikuli
+ mkdir WindowRDPFormatLibrary
+ vim Format.py
+</code></pre></li>
+</ol>
+
+
+<p><strong>python程式碼如下(這是小弟第一次寫python,請見諒)</strong></p>
+
+<pre><code>    #coding=utf-8
+    from __future__ import with_statement
+    from sikuli.Sikuli import *
+
+    addImagePath("winFormatImage")
+
+"""
+1. 在python2.6中，with正式成為了關鍵字所以在python2.5以前,要利用with的話,需要使用:Python代碼from __future__ import with_statement 
+from __future__ import with_statement 它的原理如下:所有實現上下文協議的對像都包含以下三種方法:__context__()它返回一個自我管理的上下文對象
+或者一個真正意義的上下文管理器__enter()__進入上下文管理器,開始迭代當with語句結束的時候,無論是正常結束還是拋出異常,都會執行__exit__(),該方法用於關閉資源連接
+2. Your project is created. Add at least one you-name-it.py file to the source folder and put from sikuli.Sikuli import * as the first line.
+
+"""
+__version__ = '0.1'
+
+class VolumeFormat(object):
+    ROBOT_LIBRARY_SCOPE = 'GLOBAL'
+    ROBOT_LIBRARY_VERSION = __version__
+
+def __init__(self, platform):
+
+    self.start_pictures = {'win2003' : "start2003.png" , 'winxp' : "startxp.png" , 'win2008' : "start2008.png"}
+    self.start_picture = self.start_pictures[platform]
+
+    self.control_panels = {'win2003' : "control_panel_2003.png" , "winxp" : "control_panel_xp.png" , 'win2008' : "control_panel_2008.png"}
+    self.control_panel  = self.control_panels[platform]
+
+    self.administrator_tools = {'win2003' : "administrator_tool2003.png" , 'winxp' : "administrator_toolxp.png" , 'win2008' : "administrator_tool2008.png"}
+    self.administrator_tool = self.administrator_tools[platform]
+
+    self.computer_managements = {'win2003' : "computer_management2003.png" , 'winxp' : "computer_managementxp.png" , 'win2008' : "computer_management2008.png"}
+    self.computer_management = self.computer_managements[platform]
+
+    self.disk_management =  {'win2003' : "disk_management2003.png" , 'winxp' : "disk_managementxp.png" , 'win2008' : "disk_management2008.png"} 
+    self.disk_management = self.disk_management[platform]
+
+    self.full_screens = {'win2003' : "full_screen2003.png" , 'winxp' : "full_screenxp.png" , 'win2008' : "full_screen2008.png"}
+    self.full_screen = self.full_screens[platform]
+
+    self.disk_unknowns = {'win2003' : "disk_unknown2003.png" , 'winxp' : "disk_unknownxp.png" , 'win2008' : "disk_unknown2008.png"}
+    self.disk_unknown = self.disk_unknowns[platform]
+
+    self.initial_disks = {'win2003' : "initial_disk2003.png" , 'winxp' : "initial_diskxp.png" , 'win2008' : "initial_disk2008.png"}
+    self.initial_disk = self.initial_disks[platform]
+
+    self.oks = {'win2003' : "ok2003.png" , 'winxp' : "okxp.png" , 'win2008' : "ok2008.png"}
+    self.ok = self.oks[platform]
+
+    self.link_volumes = {'win2003' : "link_vol2003.png" , 'winxp' : "link_volxp.png" , 'win2008' : "link_vol2008.png"}
+    self.link_volume = self.link_volumes[platform]
+
+    self.unformat_infos = {'win2003' : "unformat_info2003.png" , 'winxp' : "unformat_infoxp.png" , 'win2008' : "unformat_info2008.png"}
+    self.unformat_info = self.unformat_infos[platform]
+
+    self.new_partitions = {'win2003' : "new_partition2003.png" , 'winxp' : "new_partitionxp.png" , 'win2008' : "new_partition2008.png"}
+    self.new_partition = self.new_partitions[platform]
+
+    self.cancel_auto_partitions = {'win2003' : "cancel_auto_partition2003.png" , 'winxp' : "cancel_auto_partitionxp.png" , 'win2008' : "cancel_auto_partition2008.png"}
+            self.cancel_auto_partition = self.cancel_auto_partitions[platform]
+
+    self.next_bottoms = {'win2003' : "next2003.png" , 'winxp' : "nextxp.png" , 'win2008' : "next2008.png"}
+    self.next_bottom = self.next_bottoms[platform]
+
+    self.finishs = {'win2003' : "finish2003.png" , 'winxp' : "finishxp.png" , 'win2008' : "finish2008.png"}
+    self.finish = self.finishs[platform]
+
+    self.closes = {'win2003' : "close2003.png" , 'winxp' : "closexp.png" , 'win2008' : "close2008.png"}
+    self.close = self.closes[platform]
+
+def click_start(self):
+    self._click(self.start_picture)
+
+def click_control_panel(self):
+    self._click(self.control_panel)
+
+def click_administrator_tool(self, how_to_click = "click"):
+    self._click(self.administrator_tool, how_to_click)
+
+def click_computer_manager(self):
+    self._click(self.computer_management)
+
+def click_disk_management(self):
+    self._click(self.disk_management)
+
+def click_cancel_initial(self):
+    self._click(self.cancel_auto_partition)
+
+def click_full_screen(self):
+    self._click(self.full_screen)
+
+def click_link_vol(self):
+    self._click(self.link_volume)
+
+def click_right_for_initail_info(self):
+    self._click(self.disk_unknown, how_to_click = "rightClick") 
+
+def click_initial_Disk(self):
+    self._click(self.initial_disk)
+
+def click_ok(self):
+    self._click(self.ok)
+
+def click_right_for_new_partition(self):
+    self._click(self.unformat_info, how_to_click = "rightClick")
+
+def click_new_partion(self):
+    self._click(self.new_partition)
+
+def click_next(self):
+    self._click(self.next_bottom)
+
+
+def click_finish(self):
+    self._click(self.finish)    
+
+def click_close(self):
+    self._click(self.close)
+
+def click_what(self , image_name):
+    self._click(image_name)
+
+def _click(self,icon,icon_2 = None ,how_to_click="click"):
+
+    findAll(Pattern(icon).similar(0.9))       
+    allmatchs = getLastMatches()
+    sort_allmatchs = sorted(allmatchs,key=lambda allmatchs:allmatchs.getScore())
+    sort_allmatchs.reverse()
+    match = sort_allmatchs[0]
+    self.appCoordinates = (match.getX(), match.getY(), match.getW(), match.getH())
+            appRegion = Region(*self.appCoordinates)        
+
+    if how_to_click == "click":
+        appRegion.click(icon)
+            elif how_to_click == "doubleclick":
+                    appRegion.doubleClick(icon)
+    elif how_to_click == "rightClick": 
+        appRegion.rightClick(icon)
+    elif how_to_click == "hover":
+        appRegion.hover(icon)
+    elif how_to_click == "dragDrop":
+        appRegion.doubleClick(icon_start,icon_stop)
+</code></pre>
+
+<ol>
+<li><p>建立robotframework的測試碼</p>
+
+<pre><code> cd ..
+ mkdir robotCode
+ cd robotCode
+ vim format_win2008.txt
+</code></pre></li>
+</ol>
+
+
+<p>程式碼如下：</p>
+
+<p>因為我在python檔有寫__int__ 所以我在一開始就先丟個初始值給他(請看下句)</p>
+
+<p>Library  Format.VolumeFormat  win2008</p>
+
+<pre><code>    ***Settings***
+    Library  Format.VolumeFormat  win2008
+    Library  OperatingSystem
+
+    ***Test Cases***
+    Format Win2008 Volume
+        Start Process  rdesktop -u 遠端VM的名字 -p 你的密碼 遠端的IP位置
+        sleep  30
+        click_start
+        click_administrator_tool
+        click_computer_manager
+        sleep  10
+        click_disk_management
+        sleep  10
+        [Documentation]  click_cancel_initial
+        click_cancel_initial
+        click_right_for_initail_info
+        click_link_vol
+        click_right_for_initail_info
+        click_initial_Disk
+        click_ok
+        click_right_for_new_partition
+        click_new_partion
+        click_next
+        click_next
+        click_next
+        click_next
+        click_finish
+        click_close
+        [Teardown]      Stop All Processes
+</code></pre>
+
+<p><strong>重要的來了</strong></p>
+
+<ol>
+<li><p>寫執行檔！！！！這邊就是要告訴robot我還有其他lib要用～還有sikuli的jar檔要include進來</p>
+
+<pre><code> vim run.sh
+</code></pre></li>
+</ol>
+
+
+<p>程式碼如下：</p>
+
+<pre><code>    #!/bin/bash
+    export CLASSPATH="/home/alohacc/Sikuli-X-1.0rc3-r905-linux-i686/Sikuli-IDE/sikuli-script.jar"  
+
+    export JYTHONPATH="$CLASSPATH/Lib"
+
+    jybot --pythonpath WindowRDPFormatLibrary --outputdir results --loglevel TRACE -l Format_log -r Format_report -o Format_output $* robotCode
+</code></pre>
+
+<ol>
+<li><p>我run.sh的程式碼 有一個輸出的dir位置，我先建一個給他</p>
+
+<pre><code> mkdir results
+</code></pre></li>
+</ol>
+
+
+<p>To sum up :</p>
+
+<p>資料夾結構如下：</p>
+
+<pre><code>RobotSikuli
+  -&gt;results
+  -&gt;WindowRDPFormatLibrary
+        -&gt; Format.py
+  -&gt;robotCode
+        -&gt; format_win2008.txt
+        -&gt; run.sh
+  -&gt;winFormatImage
+        -&gt; administrator_tool2003.png 
+           change_to_original_view.png  
+           control_panel_xp.png                             
+            ……etc 
+</code></pre>
+
+<p>執行的話，就是下</p>
+
+<pre><code>sh robotCode/run.sh
+</code></pre>
+
+<p>恭喜完成！！！</p>
+
+<p>主要參考為</p>
+
+<p><a href="http://blog.mykhailo.com/2011/02/how-to-sikuli-and-robot-framework.html">How-To: Sikuli and Robot Framework Integration</a></p>
+</div>
+
+
+<div class="meta">
+	<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2012-01-05T13:38:00+08:00" pubdate data-updated="true">Jan 5<span>th</span>, 2012</time></div>
+	
+
+<div class="tags">
+
+	<a class='category' href='/blog/categories/linux/'>Linux</a>, <a class='category' href='/blog/categories/robotframework/'>RobotFramework</a>, <a class='category' href='/blog/categories/sikuli/'>Sikuli</a>
+
+</div>
+
+
+	
+		<span class="comments"><a href="/blog/2012/01/05/how-to-using-sikuli-and-robotframework-in-linux-platform/#disqus_thread">Comments</a></span>
+	
+</div></article>
+
+	<div class="share">
+	<div class="addthis_toolbox addthis_default_style ">
+	
+	<a class="addthis_button_facebook_like" fb:like:layout="button_count"></a>
+	
+	
+	<a class="addthis_button_tweet"></a>
+	
+	
+	<a class="addthis_button_google_plusone" g:plusone:size="medium"></a>
+	
+<!---	<a class="addthis_counter addthis_pill_style"></a> --->
+	</div>
+  <script type="text/javascript" src="http://s7.addthis.com/js/250/addthis_widget.js#pubid="></script>
+</div>
+
+
+
+<section id="comment">
+    <h2 class="title">Comments</h2>
+    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+</section>
+</div>
+	<footer id="footer" class="inner">Copyright &copy; 2014
+
+    Aloha
+
+<br>
+Powered by Octopress.
+</footer>
+	<script src="/javascripts/slash.js"></script>
+<script src="/javascripts/jquery.fancybox.pack.js"></script>
+<script type="text/javascript">
+(function($){
+	$('.fancybox').fancybox();
+})(jQuery);
+</script> <!-- Delete or comment this line to disable Fancybox -->
+
+
+<script type="text/javascript">
+      var disqus_shortname = 'ccaloha';
+      
+        
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://ccaloha.cc/blog/2012/01/05/how-to-using-sikuli-and-robotframework-in-linux-platform/';
+        var disqus_url = 'http://ccaloha.cc/blog/2012/01/05/how-to-using-sikuli-and-robotframework-in-linux-platform/';
+        var disqus_script = 'embed.js';
+      
+    (function () {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/' + disqus_script;
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script>
+
+
+
+	<script type="text/javascript">
+		var _gaq = _gaq || [];
+		_gaq.push(['_setAccount', 'UA-29608372-1']);
+		_gaq.push(['_trackPageview']);
+
+		(function() {
+			var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+			ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+			var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+		})();
+	</script>
+
+
+<a title="Google Analytics Alternative" href="http://clicky.com/100753071"><img alt="Google Analytics Alternative" src="//static.getclicky.com/media/links/badge.gif" border="0" /></a>
+<script src="//static.getclicky.com/js" type="text/javascript"></script>
+<script type="text/javascript">try{ clicky.init(100753071); }catch(e){}</script>
+<noscript><p><img alt="Clicky" width="1" height="1" src="//in.getclicky.com/100753071ns.gif" /></p></noscript>
+
+</body>
+</html>

@@ -1,0 +1,371 @@
+
+<!DOCTYPE HTML>
+<html>
+<head>
+	<script data-cfasync="false" type="text/javascript" src="//use.typekit.net/axj3cfp.js"></script>
+	<script data-cfasync="false" type="text/javascript">try{Typekit.load();}catch(e){}</script>
+	<meta charset="utf-8">
+	<title>安裝phpMyAdmin in AWS(SUSE 11 sp1)  | AlohaCC</title>
+
+<meta name="author" content="Aloha"> 
+
+<meta name="description" content="Share Ruby on Rail and all about 'Chun Yu, Chen AlohaCC'"> <meta name="keywords" content="Aloha, Ruby on Rails, Blog, Web Developer, Taiwan, Chun-Yu Chen, Design Pattern, Action Scripts, Robotframework, Sikuli">
+
+	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+	<link href="http://feeds.feedburner.com/Alohacc" rel="alternate" title="AlohaCC" type="application/atom+xml">
+	<link rel="canonical" href="">
+	<link href="/favicon.png" rel="shortcut icon">
+	<link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+	<!--[if lt IE 9]><script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
+	<script src="//ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
+	<script type="text/javascript" src="/javascripts/jquery.fancybox.pack.js"></script>
+
+<script language="Javascript" type="text/javascript">
+$(document).ready(
+  function() {
+    (function($) {
+      $(".fancybox[data-content-id]").each(function() {
+        this.href = $(this).data('content-id');
+      });
+      $(".fancybox").fancybox({
+        beforeLoad: function() {
+          var el, 
+              id = $(this.element).data('title-id');
+
+          if (id) {
+            el = $('#' + id);
+
+            if (el.length) {
+              this.title = el.html();
+            }
+          }
+          if ($(this).data('content')) {
+            this.content = $(this).data('content');
+          }
+        },
+        helpers: {
+          title: {
+            type: 'inside'
+          }
+        }
+      });
+    })(jQuery);
+  }
+);
+</script>
+
+	
+</head>
+
+
+
+<body>
+	<header id="header" class="inner"><h1><a href="/">AlohaCC</a></h1>
+<h4>Try to Make Something Diff | Just For Fun |</h4>
+<nav id="main-nav"><ul>
+	<li><a href="/">Blog</a></li>
+	<li><a href="/About">About</a></li>
+	<li><a href="/presentation">Presentation</a></li>
+  	<li><a href="/RoR">Ruby on Rails</a></li>
+  	<li><a href="/ActionScript">Action Scripts</a></li>
+  	<li><a href="/DesignPattern">Design Pattern</a></li>
+	<li><a href="/archives">Archive</a></li>
+</ul>
+</nav>
+<nav id="mobile-nav">
+	<div class="alignleft menu">
+		<a class="button">Menu</a>
+		<div class="container"><ul>
+	<li><a href="/">Blog</a></li>
+	<li><a href="/About">About</a></li>
+	<li><a href="/presentation">Presentation</a></li>
+  	<li><a href="/RoR">Ruby on Rails</a></li>
+  	<li><a href="/ActionScript">Action Scripts</a></li>
+  	<li><a href="/DesignPattern">Design Pattern</a></li>
+	<li><a href="/archives">Archive</a></li>
+</ul>
+</div>
+	</div>
+	<div class="alignright search">
+		<a class="button"></a>
+		<div class="container">
+			<form action="http://google.com/search" method="get">
+				<input type="text" name="q" results="0">
+				<input type="hidden" name="q" value="site:ccaloha.cc">
+			</form>
+		</div>
+	</div>
+</nav>
+
+
+</header>
+
+	<div id="content" class="inner"><article class="post">
+	<h2 class="title">安裝phpMyAdmin in AWS(SUSE 11 Sp1)</h2>
+	<div class="entry-content"><p>以下真的是用倒推的方式去灌出來的…科科</p>
+
+<p>不知道為甚麼 平台就是一堆有的沒的都沒有…囧</p>
+
+<pre><code>zypper install phpMyAdmin
+</code></pre>
+
+<p>找不到phpMyAdmin的package！</p>
+
+<p>於是乎</p>
+
+<pre><code>zypper addrepo http://download.opensuse.org/repositories/server:/php:/applications/SLE_11/server:php:applications.repo
+</code></pre>
+
+<p>在執行一次</p>
+
+<pre><code>zypper install phpMyAdmin
+</code></pre>
+
+<!--more-->
+
+
+<p></p>
+
+<p>出現</p>
+
+<pre><code>問題： 無法提供 php-mysql (phpMyAdmin-3.4.8-27.1.noarch 需要此項目)
+</code></pre>
+
+<p>所以…</p>
+
+<pre><code>zypper addrepo http://download.opensuse.org/repositories/server:/php/SLE_11/server:php.repo
+</code></pre>
+
+<p>然後再試看看</p>
+
+<pre><code>zypper install php5-mysql
+</code></pre>
+
+<p>咦～看起來好像都ＯＫ，所以就繼續安裝phpMyAdmin吧…結果…</p>
+
+<pre><code>zypper install phpMyAdmin
+
+問題： phpMyAdmin-3.4.8-27.1.noarch 需要 php-mcrypt，但無法提供此需求
+</code></pre>
+
+<p>囧&#8230;&#8230;所以我就又安裝了</p>
+
+<pre><code>zypper install php5-mcrypt
+</code></pre>
+
+<p>結果…</p>
+
+<pre><code>問題： 無法提供 libltdl.so.7 (php5-mcrypt-5.3.8-120.1.i586 需要此項目)
+</code></pre>
+
+<p>挖哩勒，所以我又</p>
+
+<pre><code>zypper addrepo http://download.opensuse.org/repositories/Base:/System/SLE_11_SP1/Base:System.repo
+
+zypper update libltdl7
+</code></pre>
+
+<p>但是他建議我安裝，所以我又改成了下面那行</p>
+
+<pre><code>zypper install libltdl7-2.4.2-45.1.x86_64
+</code></pre>
+
+<p>ＯＫ～繼續Go吧…剛剛裝到php5-mcrypt</p>
+
+<pre><code>zypper install php5-mcrypt
+</code></pre>
+
+<p>又來了…</p>
+
+<pre><code>問題： 無法提供 libmcrypt.so.4 (php5-mcrypt-5.3.8-120.1.i586 需要此項目)
+</code></pre>
+
+<p>所以我又裝了</p>
+
+<pre><code>zypper addrepo http://download.opensuse.org/repositories/security:/privacy/SLE_11_SP1/security:privacy.repo
+
+zypper install libmcrypt
+</code></pre>
+
+<p>之後再回來裝</p>
+
+<pre><code>zypper install php5-mcrypt
+</code></pre>
+
+<p>耶！成功了～</p>
+
+<p>ＯＫ～繼續來</p>
+
+<pre><code>zypper install phpMyAdmin
+</code></pre>
+
+<p>幹</p>
+
+<pre><code>問題： phpMyAdmin-3.4.8-27.1.noarch 需要 php-gd，但無法提供此需求
+</code></pre>
+
+<p>於是我裝了</p>
+
+<pre><code>zypper install php5-gd
+</code></pre>
+
+<p>結果…</p>
+
+<pre><code>問題： 無法提供 libt1.so.5 (php5-gd-5.3.8-120.1.i586 需要此項目)
+</code></pre>
+
+<p>於是我又</p>
+
+<pre><code>zypper addrepo http://download.opensuse.org/repositories/devel:/libraries:/c_c++/SLE_11/devel:libraries:c_c++.repo
+
+zypper install t1lib
+</code></pre>
+
+<p>再來回到剛剛的安裝</p>
+
+<pre><code>zypper install php5-gd
+</code></pre>
+
+<p>最後</p>
+
+<pre><code>zypper install phpMyAdmin
+</code></pre>
+
+<p>終於！大功告成了…科科</p>
+
+<blockquote><p>Sum up :</p></blockquote>
+
+<pre><code>zypper addrepo http://download.opensuse.org/repositories/server:/php:/applications/SLE_11/server:php:applications.repo
+
+zypper addrepo http://download.opensuse.org/repositories/server:/php/SLE_11/server:php.repo
+
+zypper addrepo http://download.opensuse.org/repositories/devel:/libraries:/c_c++/SLE_11/devel:libraries:c_c++.repo
+
+zypper addrepo http://download.opensuse.org/repositories/security:/privacy/SLE_11_SP1/security:privacy.repo
+
+zypper addrepo http://download.opensuse.org/repositories/Base:/System/SLE_11_SP1/Base:System.repo
+
+zypper install php5-mysql
+
+zypper install libltdl7-2.4.2-45.1.x86_64   
+
+zypper install libmcrypt
+
+zypper install t1lib
+
+zypper install php5-mcrypt
+
+zypper install php5-gd
+
+zypper install phpMyAdmin
+</code></pre>
+</div>
+
+
+<div class="meta">
+	<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2011-12-20T22:34:00+08:00" pubdate data-updated="true">Dec 20<span>th</span>, 2011</time></div>
+	
+
+<div class="tags">
+
+	<a class='category' href='/blog/categories/aws/'>AWS</a>, <a class='category' href='/blog/categories/linux/'>Linux</a>
+
+</div>
+
+
+	
+		<span class="comments"><a href="/blog/2011/12/20/install-phpmyadmin-in-aws-suse-11-sp1/#disqus_thread">Comments</a></span>
+	
+</div></article>
+
+	<div class="share">
+	<div class="addthis_toolbox addthis_default_style ">
+	
+	<a class="addthis_button_facebook_like" fb:like:layout="button_count"></a>
+	
+	
+	<a class="addthis_button_tweet"></a>
+	
+	
+	<a class="addthis_button_google_plusone" g:plusone:size="medium"></a>
+	
+<!---	<a class="addthis_counter addthis_pill_style"></a> --->
+	</div>
+  <script type="text/javascript" src="http://s7.addthis.com/js/250/addthis_widget.js#pubid="></script>
+</div>
+
+
+
+<section id="comment">
+    <h2 class="title">Comments</h2>
+    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+</section>
+</div>
+	<footer id="footer" class="inner">Copyright &copy; 2014
+
+    Aloha
+
+<br>
+Powered by Octopress.
+</footer>
+	<script src="/javascripts/slash.js"></script>
+<script src="/javascripts/jquery.fancybox.pack.js"></script>
+<script type="text/javascript">
+(function($){
+	$('.fancybox').fancybox();
+})(jQuery);
+</script> <!-- Delete or comment this line to disable Fancybox -->
+
+
+<script type="text/javascript">
+      var disqus_shortname = 'ccaloha';
+      
+        
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://ccaloha.cc/blog/2011/12/20/install-phpmyadmin-in-aws-suse-11-sp1/';
+        var disqus_url = 'http://ccaloha.cc/blog/2011/12/20/install-phpmyadmin-in-aws-suse-11-sp1/';
+        var disqus_script = 'embed.js';
+      
+    (function () {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/' + disqus_script;
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script>
+
+
+
+	<script type="text/javascript">
+		var _gaq = _gaq || [];
+		_gaq.push(['_setAccount', 'UA-29608372-1']);
+		_gaq.push(['_trackPageview']);
+
+		(function() {
+			var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+			ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+			var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+		})();
+	</script>
+
+
+<a title="Google Analytics Alternative" href="http://clicky.com/100753071"><img alt="Google Analytics Alternative" src="//static.getclicky.com/media/links/badge.gif" border="0" /></a>
+<script src="//static.getclicky.com/js" type="text/javascript"></script>
+<script type="text/javascript">try{ clicky.init(100753071); }catch(e){}</script>
+<noscript><p><img alt="Clicky" width="1" height="1" src="//in.getclicky.com/100753071ns.gif" /></p></noscript>
+
+</body>
+</html>

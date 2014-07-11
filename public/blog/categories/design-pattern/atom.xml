@@ -1,0 +1,207 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: Design_Pattern | AlohaCC]]></title>
+  <link href="http://ccaloha.cc/blog/categories/design-pattern/atom.xml" rel="self"/>
+  <link href="http://ccaloha.cc/"/>
+  <updated>2014-07-11T19:53:39+08:00</updated>
+  <id>http://ccaloha.cc/</id>
+  <author>
+    <name><![CDATA[Aloha]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[[閱讀筆記系列] 23 + 1 設計模式 - Part3. Adapter]]></title>
+    <link href="http://ccaloha.cc/blog/2012/06/18/reading-note-23-plus-1-design-pattern-part3-adapter/"/>
+    <updated>2012-06-18T11:12:00+08:00</updated>
+    <id>http://ccaloha.cc/blog/2012/06/18/reading-note-23-plus-1-design-pattern-part3-adapter</id>
+    <content type="html"><![CDATA[<p>這個好像還滿常用的</p>
+
+<p>概念大概是這樣的</p>
+
+<p>把<strong>本來的內容</strong> 透過 <strong>轉換的東西</strong>
+變成<strong>你要的結果</strong></p>
+
+<p>主要有兩種方式來實作，一個是繼承，另外一個是委讓(交給誰做)</p>
+
+<p>下面是講<strong>繼承</strong>的寫法</p>
+
+<!--more-->
+
+
+<p></p>
+
+<p><strong>本來的內容</strong>舉例來說就是</p>
+
+<h2>Blackboard類別</h2>
+
+<pre><code>public class Blackboard {
+    private String string;
+
+    public Blackboard(String string) {
+        this.string = string;
+    }
+
+    public void showIsHandsome()
+    {
+        System.out.println(string + "is so handsome");
+    }
+
+    public void showIsUgly()
+    {
+        System.out.println(string + "is so ugly");
+    }
+}
+</code></pre>
+
+<p><strong>你要的結果</strong>就是</p>
+
+<h2>Print 介面</h2>
+
+<pre><code>public interface Print{
+
+    public abstract void printCool();
+    public abstract void printBad();
+
+}
+</code></pre>
+
+<p><strong>轉換的東西</strong>就是</p>
+
+<h2>PrintBlackboard類別</h2>
+
+<pre><code>public class PrintBlackboard extends Blackboard implements Print{
+    public PrintBlackboard(String string)
+    {
+        super(string);
+    }
+
+    pubic void printCool()
+    {
+        showIsHandsome();
+    }
+
+    public voild printBad()
+    {
+        showIsUgly();
+    }
+}
+</code></pre>
+
+<p>用法：</p>
+
+<h2>Main類別</h2>
+
+<pre><code>public class Main{
+    public static void main(String[] args){
+        Print p = new PrintBlackboard("Aloha");
+        p.printBad();
+        p.printCool();
+    }
+}
+</code></pre>
+
+<p>就會得到</p>
+
+<pre><code>Aloha is so ugly
+
+Aloha is so handsome
+</code></pre>
+
+<p>這個程式碼</p>
+
+<p>你會發現你只有用到介面在寫程式～根本不需要知道裡頭是如何實做的，也就是說之後要改code你不需要去修改main，就修改PrintBlackboard類別就好</p>
+
+<p>如果是<strong>委讓</strong>的寫法是這樣寫的</p>
+
+<p>主要差在Print由原本的interface改成class</p>
+
+<pre><code>public abstract class Print{
+
+    public abstract void printCool();
+    public abstract void printBad();
+
+}
+</code></pre>
+
+<p>PrintBlackboard 直接繼承Print在委讓Blackboard類別幫你做事情</p>
+
+<pre><code>public class PrintBlackboard extends Print{
+    private Blackboard blackboard;
+
+    public PrintBlackboard (String string){
+        this.blackboard = new Blackboard(string);
+    }
+
+    public void printCool(){
+        blackboard.showIsHandsome();
+    }
+
+    public void printBad(){
+        blackboard.showIsUgly();
+    }
+}
+</code></pre>
+
+<iframe id='xmindshare_embedviewer' src='http://www.xmind.net/share/_embed/alohaC/adapter-model-adapter/' width='900px' height='600px' frameborder='0' scrolling='no'></iframe>
+
+
+
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[[閱讀筆記系列] 23 + 1 設計模式 - Part2. Interator]]></title>
+    <link href="http://ccaloha.cc/blog/2012/05/30/reading-note-23-plus-1-design-pattern-part2-interator/"/>
+    <updated>2012-05-30T23:20:00+08:00</updated>
+    <id>http://ccaloha.cc/blog/2012/05/30/reading-note-23-plus-1-design-pattern-part2-interator</id>
+    <content type="html"><![CDATA[<h1>迭代器模式</h1>
+
+<p>因為有圖看不太清楚 所以我有提供下載</p>
+
+<p>有興趣的話可以把它下載來看</p>
+
+<iframe id='xmindshare_embedviewer' src='http://www.xmind.net/share/_embed/alohaC/iterator-1/' width='900px' height='300px' frameborder='0' scrolling='no'></iframe>
+
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[[閱讀筆記系列] 23 + 1 設計模式 - Part1.總論]]></title>
+    <link href="http://ccaloha.cc/blog/2012/05/28/reading-note-23-plus-1-design-pattern-part-1-big-outline/"/>
+    <updated>2012-05-28T14:51:00+08:00</updated>
+    <id>http://ccaloha.cc/blog/2012/05/28/reading-note-23-plus-1-design-pattern-part-1-big-outline</id>
+    <content type="html"><![CDATA[<p>這些是我看了一些設計模式的資料整理下來的東東</p>
+
+<p>參考書有下面這些</p>
+
+<p><a href="http://www.books.com.tw/exep/prod/booksfile.php?item=0010303521">Design patterns於Java 語言上的實習應用</a></p>
+
+<p><a href="http://www.books.com.tw/exep/prod/booksfile.php?item=0010309237">深入淺出設計模式</a></p>
+
+<p><a href="http://www.books.com.tw/exep/prod/booksfile.php?item=0010430101&amp;">大話設計模式</a></p>
+
+<!--more-->
+
+
+<p>還有一些網路資料</p>
+
+<p>總共會有23 + 1種設計模式XD</p>
+
+<p>給大家一個參考啦！</p>
+
+<p>有錯的話，please feel free to tell me</p>
+
+<p>廢話不多請看</p>
+
+<iframe id='xmindshare_embedviewer' src='http://www.xmind.net/share/_embed/alohaC/design-patterns/' width='900px' height='800px' frameborder='0' scrolling='no'></iframe>
+
+
+
+]]></content>
+  </entry>
+  
+</feed>

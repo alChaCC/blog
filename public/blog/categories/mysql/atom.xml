@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: MySQL | AlohaCC]]></title>
+  <link href="http://ccaloha.cc/blog/categories/mysql/atom.xml" rel="self"/>
+  <link href="http://ccaloha.cc/"/>
+  <updated>2014-07-11T19:53:39+08:00</updated>
+  <id>http://ccaloha.cc/</id>
+  <author>
+    <name><![CDATA[Aloha]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[MacOS-Mysql中文化-latin1 轉 utf8]]></title>
+    <link href="http://ccaloha.cc/blog/2011/10/26/mysqlzhong-wen-hua-latin1-zhuan-utf8/"/>
+    <updated>2011-10-26T11:14:00+08:00</updated>
+    <id>http://ccaloha.cc/blog/2011/10/26/mysqlzhong-wen-hua-latin1-zhuan-utf8</id>
+    <content type="html"><![CDATA[<p>之前一直沒有試中文輸入...</p>
+
+<p>結果昨天在試的時候，遇到問題了...無法輸入中文</p>
+
+<p>主要參考了兩篇文章一個是PTT的Ruby版文章1215和這篇<a href="http://yoonkit.blogspot.com/2006/03/mysql-charset-from-latin1-to-utf8.html" title="文章">文章</a></p>
+
+<!--more-->
+
+
+<p></p>
+
+<ol type="a">
+<li><p>下指令
+<div class='bogus-wrapper'><notextile><figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="n">cp</span><span class="sr"> /usr/</span><span class="n">local</span><span class="o">/</span><span class="n">mysql</span><span class="o">/</span><span class="n">support</span><span class="o">-</span><span class="n">files</span><span class="o">/</span><span class="n">my</span><span class="o">-</span><span class="n">large</span><span class="o">.</span><span class="n">cnf</span><span class="sr"> /etc/m</span><span class="n">y</span><span class="o">.</span><span class="n">cnf</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div></p></li>
+<li><p>編輯/etc/my.cnf檔
+<div class='bogus-wrapper'><notextile><figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="n">vim</span><span class="sr"> /etc/m</span><span class="n">y</span><span class="o">.</span><span class="n">cnf</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div></p></li>
+<li><p>[client]底下加
+<div class='bogus-wrapper'><notextile><figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="n">default</span><span class="o">-</span><span class="n">character</span><span class="o">-</span><span class="n">set</span><span class="o">=</span><span class="n">utf8</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div></p></li>
+</ol>
+
+
+<p>[mysqld]底下多加
+<div class='bogus-wrapper'><notextile><figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="n">init</span><span class="o">-</span><span class="n">connect</span> <span class="o">=</span> <span class="s1">&#39;SET NAMES utf8&#39;</span>
+</span><span class='line'><span class="n">character</span><span class="o">-</span><span class="n">set</span><span class="o">-</span><span class="n">server</span> <span class="o">=</span> <span class="n">utf8</span>
+</span><span class='line'><span class="n">collation</span><span class="o">-</span><span class="n">server</span> <span class="o">=</span> <span class="n">utf8_general_ci</span>
+</span><span class='line'><span class="n">default</span><span class="o">-</span><span class="n">character</span><span class="o">-</span><span class="n">set</span> <span class="o">=</span> <span class="n">utf8</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div></p>
+
+<ol type="a">
+<li><p>進到mysql
+<div class='bogus-wrapper'><notextile><figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="n">mysql</span> <span class="o">-</span><span class="n">u</span> <span class="n">root</span> <span class="o">-</span><span class="nb">p</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div></p></li>
+<li><p>改每個database
+<div class='bogus-wrapper'><notextile><figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="no">SHOW</span> <span class="no">DATABASES</span><span class="p">;</span>
+</span><span class='line'><span class="no">ALTER</span> <span class="no">DATABASE</span> <span class="no">DB</span><span class="err">名稱</span> <span class="n">charset</span><span class="o">=</span><span class="n">utf8</span><span class="p">;</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div></p></li>
+<li><p>進到這個DB，改每個table
+<div class='bogus-wrapper'><notextile><figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="no">USE</span> <span class="no">DB</span><span class="err">名稱</span><span class="p">;</span>
+</span><span class='line'><span class="no">SHOW</span> <span class="no">TABLES</span><span class="p">;</span>
+</span><span class='line'><span class="no">ALTER</span> <span class="no">TABLE</span> <span class="err">資料表名稱</span> <span class="n">charset</span><span class="o">=</span><span class="n">utf8</span><span class="p">;</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div></p></li>
+<li><p>再來改這張資料表的欄位 （這邊和文章不一樣）
+<div class='bogus-wrapper'><notextile><figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="no">DECRIBE</span> <span class="err">資料表名稱</span><span class="p">;</span>
+</span><span class='line'><span class="err">＃如果你的欄位</span><span class="n">type</span><span class="err">為</span><span class="n">varchar</span><span class="p">(</span><span class="n">xx</span><span class="p">)</span>
+</span><span class='line'><span class="no">ALTER</span> <span class="no">TABLE</span> <span class="err">資料表名稱</span> <span class="no">MODIFY</span> <span class="err">欄位名稱</span> <span class="no">VARCHAR</span><span class="p">(</span><span class="n">xx</span><span class="p">)</span> <span class="no">CHARACTER</span> <span class="no">SET</span> <span class="n">utf8</span><span class="p">;</span><span class="o">&lt;</span><span class="sr">/p&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="sr">&lt;h1&gt;如果你的欄位type為text&lt;/</span><span class="n">h1</span><span class="o">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="nb">p</span><span class="o">&gt;</span><span class="no">ALTER</span> <span class="no">TABLE</span> <span class="err">資料表名稱</span> <span class="no">MODIFY</span> <span class="err">欄位名稱</span> <span class="no">TEXT</span> <span class="no">CHARACTER</span> <span class="no">SET</span> <span class="n">utf8</span><span class="p">;</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div></p></li>
+<li><p>重開MYSQL！</p></li>
+<li><p>在mysql下檢查
+<div class='bogus-wrapper'><notextile><figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="n">mysql</span><span class="o">&gt;</span> <span class="n">show</span> <span class="n">variables</span> <span class="n">like</span> <span class="s1">&#39;character%&#39;</span><span class="p">;</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div></p></li>
+</ol>
+
+]]></content>
+  </entry>
+  
+</feed>

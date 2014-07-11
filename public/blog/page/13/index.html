@@ -1,0 +1,513 @@
+
+<!DOCTYPE HTML>
+<html>
+<head>
+	<script data-cfasync="false" type="text/javascript" src="//use.typekit.net/axj3cfp.js"></script>
+	<script data-cfasync="false" type="text/javascript">try{Typekit.load();}catch(e){}</script>
+	<meta charset="utf-8">
+	<title>Try to Make Something Diff | Just For Fun |  | AlohaCC</title>
+
+<meta name="author" content="Aloha"> 
+
+<meta name="description" content="Share Ruby on Rail and all about 'Chun Yu, Chen AlohaCC'"> <meta name="keywords" content="Aloha, Ruby on Rails, Blog, Web Developer, Taiwan, Chun-Yu Chen, Design Pattern, Action Scripts, Robotframework, Sikuli">
+
+	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+	<link href="http://feeds.feedburner.com/Alohacc" rel="alternate" title="AlohaCC" type="application/atom+xml">
+	<link rel="canonical" href="">
+	<link href="/favicon.png" rel="shortcut icon">
+	<link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+	<!--[if lt IE 9]><script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
+	<script src="//ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
+	<script type="text/javascript" src="/javascripts/jquery.fancybox.pack.js"></script>
+
+<script language="Javascript" type="text/javascript">
+$(document).ready(
+  function() {
+    (function($) {
+      $(".fancybox[data-content-id]").each(function() {
+        this.href = $(this).data('content-id');
+      });
+      $(".fancybox").fancybox({
+        beforeLoad: function() {
+          var el, 
+              id = $(this.element).data('title-id');
+
+          if (id) {
+            el = $('#' + id);
+
+            if (el.length) {
+              this.title = el.html();
+            }
+          }
+          if ($(this).data('content')) {
+            this.content = $(this).data('content');
+          }
+        },
+        helpers: {
+          title: {
+            type: 'inside'
+          }
+        }
+      });
+    })(jQuery);
+  }
+);
+</script>
+
+	
+</head>
+
+
+
+<body>
+	<header id="header" class="inner"><h1><a href="/">AlohaCC</a></h1>
+<h4>Try to Make Something Diff | Just For Fun |</h4>
+<nav id="main-nav"><ul>
+	<li><a href="/">Blog</a></li>
+	<li><a href="/About">About</a></li>
+	<li><a href="/presentation">Presentation</a></li>
+  	<li><a href="/RoR">Ruby on Rails</a></li>
+  	<li><a href="/ActionScript">Action Scripts</a></li>
+  	<li><a href="/DesignPattern">Design Pattern</a></li>
+	<li><a href="/archives">Archive</a></li>
+</ul>
+</nav>
+<nav id="mobile-nav">
+	<div class="alignleft menu">
+		<a class="button">Menu</a>
+		<div class="container"><ul>
+	<li><a href="/">Blog</a></li>
+	<li><a href="/About">About</a></li>
+	<li><a href="/presentation">Presentation</a></li>
+  	<li><a href="/RoR">Ruby on Rails</a></li>
+  	<li><a href="/ActionScript">Action Scripts</a></li>
+  	<li><a href="/DesignPattern">Design Pattern</a></li>
+	<li><a href="/archives">Archive</a></li>
+</ul>
+</div>
+	</div>
+	<div class="alignright search">
+		<a class="button"></a>
+		<div class="container">
+			<form action="http://google.com/search" method="get">
+				<input type="text" name="q" results="0">
+				<input type="hidden" name="q" value="site:ccaloha.cc">
+			</form>
+		</div>
+	</div>
+</nav>
+
+
+</header>
+
+	<div id="content" class="inner">
+
+
+    <article class="post">
+	<h2 class="title">
+		
+		<a href="/blog/2011/11/04/how-to-ssh-to-virtualbox-using-macosx/">
+		
+			[超簡單]如何不改任何設定，用SSH 登入本機端的VirtualBox(作業系統為MacOSX)</a>
+	</h2>
+	<div class="entry-content">
+		<ol type="a">
+<li><p>你的Mac必須要有VirtualBox -> 這不是廢話..</p></li>
+<li><p>假設你安裝的是Ubuntu , 並取名為&#8221;我最帥的VM&#8221; （這個名稱在下個步驟會用到）</p></li>
+</ol>
+
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="n">sudo</span> <span class="n">apt</span><span class="o">-</span><span class="n">get</span> <span class="n">install</span> <span class="n">openssh</span><span class="o">-</span><span class="n">server</span>
+</span><span class='line'><span class="n">sudo</span> <span class="n">service</span> <span class="n">ssh</span> <span class="n">restart</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+
+
+
+		
+		<a href="/blog/2011/11/04/how-to-ssh-to-virtualbox-using-macosx/" class="more-link">Read on &rarr;</a>
+	</div>
+
+
+<div class="meta">
+	<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2011-11-04T15:21:00+08:00" pubdate data-updated="true">Nov 4<span>th</span>, 2011</time></div>
+	
+
+<div class="tags">
+
+	<a class='category' href='/blog/categories/linux/'>Linux</a>
+
+</div>
+
+
+	
+		<span class="comments"><a href="/blog/2011/11/04/how-to-ssh-to-virtualbox-using-macosx//blog/page/13/index.html#disqus_thread">Comments</a></span>
+	
+</div></article>
+
+
+    <article class="post">
+	<h2 class="title">
+		
+		<a href="/blog/2011/11/03/an-zhuang-nginxhe-passengerzai-centosshang-%2Cwai-jia-she-ding-nginx-dot-confdang/">
+		
+			安裝nginx和passenger在CentOS上，外加設定nginx.conf檔，讓你掛上Octopress和php</a>
+	</h2>
+	<div class="entry-content">
+		<ol type="a">
+<li>首先安裝流程就參考<a href="https://github.com/xdite/rails-nginx-passenger-centos" title="xdite">xdite這篇rails-nginx-passenger-centos</a></li>
+</ol>
+
+
+<p>幾乎都是一樣的只不過</p>
+
+<p>我有兩個需求</p>
+
+<ol type="a">
+<li> 我想要把首頁連到Octopress</li>
+</ol>
+
+
+<p>因為我也有使用<a href="http://www.study-area.org/tips/ssh_tips.htm" title="netman">網中人netman大大的ssh安全技巧</a></p>
+
+<p>來設定我自己server的ssh安全控管</p>
+
+<ol type="a">
+<li> 我必須要讓nginx可以執行php</li>
+</ol>
+
+
+
+		
+		<a href="/blog/2011/11/03/an-zhuang-nginxhe-passengerzai-centosshang-%2Cwai-jia-she-ding-nginx-dot-confdang/" class="more-link">Read on &rarr;</a>
+	</div>
+
+
+<div class="meta">
+	<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2011-11-03T23:56:00+08:00" pubdate data-updated="true">Nov 3<span>rd</span>, 2011</time></div>
+	
+
+<div class="tags">
+
+	<a class='category' href='/blog/categories/linux/'>Linux</a>, <a class='category' href='/blog/categories/nginx/'>Nginx</a>, <a class='category' href='/blog/categories/octopress/'>Octopress</a>, <a class='category' href='/blog/categories/ssh/'>SSH</a>
+
+</div>
+
+
+	
+		<span class="comments"><a href="/blog/2011/11/03/an-zhuang-nginxhe-passengerzai-centosshang-%2Cwai-jia-she-ding-nginx-dot-confdang//blog/page/13/index.html#disqus_thread">Comments</a></span>
+	
+</div></article>
+
+
+    <article class="post">
+	<h2 class="title">
+		
+		<a href="/blog/2011/11/03/solve-8139too-device-ethx-does-not-seem-to-present/">
+		
+			Solve:8139too Device ethX Does Not Seem to Present</a>
+	</h2>
+	<div class="entry-content">
+		<p>用root權限輸入</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'>  <span class="n">rmmod</span> <span class="mi">8139</span><span class="n">too</span>
+</span><span class='line'>  <span class="n">modprobe</span> <span class="mi">8139</span><span class="n">too</span>
+</span><span class='line'>  <span class="n">service</span> <span class="n">network</span> <span class="n">restart</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>歐耶～～</p>
+
+		
+		
+	</div>
+
+
+<div class="meta">
+	<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2011-11-03T23:47:00+08:00" pubdate data-updated="true">Nov 3<span>rd</span>, 2011</time></div>
+	
+
+<div class="tags">
+
+	<a class='category' href='/blog/categories/linux/'>Linux</a>
+
+</div>
+
+
+	
+		<span class="comments"><a href="/blog/2011/11/03/solve-8139too-device-ethx-does-not-seem-to-present//blog/page/13/index.html#disqus_thread">Comments</a></span>
+	
+</div></article>
+
+
+    <article class="post">
+	<h2 class="title">
+		
+		<a href="/blog/2011/11/03/run-robotframework-sshlibrary-on-ubuntu11-dot-10/">
+		
+			Run RobotFramework-sshlibrary on Ubuntu11.10</a>
+	</h2>
+	<div class="entry-content">
+		<ol type="a">
+<li>先安裝paramiko</li>
+</ol>
+
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>wget http://www.lag.net/paramiko/download/paramiko-1.7.7.1.tar.gz</span></code></pre></td></tr></table></div></figure>
+
+
+<ol type="a">
+<li>安裝easy_install在ubuntu</li>
+</ol>
+
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>sudo apt-get python-setuptools</span></code></pre></td></tr></table></div></figure>
+
+
+
+
+
+		
+		<a href="/blog/2011/11/03/run-robotframework-sshlibrary-on-ubuntu11-dot-10/" class="more-link">Read on &rarr;</a>
+	</div>
+
+
+<div class="meta">
+	<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2011-11-03T16:53:00+08:00" pubdate data-updated="true">Nov 3<span>rd</span>, 2011</time></div>
+	
+
+<div class="tags">
+
+	<a class='category' href='/blog/categories/robotframework/'>RobotFramework</a>
+
+</div>
+
+
+	
+		<span class="comments"><a href="/blog/2011/11/03/run-robotframework-sshlibrary-on-ubuntu11-dot-10//blog/page/13/index.html#disqus_thread">Comments</a></span>
+	
+</div></article>
+
+
+    <article class="post">
+	<h2 class="title">
+		
+		<a href="/blog/2011/10/28/installing-robot-framework-on-ubuntu11-dot-10/">
+		
+			Installing Robot Framework on Ubuntu11.10</a>
+	</h2>
+	<div class="entry-content">
+		<p>As Title</p>
+
+<ol type="a">
+<li><p>有ubuntu ->廢話</p></li>
+<li><p>先確保你的python是新版</p></li>
+</ol>
+
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>sudo apt-get install python</span></code></pre></td></tr></table></div></figure>
+
+
+
+
+
+		
+		<a href="/blog/2011/10/28/installing-robot-framework-on-ubuntu11-dot-10/" class="more-link">Read on &rarr;</a>
+	</div>
+
+
+<div class="meta">
+	<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2011-10-28T15:43:00+08:00" pubdate data-updated="true">Oct 28<span>th</span>, 2011</time></div>
+	
+
+<div class="tags">
+
+	<a class='category' href='/blog/categories/robotframework/'>RobotFramework</a>
+
+</div>
+
+
+	
+		<span class="comments"><a href="/blog/2011/10/28/installing-robot-framework-on-ubuntu11-dot-10//blog/page/13/index.html#disqus_thread">Comments</a></span>
+	
+</div></article>
+
+
+    <article class="post">
+	<h2 class="title">
+		
+		<a href="/blog/2011/10/26/mysqlzhong-wen-hua-latin1-zhuan-utf8/">
+		
+			MacOS-Mysql中文化-latin1 轉 Utf8</a>
+	</h2>
+	<div class="entry-content">
+		<p>之前一直沒有試中文輸入&#8230;</p>
+
+<p>結果昨天在試的時候，遇到問題了&#8230;無法輸入中文</p>
+
+<p>主要參考了兩篇文章一個是PTT的Ruby版文章1215和這篇<a href="http://yoonkit.blogspot.com/2006/03/mysql-charset-from-latin1-to-utf8.html" title="文章">文章</a></p>
+
+
+		
+		<a href="/blog/2011/10/26/mysqlzhong-wen-hua-latin1-zhuan-utf8/" class="more-link">Read on &rarr;</a>
+	</div>
+
+
+<div class="meta">
+	<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2011-10-26T11:14:00+08:00" pubdate data-updated="true">Oct 26<span>th</span>, 2011</time></div>
+	
+
+<div class="tags">
+
+	<a class='category' href='/blog/categories/mysql/'>MySQL</a>
+
+</div>
+
+
+	
+		<span class="comments"><a href="/blog/2011/10/26/mysqlzhong-wen-hua-latin1-zhuan-utf8//blog/page/13/index.html#disqus_thread">Comments</a></span>
+	
+</div></article>
+
+<nav id="pagenavi">
+    
+        <a href="/blog/page/12/" class="prev">Prev</a>
+    
+    
+        <a href="/blog/page/14/" class="next">Next</a>
+    
+    <div class="center"><a href="/archives">Blog Archives</a></div>
+</nav></div>
+	<footer id="footer" class="inner">Copyright &copy; 2014
+
+    Aloha
+
+<br>
+Powered by Octopress.
+</footer>
+	<script src="/javascripts/slash.js"></script>
+<script src="/javascripts/jquery.fancybox.pack.js"></script>
+<script type="text/javascript">
+(function($){
+	$('.fancybox').fancybox();
+})(jQuery);
+</script> <!-- Delete or comment this line to disable Fancybox -->
+
+
+<script type="text/javascript">
+      var disqus_shortname = 'ccaloha';
+      
+        
+        var disqus_script = 'count.js';
+      
+    (function () {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/' + disqus_script;
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script>
+
+
+
+	<script type="text/javascript">
+		var _gaq = _gaq || [];
+		_gaq.push(['_setAccount', 'UA-29608372-1']);
+		_gaq.push(['_trackPageview']);
+
+		(function() {
+			var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+			ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+			var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+		})();
+	</script>
+
+
+<a title="Google Analytics Alternative" href="http://clicky.com/100753071"><img alt="Google Analytics Alternative" src="//static.getclicky.com/media/links/badge.gif" border="0" /></a>
+<script src="//static.getclicky.com/js" type="text/javascript"></script>
+<script type="text/javascript">try{ clicky.init(100753071); }catch(e){}</script>
+<noscript><p><img alt="Clicky" width="1" height="1" src="//in.getclicky.com/100753071ns.gif" /></p></noscript>
+
+</body>
+</html>

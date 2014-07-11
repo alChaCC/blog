@@ -1,0 +1,907 @@
+
+<!DOCTYPE HTML>
+<html>
+<head>
+	<script data-cfasync="false" type="text/javascript" src="//use.typekit.net/axj3cfp.js"></script>
+	<script data-cfasync="false" type="text/javascript">try{Typekit.load();}catch(e){}</script>
+	<meta charset="utf-8">
+	<title>Learning on Ruby on Rails Tutorial-CH8 Sign in  | AlohaCC</title>
+
+<meta name="author" content="Aloha"> 
+
+<meta name="description" content="Share Ruby on Rail and all about 'Chun Yu, Chen AlohaCC'"> <meta name="keywords" content="Aloha, Ruby on Rails, Blog, Web Developer, Taiwan, Chun-Yu Chen, Design Pattern, Action Scripts, Robotframework, Sikuli">
+
+	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+	<link href="http://feeds.feedburner.com/Alohacc" rel="alternate" title="AlohaCC" type="application/atom+xml">
+	<link rel="canonical" href="">
+	<link href="/favicon.png" rel="shortcut icon">
+	<link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+	<!--[if lt IE 9]><script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
+	<script src="//ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
+	<script type="text/javascript" src="/javascripts/jquery.fancybox.pack.js"></script>
+
+<script language="Javascript" type="text/javascript">
+$(document).ready(
+  function() {
+    (function($) {
+      $(".fancybox[data-content-id]").each(function() {
+        this.href = $(this).data('content-id');
+      });
+      $(".fancybox").fancybox({
+        beforeLoad: function() {
+          var el, 
+              id = $(this.element).data('title-id');
+
+          if (id) {
+            el = $('#' + id);
+
+            if (el.length) {
+              this.title = el.html();
+            }
+          }
+          if ($(this).data('content')) {
+            this.content = $(this).data('content');
+          }
+        },
+        helpers: {
+          title: {
+            type: 'inside'
+          }
+        }
+      });
+    })(jQuery);
+  }
+);
+</script>
+
+	
+</head>
+
+
+
+<body>
+	<header id="header" class="inner"><h1><a href="/">AlohaCC</a></h1>
+<h4>Try to Make Something Diff | Just For Fun |</h4>
+<nav id="main-nav"><ul>
+	<li><a href="/">Blog</a></li>
+	<li><a href="/About">About</a></li>
+	<li><a href="/presentation">Presentation</a></li>
+  	<li><a href="/RoR">Ruby on Rails</a></li>
+  	<li><a href="/ActionScript">Action Scripts</a></li>
+  	<li><a href="/DesignPattern">Design Pattern</a></li>
+	<li><a href="/archives">Archive</a></li>
+</ul>
+</nav>
+<nav id="mobile-nav">
+	<div class="alignleft menu">
+		<a class="button">Menu</a>
+		<div class="container"><ul>
+	<li><a href="/">Blog</a></li>
+	<li><a href="/About">About</a></li>
+	<li><a href="/presentation">Presentation</a></li>
+  	<li><a href="/RoR">Ruby on Rails</a></li>
+  	<li><a href="/ActionScript">Action Scripts</a></li>
+  	<li><a href="/DesignPattern">Design Pattern</a></li>
+	<li><a href="/archives">Archive</a></li>
+</ul>
+</div>
+	</div>
+	<div class="alignright search">
+		<a class="button"></a>
+		<div class="container">
+			<form action="http://google.com/search" method="get">
+				<input type="text" name="q" results="0">
+				<input type="hidden" name="q" value="site:ccaloha.cc">
+			</form>
+		</div>
+	</div>
+</nav>
+
+
+</header>
+
+	<div id="content" class="inner"><article class="post">
+	<h2 class="title">Learning on Ruby on Rails Tutorial-CH8 Sign In</h2>
+	<div class="entry-content"><p>上一章已經可以成功註冊使用者，接下來就是要到登入登出的部分！</p>
+
+<p>一樣在開始之前，我們先開Branch</p>
+
+<pre><code>$ git checkout -b sign-in-out
+</code></pre>
+
+<h2>Session 和登入錯誤</h2>
+
+<p>Session 就是半永久存在於兩台電腦，就像用戶端跑browser和伺服器端跑rails</p>
+
+<p>我們會使用session來實作&#8221;Sign in&#8221;還有&#8221;forgetting&#8221;(當你關掉瀏覽器)，&#8221;remember me&#8221;這個check box保存session，&#8221;forever&#8221;（除非使用者自己清，不然會一直保存）</p>
+
+<p>我們可以把session看成RESTful resource的觀念，我們有一個登入的頁面，登入成功時他會有新的session，當他登出時， session會被清掉。不像User那樣，他會利用後端資料庫保存資料，然而session是使用<strong>cookie</strong>(是user瀏覽器那邊一小塊文字)。Sign in會用到的動作，大多都是基於<strong>cookie</strong>的認證機制！</p>
+
+<!--more-->
+
+
+<p></p>
+
+<h3>Session Controller</h3>
+
+<p>Sign in 是由new動作來處理，事實上送出&#8221;POST&#8221;這個要求給create 動作</p>
+
+<p>Sign out 是送出&#8221;DELETE&#8221;這個要求給destroy動作</p>
+
+<p>所以先來gen一些東東出來吧</p>
+
+<pre><code>$ rails generate controller Sessions --no-test-framework
+$ rails generate integration_test authentication_pages
+</code></pre>
+
+<p>先想一下，我們需要什麼樣的頁面在Sign in的頁面</p>
+
+<p>首先，我們要有一個叫做<strong>signin_path</strong>的鏈結，可以連到認證的頁面，我們還希望有個h1的標簽，他的文字是Sing in ，還有一個標簽叫做title，文字也是Sign in</p>
+
+<p>所以測試程式是</p>
+
+<p><strong>spec/requests/authentication_pages_spec.rb</strong></p>
+
+<pre><code>require 'spec_helper'
+
+describe "Authentication" do
+
+  subject { page }
+
+  describe "signin page" do
+    before { visit signin_path }
+
+    it { should have_selector('h1',    text: 'Sign in') }
+    it { should have_selector('title', text: 'Sign in') }
+  end
+end
+</code></pre>
+
+<p>執行一下確保&#8221;有&#8221;錯誤</p>
+
+<pre><code>$ bundle exec rspec spec/
+</code></pre>
+
+<p>先寫route的部份，因為剛剛有提到只有在create , new 和 destryo有使用到session,所以加上下面的東東在<strong>config/routes.rb</strong></p>
+
+<pre><code>resources :sessions, only: [:new, :create, :destroy]
+
+match '/signup', to: 'users#new'
+match '/signin',  to: 'sessions#new'
+match '/signout', to: 'sessions#destroy', via: :delete
+</code></pre>
+
+<p>注意那個<strong>via: :delete</strong>這句話就是表示當使用HTTP Delete的要求時，他會被呼叫！</p>
+
+<p>上面那些所得到的URIs就是</p>
+
+<p>HTTP request
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+URI
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+Named route
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+Action<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+Purpose</p>
+
+<p><em>===============================</em></p>
+
+<p>GET
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+/signin
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+signin_path
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+new page for a new session (signin)</p>
+
+<p>POST
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+/sessions
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+sessions_path
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+create
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+create a new session</p>
+
+<p>DELETE
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+/signout
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+signout_path
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+destroy delete a session (sign out)</p>
+
+<p>加了route之後，再來加上controller的部份
+<strong>app/controllers/sessions_controller.rb</strong></p>
+
+<pre><code>class SessionsController &lt; ApplicationController
+
+  def new
+  end
+
+  def create
+  end
+
+  def destroy
+  end
+end
+</code></pre>
+
+<p>先來新增並寫<strong>app/views/sessions/new.html.erb</strong></p>
+
+<pre><code>&lt;% provide(:title, "Sign in") %&gt;
+&lt;h1&gt;Sign in&lt;/h1&gt;
+</code></pre>
+
+<p>再來執行看看測試程式</p>
+
+<pre><code>$ bundle exec rspec spec/
+</code></pre>
+
+<h2>登入測試</h2>
+
+<p>先講需求，我們希望當使用者輸入錯誤帳號密碼時，會跳出error message也會跳回Sign in 的頁面(底下可以有一個連結，連到<strong>create new user</strong>)</p>
+
+<p>我們需要這句測試～</p>
+
+<pre><code>it { should have_selector('div.alert.alert-error', text: 'Invalid') }
+</code></pre>
+
+<p>上面那句話 <strong>div.alert.alert-error</strong>代表了</p>
+
+<pre><code>&lt;div class="alert alert-error"&gt;Invalid….&lt;/div&gt;
+</code></pre>
+
+<p>這樣就可以達成我們要的規格</p>
+
+<p>OK~把下面那一段加到 <strong>describe &#8220;Authentication&#8221; do</strong>這個區塊內</p>
+
+<pre><code>describe "sign in" do 
+    before { visit signin_path }
+
+    describe "with invalid information" do 
+      before { click_button  "Sign in" }
+
+      it { should have_selector('title',text: 'Sign in' ) }
+      it { should have_selector('div.alert.alert-error' , text: 'Invalid') }
+    end
+  end
+</code></pre>
+
+<p>接下來，我們來看一下如果登入成功的話，希望可以看到的頁面</p>
+
+<ul>
+<li>出現，一個鏈結到profile頁面</li>
+<li>出現，登出的連結</li>
+<li>登入的連結消失</li>
+</ul>
+
+
+<p>所以寫測試！把下面的加到<strong>describe &#8220;sign in&#8221; do</strong>這個區塊內</p>
+
+<pre><code>describe "with valid information" do
+      let(:user) { FactoryGirl.create(:user) }
+      before do
+        fill_in "Email",    with: user.email
+        fill_in "Password", with: user.password
+        click_button "Sign in"
+      end
+
+      it { should have_selector('title', text: user.name) }
+      it { should have_link('Profile', href: user_path(user)) }
+      it { should have_link('Sign out', href: signout_path) }
+      it { should_not have_link('Sign in', href: signin_path) }
+    end
+</code></pre>
+
+<p>這邊使用到一個新的方法 叫做是<strong>have_link</strong>,然後有個屬性叫做是 :href</p>
+
+<p>應該懂吧～XD，這是要確保我的標籤<strong>a</strong>會有正確的鏈結</p>
+
+<h2>登入表格</h2>
+
+<p>還記不記得先前寫的<strong>app/views/users/new.html.erb</strong></p>
+
+<p>其實登入表格就像那樣～</p>
+
+<p>但是不同的地方在於，create user時表格的結果是給<strong>@user</strong>的，但是這個登入表格是要給<strong>session</strong>的</p>
+
+<p>OK我們來寫吧</p>
+
+<p><strong>app/views/sessions/new.html.erb</strong></p>
+
+<pre><code>&lt;% provide(:title, "Sign in") %&gt;
+&lt;h1&gt;Sign in&lt;/h1&gt;
+
+&lt;div class="row"&gt;
+  &lt;div class="span6 offset3"&gt;
+    &lt;%= form_for(:session, url: sessions_path) do |f| %&gt;
+
+      &lt;%= f.label :email %&gt;
+      &lt;%= f.text_field :email %&gt;
+
+      &lt;%= f.label :password %&gt;
+      &lt;%= f.password_field :password %&gt;
+
+      &lt;%= f.submit "Sign in", class: "btn btn-large btn-primary" %&gt;
+    &lt;% end %&gt;
+
+    &lt;p&gt;New user? &lt;%= link_to "Sign up now!", signup_path %&gt;&lt;/p&gt;
+  &lt;/div&gt;
+&lt;/div&gt;
+</code></pre>
+
+<p>我們可以得知<strong>params</strong>這個hash，大概就有這些內容<strong>params[:session][:email]</strong>和<strong>params[:session][:password]</strong></p>
+
+<h2>重新看一下提交表格的部分</h2>
+
+<p>先在<strong>app/controllers/sessions_controller.rb</strong>加上</p>
+
+<pre><code>def create
+    render 'new'
+end
+</code></pre>
+
+<p>奇怪…怎麼點Sign in並沒有跳出…原來是因為我還沒有改一個東西</p>
+
+<p><strong>app/views/layouts/_header.html</strong> 其中Sign in 要改成這樣</p>
+
+<pre><code>&lt;li&gt;&lt;%= link_to "Sign in", signin_path %&gt;&lt;/li&gt;
+</code></pre>
+
+<p>接著我們來看controller的create動作！</p>
+
+<p>當使用者登入時，就會create 一個session，然後如果登入成功的話，我們要把他轉到他的show page下面</p>
+
+<p>如果登入失敗的話，我們要重新render登入畫面給他！並告訴他訊息！</p>
+
+<p>所以&#8230;.</p>
+
+<pre><code>def create
+  user = User.find_by_email(params[:session][:email])
+  if user &amp;&amp; user.authenticate(params[:session][:password])
+    # Sign the user in and redirect to the user's show page.
+  else
+    # Create an error message and re-render the signin form.
+  end
+end
+</code></pre>
+
+<p>用<strong>&amp;&amp;</strong>的原因是只要有一個失敗 就是Fail一個是找不到User一個是密碼錯誤！</p>
+
+<h2>Rendering with flash message</h2>
+
+<p>之前在第七章，有看到flash的用法，這邊不在贅述</p>
+
+<p>加到<strong>app/controllers/sessions_controller.rb</strong>裡面</p>
+
+<pre><code>def create
+    user = User.find_by_email(params[:session][:email])
+    if user &amp;&amp; user.authenticate(params[:session][:password])
+      # Sign the user in and redirect to the user's show page.
+    else
+      flash[:error] = 'Invalid email/password combination' # Not quite right!
+      render 'new'
+    end
+  end
+</code></pre>
+
+<p>OK~這時候可以玩玩網頁～隨便輸入錯誤的賬號密碼，他果然有跳出錯誤訊息&#8230;.但是…見鬼了！當你點其他頁面時，錯誤訊息並不會消失～</p>
+
+<p>不過當你執行</p>
+
+<pre><code>$ bundle exec rspec spec/requests/authentication_pages_spec.rb -e "sign in with invalid information"
+</code></pre>
+
+<p>他會pass歐！！</p>
+
+<p>但是實際上這是有bug的&#8230;.所以我們必須要加上測試的東東，確保他沒有問題</p>
+
+<p>加在<strong>spec/requests/authentication_pages_spec.rb</strong>的<strong>describe &#8220;with invalid information&#8221; do</strong>區塊裡面</p>
+
+<pre><code>describe "after visiting another page" do
+  before { click_link "Home" }
+  it { should_not have_selector('div.alert.alert-error') }
+end
+</code></pre>
+
+<p>在執行一次，發現有錯誤了！</p>
+
+<pre><code>$ bundle exec rspec spec/requests/authentication_pages_spec.rb -e "sign in with invalid information"
+</code></pre>
+
+<p>OK~ 那我們怎麼樣改掉這個bug，很簡單&#8230;.只要在<strong>flash[:error]</strong>多加一個now即可阿！</p>
+
+<pre><code> def create
+    user = User.find_by_email(params[:session][:email])
+    if user &amp;&amp; user.authenticate(params[:session][:password])
+      # Sign the user in and redirect to the user's show page.
+    else
+      flash.now[:error] = 'Invalid email/password combination'
+      render 'new'
+    end
+  end
+</code></pre>
+
+<h2>登入成功！</h2>
+
+<p>接下來就是一連串困難的開始！</p>
+
+<p>一開始是比較簡單的部分，當使用者登入成功時，我們要將它導到<strong>user</strong>頁面</p>
+
+<p>所以在<strong>app/controllers/sessions_controller.rb</strong>加入</p>
+
+<pre><code>def create
+    user = User.find_by_email(params[:session][:email])
+    if user &amp;&amp; user.authenticate(params[:session][:password])
+      sign_in user
+      redirect_to user
+    else
+      flash.now[:error] = 'Invalid email/password combination'
+      render 'new'
+    end
+  end
+</code></pre>
+
+<h3>記住我</h3>
+
+<p>現在開始開發signin的model部分，因為Sing 這個動作是屬於跨MVC會被用到的東西(譬如controller和view)，所以我們建了一個<strong>SessionsHelper</strong>，這個會自動被include到Rails的view，如果希望在所有controller被使用的話，那就是在<strong>app/controllers/application_controller.rb</strong>加上</p>
+
+<pre><code>include SessionsHelper
+</code></pre>
+
+<p>在開始寫之前，先來看一些現象</p>
+
+<p>因為HTTP 是一個stateless的協定，網頁應用需要使用者登入，必須實作追蹤每個使用者的動態，一個簡單方法是使用傳統Rails的session，儲存<strong>remember token</strong>讓它等於使用者id</p>
+
+<pre><code>session[:remember_token] = user.id
+</code></pre>
+
+<p>所以我們可以在每個頁面用下面那句話，很簡單的找到user</p>
+
+<pre><code>User.find(session[:remember_token])
+</code></pre>
+
+<p>對於我們的網頁的規劃是，我們可以讓user永久保留session，所以我們需要使用一個<em>permanent</em>的標籤，所以要gen一個獨特、機密的記錄token並且記錄他當成永久cookie(除非browser被清掉)，這個記錄需要和user相關，而且還要留存到之後，所以&#8230;.我們需要在model上加點東西！再加之前我們來來寫測試吧！</p>
+
+<p><strong>spec/models/user_spec.rb</strong>加上</p>
+
+<pre><code>it { should respond_to(:remember_token) }
+</code></pre>
+
+<p>為了通過測試！ 我們要下</p>
+
+<pre><code>$ rails generate migration add_remember_token_to_users
+</code></pre>
+
+<p>在<strong>db/migrate/[timestamp]_add_remember_token_to_users.rb</strong>寫下</p>
+
+<pre><code>class AddRememberTokenToUsers &lt; ActiveRecord::Migration
+  def change
+    add_column :users, :remember_token, :string
+    add_index  :users, :remember_token
+  end
+end
+</code></pre>
+
+<p>別忘了</p>
+
+<pre><code>$ bundle exec rake db:migrate
+$ bundle exec rake db:test:prepare
+</code></pre>
+
+<p>加完這些後，測試應該是可以通過的～</p>
+
+<pre><code>$ bundle exec rspec spec/models/user_spec.rb
+</code></pre>
+
+<p>現在我們要來決定要拿什麼東西當作是remember token , 基本上就要用很多亂數的字串組成，當然也可以使用密碼(<strong>password_hash</strong>)，但是這會讓使用者暴露在外，造成不必要的困擾，所以！！！小心起見，我們都會製作客制化的token，利用！！！<strong>urlsafe_base64</strong>方法（來自<strong>SecureRandom</strong>這個module），他會製作url使用的Base64字串</p>
+
+<p>再來，我們會使用callback(before_save)來作token（藉由email的獨特性！），在使用者存檔前，做create <strong>remember_token</strong>這個動作</p>
+
+<p>OK來寫測試！</p>
+
+<p><strong>spec/models/user_spec.rb</strong> 加到<strong>describe User do</strong>區塊內</p>
+
+<pre><code>describe "remember token" do
+    before { @user.save }
+    its(:remember_token) { should_not be_blank }
+  end 
+</code></pre>
+
+<p>這邊要說一下那個<strong>its</strong>就像是<strong>it</strong>但他有的特殊的含義！</p>
+
+<p>舉例一下</p>
+
+<pre><code>its(:remember_token) { should_not be_blank }
+</code></pre>
+
+<p>就等於</p>
+
+<pre><code>it { @user.remember_token.should_not be_blank }
+</code></pre>
+
+<p>OK來寫callback在<strong>app/models/user.rb</strong></p>
+
+<pre><code>before_save :create_remember_token
+
+private
+  def create_remember_token
+    self.remember_token = SecureRandom.urlsafe_base64
+  end
+</code></pre>
+
+<p>這邊我們使用<strong>self</strong>是因為我們希望User物件本身的remember_token被設定為值</p>
+
+<p>OK~因為在before_save時已經有塞值給他了，所以現在跑測試應該可以通過</p>
+
+<pre><code>$ bundle exec rspec spec/models/user_spec.rb
+</code></pre>
+
+<h2>Sing_in 這個在Helper的方法</h2>
+
+<p>就之前的設計概念，希望可以將紀錄的token當成cookie放在使用者的瀏覽器！</p>
+
+<p>然後透過這個token找到這個使用者在我們網站上的紀錄！ 所以我們sign_in就是要做這件事情</p>
+
+<p>所以接下來要講個很酷的東東 請先看code</p>
+
+<p><strong>app/helpers/sessions_helper.rb</strong></p>
+
+<pre><code>module SessionsHelper
+
+  def sign_in(user)
+    cookies.permanent[:remember_token] = user.remember_token
+    current_user = user
+  end
+end
+</code></pre>
+
+<p>我們可以來看一下cookie內容長什麼樣子</p>
+
+<pre><code>cookies[:remember_token] = { value:   user.remember_token,
+                         expires: 20.years.from_now.utc }
+</code></pre>
+
+<p>其實是因為我們使用<strong>cookies.permanent</strong>所以預設失效時間是二十年後！</p>
+
+<p>所以我們在使用上就可以這樣找User</p>
+
+<pre><code>User.find_by_remember_token(cookies[:remember_token])
+</code></pre>
+
+<p>也許你會注意到，如果在使用者的瀏覽器記錄登入cookie，並且傳輸透明在應用上，可能會被使用</p>
+
+<p><strong>session hijacking</strong>攻擊，那其實解決方法就是使用ssl</p>
+
+<h2>目前的使用者</h2>
+
+<p>來看一下剛剛那個檔案</p>
+
+<pre><code>module SessionsHelper
+
+  def sign_in(user)
+    cookies.permanent[:remember_token] = user.remember_token
+    current_user = user
+  end
+end
+</code></pre>
+
+<p>我們來看這句</p>
+
+<pre><code>current_user = user
+</code></pre>
+
+<p>這個我們希望他可以在controller和view都可以被存取</p>
+
+<p>就像</p>
+
+<pre><code>&lt;%= current_user.name %&gt; 和 redirect_to current_user
+</code></pre>
+
+<p>所以&#8230;.我們在<strong>app/helpers/sessions_helper.rb</strong>加上</p>
+
+<pre><code>def current_user=(user)
+    @current_user = user
+end 
+</code></pre>
+
+<p>這邊有點奇特，就是那個<strong>current_user=(&#8230;)</strong>其實等同於 <strong>current_user = …</strong></p>
+
+<p>接下來，我們來寫一個funcion使可以取得current_user的，你會發現長的跟上面好像</p>
+
+<pre><code>def current_user
+    @current_user     # Useless! Don't use this line.
+end
+</code></pre>
+
+<p> 但是一般來說我們不會這樣用～</p>
+
+<p> 因為這樣做，我們乾脆就用<strong>attr_accessor</strong>就好～ 不過…其實這完全沒有解決問題，使用者的登入狀態，會被忘記～～所以當他從一個頁面跳到另一個頁面，session就會失效～～</p>
+
+<p> 所以我們會這樣做！</p>
+
+<pre><code> def current_user
+    @current_user ||= user_from_remember_token
+ end
+
+ private 
+
+    def user_from_remember_token
+        remember_token = cookies[:remember_token]
+        User.find_by_remember_token(remember_token) unless remember_token.nil?
+    end
+</code></pre>
+
+<p>那個 <strong>@current_user ||= user_from_remember_token</strong> 等同於</p>
+
+<p>@current_user = @current_user || user_from_remember_token</p>
+
+<h3>改變layout的連結</h3>
+
+<p>我們需要一個類似 <strong>signed_in?</strong></p>
+
+<p>可以讓我們用在 view那邊</p>
+
+<pre><code>&lt;% if signed_in? %&gt;
+  # Links for signed-in users
+&lt;% else %&gt;
+  # Links for non-signed-in-users
+&lt;% end %&gt;
+</code></pre>
+
+<p>所以我們在<strong>app/helpers/sessions_helper.rb</strong>加上</p>
+
+<pre><code>def signed_in?
+    !current_user.nil?
+end
+</code></pre>
+
+<p>這句話的意思是，當現在使用者是空的嗎？如果是的話，singed_in?就是true , 反之</p>
+
+<p>有了這個之後～我們view就有很多要改的</p>
+
+<p><strong>app/views/layouts/_header.html.erb</strong></p>
+
+<pre><code>&lt;header class="navbar navbar-fixed-top"&gt;
+  &lt;div class="navbar-inner"&gt;
+    &lt;div class="container"&gt;
+      &lt;%= link_to "sample app", root_path, id: "logo" %&gt;
+      &lt;nav&gt;
+        &lt;ul class="nav pull-right"&gt;
+          &lt;li&gt;&lt;%= link_to "Home", root_path %&gt;&lt;/li&gt;
+          &lt;li&gt;&lt;%= link_to "Help", help_path %&gt;&lt;/li&gt;
+          &lt;% if signed_in? %&gt;
+            &lt;li&gt;&lt;%= link_to "Users", '#' %&gt;&lt;/li&gt;
+            &lt;li id="fat-menu" class="dropdown"&gt;
+              &lt;a href="#" class="dropdown-toggle" data-toggle="dropdown"&gt;
+                Account &lt;b class="caret"&gt;&lt;/b&gt;
+              &lt;/a&gt;
+              &lt;ul class="dropdown-menu"&gt;
+                &lt;li&gt;&lt;%= link_to "Profile", current_user %&gt;&lt;/li&gt;
+                &lt;li&gt;&lt;%= link_to "Settings", '#' %&gt;&lt;/li&gt;
+                &lt;li class="divider"&gt;&lt;/li&gt;
+                &lt;li&gt;
+                  &lt;%= link_to "Sign out", signout_path, method: "delete" %&gt;
+                &lt;/li&gt;
+              &lt;/ul&gt;
+            &lt;/li&gt;
+          &lt;% else %&gt;
+            &lt;li&gt;&lt;%= link_to "Sign in", signin_path %&gt;&lt;/li&gt;
+          &lt;% end %&gt;
+        &lt;/ul&gt;
+      &lt;/nav&gt;
+    &lt;/div&gt;
+  &lt;/div&gt;
+&lt;/header&gt;
+</code></pre>
+
+<p>這邊有幾個酷炫的地方</p>
+
+<ol>
+<li><p>&lt;%= link_to &#8220;Sign out&#8221;, signout_path, method: &#8220;delete&#8221; %></p>
+
+<p> 這個會pass一個hash參數，告訴提交一個HTTP DELETE 要求</p></li>
+<li><p>&lt;%= link_to &#8220;Profile&#8221;, current_user %></p>
+
+<p> 因為Rails會讓你自動幫你用成user_path(current_user)</p></li>
+</ol>
+
+
+<p>然後那個裡頭<strong><li id="fat-menu" class="dropdown"></strong> 是由Bootstrap&#8217;s Javascript Library提供～</p>
+
+<p>所以我們要在 <strong>app/assets/javascripts/application.js</strong> 加上</p>
+
+<pre><code>//= require bootstrap
+</code></pre>
+
+<h3>Sign up 之後就是Sign in</h3>
+
+<p>先寫測試，把這個加到<strong>spec/requests/user_pages_spec.rb</strong>的<strong>describe &#8220;after saving the user&#8221; do</strong>裡</p>
+
+<pre><code>it { should have_link('Sign out') }
+</code></pre>
+
+<p>還有在<strong>app/controllers/users_controller.rb</strong>加上一句話<strong>sign_in @user</strong></p>
+
+<pre><code>def create
+@user = User.new(params[:user])
+if @user.save
+  sign_in @user
+  flash[:success] = "Welcome to the Sample App!"
+  redirect_to @user
+else
+  render 'new'
+end
+end
+</code></pre>
+
+<p>這樣 就完成了～～</p>
+
+<h3>Sign out</h3>
+
+<p>一樣先寫測試～不過這次要換成destroy 在<strong>spec/requests/authentication_pages_spec.rb</strong></p>
+
+<p>的<strong>describe &#8220;with valid information&#8221; do</strong>的區塊加上</p>
+
+<pre><code>describe "followed by signout" do
+    before { click_link "Sign out" }
+    it { should have_link('Sign in') }
+  end
+</code></pre>
+
+<p>在<strong>app/controllers/sessions_controller.rb</strong>寫上</p>
+
+<pre><code>def destroy
+    sign_out
+    redirect_to root_path
+  end
+</code></pre>
+
+<p>因為我們還沒有sign_out所以…要在helper寫～主要就是要讓current_user變成空的～然後把cookie刪掉</p>
+
+<p>所以在<strong>app/helpers/sessions_helper.rb</strong>寫下</p>
+
+<pre><code>def sign_out
+    current_user = nil
+    cookies.delete(:remember_token)
+end
+</code></pre>
+
+<p>我發現一個怪怪的地方～那就是<strong>/spec/requests/user_pages_spec.rb</strong> 裡頭有個<strong>describe &#8220;after saving the user&#8221; do</strong></p>
+
+<p>我居然找不到！ 結果在CH7底下練習找到</p>
+
+<p>所以我補充一下剛剛那個<strong>spec/requests/user_pages_spec.rb</strong></p>
+
+<p>describe &#8220;after saving the user&#8221; do</p>
+
+<pre><code>            before { click_button submit }
+            let(:user) { User.find_by_email('user@example.com') }
+            it { should have_selector('title', text: user.name) }
+            it { should have_selector('div.alert.alert-success', text: 'Welcome') }
+            it { should have_link('Sign out') }
+    end
+</code></pre>
+
+<p>OK~大功告成！</p>
+
+<p>ps. 我跳過<a href="http://ruby.railstutorial.org/chapters/sign-in-sign-out?version=3.2#sec:cucumber">Introduction to Cucumber</a></p>
+
+<pre><code>$ git add .
+$ git commit -m "Finish sign in"
+$ git checkout master
+$ git merge sign-in-out
+</code></pre>
+</div>
+
+
+<div class="meta">
+	<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2012-08-10T11:05:00+08:00" pubdate data-updated="true">Aug 10<span>th</span>, 2012</time></div>
+	
+
+<div class="tags">
+
+	<a class='category' href='/blog/categories/reading/'>Reading</a>, <a class='category' href='/blog/categories/ruby-on-rails/'>Ruby_on_Rails</a>
+
+</div>
+
+
+	
+		<span class="comments"><a href="/blog/2012/08/10/learning-on-ruby-on-rails-tutorial-ch8-sign-in/#disqus_thread">Comments</a></span>
+	
+</div></article>
+
+	<div class="share">
+	<div class="addthis_toolbox addthis_default_style ">
+	
+	<a class="addthis_button_facebook_like" fb:like:layout="button_count"></a>
+	
+	
+	<a class="addthis_button_tweet"></a>
+	
+	
+	<a class="addthis_button_google_plusone" g:plusone:size="medium"></a>
+	
+<!---	<a class="addthis_counter addthis_pill_style"></a> --->
+	</div>
+  <script type="text/javascript" src="http://s7.addthis.com/js/250/addthis_widget.js#pubid="></script>
+</div>
+
+
+
+<section id="comment">
+    <h2 class="title">Comments</h2>
+    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+</section>
+</div>
+	<footer id="footer" class="inner">Copyright &copy; 2014
+
+    Aloha
+
+<br>
+Powered by Octopress.
+</footer>
+	<script src="/javascripts/slash.js"></script>
+<script src="/javascripts/jquery.fancybox.pack.js"></script>
+<script type="text/javascript">
+(function($){
+	$('.fancybox').fancybox();
+})(jQuery);
+</script> <!-- Delete or comment this line to disable Fancybox -->
+
+
+<script type="text/javascript">
+      var disqus_shortname = 'ccaloha';
+      
+        
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://ccaloha.cc/blog/2012/08/10/learning-on-ruby-on-rails-tutorial-ch8-sign-in/';
+        var disqus_url = 'http://ccaloha.cc/blog/2012/08/10/learning-on-ruby-on-rails-tutorial-ch8-sign-in/';
+        var disqus_script = 'embed.js';
+      
+    (function () {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/' + disqus_script;
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script>
+
+
+
+	<script type="text/javascript">
+		var _gaq = _gaq || [];
+		_gaq.push(['_setAccount', 'UA-29608372-1']);
+		_gaq.push(['_trackPageview']);
+
+		(function() {
+			var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+			ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+			var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+		})();
+	</script>
+
+
+<a title="Google Analytics Alternative" href="http://clicky.com/100753071"><img alt="Google Analytics Alternative" src="//static.getclicky.com/media/links/badge.gif" border="0" /></a>
+<script src="//static.getclicky.com/js" type="text/javascript"></script>
+<script type="text/javascript">try{ clicky.init(100753071); }catch(e){}</script>
+<noscript><p><img alt="Clicky" width="1" height="1" src="//in.getclicky.com/100753071ns.gif" /></p></noscript>
+
+</body>
+</html>

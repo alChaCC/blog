@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: CoffeeScript | AlohaCC]]></title>
+  <link href="http://ccaloha.cc/blog/categories/coffeescript/atom.xml" rel="self"/>
+  <link href="http://ccaloha.cc/"/>
+  <updated>2014-07-11T19:53:39+08:00</updated>
+  <id>http://ccaloha.cc/</id>
+  <author>
+    <name><![CDATA[Aloha]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[HOWTO:Install CoffeeScirpt in MacOSX(and use textmate)]]></title>
+    <link href="http://ccaloha.cc/blog/2012/04/22/howto-install-coffeescirpt-in-macosx-and-use-textmate/"/>
+    <updated>2012-04-22T23:08:00+08:00</updated>
+    <id>http://ccaloha.cc/blog/2012/04/22/howto-install-coffeescirpt-in-macosx-and-use-textmate</id>
+    <content type="html"><![CDATA[<h1>安裝CoffeesSript in Your Mac OSX</h1>
+
+<p>1.Install Node.js</p>
+
+<p>GO TO <a href="http://nodejs.org/">Node.js</a></p>
+
+<p>Click <strong>"Download"</strong></p>
+
+<p>Install it .</p>
+
+<!--more-->
+
+
+<p>2.Install npm</p>
+
+<pre><code>    curl http://npmjs.org/install.sh | sudo sh
+</code></pre>
+
+<p>3.Install CoffeeScript</p>
+
+<pre><code>    sudo npm install -g coffee-script
+</code></pre>
+
+<p>4.If You use Textmate , you can install textmate bundle. Using "command+B" preview your code.</p>
+
+<pre><code>which node
+/usr/bin/node
+
+which coffee
+/usr/bin/coffee
+
+cd /usr/bin
+sudo ln -s /usr/bin/node
+sudo ln -s /usr/bin/coffee
+
+mkdir -p ~/Library/Application\ Support/TextMate/Bundles
+
+cd ~/Library/Application\ Support/TextMate/Bundles
+git clone git://github.com/jashkenas/coffee-script-tmbundle CoffeeScript.tmbundle
+</code></pre>
+]]></content>
+  </entry>
+  
+</feed>

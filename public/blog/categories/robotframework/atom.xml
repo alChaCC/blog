@@ -1,0 +1,861 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: RobotFramework | AlohaCC]]></title>
+  <link href="http://ccaloha.cc/blog/categories/robotframework/atom.xml" rel="self"/>
+  <link href="http://ccaloha.cc/"/>
+  <updated>2014-07-11T19:53:39+08:00</updated>
+  <id>http://ccaloha.cc/</id>
+  <author>
+    <name><![CDATA[Aloha]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[[Installation Guide] RobotFramework 2.7.4 + Sikuli + DatabaseLibrary +SSHLibrary + Seleniumlibrary (jybot and pybot)in Ubuntu 12.04]]></title>
+    <link href="http://ccaloha.cc/blog/2012/10/16/installation-guide-robotframework-2-dot-7-4-plus-sikuli-plus-databaselibrary-plus-sshlibrary-plus-seleniumlibrary-jybot-and-pybot-in-ubuntu-12-dot-04/"/>
+    <updated>2012-10-16T11:39:00+08:00</updated>
+    <id>http://ccaloha.cc/blog/2012/10/16/installation-guide-robotframework-2-dot-7-4-plus-sikuli-plus-databaselibrary-plus-sshlibrary-plus-seleniumlibrary-jybot-and-pybot-in-ubuntu-12-dot-04</id>
+    <content type="html"><![CDATA[<h2>Prepare</h2>
+
+<ol>
+<li>ubuntu-12.04.1-desktop-i386</li>
+<li>VirtualBox</li>
+</ol>
+
+
+<h2>Installation Ubuntu in VirtualBox</h2>
+
+<p>流程請參考</p>
+
+<p><a href="http://www.deltalounge.net/wpress/2012/06/virtualbox-install-ubuntu-12-04/">VirtualBox - Install Ubuntu 12.4</a></p>
+
+<p><a href="http://blog.xuite.net/yh96301/blog/60374490-VirtualBox+4.1%E5%AE%89%E8%A3%9DUbuntu+12.04">VirtualBox 4.1安裝Ubuntu 12.04</a></p>
+
+<!--more-->
+
+
+<h2>Update / Upgrade apt-get</h2>
+
+<pre><code>$ sudo apt-get update
+$ sudo apt-get -f upgrade
+</code></pre>
+
+<h2>Install VIM</h2>
+
+<pre><code>$ sudo apt-get install vim
+</code></pre>
+
+<h2>Install Python</h2>
+
+<pre><code>$ python --version
+</code></pre>
+
+<p>Ubuntu 已經幫你安裝好了</p>
+
+<!--more-->
+
+
+<p></p>
+
+<h2>Install Java</h2>
+
+<p>（http://maketecheasier.com/install-java-runtime-in-ubuntu/2012/05/14）</p>
+
+<pre><code>$ sudo apt-get install openjdk-7-jre
+$ java -version
+</code></pre>
+
+<h2>Install Jython</h2>
+
+<pre><code>$ sudo apt-get install jython  
+</code></pre>
+
+<h2>Install Robotframework</h2>
+
+<p>Download <em>robotframework-2.7.4.tar.gz</em></p>
+
+<pre><code>$ cd Downloads
+$ tar -zxv -f robotframework-2.7.4.tar.gz
+$ cd robotframework-2.7.4
+$ sudo python setup.py install
+$ sudo jython setup.py install
+$ pybot --version
+$ jybot --version
+</code></pre>
+
+<h4>2012/10/16補充</h4>
+
+<pre><code>if you get "jybot: command not found"
+
+$ ln -s  /usr/local/bin/jybot /usr/share/jython/bin/jybot 
+</code></pre>
+
+<h2>Intall ez_install</h2>
+
+<pre><code>$ wget http://peak.telecommunity.com/dist/ez_setup.py
+$ python ez_setup.py
+</code></pre>
+
+<h2>Install Database Library (pybot only)</h2>
+
+<pre><code>$ easy_install robotframework-databaselibrary
+$ sudo apt-get install python-mysqldb
+</code></pre>
+
+<h2>Install paramiko</h2>
+
+<pre><code>$ sudo apt-get install python-paramiko
+</code></pre>
+
+<h2>Install SSH Library</h2>
+
+<pre><code>$ tar -zxv -f robotframework-sshlibrary-1.1.tar.gz 
+$ cd robotframework-sshlibrary-1.1
+$ sudo python setup.py install
+$ sudo jython setup.py install
+</code></pre>
+
+<h2>Install Seleniumlibrary</h2>
+
+<pre><code>$ tar -zxv -f robotframework-sshlibrary-1.1.tar.gz 
+$ cd robotframework-sshlibrary-1.1
+$ sudo python setup.py install
+$ sudo jython setup.py install
+</code></pre>
+
+<h2>Install SVN</h2>
+
+<pre><code>$ sudo apt-get install subversion
+</code></pre>
+
+<h2>Install Sikuli related package</h2>
+
+<pre><code>$ sudo apt-get install wmctrl
+$ sudo apt-get install libopencv-*
+$ sudo apt-get isntall python-opencv
+$ sudo apt-get install build-essential libgtk2.0-dev libjpeg-dev libtiff4-dev libjasper-dev libopenexr-dev cmake python-dev python-numpy python-tk libtbb-dev libeigen2-dev yasm libfaac-dev libopencore-amrnb-dev libopencore-amrwb-dev libtheora-dev libvorbis-dev libxvidcore-dev libx264-dev libqt4-dev libqt4-opengl-dev sphinx-common texlive-latex-extra libv4l-dev libdc1394-22-dev libavcodec-dev libavformat-dev libswscale-dev
+</code></pre>
+
+<p>上面是參考<a href="http://www.samontab.com/web/2012/06/installing-opencv-2-4-1-ubuntu-12-04-lts/">Installing OpenCV 2.4.1 in Ubuntu 12.04 LTS</a></p>
+
+<h4>2012/10/16補充</h4>
+
+<pre><code>$ echo "deb http://us.archive.ubuntu.com/ubuntu/ oneiric universe"  &gt;&gt; /etc/apt/sources.list
+$ echo "deb http://us.archive.ubuntu.com/ubuntu/ oneiric-updates universe" &gt;&gt; /etc/apt/sources.list
+$ sudo apt-get update
+$ sudo apt-get install libcv2.1 libcvaux2.1 libhighgui2.1
+</code></pre>
+
+<h2>Install Rdesktop for Windows Login (Sikuli Used)</h2>
+
+<pre><code># sudo apt-get install rdesktop
+</code></pre>
+
+<h2>Prepare Related jar for Jybot</h2>
+
+<p>你必須要下載，我是把它放在我的test folder裡面 ex: resource/keyword/LinuxEnvirement</p>
+
+<pre><code>sikuli-script.jar
+trilead-ssh2-build213.jar
+dblibrary-2.0.jar
+mysql-connector-java-5.1.18-bin.jar
+</code></pre>
+
+<h2>Ubuntu Run Script Sample</h2>
+
+<blockquote><p>PATH is very IMPORTANT</p></blockquote>
+
+<pre><code>#!/bin/bash
+
+if [ $# -lt 4 ]; then
+        echo "usage : sh run_tests.sh "Test_IP" "Database_IP" "BriefTest/FullTest" "Revison"
+        exit 1
+fi
+
+#===========================================================
+# 這一段是把我的Sikuli所要使用的圖片路徑加進AddImagePath.py裡面
+# Absolute path to this script
+SCRIPT=`readlink -f $0`
+# Absolute path this script is in
+SCRIPTPATH=`dirname $SCRIPT`
+CONFIG_FILE=$SCRIPTPATH/resource/keyword/AddImagePath.py
+echo $SCRIPTPATH
+#sed -i 's/Winbasic=.*/Winbasic=""/g' $CONFIG_FILE
+sed -i -e "s@Winbasic=.*@Winbasic=\"$SCRIPTPATH/..\/Lib\/keyword\/Others\/Sikuli\/Windows_Operating.sikuli\/ImagesOfWindowsBasicOperation\"@g" $CONFIG_FILE
+sed -i -e "s@Shutdown=.*@Shutdown=\"$SCRIPTPATH/..\/Lib\/keyword\/Others\/Sikuli\/Windows_Operating.sikuli\/ImagesOfShutdown\"@g" $CONFIG_FILE
+sed -i -e "s@CreateFile=.*@CreateFile=\"$SCRIPTPATH/..\/Lib\/keyword\/Others\/Sikuli\/Windows_Operating.sikuli\/ImagesOfCreateFile\"@g" $CONFIG_FILE
+sed -i -e "s@Format=.*@Format=\"$SCRIPTPATH/..\/Lib\/keyword\/Others\/Sikuli\/Windows_Operating.sikuli\/ImagesOfFormat\"@g" $CONFIG_FILE
+sed -i -e "s@WinRDP=.*@WinRDP=\"$SCRIPTPATH/..\/Lib\/keyword\/Others\/Sikuli\/Windows_Operating.sikuli\/ImagesOfWinRDP\"@g" $CONFIG_FILE
+#===========================================================
+
+MYDIRPATH=../Lib/keyword/Others/Sikuli/Windows_Operating.sikuli:resource/keyword
+LOCALPATH=resource/keyword/LinuxEnvirement
+
+VERSION=$4
+TESTSCALE=$3
+Test_IP=$1
+Database_IP=$2
+
+export CLASSPATH=$LOCALPATH/sikuli-script.jar:$LOCALPATH/trilead-ssh2-build213.jar:$LOCALPATH/dblibrary-2.0.jar:$LOCALPATH/mysql-connector-java-5.1.18-bin.jar
+export JYTHONPATH=/usr/share/jython/Lib:$LOCALPATH/sikuli-script.jar/Lib 
+
+
+jybot --pythonpath $MYDIRPATH  --outputdir test --exclude no_run --include $TESTSCALE --loglevel TRACE -l Windows_log_$TESTSCALE\_$VERSION -r Windows_report_$TESTSCALE\_$VERSION -o Windows_output_$TESTSCALE\_$VERSION --variable Database_IP:$Database_IP --variable Test_IP:$Test_IP Windows_TestCase.txt
+</code></pre>
+
+<p>最重要就是要告訴JYTHONPATH</p>
+
+<p>大概是這樣！</p>
+
+<p>有些lib是為了可以跑sikuli裝的 沒有時間一一去驗證是否真的需要....</p>
+
+<blockquote><p>特別感謝 EJ 和 林旺 提供強大支援！</p></blockquote>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[HOWTO:Integrate SSH / Database / Selenium Library and Sikuli in RobotFramework using Jybot]]></title>
+    <link href="http://ccaloha.cc/blog/2012/02/24/howto-integrate-ssh-slash-database-slash-selenium-library-and-sikuli-in-robotframework-using-jybot/"/>
+    <updated>2012-02-24T22:21:00+08:00</updated>
+    <id>http://ccaloha.cc/blog/2012/02/24/howto-integrate-ssh-slash-database-slash-selenium-library-and-sikuli-in-robotframework-using-jybot</id>
+    <content type="html"><![CDATA[<blockquote><p>閱讀此篇之前，我已假設您具備使用RF的經驗，譬如使用SSH / Database / Selenium 撰寫test case
+另外我的平台是Linux</p></blockquote>
+
+<h2>準備jar檔</h2>
+
+<pre><code>dblibrary-1.0.jar 
+trilead-ssh2-build213.jar
+mysql-connector-java-5.1.18-bin.jar
+sikuli-script.jar
+</code></pre>
+
+<!--more-->
+
+
+<h2>準備好你自己寫好的Sikuli函式庫</h2>
+
+<p>請參考<a href="http://ccaloha.cc/blog/2012/01/05/how-to-using-sikuli-and-robotframework-in-linux-platform/">HOW-TO: Using Sikuli and RobotFramework in Linux Platform</a></p>
+
+<pre><code>假設路徑在/home/aloha/RobotSikuli/Lib/RDPFormatLib
+</code></pre>
+
+<h2>準備好你的Test Case</h2>
+
+<pre><code>假設路徑在/home/aloha/RobotSikuli/test_case.txt
+</code></pre>
+
+<h2>寫script把上面那些東東放進去！&lt;--重要</h2>
+
+<pre><code>#!/bin/bash
+MYLIBDIR=/home/aloha/RobotSikuli/Lib/RDPFormatLib
+export JYTHONPATH="/home/aloha/RobotSikuli/JavaLib/sikuli-script.jar/Lib"
+export CLASSPATH=/home/aloha/RobotSikuli/JavaLib/sikuli-script.jar:/home/aloha/RobotSikuli/JavaLib/trilead-ssh2-build213.jar:/home/aloha/RobotSikuli/JavaLib/dblibrary-1.0.jar:/home/aloha/RobotSikuli/JavaLib/mysql-connector-java-5.1.18-bin.jar  
+
+jybot --pythonpath $MYLIBDIR  --outputdir test --loglevel TRACE -l log -r report -o output $* test_case.txt
+</code></pre>
+
+<h2>是否要改原先用pybot寫的keyword?</h2>
+
+<p><strong>SSH Library不用改</strong></p>
+
+<p><strong>Selenium Library不用改</strong></p>
+
+<p><strong>Database Library要改</strong></p>
+
+<ol>
+<li>Library         org.robot.database.keywords.DatabaseLibrary</li>
+<li>其他keyword並沒有對應～所以要修改</li>
+</ol>
+
+
+<p>以上為目前開發經驗，後續會再補充</p>
+
+<p>特別要感謝<strong>Derek</strong>強力支援</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[10分鐘安裝RobotFramework/Database Library/SSH Library/Selenium Library on CentOS]]></title>
+    <link href="http://ccaloha.cc/blog/2012/02/24/intall-robotframework-SSH-Database-Selenium-Lib-using-10-minuates-in-centos/"/>
+    <updated>2012-02-24T21:30:00+08:00</updated>
+    <id>http://ccaloha.cc/blog/2012/02/24/intall-robotframework-SSH-Database-Selenium-Lib-using-10-minuates-in-centos</id>
+    <content type="html"><![CDATA[<p>10分鐘安裝RobotFramework on CentOS 5.5</p>
+
+<p>今天為了趕下班 快速建立的RobotFramework 在乾淨的CentOS 5.5上！</p>
+
+<p>真的是快速！ 要謝謝 <strong>Mac大大</strong> 強力快手支援</p>
+
+<h2>安裝python 2.6</h2>
+
+<pre><code>yum install python26
+</code></pre>
+
+<h2>安裝easy_install</h2>
+
+<pre><code>wget http://peak.telecommunity.com/dist/ez_setup.py
+python26 ez_setup.py 
+</code></pre>
+
+<!--more-->
+
+
+<h2>安裝Robotframework 2.6.3</h2>
+
+<pre><code>easy_install robotframework==2.6.3
+</code></pre>
+
+<h2>安裝Database Library python 版</h2>
+
+<pre><code>easy_install robotframework-databaselibrary
+</code></pre>
+
+<h2>安裝MySQLDB for DatabaseLibrary</h2>
+
+<pre><code>yum install  python26-mysqldb
+</code></pre>
+
+<h2>安裝paramiko for SSH Library</h2>
+
+<pre><code>yum install  python26-paramiko.noarch
+</code></pre>
+
+<h2>安裝gcc for SSH Library</h2>
+
+<pre><code>yum install gcc
+</code></pre>
+
+<h2>安裝SSH Library</h2>
+
+<pre><code>wget http://robotframework-sshlibrary.googlecode.com/files/SSHLibrary-1.0.tar.gz
+tar -zxv -f SSHLibrary-1.0.tar.gz 
+cd SSHLibrary-1.0
+python2.6 setup.py install
+</code></pre>
+
+<h2>安裝SeleniumLibrary</h2>
+
+<pre><code>wget http://robotframework-seleniumlibrary.googlecode.com/files/robotframework-seleniumlibrary-2.8.tar.gz
+tar -zxv -f robotframework-seleniumlibrary-2.8.tar.gz
+cd robotframework-seleniumlibrary-2.8
+python2.6 setup.py install
+</code></pre>
+
+<h2>安裝SVN (額外)</h2>
+
+<pre><code>yum install subversion
+</code></pre>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[RobotFramework for dummies]]></title>
+    <link href="http://ccaloha.cc/blog/2012/02/04/robotframework-first-time-cook-book/"/>
+    <updated>2012-02-04T22:16:00+08:00</updated>
+    <id>http://ccaloha.cc/blog/2012/02/04/robotframework-first-time-cook-book</id>
+    <content type="html"><![CDATA[<h2>1. 總體注意事項！</h2>
+
+<ol type="a">
+<li><p>每個變化！都要空兩格！ 不然都屬於一個變化</p></li>
+<li><p>如果keyword的輸入變數要設成有default值的話，要寫在最後面！(後面的範例有)</p></li>
+</ol>
+
+
+<p> <!--more--></p>
+
+<h2>2. 跑RF的執行檔 -  run.sh檔</h2>
+
+<p>指令要跑的檔案為 <strong>my_TestCase.txt</strong></p>
+
+<p>指定跑的log放在哪裡  還有可以設定輸出的檔名</p>
+
+<p>以及指定這次跑的test case 是那些 (可以用關鍵字[Tags]來分,用include是代表"要跑"的tag,exclude是代表"不要跑"哪些)</p>
+
+<pre><code>OUTDIR=test_result
+COMMON_FLAGS="-d $OUTDIR"
+pybot $COMMON_FLAGS -l my_log -r my_report -o my_output  --exclude=no_run $* my_TestCase.txt
+</code></pre>
+
+<p><strong>使用方式</strong></p>
+
+<p>在放test case的資料夾底下執行！</p>
+
+<h2>3. 善用__init__.txt檔</h2>
+
+<p>將所有你會用到的資源！通通寫在這邊～以便管理</p>
+
+<p>而且test case只要include這個檔案即可！其他keyword的txt檔都不需要在寫Setting</p>
+
+<pre><code>*** Settings ***
+Variables       resource/variable/my_variables.py
+Library         OperatingSystem
+Library         SSHLibrary   ${EMPTY}   ${EMPTY}   ${PROMPT}
+Library         DatabaseLibrary
+Library         StringLibrary
+Resource        resource/variable/constant_var.txt
+Resource        resource/keyword/keyword_local.txt
+</code></pre>
+
+<h2>4. Variable 寫法</h2>
+
+<p>TXT檔(通常我會取名variable_XXX.txt)的寫法如下：</p>
+
+<pre><code>*** Variables ***
+${hello}            hahaha
+#如果你要空格的話呢？
+${hello_have_space} \ hahaha
+</code></pre>
+
+<p>PY檔(通常我會取名variable_XXX.py)的寫法如下：</p>
+
+<pre><code>HOST =  "xx.xx.xx.xx"
+SQL_SERVER = "xx.xx.xx.xx"
+USERNAME =  "aloha"
+PASSWORD =  "XXXXX"
+PROMPT   =  "#"
+</code></pre>
+
+<h2>5. Keyword 寫法</h2>
+
+<h4>a. 如果你的keyword需要帶參數,請服用 [Arguments]  參數名稱  …   …</h4>
+
+<h4>b. 如果你的keyword需要回傳參數,請服用 [Return]  參數名稱  …   …</h4>
+
+<h4>c. 如果你的keyword需要說明,請服用 [Documentation]  你的說明</h4>
+
+<h4>d. 你會發現,keyword 裡頭也可以包其他keyword</h4>
+
+<pre><code>*** Keywords ***
+Login As Valid User
+    Open Connection To Test Host
+    Login  ${USERNAME}  ${PASSWORD}
+
+Open Connection To Test Host
+    Open Connection  ${HOST}
+
+Set Test Case Keyword   [Arguments] ${keyword_name}
+    Set Suite Variable  ${test_case_keyword}    ${keyword_name} 
+
+Connect to Database
+[Documentation]  連接到Database Server
+Connect To Database  MySQLdb  要用的資料庫名稱  登入帳號  登入密碼  ${SQL_SERVER}  埠口 
+
+Get ID from Database by element Name and table name
+    [Arguments]  ${element_Name}  ${table_name}  ${limit script}=null
+    Connect to Database
+    ${queryResult_no_script} =  Run Keyword If  "${limit script}" == "null"  Query  select ${table_name}_id from ${table_name} where name='${element_Name}'
+    ${queryResult_have_script} =  Run Keyword Unless  "${limit script}" == "null"  Query  select ${table_name}_id from ${table_name} where name='${element_Name}' ${limit script}
+    ${queryResults} =  Set Variable If  "${limit script}" == "null"   ${queryResult_no_script}   ${queryResult_have_script} 
+    Log  ${queryResults[0][0]}
+    Disconnect From Database
+    [Return]  ${queryResults[0][0]} 
+
+To interact to HOST 
+    [Arguments]  ${USERNAME}
+    Login As Valid User 
+    Write  cd /tmp
+    Write  ls 
+    Write  rm -f XXX
+    Witre  sh what_is_your_name.sh
+    Read Until  Input username :
+    Write  ${USERNAME}
+    SSHLibrary.Get File  /tmp/你的檔案位置  ${CURDIR}/你要放的位置  
+
+To Get Time now and Using Operating_System_Library Modify file
+    [Arguments]   ${txt_name}  ${cur_day}  ${next_hour}  ${input_user_id}  
+    ${yyyy} ${mm}   ${dd} = Get Time  year,month,day
+    ${cur_day} =  Run Keyword If  '${cur_day}' == 'today'  Get Time  day
+    ${cur_hour} =  Get Time  hour
+    ${tmp_hour} =  Convert To Integer  ${cur_hour}
+    ${next_hour}=  Run Keyword If  '${next_hour}' == 'next_hour' Evaluate  ${tmp_hour}+${1}
+    ${tmp_day}=   Convert To Integer  ${cur_day}
+    ${next_day}=  Evaluate  ${tmp_day}+${1} 
+    Run  sed -i \'s/Time = /Time = ${tmp_day} ${next_day} ${input_user_id}/g\' ${CURDIR}/${txt_name}
+
+Using Selenium_Library Get Key
+    [Setup]  Start Selenium Server
+    Open Browser  ${login address}
+    Maximize Browser Window
+    call selenium api  click  //div[contains(@class,'XXXX')][text()='Show Key']
+    ${Key}=  Get Text  //div[contains(@id,'Key')]
+    Close Browser
+    [Teardown]  Stop Selenium Server
+
+Using String_Library replace escape char
+    [Arguments]  ${KEY}
+    ${after_reg}=  Replace String Using Regexp  ${KEY}  \/  \\/
+    Log  ${after_reg}
+</code></pre>
+
+<h3>常用的keyword</h3>
+
+<ol>
+<li><p>Built-in Library</p>
+
+<pre><code> Run Keyword If  /  Run Keyword Unless
+ Set Variable If 
+ Set Suite Variable
+ Evaluate
+ Get Time
+ Convert To Integer
+</code></pre></li>
+<li><p>SSH Library</p>
+
+<pre><code> Login
+ Open Connection
+ Write 
+ Read Until
+ Get File
+</code></pre></li>
+<li><p>Selenium Library</p>
+
+<pre><code> Start Selenium Server  /  Stop Selenium Server
+ Open Browser  /  Close Browser
+ call selenium api 
+</code></pre></li>
+<li><p>String Library</p>
+
+<pre><code> Replace String Using Regexp
+</code></pre></li>
+<li><p>Operating_System_Library</p>
+
+<pre><code> Run 
+</code></pre></li>
+</ol>
+
+
+<h2>6. TestCase寫法</h2>
+
+<p><strong>盡量把test case 寫成可讀性高的描述！這也意味著可能你的keyword會變多～XD</strong></p>
+
+<pre><code>Combine All Keywords in One Test Case 
+    [Tags]  critical_test
+    [Documentation]  使用DatabaseLibrary找尋我的username在user這個table，然後搜尋條件之一就是is_appear='1'
+    ${MyUserNameID} =  Get ID from Database by element Name and table name  ${username}  user  and is_appear='1'
+    [Documentation]  取得時間，使用OS Library調整我的test.txt檔  
+    To Get Time now and Using Operating_System_Library Modify file  test.txt  today  next_hour  ${MyUserNameID}
+    [Documentation]  用SSH Library 登入到Host 然後輸入文字my name is aloha
+    To interact to HOST  my name is aloha
+    [Documentation]  使用Selenium Library 取得網站的key
+    Using Selenium_Library Get Key
+    [Documentation]  使用String Library找出字串jadfksal;fed;lfsjfljsa\fdsa的跳脫字元
+    Using String_Library replace escape char  jadfksal;fed;lfsjfljsa\fdsa
+</code></pre>
+
+<h2>最後的資料夾結構規劃</h2>
+
+<pre><code>My_test_case_folder
+    -&gt; my_TestCase.txt
+    -&gt; __init__.txt
+    -&gt; resource
+        -&gt;keyword
+            -&gt;keyword_local.txt
+        -&gt;variable
+            -&gt;variable_local.py
+            -&gt;variable_constant.txt
+    -&gt;test_result
+</code></pre>
+
+<p>後續會一直加....</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[HOW-TO: Using Sikuli and RobotFramework in Linux Platform ]]></title>
+    <link href="http://ccaloha.cc/blog/2012/01/05/how-to-using-sikuli-and-robotframework-in-linux-platform/"/>
+    <updated>2012-01-05T13:38:00+08:00</updated>
+    <id>http://ccaloha.cc/blog/2012/01/05/how-to-using-sikuli-and-robotframework-in-linux-platform</id>
+    <content type="html"><![CDATA[<blockquote><p>首先，你必須先看過這篇文章 抓好 Sikuli <a href="http://ccaloha.cc/blog/2011/12/17/install-sikuli-in-ubuntu/">搞搞 Sikuli 在你的 Ubuntu</a></p></blockquote>
+
+<p><strong>我會使用 windows RDP, 作為一個範例,在這之前,請先確保你的linux可以使用 # rdesktop</strong></p>
+
+<blockquote><p>以下為我的簡單感想 , 在robot framework底下使用sikuli , 就是使用一個擴充的library</p></blockquote>
+
+<!--more-->
+
+
+<p></p>
+
+<h2>目標 使用Sikuli，遠端登入到window桌面，進行format volume的動作</h2>
+
+<ol>
+<li><p>使用sikuli ide 把要點選的照片拍下來 (我個人覺得這個很費工....囧)</p>
+
+<pre><code> sh /你的sikuli路徑/sikuli-ide.ti
+</code></pre></li>
+<li><p>建立個資料夾吧</p>
+
+<pre><code> mkdir RobotSikuli
+</code></pre></li>
+<li><p>把剛剛拍的照片放到winFormatImage裡</p>
+
+<pre><code>cd RobotSikuli
+mkdir winFormatImage
+mv 你剛剛用sikuli拍的照片檔路徑 winFormatImage   
+</code></pre></li>
+<li><p>開始撰寫你的library (因為要run在不同的三種window版本，所以寫得比較麻煩…科科)</p>
+
+<pre><code> cd ..
+ cd RobotSikuli
+ mkdir WindowRDPFormatLibrary
+ vim Format.py
+</code></pre></li>
+</ol>
+
+
+<p><strong>python程式碼如下(這是小弟第一次寫python,請見諒)</strong></p>
+
+<pre><code>    #coding=utf-8
+    from __future__ import with_statement
+    from sikuli.Sikuli import *
+
+    addImagePath("winFormatImage")
+
+"""
+1. 在python2.6中，with正式成為了關鍵字所以在python2.5以前,要利用with的話,需要使用:Python代碼from __future__ import with_statement 
+from __future__ import with_statement 它的原理如下:所有實現上下文協議的對像都包含以下三種方法:__context__()它返回一個自我管理的上下文對象
+或者一個真正意義的上下文管理器__enter()__進入上下文管理器,開始迭代當with語句結束的時候,無論是正常結束還是拋出異常,都會執行__exit__(),該方法用於關閉資源連接
+2. Your project is created. Add at least one you-name-it.py file to the source folder and put from sikuli.Sikuli import * as the first line.
+
+"""
+__version__ = '0.1'
+
+class VolumeFormat(object):
+    ROBOT_LIBRARY_SCOPE = 'GLOBAL'
+    ROBOT_LIBRARY_VERSION = __version__
+
+def __init__(self, platform):
+
+    self.start_pictures = {'win2003' : "start2003.png" , 'winxp' : "startxp.png" , 'win2008' : "start2008.png"}
+    self.start_picture = self.start_pictures[platform]
+
+    self.control_panels = {'win2003' : "control_panel_2003.png" , "winxp" : "control_panel_xp.png" , 'win2008' : "control_panel_2008.png"}
+    self.control_panel  = self.control_panels[platform]
+
+    self.administrator_tools = {'win2003' : "administrator_tool2003.png" , 'winxp' : "administrator_toolxp.png" , 'win2008' : "administrator_tool2008.png"}
+    self.administrator_tool = self.administrator_tools[platform]
+
+    self.computer_managements = {'win2003' : "computer_management2003.png" , 'winxp' : "computer_managementxp.png" , 'win2008' : "computer_management2008.png"}
+    self.computer_management = self.computer_managements[platform]
+
+    self.disk_management =  {'win2003' : "disk_management2003.png" , 'winxp' : "disk_managementxp.png" , 'win2008' : "disk_management2008.png"} 
+    self.disk_management = self.disk_management[platform]
+
+    self.full_screens = {'win2003' : "full_screen2003.png" , 'winxp' : "full_screenxp.png" , 'win2008' : "full_screen2008.png"}
+    self.full_screen = self.full_screens[platform]
+
+    self.disk_unknowns = {'win2003' : "disk_unknown2003.png" , 'winxp' : "disk_unknownxp.png" , 'win2008' : "disk_unknown2008.png"}
+    self.disk_unknown = self.disk_unknowns[platform]
+
+    self.initial_disks = {'win2003' : "initial_disk2003.png" , 'winxp' : "initial_diskxp.png" , 'win2008' : "initial_disk2008.png"}
+    self.initial_disk = self.initial_disks[platform]
+
+    self.oks = {'win2003' : "ok2003.png" , 'winxp' : "okxp.png" , 'win2008' : "ok2008.png"}
+    self.ok = self.oks[platform]
+
+    self.link_volumes = {'win2003' : "link_vol2003.png" , 'winxp' : "link_volxp.png" , 'win2008' : "link_vol2008.png"}
+    self.link_volume = self.link_volumes[platform]
+
+    self.unformat_infos = {'win2003' : "unformat_info2003.png" , 'winxp' : "unformat_infoxp.png" , 'win2008' : "unformat_info2008.png"}
+    self.unformat_info = self.unformat_infos[platform]
+
+    self.new_partitions = {'win2003' : "new_partition2003.png" , 'winxp' : "new_partitionxp.png" , 'win2008' : "new_partition2008.png"}
+    self.new_partition = self.new_partitions[platform]
+
+    self.cancel_auto_partitions = {'win2003' : "cancel_auto_partition2003.png" , 'winxp' : "cancel_auto_partitionxp.png" , 'win2008' : "cancel_auto_partition2008.png"}
+            self.cancel_auto_partition = self.cancel_auto_partitions[platform]
+
+    self.next_bottoms = {'win2003' : "next2003.png" , 'winxp' : "nextxp.png" , 'win2008' : "next2008.png"}
+    self.next_bottom = self.next_bottoms[platform]
+
+    self.finishs = {'win2003' : "finish2003.png" , 'winxp' : "finishxp.png" , 'win2008' : "finish2008.png"}
+    self.finish = self.finishs[platform]
+
+    self.closes = {'win2003' : "close2003.png" , 'winxp' : "closexp.png" , 'win2008' : "close2008.png"}
+    self.close = self.closes[platform]
+
+def click_start(self):
+    self._click(self.start_picture)
+
+def click_control_panel(self):
+    self._click(self.control_panel)
+
+def click_administrator_tool(self, how_to_click = "click"):
+    self._click(self.administrator_tool, how_to_click)
+
+def click_computer_manager(self):
+    self._click(self.computer_management)
+
+def click_disk_management(self):
+    self._click(self.disk_management)
+
+def click_cancel_initial(self):
+    self._click(self.cancel_auto_partition)
+
+def click_full_screen(self):
+    self._click(self.full_screen)
+
+def click_link_vol(self):
+    self._click(self.link_volume)
+
+def click_right_for_initail_info(self):
+    self._click(self.disk_unknown, how_to_click = "rightClick") 
+
+def click_initial_Disk(self):
+    self._click(self.initial_disk)
+
+def click_ok(self):
+    self._click(self.ok)
+
+def click_right_for_new_partition(self):
+    self._click(self.unformat_info, how_to_click = "rightClick")
+
+def click_new_partion(self):
+    self._click(self.new_partition)
+
+def click_next(self):
+    self._click(self.next_bottom)
+
+
+def click_finish(self):
+    self._click(self.finish)    
+
+def click_close(self):
+    self._click(self.close)
+
+def click_what(self , image_name):
+    self._click(image_name)
+
+def _click(self,icon,icon_2 = None ,how_to_click="click"):
+
+    findAll(Pattern(icon).similar(0.9))       
+    allmatchs = getLastMatches()
+    sort_allmatchs = sorted(allmatchs,key=lambda allmatchs:allmatchs.getScore())
+    sort_allmatchs.reverse()
+    match = sort_allmatchs[0]
+    self.appCoordinates = (match.getX(), match.getY(), match.getW(), match.getH())
+            appRegion = Region(*self.appCoordinates)        
+
+    if how_to_click == "click":
+        appRegion.click(icon)
+            elif how_to_click == "doubleclick":
+                    appRegion.doubleClick(icon)
+    elif how_to_click == "rightClick": 
+        appRegion.rightClick(icon)
+    elif how_to_click == "hover":
+        appRegion.hover(icon)
+    elif how_to_click == "dragDrop":
+        appRegion.doubleClick(icon_start,icon_stop)
+</code></pre>
+
+<ol>
+<li><p>建立robotframework的測試碼</p>
+
+<pre><code> cd ..
+ mkdir robotCode
+ cd robotCode
+ vim format_win2008.txt
+</code></pre></li>
+</ol>
+
+
+<p>程式碼如下：</p>
+
+<p>因為我在python檔有寫__int__ 所以我在一開始就先丟個初始值給他(請看下句)</p>
+
+<p>Library  Format.VolumeFormat  win2008</p>
+
+<pre><code>    ***Settings***
+    Library  Format.VolumeFormat  win2008
+    Library  OperatingSystem
+
+    ***Test Cases***
+    Format Win2008 Volume
+        Start Process  rdesktop -u 遠端VM的名字 -p 你的密碼 遠端的IP位置
+        sleep  30
+        click_start
+        click_administrator_tool
+        click_computer_manager
+        sleep  10
+        click_disk_management
+        sleep  10
+        [Documentation]  click_cancel_initial
+        click_cancel_initial
+        click_right_for_initail_info
+        click_link_vol
+        click_right_for_initail_info
+        click_initial_Disk
+        click_ok
+        click_right_for_new_partition
+        click_new_partion
+        click_next
+        click_next
+        click_next
+        click_next
+        click_finish
+        click_close
+        [Teardown]      Stop All Processes
+</code></pre>
+
+<p><strong>重要的來了</strong></p>
+
+<ol>
+<li><p>寫執行檔！！！！這邊就是要告訴robot我還有其他lib要用～還有sikuli的jar檔要include進來</p>
+
+<pre><code> vim run.sh
+</code></pre></li>
+</ol>
+
+
+<p>程式碼如下：</p>
+
+<pre><code>    #!/bin/bash
+    export CLASSPATH="/home/alohacc/Sikuli-X-1.0rc3-r905-linux-i686/Sikuli-IDE/sikuli-script.jar"  
+
+    export JYTHONPATH="$CLASSPATH/Lib"
+
+    jybot --pythonpath WindowRDPFormatLibrary --outputdir results --loglevel TRACE -l Format_log -r Format_report -o Format_output $* robotCode
+</code></pre>
+
+<ol>
+<li><p>我run.sh的程式碼 有一個輸出的dir位置，我先建一個給他</p>
+
+<pre><code> mkdir results
+</code></pre></li>
+</ol>
+
+
+<p>To sum up :</p>
+
+<p>資料夾結構如下：</p>
+
+<pre><code>RobotSikuli
+  -&gt;results
+  -&gt;WindowRDPFormatLibrary
+        -&gt; Format.py
+  -&gt;robotCode
+        -&gt; format_win2008.txt
+        -&gt; run.sh
+  -&gt;winFormatImage
+        -&gt; administrator_tool2003.png 
+           change_to_original_view.png  
+           control_panel_xp.png                             
+            ……etc 
+</code></pre>
+
+<p>執行的話，就是下</p>
+
+<pre><code>sh robotCode/run.sh
+</code></pre>
+
+<p>恭喜完成！！！</p>
+
+<p>主要參考為</p>
+
+<p><a href="http://blog.mykhailo.com/2011/02/how-to-sikuli-and-robot-framework.html">How-To: Sikuli and Robot Framework Integration</a></p>
+]]></content>
+  </entry>
+  
+</feed>
