@@ -107,6 +107,55 @@ $(document).ready(
     <article class="post">
 	<h2 class="title">
 		
+		<a href="/blog/2014/07/11/reading-note-23-plus-1-design-pattern-part3-factory-method/">
+		
+			Reading-note-23-plus-1-design-pattern-part3-factory_method</a>
+	</h2>
+	<div class="entry-content">
+		<p>重點在於</p>
+
+<blockquote><p>將建立物件的程式碼集中在一個物件或行為中，可避免程式碼重複，方便以後修改</p></blockquote>
+
+<p>你是否常需要建立某個object，但是這個object內容卻時常需要變化，但是又很類似</p>
+
+<p>之前的閱讀筆記(懶惰版)</p>
+
+<iframe id="xmindshare_embedviewer" src="http://www.xmind.net/embed/w4XW?size=medium" width="750px" height="450px" frameborder="0" scrolling="no"></iframe>
+
+
+
+
+		
+		
+	</div>
+
+
+<div class="meta">
+	<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2014-07-11T22:57:34+08:00" pubdate data-updated="true">Jul 11<span>th</span>, 2014</time></div>
+	
+
+
+	
+		<span class="comments"><a href="/blog/2014/07/11/reading-note-23-plus-1-design-pattern-part3-factory-method//blog/index.html#disqus_thread">Comments</a></span>
+	
+</div></article>
+
+
+    <article class="post">
+	<h2 class="title">
+		
 		<a href="/blog/2014/06/30/dynamic-roles-and-permissions-management-using-cancan/">
 		
 			如何動態管理權限-使用cancan</a>
@@ -532,82 +581,6 @@ Net::SSH::Disconnect, connection closed by remote host&#8221;</strong></p>
 
 	
 		<span class="comments"><a href="/blog/2014/03/27/howto-transfer-capistrano-2-to-capistrano-3-using-ruby-on-rails//blog/index.html#disqus_thread">Comments</a></span>
-	
-</div></article>
-
-
-    <article class="post">
-	<h2 class="title">
-		
-		<a href="/blog/2014/03/07/howto-seo-for-octopress/">
-		
-			HOWTO- 公司需要CEO, Blog也需要SEO！- Using Octopress</a>
-	</h2>
-	<div class="entry-content">
-		<p>這篇其實是學習(翻譯)自
-<a href="http://xit0.org/2013/05/seo-for-octopress-websites">http://xit0.org/2013/05/seo-for-octopress-websites</a></p>
-
-<h2>第一步- 文章SEO: 更改你Octopress產生文章引擎的 Rakefile</h2>
-
-<pre><code>desc "Begin a new post in #{source_dir}/#{posts_dir}"
-task :new_post, :title do |t, args|
-  if args.title
-    title = args.title
-  else
-    title = get_stdin("Enter a title for your post: ")
-  end
-  raise "### You haven't set anything up yet. First run `rake install` to set up an Octopress theme." unless File.directory?(source_dir)
-  mkdir_p "#{source_dir}/#{posts_dir}"
-  filename = "#{source_dir}/#{posts_dir}/#{Time.now.strftime('%Y-%m-%d')}-#{title.to_url}.#{new_post_ext}"
-  if File.exist?(filename)
-    abort("rake aborted!") if ask("#{filename} already exists. Do you want to overwrite?", ['y', 'n']) == 'n'
-  end
-  puts "Creating new post: #{filename}"
-  open(filename, 'w') do |post|
-    post.puts "---"
-    post.puts "layout: post"
-    post.puts "title: \"#{title.gsub(/&amp;/,'&amp;amp;')}\""
-    post.puts "date: #{Time.now.strftime('%Y-%m-%d %H:%M')}"
-    post.puts "comments: true"
-    post.puts "categories: "
-    post.puts "keywords: "      # 加在這邊
-    post.puts "description: "   # 加在這邊
-    post.puts "---"
-  end
-end
-</code></pre>
-
-
-		
-		<a href="/blog/2014/03/07/howto-seo-for-octopress/" class="more-link">Read on &rarr;</a>
-	</div>
-
-
-<div class="meta">
-	<div class="date">
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2014-03-07T10:32:20+08:00" pubdate data-updated="true">Mar 7<span>th</span>, 2014</time></div>
-	
-
-<div class="tags">
-
-	<a class='category' href='/blog/categories/seo/'>SEO</a>
-
-</div>
-
-
-	
-		<span class="comments"><a href="/blog/2014/03/07/howto-seo-for-octopress//blog/index.html#disqus_thread">Comments</a></span>
 	
 </div></article>
 

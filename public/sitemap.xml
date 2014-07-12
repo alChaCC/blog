@@ -427,6 +427,12 @@
         <lastmod>2014-06-30T15:38:46+08:00</lastmod>
     </url>
     <url>
+        <loc>
+            http://ccaloha.cc/blog/2014/07/11/reading-note-23-plus-1-design-pattern-part3-factory-method/
+        </loc>
+        <lastmod>2014-07-12T10:52:32+08:00</lastmod>
+    </url>
+    <url>
         <loc>http://ccaloha.cc/About/</loc>
         <lastmod>2013-12-13T19:46:20+08:00</lastmod>
     </url>
@@ -440,15 +446,15 @@
     </url>
     <url>
         <loc>http://ccaloha.cc/archives/</loc>
-        <lastmod>2014-06-30T15:38:46+08:00</lastmod>
+        <lastmod>2014-07-12T10:52:32+08:00</lastmod>
     </url>
     <url>
         <loc>http://ccaloha.cc/blog/archives/</loc>
-        <lastmod>2014-06-30T15:38:46+08:00</lastmod>
+        <lastmod>2014-07-12T10:52:32+08:00</lastmod>
     </url>
     <url>
         <loc>http://ccaloha.cc/blog/</loc>
-        <lastmod>2014-06-30T15:38:46+08:00</lastmod>
+        <lastmod>2014-07-12T10:52:32+08:00</lastmod>
     </url>
     <url>
         <loc>http://ccaloha.cc/DesignPattern/</loc>
@@ -456,7 +462,7 @@
     </url>
     <url>
         <loc>http://ccaloha.cc/</loc>
-        <lastmod>2014-06-30T15:38:46+08:00</lastmod>
+        <lastmod>2014-07-12T10:52:32+08:00</lastmod>
     </url>
     <url>
         <loc>http://ccaloha.cc/Linux/</loc>
