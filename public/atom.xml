@@ -4,7 +4,7 @@
   <title><![CDATA[AlohaCC]]></title>
   <link href="http://ccaloha.cc/atom.xml" rel="self"/>
   <link href="http://ccaloha.cc/"/>
-  <updated>2014-07-12T10:52:44+08:00</updated>
+  <updated>2014-07-12T11:00:06+08:00</updated>
   <id>http://ccaloha.cc/</id>
   <author>
     <name><![CDATA[Aloha]]></name>
@@ -14,7 +14,7 @@
 
   
   <entry>
-    <title type="html"><![CDATA[reading-note-23-plus-1-design-pattern-part3-factory_method]]></title>
+    <title type="html"><![CDATA[[閱讀筆記系列] 23 + 1 設計模式 - Part4. 工廠方法(Factory Method)]]></title>
     <link href="http://ccaloha.cc/blog/2014/07/11/reading-note-23-plus-1-design-pattern-part3-factory-method/"/>
     <updated>2014-07-11T22:57:34+08:00</updated>
     <id>http://ccaloha.cc/blog/2014/07/11/reading-note-23-plus-1-design-pattern-part3-factory-method</id>

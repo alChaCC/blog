@@ -1,10 +1,10 @@
 ---
 layout: post
-title: "reading-note-23-plus-1-design-pattern-part3-factory_method"
+title: "[閱讀筆記系列] 23 + 1 設計模式 - Part4. 工廠方法(Factory Method)"
 date: 2014-07-11 22:57:34 +0800
 comments: true
 categories: 
-keywords: "Design Pattern, Factory Method, Xmind"
+keywords: "Design Pattern, Factory Method, Xmind, 工廠方法, 設計模式"
 description: "閱讀筆記 - 設計模式 - 工廠模式"
 ---
 
