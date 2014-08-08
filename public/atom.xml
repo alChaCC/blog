@@ -4,7 +4,7 @@
   <title><![CDATA[AlohaCC]]></title>
   <link href="http://ccaloha.cc/atom.xml" rel="self"/>
   <link href="http://ccaloha.cc/"/>
-  <updated>2014-07-12T11:00:06+08:00</updated>
+  <updated>2014-08-08T12:49:10+08:00</updated>
   <id>http://ccaloha.cc/</id>
   <author>
     <name><![CDATA[Aloha]]></name>
@@ -12,6 +12,414 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[[HOWTO] 跳出視窗，內含動態選單]]></title>
+    <link href="http://ccaloha.cc/blog/2014/08/08/howto-rails-popup-window-and-ajax-form/"/>
+    <updated>2014-08-08T12:40:10+08:00</updated>
+    <id>http://ccaloha.cc/blog/2014/08/08/howto-rails-popup-window-and-ajax-form</id>
+    <content type="html"><![CDATA[<p>屁話區：</p>
+
+<p>最近要準備開發比較user friendly的後台，於是乎，想到這樣的功能，</p>
+
+<p>於是，我拿了之前開發過的專案來試玩看看～～ 快來看一下中間的眉角～(ps.其實也沒有什麼眉角&#8230;都是g來的XDDDD)</p>
+
+<h2>需求描述：</h2>
+
+<p>使用者希望點選&#8221;編輯&#8221;後，直接popup編輯視窗，裡頭還包含了動態表格</p>
+
+<p>More specific, 來個簡單使用者情境：</p>
+
+<blockquote><p>後台管理人員，需要幫其中一張訂單，加購商品</p></blockquote>
+
+<p><img src="https://dl.dropboxusercontent.com/u/22307926/Blog%20Image/%5Bhowto%5D%20%E8%B7%B3%E5%87%BA%E8%A6%96%E7%AA%97%EF%BC%8C%E5%85%A7%E5%90%AB%E5%8B%95%E6%85%8B%E9%81%B8%E5%96%AE/popup%E8%A6%96%E7%AA%97.png" alt="加購商品跳出視窗"></p>
+
+<p>就讓我們繼續看下去&#8230;.這崮中有什麼訣竅～～～～</p>
+
+<!-- more -->
+
+
+<p>在文章的開始，當然要先感謝前人的知識、還有一堆Open Source</p>
+
+<h4>REF</h4>
+
+<p><a href="http://ericlondon.com/2014/03/13/rails-4-submit-modal-form-via-ajax-and-render-js-response-as-table-row.html">Rails 4 submit modal form via AJAX and render JS response as table row</a></p>
+
+<p><a href="http://www.petermac.com/rails-3-jquery-and-multi-select-dependencies/">Rails 3, jQuery and multi-select dependencies</a></p>
+
+<p><a href="http://getbootstrap.com/javascript/#modals">Bootstrap- modal.js</a> => 用來做popup視窗</p>
+
+<p><a href="http://ivaynberg.github.io/select2/">Selec2 js</a> => 用來做動態選資料</p>
+
+<h2>流程</h2>
+
+<ol>
+<li>管理人員在後台，訂單的list頁，有一個加購的button</li>
+<li>點選這個button後，會跳出一個視窗</li>
+<li>視窗裡面有一個表格，上面會預先帶入這個訂單的ID，還有一個產品編號的select功能</li>
+<li>當管理人員慢慢打字輸入了產品編號，系統會自動搜尋可能的結果</li>
+<li>選擇了一個產品編號，底下會自動跳出這個加購的資訊，例如：顏色、尺寸、數量</li>
+</ol>
+
+
+<p>ps. 我的View是使用slim</p>
+
+<h3>流程一：管理人員在後台，訂單的list頁，有一個加購的button</h3>
+
+<p>你可能會有一個訂單清單</p>
+
+<p>在 <em>app/views/orders/index.html.slim</em> 你只要加上</p>
+
+<pre><code>= link_to '加購', '#add_product_modal', 'data-toggle' =&gt; 'modal', class: 'btn 
+btn-mini', 'data-order' =&gt; order.id
+</code></pre>
+
+<p><strong>重點是那個&#8217;data-toggle&#8217; => &#8216;modal&#8217;</strong> => 加了就有modal的功效歐～～</p>
+
+<p>還有另外一個伏筆，那個 &#8216;data-order&#8217; => order.id</p>
+
+<p>慢慢讀下去你就會知道那個要幹嘛了！</p>
+
+<p>大概可能會長這樣</p>
+
+<pre><code>- @orders.each do |order|
+    = ...
+    = link_to '加購', '#add_product_modal', 'data-toggle' =&gt; 'modal', class: 'btn btn-mini', 'data-order' =&gt; order.id
+</code></pre>
+
+<p>ps. 這邊你可能會有個疑惑，囧～這個link_to 怎麼沒有 link to 的位置?! 人客啊～不要急～讓我們繼續看下去</p>
+
+<h4>成果：</h4>
+
+<p><img src="https://dl.dropboxusercontent.com/u/22307926/Blog%20Image/%5Bhowto%5D%20%E8%B7%B3%E5%87%BA%E8%A6%96%E7%AA%97%EF%BC%8C%E5%85%A7%E5%90%AB%E5%8B%95%E6%85%8B%E9%81%B8%E5%96%AE/%E8%A8%82%E5%96%AElist.png" alt="訂單list"></p>
+
+<h3>流程二：點選這個button後，會跳出一個視窗</h3>
+
+<p>在 <em>app/views/orders/index.html.slim</em> 繼續加上，我是把它加在最底下，不過你也可以考慮拉出一個partial view，depend on you摟～</p>
+
+<p>不要覺得好像很厲害(但是寫這個套件很厲害!)～這一串是從Modal官網看到的sample，只是把它拿出來用而已</p>
+
+<pre><code>.modal.fade#add_product_modal tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true"
+  .modal-dialog
+    .modal-content
+      .modal-header
+        button.close type="button" data-dismiss="modal" aria-hidden="true"
+          | &amp;times;
+        h4.modal-title#myModalLabel
+          | 加購產品
+      .modal-body
+        = render 'extra_buy_form' 
+      .modal-footer
+        button type="button" class="btn btn-default" data-dismiss="modal"
+          | 關閉
+</code></pre>
+
+<p>這裡頭有ㄧ個關鍵，就是那個跳出來視窗，裡頭的內容(在我們的例子，也就是表格)</p>
+
+<p>我把它寫成 partial view: <strong>extra_buy_form</strong></p>
+
+<p>其他的東東，我想看那個class name就知道了吧～</p>
+
+<h4>流程二 - 1 既然都已經寫好modal，那當然要記得要有他的js歐～不然不會有效果</h4>
+
+<p>加入在<em>app/assets/javascripts/admin.js</em> (這是因為我的admin有自己的版，裡頭會抓admin.js)</p>
+
+<pre><code>//= require bootstrap.min 
+</code></pre>
+
+<h3>流程三：視窗裡面有一個表格，上面會預先帶入這個訂單的ID，還有一個產品編號的select功能</h3>
+
+<p>這邊就進到了，<strong>extra_buy_form</strong>的部分，</p>
+
+<p>由於是在order底下，所以我的檔案是建立在 <em>app/views/admin/orders/_extra_buy_form.html.slim</em></p>
+
+<pre><code>= simple_form_for :line_item,:url =&gt; update_extra_buy_admin_orders_path, defaults: { input_html: { remote: true, 'data-model' =&gt; 'product'}}do |f|
+  = f.input :order_id,  label: '加入訂單編號：'
+  = f.input :product_id, input_html: {class: 'form-control', data: {product_selector: 'true'} }
+  #buying_detail
+  .text-center.small-padding
+    = submit_tag '送出', disabled_with: '送出中', class: 'btn block-btn'
+</code></pre>
+
+<p>這邊有幾個點要講：</p>
+
+<ol>
+<li>由於我們這個不屬於orde model的屬性，也沒有任何 instance variable (例如：@line_item)被帶入，所以simple_form 我是使用 symbol (:) 來表示</li>
+<li>再來，那個url，就代表著等一下這張表格會被 post到哪裡，等下會說明 order controller的部分和route</li>
+<li>第三行，就是要用select2 來實作的動態select內容的寫法，最重要的是那個：data: {product_selector}</li>
+<li>第四行非常重要的！ 當你選完產品id後，這邊就會render出這個產品的相關資訊，等一下會介紹到！！！</li>
+<li>那個order_id，嘿嘿～～ 等一下流程五會提到！</li>
+</ol>
+
+
+<h3>流程四：當管理人員慢慢打字輸入了產品編號，系統會自動搜尋可能的結果</h3>
+
+<p>這邊就是select2的實作！</p>
+
+<p>首先，先建立一個js吧～ <em>app/assets/javascripts/admin/proudct_selector.js.coffee</em></p>
+
+<pre><code>jQuery ($) -&gt;
+  $(document).on 'ready page:load', -&gt;
+    $('[data-product-selector]').each -&gt;
+      $this = $(this)
+      $this.select2(
+        placeholder: "輸入產品編號"
+        minimumInputLength: 0
+        allowClear: true
+
+        ajax:
+          url: '/admin/products/get_product_list.json'
+          data: (term, page) -&gt; q: term
+          results: (data, page) -&gt; results: data
+
+        initSelection: (element, callback) -&gt;
+          if $this.val() isnt ''
+            $.ajax(
+              url: "/admin/products/#{$this.val()}.json"
+              success: (data) -&gt; callback(data)
+            )
+      )
+</code></pre>
+
+<p>這邊有幾個點要講：</p>
+
+<ol>
+<li><strong>$(&#8216;[data-product-selector]&#8217;)</strong> 就是找到 這個 => <strong>data: {product_selector}</strong></li>
+<li><strong>url: &#8216;/admin/products/get_product_list.json&#8217;</strong> => 這邊要去跟controller要資料</li>
+<li><strong>url: &#8220;/admin/products/#{$this.val()}.json&#8221;</strong> => 這邊其實用不太到，不過，如果你可能會有預設值的話，譬如說，你是某個form 可以給人家編輯</li>
+</ol>
+
+
+<h4>成果：</h4>
+
+<p><img src="https://dl.dropboxusercontent.com/u/22307926/Blog%20Image/%5Bhowto%5D%20%E8%B7%B3%E5%87%BA%E8%A6%96%E7%AA%97%EF%BC%8C%E5%85%A7%E5%90%AB%E5%8B%95%E6%85%8B%E9%81%B8%E5%96%AE/select2%20serarch%E5%8A%9F%E8%83%BD.png" alt="select2 search"></p>
+
+<h4>流程四 - 1：既然這邊用到了select2、還有你自己寫的js，別忘了&#8230;.</h4>
+
+<p>加入在<em>app/assets/javascripts/admin.js</em> (這是因為我的admin有自己的版，裡頭會抓admin.js)</p>
+
+<pre><code>//= require select2
+//= require admin/product_selector
+</code></pre>
+
+<h4>流程四 - 2：剛剛提到說兩個 admin/products/XXX.json 就是要跟controller拿資料，所以當然我們要新增action給他摟</h4>
+
+<p>請加在： <em>app/controllers/admin/products_controller.rb</em></p>
+
+<p>首先</p>
+
+<pre><code>def serial_products(products)
+    products.map { |p| {id: p.id, text: p.product_no}}
+end
+
+def show 
+    @product = Product.find(params[:id])
+
+    respond_to do |f|
+        f.html
+        f.json { render json: serial_products(@product) } #要給ajax使用
+    end
+end
+</code></pre>
+
+<p>再來</p>
+
+<pre><code>def get_product_list
+    @products = if params[:q]
+                    Product.on_sale.filter_by(params[:q])
+                else
+                    Product.on_sale
+                end
+    respond_to do |f|
+        f.json { render json: serial_products(@products)} #只給ajax使用
+    end
+end
+</code></pre>
+
+<p>重要的眉角：</p>
+
+<pre><code>if params[:q]
+    Product.on_sale.filter_by(params[:q])
+...
+</code></pre>
+
+<p>為甚麼要有這個呢？</p>
+
+<p>那是因為<em>app/assets/javascripts/admin/proudct_selector.js.coffee</em>這個js不是有一個</p>
+
+<pre><code>url: '/admin/products/get_product_list.json'
+data: (term, page) -&gt; q: term
+</code></pre>
+
+<p>有沒有看到那個 “q“</p>
+
+<p>沒錯！ 就是那個q，他會丟一個param[:q]的值給get_product_list，</p>
+
+<p>也就是這個，我們就可以達成 <strong>慢慢打字輸入了產品編號，系統會自動搜尋可能的結果</strong></p>
+
+<h4>流程四 - 3： 從上一個步驟(四-3)裡頭有&#8221;Product.on_sale.filter_by&#8221;，這邊是model的方法</h4>
+
+<p>我們來看一下model，並加在 <em>app/models/product.rb</em></p>
+
+<pre><code>scope :on_sale, -&gt; {where(is_added: true)}
+scope :filter_by, lambda { |q| where('product_no LIKE :qurey', qurey: "%#{q}%") }
+</code></pre>
+
+<p>這邊小眉角：</p>
+
+<pre><code>where('product_no LIKE :qurey', qurey: "%#{q}%")
+</code></pre>
+
+<p>這個就是rails用來做 like搜尋(我把它稱作模糊搜尋，不知道有沒有錯)</p>
+
+<h4>流程四 - 4： 既然controller都寫完了，別忘記route歐！</h4>
+
+<p>要改：<em>config/routes.rb</em></p>
+
+<pre><code>namespace :admin do
+
+  ...
+
+  resources :products do
+    ...
+
+    collection { get :get_product_list}
+  end
+
+  resources :orders do
+    ...
+    collection { post :update_extra_buy }
+  end
+
+  ....
+
+end
+</code></pre>
+
+<h3>流程五：選擇了一個產品編號，底下會自動跳出這個加購的資訊，例如：顏色、尺寸、數量</h3>
+
+<p>這邊我們要來看，<em>app/views/admin/orders/_extra_buy_form.html.slim</em></p>
+
+<p>裡面的</p>
+
+<pre><code>  #buying_detail
+</code></pre>
+
+<p>怪怪&#8230;.為甚麼這一行，就可以讓它自動跳出加購的資訊？！</p>
+
+<p>接下來厲害了！！</p>
+
+<h3>流程五-1：表格上面select 也已經動態可以選了，那底下的動態表格，怎麼沒有render出來？！</h3>
+
+<p>這邊 我們必須使用一個javascript來監控那個select2的行為， 不過貌似可以寫在select2裡面，但是&#8230;我是覺得怪怪的～應該要猜開才是(ps. 其實是我不太會寫XDDDD)</p>
+
+<p>沒錯！ 我們需要新增 <em>app/assets/admin/order.js</em></p>
+
+<pre><code>jQuery(function($) {
+  // when the #data-product-selector field changes
+  $("[data-product-selector]").change(function() {
+    var product_id = $('[data-product-selector]').val();
+    if(product_id == "") product_id="0";
+    var product = 'product_id='+ product_id;
+    jQuery.get("/admin/products/update_product_atts",product, function(data){
+        $("#buying_detail").html(data);
+    })
+    return false;
+  });
+
+  $(document).on('click', '[data-toggle=modal]', function(e) {
+    $('#line_item_order_id').val(e.target.getAttribute('data-order'));
+  });
+
+})
+</code></pre>
+
+<p>重點：</p>
+
+<p>1.jQuery.get(&#8220;/admin/products/update_product_atts&#8221;,product, function(data){</p>
+
+<pre><code>        $("#buying_detail").html(data);
+    })
+</code></pre>
+
+<p>我覺得 可以算是本日最精彩！</p>
+
+<p>第一次知道原來partial view可以這樣用！！！！</p>
+
+<p>等一下在講那個update_product_atts</p>
+
+<p>2.<strong>$(&#8216;#line_item_order_id&#8217;).val(e.target.getAttribute(&#8216;data-order&#8217;));</strong></p>
+
+<p>這個是為了那個pop視窗 <em>app/views/admin/orders/_extra_buy_form.html.slim</em> 的裡頭預設的order id值</p>
+
+<pre><code>= simple_form_for :line_item,:url =&gt; update_extra_buy_admin_orders_path, defaults: { input_html: { remote: true, 'data-model' =&gt; 'product'}}do |f|
+  = f.input :order_id,  label: '加入訂單編號：'
+</code></pre>
+
+<p>為甚麼會有 <strong>e.target.getAttribute(&#8216;data-order&#8217;)</strong></p>
+
+<p>那是因為，我希望直接知道 使用者點的是那張訂單，所以&#8230;. 還記得&#8230;.</p>
+
+<p>在 <em>app/views/orders/index.html.slim</em> 你只要加上</p>
+
+<pre><code>= link_to '加購', '#add_product_modal', 'data-toggle' =&gt; 'modal', class: 'btn 
+btn-mini', 'data-order' =&gt; order.id
+</code></pre>
+
+<p>有沒有看到&#8217;data-order&#8217; => order.id</p>
+
+<p>所以那段js只是把 值抓出來而已，然後再餵給 <strong>f.input :order_id</strong></p>
+
+<h3>流程五-2：/admin/products/update_product_atts 、$(&#8220;#buying_detail&#8221;).html(data) 在搞什麼鬼？</h3>
+
+<p>其實從js來看，就會知道他就是要跟 products controller拿東東</p>
+
+<p>所以，繼續來編輯我們的 <em>app/controllers/admin/products_controller.rb</em></p>
+
+<pre><code> def update_product_atts
+        product = Product.find(params[:product_id]) unless params[:product_id].blank?
+        render :partial =&gt; "admin/orders/product_attrs", :locals =&gt; { :product =&gt; product} #這邊還挺酷的，只會render那個partial頁面
+ end
+</code></pre>
+
+<p>還有view歐  <em>app/views/admin/order/_product_attrs.html.slim</em></p>
+
+<pre><code>- if product.present?
+  = simple_form_for :line_item_attr, defaults: { input_html: { remote: true, url: '#'}} do |f|
+    = f.input :color, label: '顏色：' , collection: "#{product.color}".split(",").map(&amp;:to_s)
+    = f.input :size, label: '尺寸：', collection: "#{product.size}".split(",").map(&amp;:to_s)
+    = f.input :count, label: '數量：' , collection: (1..50), selected: '1'
+</code></pre>
+
+<p>有沒有看到～ 那個</p>
+
+<p><strong>jQuery.get(&#8220;/admin/products/update_product_atts&#8221;,product</strong></p>
+
+<p>就是會丟出一個 params[:product_id] 給 product controller</p>
+
+<p>當controller 抓到 id 後，就把那個product 資料，依照  admin/orders/product_attrs 樣子render給data，然後讓</p>
+
+<pre><code>$("#buying_detail").html(data); 
+</code></pre>
+
+<p>把資料畫出來</p>
+
+<p>傑克！這實在太神奇了！！！！！！！！！！！！</p>
+
+<h4>成果：</h4>
+
+<p><img src="https://dl.dropboxusercontent.com/u/22307926/Blog%20Image/%5Bhowto%5D%20%E8%B7%B3%E5%87%BA%E8%A6%96%E7%AA%97%EF%BC%8C%E5%85%A7%E5%90%AB%E5%8B%95%E6%85%8B%E9%81%B8%E5%96%AE/%E8%87%AA%E5%8B%95%E5%B8%B6%E5%87%BAform.png" alt="select2 search"></p>
+
+<h3>流程五-3：既然你自己寫的js，別忘了&#8230;.</h3>
+
+<p>加入在<em>app/assets/javascripts/admin.js</em> (這是因為我的admin有自己的版，裡頭會抓admin.js)</p>
+
+<pre><code>//= require admin/orders
+</code></pre>
+
+<h2>打完收工！</h2>
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[[閱讀筆記系列] 23 + 1 設計模式 - Part4. 工廠方法(Factory Method)]]></title>
@@ -2450,1281 +2858,6 @@ jybot --pythonpath $MYDIRPATH  --outputdir test --exclude no_run --include $TEST
 <p>有些lib是為了可以跑sikuli裝的 沒有時間一一去驗證是否真的需要&#8230;.</p>
 
 <blockquote><p>特別感謝 EJ 和 林旺 提供強大支援！</p></blockquote>
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[Learning on Ruby on Rails Tutorial-CH10 User microposts]]></title>
-    <link href="http://ccaloha.cc/blog/2012/08/10/learning-on-ruby-on-rails-tutorial-ch10-user-microposts/"/>
-    <updated>2012-08-10T11:09:00+08:00</updated>
-    <id>http://ccaloha.cc/blog/2012/08/10/learning-on-ruby-on-rails-tutorial-ch10-user-microposts</id>
-    <content type="html"><![CDATA[<p>這一章節，我們會完成User的微網誌！使用<strong>has_many</strong>和<strong>belongs_to</strong>的資料庫關聯性，來看每個user的po文</p>
-
-<p>一開始，我都會先這樣</p>
-
-<pre><code>$ cd /你的路徑/
-
-# 先用mate指令打開專案
-$ mate sample_app   
-
-$ cd sample_app
-
-# 看看目前有哪些gemset
-$ rvm gemset list 
-$ rvm gemset use rails3tutorial2ndEd
-</code></pre>
-
-<p>OK來開始第十章吧！</p>
-
-<!--more-->
-
-
-<p></p>
-
-<pre><code>$ git checkout -b user-microposts
-</code></pre>
-
-<h2>A Micropost model</h2>
-
-<h3>The basic model</h3>
-
-<p>先到model的部份，這個model很簡單，先把需要用的東東(發文內容和是哪個user)建起來，</p>
-
-<pre><code>$ rails generate model Micropost content:string user_id:integer
-</code></pre>
-
-<p>看一下剛剛gem出來的檔案，並且加上我們需要的功能</p>
-
-<p><strong>db/migrate/[timestamp]_create_microposts.rb</strong></p>
-
-<pre><code>class CreateMicroposts &lt; ActiveRecord::Migration
-  def change
-    create_table :microposts do |t|
-      t.string :content
-      t.integer :user_id
-
-      t.timestamps
-    end
-    add_index :microposts, [:user_id, :created_at]
-  end
-end
-</code></pre>
-
-<p>因為我們希望可以透過user_id取得所有microposts，並且可以依照時間排序，所以才多加一個<strong>add_index :microposts, [:user_id, :created_at]</strong></p>
-
-<p>寫測試摟</p>
-
-<p><strong>spec/models/micropost_spec.rb</strong></p>
-
-<pre><code>require 'spec_helper'
-
-describe Micropost do
-  let(:user) { FactoryGirl.create(:user) }
-   before do
-     # This code is wrong!
-     @micropost = Micropost.new(content: "Lorem ipsum", user_id: user.id)
-   end
-
-   subject { @micropost }
-
-   it { should respond_to(:content) }
-   it { should respond_to(:user_id) }
-
-end
-</code></pre>
-
-<p>跑指令，這樣應該是可以work的！</p>
-
-<pre><code>$ bundle exec rake db:migrate
-$ bundle exec rake db:test:prepare
-$ bundle exec rspec spec/models/micropost_spec.rb
-</code></pre>
-
-<p>雖然會pass不過有段程式 有問題！ 會在下章解答why</p>
-
-<h3>Accessible attributes and the first validation</h3>
-
-<p>為了要知道為甚麼這些有錯</p>
-
-<p>我們來繼續寫測試！</p>
-
-<p><strong>spec/models/micropost_spec.rb</strong></p>
-
-<p>補上</p>
-
-<pre><code>it { should be_valid }
-
-  describe "when user_id is not present" do
-    before { @micropost.user_id = nil }
-    it { should_not be_valid }
-  end
-</code></pre>
-
-<p>這段程式碼，要求micropost必須有效，而且<strong>user_id</strong>也必須要存在！</p>
-
-<p>我們可以在<strong>app/models/micropost.rb</strong>加上一些話就可以確保測試會通過</p>
-
-<pre><code>class Micropost &lt; ActiveRecord::Base
-  attr_accessible :content, :user_id  
-  validates :user_id, presence: true
-end
-</code></pre>
-
-<p>現在我們來看為什麼這句話是錯的！</p>
-
-<pre><code>@micropost = Micropost.new(content: "Lorem ipsum", user_id: user.id)
-</code></pre>
-
-<p>其實是因為預設所有的Micropost的屬性都是accessible</p>
-
-<p>也就是說所有人都可以使用CLI發出不合法的要求，去改值，所以如果我故意改了文章的user_id他就會指錯使用者！ 也就是說，如果當我們把<strong>attr_accessible :user_id</strong>拿掉，剛剛的測試就會出現錯誤！！ 我們會在下一章解決這問題！</p>
-
-<h3>User/Micropost associations</h3>
-
-<p>先來說一下狀況，基本上 micropost <strong>belongs_to</strong> user</p>
-
-<p>另外，user <strong>has_many</strong> microposts</p>
-
-<p>因為這個關聯性，我們可以整理出一張表格！</p>
-
-<p>Method
-&nbsp;
-&nbsp;
-&nbsp;
-&nbsp;
-&nbsp;
-&nbsp;
-&nbsp;
-&nbsp;
-&nbsp;
-Purpose</p>
-
-<p>===========================================================</p>
-
-<p>micropost.user
-&nbsp;
-&nbsp;
-&nbsp;
-&nbsp;
-&nbsp;
-&nbsp;
-&nbsp;
-&nbsp;
-&nbsp;
-Return the User object associated with the micropost.</p>
-
-<p>user.microposts
-&nbsp;
-&nbsp;
-&nbsp;
-&nbsp;
-&nbsp;
-&nbsp;
-&nbsp;
-&nbsp;
-&nbsp;
-Return an array of the user’s microposts.</p>
-
-<p>user.microposts.create(arg)  <br/>
-&nbsp;
-&nbsp;
-&nbsp;
-&nbsp;
-&nbsp;
-&nbsp;
-&nbsp;
-&nbsp;
-&nbsp;
-Create a micropost (user_id = user.id).</p>
-
-<p>user.microposts.create!(arg)  <br/>
-&nbsp;
-&nbsp;
-&nbsp;
-&nbsp;
-&nbsp;
-&nbsp;
-&nbsp;
-&nbsp;
-&nbsp;
-Create a micropost (exception on failure).</p>
-
-<p>user.microposts.build(arg)
-&nbsp;
-&nbsp;
-&nbsp;
-&nbsp;
-&nbsp;
-&nbsp;
-&nbsp;
-&nbsp;
-&nbsp;
-Return a new Micropost object (user_id = user.id).</p>
-
-<p>注意歐！這邊我們沒有</p>
-
-<pre><code>Micropost.create
-Micropost.create!
-Micropost.new
-</code></pre>
-
-<p>而是</p>
-
-<pre><code>user.microposts.create
-user.microposts.create!
-user.microposts.build
-</code></pre>
-
-<p>這個才是合法的寫法，因為關聯性，所以我們在建立micropost時，是會自動幫你把user_id帶入！所以測試可以改成這樣</p>
-
-<pre><code>let(:user) { FactoryGirl.create(:user) }
-before { @micropost = user.microposts.build(content: "Lorem ipsum") }
-</code></pre>
-
-<p>透過關聯性建立micropost，並沒有解決user_id可以被accessible的安全性問題！</p>
-
-<p>所以…我們先來寫個測試！加到<strong>describe Micropost do</strong>區塊內</p>
-
-<pre><code> describe "accessible attributes" do
-       it "should not allow access to user_id" do
-         expect do
-           Micropost.new(user_id: user.id)
-         end.should raise_error(ActiveModel::MassAssignmentSecurity::Error)
-       end    
-  end
-</code></pre>
-
-<p>這個測試可以發出error訊息！</p>
-
-<p>但是在Rails 3.2.3預設是有開啓的！但是其它舊版本並沒有，所以為了確保這是可用的！</p>
-
-<p><strong>config/application.rb</strong>把下面那串un-mark掉</p>
-
-<pre><code> config.active_record.whitelist_attributes = true
-</code></pre>
-
-<p>在網頁上，實際能編輯的只有<strong>content</strong>屬性而已！所以我們應該要把<strong>attr_accessible :user_id</strong>拿掉！</p>
-
-<p>變成</p>
-
-<pre><code>class Micropost &lt; ActiveRecord::Base
-    attr_accessible :content
-    validates :user_id, presence: true
-end
-</code></pre>
-
-<p>再來我們來寫測試micropost的關聯性的測試！</p>
-
-<p>整體來說是這樣</p>
-
-<p><strong>spec/models/micropost_spec.rb</strong></p>
-
-<pre><code>require 'spec_helper'
-
-describe Micropost do
-
-  let(:user) { FactoryGirl.create(:user) }
-  before { @micropost = user.microposts.build(content: "Lorem ipsum") }
-
-  subject { @micropost }
-
-  it { should respond_to(:content) }
-  it { should respond_to(:user_id) }
-  it { should respond_to(:user) }
-  its(:user) { should == user }
-
-  it { should be_valid }
-
-  describe "accessible attributes" do
-    it "should not allow access to user_id" do
-      expect do
-        Micropost.new(user_id: user.id)
-      end.should raise_error(ActiveModel::MassAssignmentSecurity::Error)
-    end    
-  end
-
-  describe "when user_id is not present" do
-    before { @micropost.user_id = nil }
-    it { should_not be_valid }
-  end
-end
-</code></pre>
-
-<p>別忘了我們user這邊也要測試！</p>
-
-<p>首先user必須要有<strong>microposts</strong></p>
-
-<p><strong>spec/models/user_spec.rb</strong> 加上一句話</p>
-
-<pre><code>it { should respond_to(:microposts) }
-</code></pre>
-
-<p>完成後！ 剩下最後一步驟！在兩個model加上關聯性！</p>
-
-<p><strong>app/models/micropost.rb</strong></p>
-
-<pre><code>class Micropost &lt; ActiveRecord::Base
-  attr_accessible :content
-  belongs_to :user
-
-  validates :user_id, presence: true  
-end
-</code></pre>
-
-<p><strong>app/models/user.rb</strong></p>
-
-<pre><code>class User &lt; ActiveRecord::Base
-  attr_accessible :name, :email, :password, :password_confirmation
-  has_secure_password
-  has_many :microposts
-  .
-  .
-  .
-end
-</code></pre>
-
-<p>執行測試吧</p>
-
-<pre><code>$ bundle exec rspec spec/models
-</code></pre>
-
-<h3>Micropost refinements</h3>
-
-<p>此章節，我們必須要驗證到microposts的排序以及相依性</p>
-
-<p>在這之前要先產生一堆資料</p>
-
-<p>先定義好在<strong>spec/factories.rb</strong>，然後再呼叫…</p>
-
-<pre><code>FactoryGirl.define do
-  factory :user do
-    sequence(:name)  { |n| "Person #{n}" }
-    sequence(:email) { |n| "person_#{n}@example.com"}   
-    password "foobar"
-    password_confirmation "foobar"
-
-    factory :admin do
-      admin true
-    end
-  end
-
-  factory :micropost do
-    content "Aloha is so handsome"
-    user
-  end
-end
-</code></pre>
-
-<p>有一個地方要注意，因為那個<strong>user</strong>所以FactoryGirl知道這個micropost是屬於user的！</p>
-
-<p>所以等一下要用可以這樣用</p>
-
-<pre><code>FactoryGirl.create(:micropost, user: @user, created_at: 1.day.ago)
-</code></pre>
-
-<p>為了要讓資料有先後順序，我們打算以create時間來做排序，但是大多是資料庫，取資料時，都是以id為排序依據，所以在測試時，我們會改<strong>let</strong>變成<strong>lets</strong></p>
-
-<p>let!:   讓變數立即產生</p>
-
-<p>let:    只有在refecence時，才會使變數存在</p>
-
-<p><strong>spec/models/user_spec.rb</strong> 加在<strong>describe User do</strong>區塊內</p>
-
-<pre><code>describe "micropost associations" do
-
-    before { @user.save }
-    let!(:older_micropost) do 
-      FactoryGirl.create(:micropost, user: @user, created_at: 1.day.ago)
-    end
-    let!(:newer_micropost) do
-      FactoryGirl.create(:micropost, user: @user, created_at: 1.hour.ago)
-    end
-
-    it "should have the right microposts in the right order" do
-      @user.microposts.should == [newer_micropost, older_micropost]
-    end
-end
-</code></pre>
-
-<p>最關鍵的一行就是</p>
-
-<pre><code>@user.microposts.should == [newer_micropost, older_micropost]
-</code></pre>
-
-<p>為了讓測試通過其實很簡單，只要在<strong>app/models/micropost.rb</strong>加上一個東東！</p>
-
-<pre><code>default_scope order: 'microposts.created_at DESC'
-</code></pre>
-
-<p>DESC在SQL就是&#8221;descending&#8221;</p>
-
-<p>接著來看相依性的問題：<strong>刪除</strong></p>
-
-<p>admin有權限可以刪除使用者，照理說使用者被刪除後，他的micropost應該都要被刪除才是，我們可以這樣寫測試來驗證，當我們刪除文章的user時，相對應的文章都應該不會在資料庫內</p>
-
-<p><strong>spec/models/user_spec.rb</strong>在<strong>describe &#8220;micropost associations&#8221; do</strong>區塊加入</p>
-
-<pre><code>it "should destroy associated microposts" do
-   microposts = @user.microposts
-   @user.destroy
-   microposts.each do |micropost|
-   Micropost.find_by_id(micropost.id).should be_nil
- end
-end
-</code></pre>
-
-<p>要認這測試通過很簡單，只要告訴他的相依性有哪些</p>
-
-<p><strong>app/models/user.rb</strong></p>
-
-<pre><code>has_many :microposts, dependent: :destroy
-</code></pre>
-
-<p>測試一下吧～應該要可以通過</p>
-
-<pre><code>$ bundle exec rspec spec/   
-</code></pre>
-
-<p>在跳到下一節之前，我們來看看內容驗證的部分！</p>
-
-<p>廢話不多說，看一下要驗證哪些東西</p>
-
-<p><strong>spec/models/micropost_spec.rb</strong></p>
-
-<pre><code>describe "when user_id is not present" do
-    before { @micropost.user_id = nil }
-    it { should_not be_valid }
-  end
-
-  describe "with blank content" do
-    before { @micropost.content = " " }
-    it { should_not be_valid }
-  end
-
-  describe "with content that is too long" do
-    before { @micropost.content = "a" * 141 }
-    it { should_not be_valid }
-  end
-</code></pre>
-
-<p> 為了要限制字數，還記得要加什麼嗎?</p>
-
-<p> 沒錯，就是</p>
-
-<pre><code>validates :content, presence: true, length: { maximum: 140 }
-</code></pre>
-
-<h2>Showing microposts</h2>
-
-<p>依照Twitter的設計，我們可以在個人頁面看到他發的post，而不需要到micropost的index頁面，所以來開始吧！</p>
-
-<h3>Augmenting the user show page</h3>
-
-<p>我們希望能夠建立兩個文章在一個user上，然後驗證show 頁面，包含文章的內容 ，因為我們希望文章和人可以馬上出現連結一起，所以我們不是用let而是使用let!</p>
-
-<p><strong>spec/requests/user_pages_spec.rb</strong> 加在<strong>describe &#8220;User pages&#8221; do</strong>程式區塊內</p>
-
-<pre><code>describe "profile page" do
-        let(:user) { FactoryGirl.create(:user) }
-        let!(:m1) { FactoryGirl.create(:micropost, user: user, content: "Aloha ") }
-        let!(:m2) { FactoryGirl.create(:micropost, user: user, content: "Cool") }
-
-        before { visit user_path(user) }
-
-        it { should have_selector('h1',    text: user.name) }
-        it { should have_selector('title', text: user.name) }
-
-        describe "microposts" do
-          it { should have_content(m1.content) }
-          it { should have_content(m2.content) }
-          it { should have_content(user.microposts.count) }
-        end
-  end
-</code></pre>
-
-<p>OK~來看一下 <strong>app/views/users/show.html.erb</strong> 在 <strong><aside></aside></strong>之後加入</p>
-
-<pre><code>&lt;div class="span8"&gt;
-    &lt;% if @user.microposts.any? %&gt;
-      &lt;h3&gt;Microposts (&lt;%= @user.microposts.count %&gt;)&lt;/h3&gt;
-      &lt;ol class="microposts"&gt;
-        &lt;%= render @microposts %&gt;
-      &lt;/ol&gt;
-      &lt;%= will_paginate @microposts %&gt;
-    &lt;% end %&gt;
-  &lt;/div&gt;
-</code></pre>
-
-<p>注意一些細節，我們加了 換頁的東東， 這邊其實可以只用</p>
-
-<pre><code>&lt;%= will_paginate %&gt;
-</code></pre>
-
-<p>為什麼要加上@microposts是因為在User controller底下，<strong>will_paginate</strong>是假設呼叫的值是@users，但是因為我們雖然在user controller之下，</p>
-
-<p>但是我們是要show 文章！所以才要丟參數給他</p>
-
-<p>還有一個特別的地方</p>
-
-<pre><code>&lt;ol class="microposts"&gt;
-   &lt;%= render @microposts %&gt;
-&lt;/ol&gt;
-</code></pre>
-
-<p>這是使用經排序的list標籤<strong>ol</strong>，另外那個render他會去找&#8230;..找什麼？</p>
-
-<p>如果是之前使用<strong>render @users</strong>他會去找<strong>_user.html.erb</strong></p>
-
-<p>So ?</p>
-
-<p>這邊他就會去找<strong>_micropost.html.erb</strong>，當然我們沒有要建立一個給他</p>
-
-<p><strong>app/views/microposts/_micropost.html.erb</strong></p>
-
-<pre><code>&lt;li&gt;
-  &lt;span class="content"&gt;&lt;%= micropost.content %&gt;&lt;/span&gt;
-  &lt;span class="timestamp"&gt;
-    Posted &lt;%= time_ago_in_words(micropost.created_at) %&gt; ago.
-  &lt;/span&gt;
-&lt;/li&gt;
-</code></pre>
-
-<p>這邊使用到一個很酷的方法<strong>time_ago_in_words</strong>，我們等一下會介紹這個helper</p>
-
-<p>接著我們趕緊來編輯，<strong>app/controllers/users_controller.rb</strong></p>
-
-<p>因為那些View都需要@microposts這個東東</p>
-
-<p>把show改成</p>
-
-<pre><code> def show
-    @user = User.find(params[:id])
-    $title = @user.name
-    @microposts = @user.microposts.paginate(page: params[:page])
- end
-</code></pre>
-
-<p>yap~~不過到了這階段，目前還是沒有辦法看到一些東西～所以我們到下一小節，新增micropost吧！</p>
-
-<h3>Sample microposts</h3>
-
-<p>使用<strong>lib/tasks/sample_data.rake</strong>來建置大量使用者micropost吧！</p>
-
-<p>加到<strong>task populate: :environment do</strong>裡面</p>
-
-<pre><code>users = User.all(limit: 6)
-50.times do
-  content = Faker::Lorem.sentence(5)
-  users.each { |user| user.microposts.create!(content: content) }
-end
-</code></pre>
-
-<p>這邊我們只選擇前六個使用者，然後用<strong>Faker::Lorem.sentence</strong>這個方法隨機建立文字</p>
-
-<p>OK 建到資料庫吧！</p>
-
-<pre><code>$ bundle exec rake db:reset
-$ bundle exec rake db:populate
-$ bundle exec rake db:test:prepare
-</code></pre>
-
-<p>但是看起來好醜&#8230;.所以我們來加一些css</p>
-
-<p><strong>app/assets/stylesheets/custom.css.scss</strong></p>
-
-<pre><code>/* microposts */
-
-.microposts {
-  list-style: none;
-  margin: 10px 0 0 0;
-
-  li {
-    padding: 10px 0;
-    border-top: 1px solid #e8e8e8;
-  }
-}
-.content {
-  display: block;
-}
-.timestamp {
-  color: $grayLight;
-}
-.gravatar {
-  float: left;
-  margin-right: 10px;
-}
-aside {
-  textarea {
-    height: 100px;
-    margin-bottom: 5px;
-  }
-}
-</code></pre>
-
-<p>yap~好看多了！</p>
-
-<h2>Manipulating microposts</h2>
-
-<p>完成data  的model和micropost的view，現在把重點放在micropost操作上，這個Micropost的操作會密集在User和static頁面controller之間，</p>
-
-<p>也就是說…這不簡單&#8230;.OK！要操作Micropost之前，我們要先讓他有RestFul</p>
-
-<p>REST有主要有兩個核心精神：1. 使用Resource來當做識別的資源，也就是使用一個URL網址來代表一個Resource 2. 同一個Resource則可以有不同的Representations格式變化。</p>
-
-<p>所以我們要在<strong>config/routes.rb</strong>加上</p>
-
-<pre><code>resources :microposts, only: [:create, :destroy]
-</code></pre>
-
-<p>這也代表了他會有兩個url可以用！</p>
-
-<p>HTTP request
-&nbsp;
-&nbsp;
-&nbsp;
-&nbsp;URI
-&nbsp;
-&nbsp;
-&nbsp;
-&nbsp;Action
-&nbsp;
-&nbsp;
-&nbsp;
-&nbsp;Purpose</p>
-
-<p>POST
-&nbsp;
-&nbsp;
-&nbsp;
-&nbsp;
-/microposts
-&nbsp;
-&nbsp;
-&nbsp;
-&nbsp;
-create
-&nbsp;
-&nbsp;
-&nbsp;
-&nbsp;
-create a new micropost</p>
-
-<p>DELETE
-&nbsp;
-&nbsp;
-&nbsp;
-&nbsp;
-/microposts/1
-&nbsp;
-&nbsp;
-&nbsp;
-&nbsp;
-destroy
-&nbsp;
-&nbsp;
-&nbsp;
-&nbsp;
-delete micropost with id</p>
-
-<h3>Access control</h3>
-
-<p>當然要有登入的使用者才可以創建或刪除文章，所以我們的測試可以這樣寫</p>
-
-<p><strong>spec/requests/authentication_pages_spec.rb</strong>在<strong>describe &#8220;for non-signed-in users&#8221; do</strong>區塊加入</p>
-
-<pre><code>describe "in the Microposts controller" do
-
-    describe "submitting to the create action" do
-      before { post microposts_path }
-      specify { response.should redirect_to(signin_path) }
-    end
-
-    describe "submitting to the destroy action" do
-      before { delete micropost_path(FactoryGirl.create(:micropost)) }
-      specify { response.should redirect_to(signin_path) }
-    end
-  end
-</code></pre>
-
-<p>注意歐～這邊<strong>post microposts_path</strong>就是使用<strong>create</strong>動作; <strong>delete micropost_path(micropost)</strong>就會使用<strong>destroy</strong>動作！</p>
-
-<p>為了要讓測試通過，我們必須要小小的重構程式碼，我們在User controller的地方，使用了<strong>signed_in_user</strong>判斷使用者是否登入</p>
-
-<p>我們發現說原來在micropost也需要用到！所以我們把這段程式碼搬到<strong>app/helpers/sessions_helper.rb</strong></p>
-
-<p>加上</p>
-
-<pre><code>def signed_in_user
-  unless signed_in?
-    store_location
-    redirect_to signin_path, notice: "Please sign in." 
-  end
-end
-</code></pre>
-
-<p>耶～所以現在就可以在<strong>app/controllers/microposts_controller.rb</strong>使用啦～</p>
-
-<pre><code>class MicropostsController &lt; ApplicationController
-  before_filter :signed_in_user , only: [:create , :destroy]
-
-  def create
-  end
-
-  def destroy
-  end
-
-  def index
-  end
-
-end
-</code></pre>
-
-<p>跑測試吧～</p>
-
-<pre><code>$ bundle exec rspec spec/requests/authentication_pages_spec.rb
-</code></pre>
-
-<h3>Creating microposts</h3>
-
-<p>這邊有一個地方很不一樣，因為在發文的時候一定會是已登入的使用者，所以要建一個新的頁面專門給micropost使用的！</p>
-
-<p>在這之前，我們先來建立測試吧！</p>
-
-<pre><code>$ rails generate integration_test micropost_pages
-</code></pre>
-
-<p>編輯測試程式</p>
-
-<p><strong>spec/requests/micropost_pages_spec.rb</strong></p>
-
-<pre><code>require 'spec_helper'
-
-describe "Micropost pages" do
-
-  subject { page }
-
-  let(:user) { FactoryGirl.create(:user) }
-  before { sign_in user }
-
-  describe "micropost creation" do
-    before { visit root_path }
-
-    describe "with invalid information" do
-
-      it "should not create a micropost" do
-        expect { click_button "Post" }.should_not change(Micropost, :count)
-      end
-
-      describe "error messages" do
-        before { click_button "Post" }
-        it { should have_content('error') } 
-      end
-    end
-
-    describe "with valid information" do
-
-      before { fill_in 'micropost_content', with: "Lorem ipsum" }
-      it "should create a micropost" do
-        expect { click_button "Post" }.should change(Micropost, :count).by(1)
-      end
-    end
-  end
-end
-</code></pre>
-
-<p>在來編輯
-<strong>app/controllers/microposts_controller.rb</strong></p>
-
-<pre><code>class MicropostsController &lt; ApplicationController
-  before_filter :signed_in_user
-
-  def create
-    @micropost = current_user.microposts.build(params[:micropost])
-    if @micropost.save
-      flash[:success] = "Micropost created!"
-      redirect_to root_path
-    else
-      render 'static_pages/home'
-    end
-  end
-
-  def destroy
-  end
-end
-</code></pre>
-
-<p>Control 完 換View</p>
-
-<p><strong>app/views/static_pages/home.html.erb</strong></p>
-
-<p>其實就是多加了判斷user是不是登入！</p>
-
-<pre><code>&lt;% if signed_in? %&gt;
-  &lt;div class="row"&gt;
-    &lt;aside class="span4"&gt;
-      &lt;section&gt;
-        &lt;%= render 'shared/user_info' %&gt;
-      &lt;/section&gt;
-      &lt;section&gt;
-        &lt;%= render 'shared/micropost_form' %&gt;
-      &lt;/section&gt;
-    &lt;/aside&gt;
-  &lt;/div&gt;  
-&lt;% else %&gt;
-  &lt;div class="center hero-unit"&gt;
-    &lt;h1&gt;Welcome to the Sample App&lt;/h1&gt;
-
-    &lt;h2&gt;
-      This is the home page for the
-      &lt;a href="http://railstutorial.org/"&gt;Ruby on Rails Tutorial&lt;/a&gt;
-      sample application.
-    &lt;/h2&gt;
-
-    &lt;%= link_to "Sign up now!", signup_path, 
-                                class: "btn btn-large btn-primary" %&gt;
-  &lt;/div&gt;
-
-  &lt;%= link_to image_tag("rails.png", alt: "Rails"), 'http://rubyonrails.org/' %&gt;
-&lt;% end %&gt; 
-</code></pre>
-
-<p>注意歐！因為有些東西是可以拉出來寫的例如<strong>&lt;%= render &#8216;shared/user_info&#8217; %></strong></p>
-
-<p>就是</p>
-
-<p><strong>app/views/shared/_user_info.html.erb</strong></p>
-
-<pre><code>&lt;a href="&lt;%= user_path(current_user) %&gt;"&gt;
-  &lt;%= gravatar_for current_user, size: 52 %&gt;
-&lt;/a&gt;
-&lt;h1&gt;
-  &lt;%= current_user.name %&gt;
-&lt;/h1&gt;
-&lt;span&gt;
-  &lt;%= link_to "view my profile", current_user %&gt;
-&lt;/span&gt;
-&lt;span&gt;
-  &lt;%= pluralize(current_user.microposts.count, "micropost") %&gt;
-&lt;/span&gt;
-</code></pre>
-
-<p>這些之前都有講過了～所以就不再提了～</p>
-
-<p>因為還有一個也是被拉出來寫<strong>&lt;%= render &#8216;shared/micropost_form&#8217; %></strong></p>
-
-<pre><code>&lt;%= form_for(@micropost) do |f| %&gt;
-  &lt;%= render 'shared/error_messages', object: f.object %&gt;
-  &lt;div class="field"&gt;
-    &lt;%= f.text_area :content, placeholder: "Compose new micropost..." %&gt;
-  &lt;/div&gt;
-  &lt;%= f.submit "Post", class: "btn btn-large btn-primary" %&gt;
-&lt;% end %&gt;
-</code></pre>
-
-<p>那個@micropost是我們在controller用<strong>current_user.microposts.build</strong>建出來的</p>
-
-<p>另外還要加上micropost的變數實例在<strong>app/controllers/static_pages_controller.rb</strong></p>
-
-<pre><code>def home
-    @micropost = current_user.microposts.build if signed_in?
-end
-</code></pre>
-
-<p>還有一個很詭異的東東那就是</p>
-
-<pre><code>&lt;%= render 'shared/error_messages', object: f.object %&gt;
-</code></pre>
-
-<p>舉個例來說明，form_for(@user) do |f|</p>
-
-<p>那個f.object 就是 @user,</p>
-
-<p>同理可得form_for(@micropost) do |f|</p>
-
-<p>他的f.object 就是 @micropost</p>
-
-<p>換句話說， 那個object: f.object 會在<strong>error_messsages</strong>建立一個變數叫做<strong>object</strong></p>
-
-<p>因為這樣，所以要update一下<strong>app/views/shared/_error_messages.html.erb</strong></p>
-
-<pre><code>&lt;% if object.errors.any? %&gt;
-  &lt;div id="error_explanation"&gt;
-    &lt;div class="alert alert-error"&gt;
-      The form contains &lt;%= pluralize(object.errors.count, "error") %&gt;.
-    &lt;/div&gt;
-    &lt;ul&gt;
-    &lt;% object.errors.full_messages.each do |msg| %&gt;
-      &lt;li&gt;* &lt;%= msg %&gt;&lt;/li&gt;
-    &lt;% end %&gt;
-    &lt;/ul&gt;
-  &lt;/div&gt;
-&lt;% end %&gt;
-</code></pre>
-
-<p>執行測試看有沒有哪裡改錯</p>
-
-<pre><code>$  bundle exec rspec spec/requests/micropost_pages_spec.rb
-</code></pre>
-
-<p>注意看上面範例～ yap~沒錯！</p>
-
-<p>接著我們來更新<strong>app/views/users/new.html.erb</strong></p>
-
-<p>只有一個地方要改<strong>object: f.object</strong></p>
-
-<p>變成這樣</p>
-
-<pre><code>&lt;%= render 'shared/error_messages' , object: f.object %&gt;
-</code></pre>
-
-<p>當然那個<strong>app/views/users/edit.html.erb</strong>也要改</p>
-
-<pre><code>&lt;% provide(:title, "Edit user") %&gt; 
-    &lt;h1&gt;Update your profile&lt;/h1&gt;
-
-    &lt;div class="row"&gt;
-      &lt;div class="span6 offset3"&gt;
-      &lt;%= form_for(@user) do |f| %&gt;
-          &lt;%= render 'shared/error_messages', object: f.object %&gt;
-
-          &lt;%= f.label :name %&gt;
-          &lt;%= f.text_field :name %&gt;
-
-          &lt;%= f.label :email %&gt;
-          &lt;%= f.text_field :email %&gt;
-
-          &lt;%= f.label :password %&gt;
-          &lt;%= f.password_field :password %&gt;
-
-          &lt;%= f.label :password_confirmation, "Confirm Password" %&gt;
-          &lt;%= f.password_field :password_confirmation %&gt;
-
-          &lt;%= f.submit "Save changes", class: "btn btn-large btn-primary" %&gt;
-        &lt;% end %&gt;
-
-        &lt;%= gravatar_for @user %&gt;
-        &lt;a href="http://gravatar.com/emails"&gt;change&lt;/a&gt;
-      &lt;/div&gt;
-    &lt;/div&gt;
-</code></pre>
-
-<h3>A proto-feed</h3>
-
-<p>因為每個人都有feed，所以勢必要加一個<strong>feed</strong>的函式在User model裡面，先寫測試<strong>feed</strong>函式包含了現在使用者的micropost，
-但是沒有其他user的程式</p>
-
-<p><strong>spec/models/user_spec.rb</strong></p>
-
-<pre><code>require 'spec_helper'
-
-describe User do
-  .
-  .
-  .
-  it { should respond_to(:microposts) }
-  it { should respond_to(:feed) }
-  .
-  .
-  .
-  describe "micropost associations" do
-
-    before { @user.save }
-    let!(:older_micropost) do 
-      FactoryGirl.create(:micropost, user: @user, created_at: 1.day.ago)
-    end
-    let!(:newer_micropost) do
-      FactoryGirl.create(:micropost, user: @user, created_at: 1.hour.ago)
-    end
-    .
-    .
-    .
-    describe "status" do
-      let(:unfollowed_post) do
-        FactoryGirl.create(:micropost, user: FactoryGirl.create(:user))
-      end
-
-      its(:feed) { should include(newer_micropost) }
-      its(:feed) { should include(older_micropost) }
-      its(:feed) { should_not include(unfollowed_post) }
-    end
-  end
-end
-</code></pre>
-
-<p>這次的測試多了一個新的夥伴！<strong>include?</strong> 他主要的工作就是檢查array裡面，有沒有包含我們要找的值</p>
-
-<p>RSpec很聰明得知道我們要測試是否元素在陣列裡</p>
-
-<p>來到<strong>app/models/user.rb</strong></p>
-
-<pre><code> def feed
-    # This is preliminary. See "Following users" for the full implementation.
-    Micropost.where("user_id = ?", id)
-  end
-</code></pre>
-
-<p>這邊我有個問題，那就是那個<strong>Micropost.where(&#8220;user_id = ?&#8221;, id)</strong>是怎麼一回事</p>
-
-<p>文章是說<strong>id</strong>最好不要在SQL指令出現，這是因為會有<strong>SQL injection</strong>攻擊，但是對於我們這個
-例子，這個id是整數，所以沒有危險～  這一行其實等於下面</p>
-
-<pre><code>def feed
- microposts
-end
-</code></pre>
-
-<p>再寫一個測試</p>
-
-<p><strong>spec/requests/static_pages_spec.rb</strong></p>
-
-<pre><code>describe "for signed-in users" do
-      let(:user) { FactoryGirl.create(:user) }
-      before do
-        FactoryGirl.create(:micropost, user: user, content: "Lorem ipsum")
-        FactoryGirl.create(:micropost, user: user, content: "Dolor sit amet")
-        sign_in user
-        visit root_path
-      end
-
-      it "should render the user's feed" do
-        user.feed.each do |item|
-          page.should have_selector("li##{item.id}", text: item.content)
-        end
-      end
-    end
-</code></pre>
-
-<p>注意一下</p>
-
-<pre><code> page.should have_selector("li##{item.id}", text: item.content)
-</code></pre>
-
-<p>有兩個#其中一個是要給CSS看得ID，另外一個#{}是一起的～是Ruby的字串包含程式碼</p>
-
-<p>為了要在程式使用到<strong>feed</strong>，我們會加上一個<strong>@feed_items</strong>實例變數(instance variable：宣告在 class 內，method 之外，且未使用 static 修飾的變數)，</p>
-
-<p>給現在使用者的feed.</p>
-
-<p><strong>app/controllers/static_pages_controller.rb</strong></p>
-
-<pre><code>def home
-    if signed_in?
-      @micropost  = current_user.microposts.build
-      @feed_items = current_user.feed.paginate(page: params[:page])
-    end
-  end
-</code></pre>
-
-<p>另外要作partial view 給feed 和 feed_item本身</p>
-
-<p><strong>app/views/shared/_feed.html.erb</strong></p>
-
-<pre><code>&lt;% if @feed_items.any? %&gt;
-  &lt;ol class="microposts"&gt;
-    &lt;%= render partial: 'shared/feed_item', collection: @feed_items %&gt;
-  &lt;/ol&gt;
-  &lt;%= will_paginate @feed_items %&gt;
-&lt;% end %&gt;
-</code></pre>
-
-<p><strong>app/views/shared/_feed_item.html.erb</strong></p>
-
-<pre><code>&lt;li id="&lt;%= feed_item.id %&gt;"&gt;
-  &lt;%= link_to gravatar_for(feed_item.user), feed_item.user %&gt;
-  &lt;span class="user"&gt;
-    &lt;%= link_to feed_item.user.name, feed_item.user %&gt;
-  &lt;/span&gt;
-  &lt;span class="content"&gt;&lt;%= feed_item.content %&gt;&lt;/span&gt;
-  &lt;span class="timestamp"&gt;
-    Posted &lt;%= time_ago_in_words(feed_item.created_at) %&gt; ago.
-  &lt;/span&gt;
-&lt;/li&gt;
-</code></pre>
-
-<p>yap~現在來看user登入後的view</p>
-
-<p><strong>app/views/static_pages/home.html.erb</strong></p>
-
-<pre><code>&lt;% if signed_in? %&gt;
-  &lt;div class="row"&gt;
-    &lt;aside class="span4"&gt;
-      &lt;section&gt;
-        &lt;%= render 'shared/user_info' %&gt;
-      &lt;/section&gt;
-      &lt;section&gt;
-        &lt;%= render 'shared/micropost_form' %&gt;
-      &lt;/section&gt;
-    &lt;/aside&gt;
-
-    &lt;div class="span8"&gt;
-          &lt;h3&gt;Micropost Feed&lt;/h3&gt;
-          &lt;%= render 'shared/feed' %&gt;
-    &lt;/div&gt;
-  &lt;/div&gt;  
-&lt;% else %&gt;
-  &lt;div class="center hero-unit"&gt;
-    &lt;h1&gt;Welcome to the Sample App&lt;/h1&gt;
-
-    &lt;h2&gt;
-      This is the home page for the
-      &lt;a href="http://railstutorial.org/"&gt;Ruby on Rails Tutorial&lt;/a&gt;
-      sample application.
-    &lt;/h2&gt;
-
-    &lt;%= link_to "Sign up now!", signup_path, 
-                                class: "btn btn-large btn-primary" %&gt;
-  &lt;/div&gt;
-
-  &lt;%= link_to image_tag("rails.png", alt: "Rails"), 'http://rubyonrails.org/' %&gt;
-&lt;% end %&gt;
-</code></pre>
-
-<p>耶～可以看一下網頁！看起來不錯歐！也可以發表成功！</p>
-
-<p>咦&#8230;.不過如果我不打字串按發表的話，要跳出error</p>
-
-<p>解法暫時如下：</p>
-
-<p><strong>app/controllers/microposts_controller.rb</strong></p>
-
-<p>當使用者沒有輸入值時，先給他空的array</p>
-
-<pre><code>def create
-    @micropost = current_user.microposts.build(params[:micropost])
-    if @micropost.save
-      flash[:success] = "Micropost created!"
-      redirect_to root_path
-    else
-      @feed_items = []
-      render 'static_pages/home'
-    end
-  end
-</code></pre>
-
-<p>來跑測試吧！</p>
-
-<pre><code>$ bundle exec rspec spec/
-</code></pre>
-
-<h3>Destroying microposts</h3>
-
-<p>最後，加上一個可以刪除micropost的東東～</p>
-
-<p>大概就是加上</p>
-
-<pre><code>&lt;% if current_user?(micropost.user) %&gt;
-        &lt;%= link_to "delete", micropost, method:  :delete,
-                                         confirm: "You sure?",
-                                         title:   micropost.content %&gt;
-&lt;% end %&gt;
-</code></pre>
-
-<p><strong>app/views/microposts/_micropost.html.erb</strong></p>
-
-<pre><code>&lt;li&gt;
-  &lt;span class="content"&gt;&lt;%= micropost.content %&gt;&lt;/span&gt;
-  &lt;span class="timestamp"&gt;
-    Posted &lt;%= time_ago_in_words(micropost.created_at) %&gt; ago.
-  &lt;/span&gt;
-  &lt;% if current_user?(micropost.user) %&gt;
-    &lt;%= link_to "delete", micropost, method:  :delete,
-                                     confirm: "You sure?",
-                                     title:   micropost.content %&gt;
-  &lt;% end %&gt;
-&lt;/li&gt;
-</code></pre>
-
-<p><strong>app/views/shared/_feed_item.html.erb</strong></p>
-
-<pre><code>&lt;li id="&lt;%= feed_item.id %&gt;"&gt;
-  &lt;%= link_to gravatar_for(feed_item.user), feed_item.user %&gt;
-    &lt;span class="user"&gt;
-      &lt;%= link_to feed_item.user.name, feed_item.user %&gt;
-    &lt;/span&gt;
-    &lt;span class="content"&gt;&lt;%= feed_item.content %&gt;&lt;/span&gt;
-    &lt;span class="timestamp"&gt;
-      Posted &lt;%= time_ago_in_words(feed_item.created_at) %&gt; ago.
-    &lt;/span&gt;
-  &lt;% if current_user?(feed_item.user) %&gt;
-    &lt;%= link_to "delete", feed_item, method:  :delete,
-                                     confirm: "You sure?",
-                                     title:   feed_item.content %&gt;
-  &lt;% end %&gt;
-&lt;/li&gt;
-</code></pre>
-
-<p>在寫controller刪除功能之前，先來寫測試</p>
-
-<p><strong>spec/requests/micropost_pages_spec.rb</strong></p>
-
-<p>在<strong>describe &#8220;Micropost pages&#8221; do</strong>區塊加上</p>
-
-<pre><code>describe "micropost destruction" do
-    before { FactoryGirl.create(:micropost, user: user) }
-
-    describe "as correct user" do
-      before { visit root_path }
-
-      it "should delete a micropost" do
-        expect { click_link "delete" }.should change(Micropost, :count).by(-1)
-      end
-    end
-  end
-</code></pre>
-
-<p>刪除的地方在之前user的地方有做過！主要差別在於只要是user本人即可刪除訊息，所以我們用</p>
-
-<p><strong>correct_user</strong>來檢查</p>
-
-<p><strong>app/controllers/microposts_controller.rb</strong></p>
-
-<pre><code>before_filter :correct_user,   only: :destroy
-
-def destroy
-    @micropost.destroy
-    redirect_to root_path
-end
-
-private
-
-def correct_user
-  @micropost = current_user.microposts.find_by_id(params[:id])
-  redirect_to root_path if @micropost.nil?
-end
-</code></pre>
-
-<p>這個寫法主要是可以確保現在的user 他的文章裡頭可以找到這個id的文章！</p>
-
-<p>其實也是可以這樣寫！</p>
-
-<pre><code>@micropost = Micropost.find_by_id(params[:id])
-redirect_to root_path unless current_user?(@micropost.user)
-</code></pre>
-
-<p>不過根據高手的文章表示，</p>
-
-<blockquote><p>for security purposes it is a good practice always to run lookups through the association.</p></blockquote>
-
-<p>ＯＫ～確保一下程式都沒問題</p>
-
-<pre><code>$ bundle exec rspec spec/
-</code></pre>
-
-<h2>Conclusion</h2>
-
-<pre><code>$ git add .
-$ git commit -m "Add user microposts"
-$ git checkout master
-$ git merge user-microposts
-$ git push
-</code></pre>
-
-<p>You can also push the app up to Heroku at this point. Because the data model has changed through the addition of the microposts table, you will also need to migrate the production database:</p>
-
-<p>$ git push heroku
-$ heroku pg:reset SHARED_DATABASE &#8211;confirm &lt;name-heroku-gave-to-your-app>
-$ heroku run rake db:migrate
-$ heroku run rake db:populate</p>
 ]]></content>
   </entry>
   
