@@ -32,7 +32,7 @@ More specific, 來個簡單使用者情境：
 
 在文章的開始，當然要先感謝前人的知識、還有一堆Open Source
 
-####REF 
+##REF 
 
 [Rails 4 submit modal form via AJAX and render JS response as table row](http://ericlondon.com/2014/03/13/rails-4-submit-modal-form-via-ajax-and-render-js-response-as-table-row.html)
 
@@ -44,7 +44,7 @@ More specific, 來個簡單使用者情境：
 [Selec2 js](http://ivaynberg.github.io/select2/) => 用來做動態選資料
 
 
-## 流程
+# 流程
 
 1. 管理人員在後台，訂單的list頁，有一個加購的button 
 2. 點選這個button後，會跳出一個視窗
@@ -54,7 +54,7 @@ More specific, 來個簡單使用者情境：
 
 ps. 我的View是使用slim
 
-### 流程一：管理人員在後台，訂單的list頁，有一個加購的button 
+# 流程一：管理人員在後台，訂單的list頁，有一個加購的button 
 
 你可能會有一個訂單清單
 
@@ -78,11 +78,11 @@ ps. 我的View是使用slim
 
 ps. 這邊你可能會有個疑惑，囧～這個link_to 怎麼沒有 link to 的位置?! 人客啊～不要急～讓我們繼續看下去
 
-####成果：
+###成果：
 
 <img src="https://dl.dropboxusercontent.com/u/22307926/Blog%20Image/%5Bhowto%5D%20%E8%B7%B3%E5%87%BA%E8%A6%96%E7%AA%97%EF%BC%8C%E5%85%A7%E5%90%AB%E5%8B%95%E6%85%8B%E9%81%B8%E5%96%AE/%E8%A8%82%E5%96%AElist.png" alt="訂單list">
 
-### 流程二：點選這個button後，會跳出一個視窗
+# 流程二：點選這個button後，會跳出一個視窗
 
 在 *app/views/orders/index.html.slim* 繼續加上，我是把它加在最底下，不過你也可以考慮拉出一個partial view，depend on you摟～
 
@@ -109,13 +109,13 @@ ps. 這邊你可能會有個疑惑，囧～這個link_to 怎麼沒有 link to �
 
 其他的東東，我想看那個class name就知道了吧～
 
-#### 流程二 - 1 既然都已經寫好modal，那當然要記得要有他的js歐～不然不會有效果
+## 流程二 - 1 既然都已經寫好modal，那當然要記得要有他的js歐～不然不會有效果
 
 加入在*app/assets/javascripts/admin.js* (這是因為我的admin有自己的版，裡頭會抓admin.js)
 
 	//= require bootstrap.min 
 	
-### 流程三：視窗裡面有一個表格，上面會預先帶入這個訂單的ID，還有一個產品編號的select功能
+# 流程三：視窗裡面有一個表格，上面會預先帶入這個訂單的ID，還有一個產品編號的select功能
 
 這邊就進到了，**extra_buy_form**的部分，
 
@@ -136,7 +136,7 @@ ps. 這邊你可能會有個疑惑，囧～這個link_to 怎麼沒有 link to �
 4. 第四行非常重要的！ 當你選完產品id後，這邊就會render出這個產品的相關資訊，等一下會介紹到！！！
 5. 那個order_id，嘿嘿～～ 等一下流程五會提到！
 
-### 流程四：當管理人員慢慢打字輸入了產品編號，系統會自動搜尋可能的結果
+## 流程四：當管理人員慢慢打字輸入了產品編號，系統會自動搜尋可能的結果
 
 這邊就是select2的實作！
 
@@ -171,18 +171,18 @@ ps. 這邊你可能會有個疑惑，囧～這個link_to 怎麼沒有 link to �
 3.  **url: "/admin/products/#{$this.val()}.json"** => 這邊其實用不太到，不過，如果你可能會有預設值的話，譬如說，你是某個form 可以給人家編輯
 
 
-####成果：
+###成果：
 
 <img src="https://dl.dropboxusercontent.com/u/22307926/Blog%20Image/%5Bhowto%5D%20%E8%B7%B3%E5%87%BA%E8%A6%96%E7%AA%97%EF%BC%8C%E5%85%A7%E5%90%AB%E5%8B%95%E6%85%8B%E9%81%B8%E5%96%AE/select2%20serarch%E5%8A%9F%E8%83%BD.png" alt="select2 search">
 
-#### 流程四 - 1：既然這邊用到了select2、還有你自己寫的js，別忘了....
+## 流程四 - 1：既然這邊用到了select2、還有你自己寫的js，別忘了....
 
 加入在*app/assets/javascripts/admin.js* (這是因為我的admin有自己的版，裡頭會抓admin.js)
 
 	//= require select2
 	//= require admin/product_selector
 
-#### 流程四 - 2：剛剛提到說兩個 admin/products/XXX.json 就是要跟controller拿資料，所以當然我們要新增action給他摟
+## 流程四 - 2：剛剛提到說兩個 admin/products/XXX.json 就是要跟controller拿資料，所以當然我們要新增action給他摟
 
 請加在： *app/controllers/admin/products_controller.rb*
 
@@ -235,7 +235,7 @@ ps. 這邊你可能會有個疑惑，囧～這個link_to 怎麼沒有 link to �
 
 也就是這個，我們就可以達成 **慢慢打字輸入了產品編號，系統會自動搜尋可能的結果**
 
-#### 流程四 - 3： 從上一個步驟(四-3)裡頭有"Product.on_sale.filter_by"，這邊是model的方法
+## 流程四 - 3： 從上一個步驟(四-3)裡頭有"Product.on_sale.filter_by"，這邊是model的方法
 
 
 我們來看一下model，並加在 *app/models/product.rb*
@@ -249,7 +249,7 @@ ps. 這邊你可能會有個疑惑，囧～這個link_to 怎麼沒有 link to �
 	
 這個就是rails用來做 like搜尋(我把它稱作模糊搜尋，不知道有沒有錯)
 
-#### 流程四 - 4： 既然controller都寫完了，別忘記route歐！
+## 流程四 - 4： 既然controller都寫完了，別忘記route歐！
 
 要改：*config/routes.rb*
 
@@ -273,7 +273,7 @@ ps. 這邊你可能會有個疑惑，囧～這個link_to 怎麼沒有 link to �
 	end
 
 
-### 流程五：選擇了一個產品編號，底下會自動跳出這個加購的資訊，例如：顏色、尺寸、數量
+# 流程五：選擇了一個產品編號，底下會自動跳出這個加購的資訊，例如：顏色、尺寸、數量
 
 這邊我們要來看，*app/views/admin/orders/_extra_buy_form.html.slim*
 
@@ -285,7 +285,7 @@ ps. 這邊你可能會有個疑惑，囧～這個link_to 怎麼沒有 link to �
 	 
 接下來厲害了！！
 
-### 流程五-1：表格上面select 也已經動態可以選了，那底下的動態表格，怎麼沒有render出來？！ 
+## 流程五-1：表格上面select 也已經動態可以選了，那底下的動態表格，怎麼沒有render出來？！ 
 
 這邊 我們必須使用一個javascript來監控那個select2的行為， 不過貌似可以寫在select2裡面，但是...我是覺得怪怪的～應該要猜開才是(ps. 其實是我不太會寫XDDDD)
 
@@ -343,7 +343,7 @@ ps. 這邊你可能會有個疑惑，囧～這個link_to 怎麼沒有 link to �
 
 
 
-### 流程五-2：/admin/products/update_product_atts 、$("#buying_detail").html(data) 在搞什麼鬼？
+## 流程五-2：/admin/products/update_product_atts 、$("#buying_detail").html(data) 在搞什麼鬼？
 
 其實從js來看，就會知道他就是要跟 products controller拿東東
 
@@ -377,11 +377,11 @@ ps. 這邊你可能會有個疑惑，囧～這個link_to 怎麼沒有 link to �
 
 傑克！這實在太神奇了！！！！！！！！！！！！
 
-####成果：
+###成果：
 
 <img src="https://dl.dropboxusercontent.com/u/22307926/Blog%20Image/%5Bhowto%5D%20%E8%B7%B3%E5%87%BA%E8%A6%96%E7%AA%97%EF%BC%8C%E5%85%A7%E5%90%AB%E5%8B%95%E6%85%8B%E9%81%B8%E5%96%AE/%E8%87%AA%E5%8B%95%E5%B8%B6%E5%87%BAform.png" alt="select2 search">
 
-### 流程五-3：既然你自己寫的js，別忘了....
+## 流程五-3：既然你自己寫的js，別忘了....
 
 加入在*app/assets/javascripts/admin.js* (這是因為我的admin有自己的版，裡頭會抓admin.js)
 	

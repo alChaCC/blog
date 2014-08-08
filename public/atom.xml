@@ -4,7 +4,7 @@
   <title><![CDATA[AlohaCC]]></title>
   <link href="http://ccaloha.cc/atom.xml" rel="self"/>
   <link href="http://ccaloha.cc/"/>
-  <updated>2014-08-08T12:49:10+08:00</updated>
+  <updated>2014-08-08T12:56:11+08:00</updated>
   <id>http://ccaloha.cc/</id>
   <author>
     <name><![CDATA[Aloha]]></name>
@@ -41,7 +41,7 @@
 
 <p>在文章的開始，當然要先感謝前人的知識、還有一堆Open Source</p>
 
-<h4>REF</h4>
+<h2>REF</h2>
 
 <p><a href="http://ericlondon.com/2014/03/13/rails-4-submit-modal-form-via-ajax-and-render-js-response-as-table-row.html">Rails 4 submit modal form via AJAX and render JS response as table row</a></p>
 
@@ -51,7 +51,7 @@
 
 <p><a href="http://ivaynberg.github.io/select2/">Selec2 js</a> => 用來做動態選資料</p>
 
-<h2>流程</h2>
+<h1>流程</h1>
 
 <ol>
 <li>管理人員在後台，訂單的list頁，有一個加購的button</li>
@@ -64,7 +64,7 @@
 
 <p>ps. 我的View是使用slim</p>
 
-<h3>流程一：管理人員在後台，訂單的list頁，有一個加購的button</h3>
+<h1>流程一：管理人員在後台，訂單的list頁，有一個加購的button</h1>
 
 <p>你可能會有一個訂單清單</p>
 
@@ -89,11 +89,11 @@ btn-mini', 'data-order' =&gt; order.id
 
 <p>ps. 這邊你可能會有個疑惑，囧～這個link_to 怎麼沒有 link to 的位置?! 人客啊～不要急～讓我們繼續看下去</p>
 
-<h4>成果：</h4>
+<h3>成果：</h3>
 
 <p><img src="https://dl.dropboxusercontent.com/u/22307926/Blog%20Image/%5Bhowto%5D%20%E8%B7%B3%E5%87%BA%E8%A6%96%E7%AA%97%EF%BC%8C%E5%85%A7%E5%90%AB%E5%8B%95%E6%85%8B%E9%81%B8%E5%96%AE/%E8%A8%82%E5%96%AElist.png" alt="訂單list"></p>
 
-<h3>流程二：點選這個button後，會跳出一個視窗</h3>
+<h1>流程二：點選這個button後，會跳出一個視窗</h1>
 
 <p>在 <em>app/views/orders/index.html.slim</em> 繼續加上，我是把它加在最底下，不過你也可以考慮拉出一個partial view，depend on you摟～</p>
 
@@ -120,14 +120,14 @@ btn-mini', 'data-order' =&gt; order.id
 
 <p>其他的東東，我想看那個class name就知道了吧～</p>
 
-<h4>流程二 - 1 既然都已經寫好modal，那當然要記得要有他的js歐～不然不會有效果</h4>
+<h2>流程二 - 1 既然都已經寫好modal，那當然要記得要有他的js歐～不然不會有效果</h2>
 
 <p>加入在<em>app/assets/javascripts/admin.js</em> (這是因為我的admin有自己的版，裡頭會抓admin.js)</p>
 
 <pre><code>//= require bootstrap.min 
 </code></pre>
 
-<h3>流程三：視窗裡面有一個表格，上面會預先帶入這個訂單的ID，還有一個產品編號的select功能</h3>
+<h1>流程三：視窗裡面有一個表格，上面會預先帶入這個訂單的ID，還有一個產品編號的select功能</h1>
 
 <p>這邊就進到了，<strong>extra_buy_form</strong>的部分，</p>
 
@@ -152,7 +152,7 @@ btn-mini', 'data-order' =&gt; order.id
 </ol>
 
 
-<h3>流程四：當管理人員慢慢打字輸入了產品編號，系統會自動搜尋可能的結果</h3>
+<h2>流程四：當管理人員慢慢打字輸入了產品編號，系統會自動搜尋可能的結果</h2>
 
 <p>這邊就是select2的實作！</p>
 
@@ -190,11 +190,11 @@ btn-mini', 'data-order' =&gt; order.id
 </ol>
 
 
-<h4>成果：</h4>
+<h3>成果：</h3>
 
 <p><img src="https://dl.dropboxusercontent.com/u/22307926/Blog%20Image/%5Bhowto%5D%20%E8%B7%B3%E5%87%BA%E8%A6%96%E7%AA%97%EF%BC%8C%E5%85%A7%E5%90%AB%E5%8B%95%E6%85%8B%E9%81%B8%E5%96%AE/select2%20serarch%E5%8A%9F%E8%83%BD.png" alt="select2 search"></p>
 
-<h4>流程四 - 1：既然這邊用到了select2、還有你自己寫的js，別忘了&#8230;.</h4>
+<h2>流程四 - 1：既然這邊用到了select2、還有你自己寫的js，別忘了&#8230;.</h2>
 
 <p>加入在<em>app/assets/javascripts/admin.js</em> (這是因為我的admin有自己的版，裡頭會抓admin.js)</p>
 
@@ -202,7 +202,7 @@ btn-mini', 'data-order' =&gt; order.id
 //= require admin/product_selector
 </code></pre>
 
-<h4>流程四 - 2：剛剛提到說兩個 admin/products/XXX.json 就是要跟controller拿資料，所以當然我們要新增action給他摟</h4>
+<h2>流程四 - 2：剛剛提到說兩個 admin/products/XXX.json 就是要跟controller拿資料，所以當然我們要新增action給他摟</h2>
 
 <p>請加在： <em>app/controllers/admin/products_controller.rb</em></p>
 
@@ -257,7 +257,7 @@ data: (term, page) -&gt; q: term
 
 <p>也就是這個，我們就可以達成 <strong>慢慢打字輸入了產品編號，系統會自動搜尋可能的結果</strong></p>
 
-<h4>流程四 - 3： 從上一個步驟(四-3)裡頭有&#8221;Product.on_sale.filter_by&#8221;，這邊是model的方法</h4>
+<h2>流程四 - 3： 從上一個步驟(四-3)裡頭有&#8221;Product.on_sale.filter_by&#8221;，這邊是model的方法</h2>
 
 <p>我們來看一下model，並加在 <em>app/models/product.rb</em></p>
 
@@ -272,7 +272,7 @@ scope :filter_by, lambda { |q| where('product_no LIKE :qurey', qurey: "%#{q}%") 
 
 <p>這個就是rails用來做 like搜尋(我把它稱作模糊搜尋，不知道有沒有錯)</p>
 
-<h4>流程四 - 4： 既然controller都寫完了，別忘記route歐！</h4>
+<h2>流程四 - 4： 既然controller都寫完了，別忘記route歐！</h2>
 
 <p>要改：<em>config/routes.rb</em></p>
 
@@ -296,7 +296,7 @@ scope :filter_by, lambda { |q| where('product_no LIKE :qurey', qurey: "%#{q}%") 
 end
 </code></pre>
 
-<h3>流程五：選擇了一個產品編號，底下會自動跳出這個加購的資訊，例如：顏色、尺寸、數量</h3>
+<h1>流程五：選擇了一個產品編號，底下會自動跳出這個加購的資訊，例如：顏色、尺寸、數量</h1>
 
 <p>這邊我們要來看，<em>app/views/admin/orders/_extra_buy_form.html.slim</em></p>
 
@@ -309,7 +309,7 @@ end
 
 <p>接下來厲害了！！</p>
 
-<h3>流程五-1：表格上面select 也已經動態可以選了，那底下的動態表格，怎麼沒有render出來？！</h3>
+<h2>流程五-1：表格上面select 也已經動態可以選了，那底下的動態表格，怎麼沒有render出來？！</h2>
 
 <p>這邊 我們必須使用一個javascript來監控那個select2的行為， 不過貌似可以寫在select2裡面，但是&#8230;我是覺得怪怪的～應該要猜開才是(ps. 其實是我不太會寫XDDDD)</p>
 
@@ -370,7 +370,7 @@ btn-mini', 'data-order' =&gt; order.id
 
 <p>所以那段js只是把 值抓出來而已，然後再餵給 <strong>f.input :order_id</strong></p>
 
-<h3>流程五-2：/admin/products/update_product_atts 、$(&#8220;#buying_detail&#8221;).html(data) 在搞什麼鬼？</h3>
+<h2>流程五-2：/admin/products/update_product_atts 、$(&#8220;#buying_detail&#8221;).html(data) 在搞什麼鬼？</h2>
 
 <p>其實從js來看，就會知道他就是要跟 products controller拿東東</p>
 
@@ -406,11 +406,11 @@ btn-mini', 'data-order' =&gt; order.id
 
 <p>傑克！這實在太神奇了！！！！！！！！！！！！</p>
 
-<h4>成果：</h4>
+<h3>成果：</h3>
 
 <p><img src="https://dl.dropboxusercontent.com/u/22307926/Blog%20Image/%5Bhowto%5D%20%E8%B7%B3%E5%87%BA%E8%A6%96%E7%AA%97%EF%BC%8C%E5%85%A7%E5%90%AB%E5%8B%95%E6%85%8B%E9%81%B8%E5%96%AE/%E8%87%AA%E5%8B%95%E5%B8%B6%E5%87%BAform.png" alt="select2 search"></p>
 
-<h3>流程五-3：既然你自己寫的js，別忘了&#8230;.</h3>
+<h2>流程五-3：既然你自己寫的js，別忘了&#8230;.</h2>
 
 <p>加入在<em>app/assets/javascripts/admin.js</em> (這是因為我的admin有自己的版，裡頭會抓admin.js)</p>
 
