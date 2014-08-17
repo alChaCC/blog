@@ -4,7 +4,7 @@
   <title><![CDATA[AlohaCC]]></title>
   <link href="http://ccaloha.cc/atom.xml" rel="self"/>
   <link href="http://ccaloha.cc/"/>
-  <updated>2014-08-08T12:56:11+08:00</updated>
+  <updated>2014-08-17T21:28:11+08:00</updated>
   <id>http://ccaloha.cc/</id>
   <author>
     <name><![CDATA[Aloha]]></name>
@@ -12,6 +12,159 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[[HOWTO] 5 steps let your EC website applying GA E-commerce using Ruby on Rails]]></title>
+    <link href="http://ccaloha.cc/blog/2014/08/17/5-steps-let-your-ec-website-applying-ga-e-commerce-using-ruby-on-rails/"/>
+    <updated>2014-08-17T21:25:55+08:00</updated>
+    <id>http://ccaloha.cc/blog/2014/08/17/5-steps-let-your-ec-website-applying-ga-e-commerce-using-ruby-on-rails</id>
+    <content type="html"><![CDATA[<p>這篇你會知道如何在 Rails 加上 GA E-commerce的 code</p>
+
+<p>基本上就是參考<a href="https://developers.google.com/analytics/devguides/collection/analyticsjs/ecommerce">GA- Ecommerce Tracking - Web Tracking (analytics.js)</a></p>
+
+<p>google 是建議 GATC(google analytic tracking code)可以埋在當使用者完成交易後的感謝頁面</p>
+
+<p>所以，我也是加上訂單created 後的動作，</p>
+
+<p>就讓我們開始吧!</p>
+
+<!-- more -->
+
+
+<p></p>
+
+<h2>Step 1. Order Controller</h2>
+
+<p>在 <strong>app/controllers/orders_controller.rb</strong></p>
+
+<p>因為需要多一個步驟，所以我是新增一個新的 action，<strong>send_data_to_ga_ec</strong></p>
+
+<pre><code>def send_data_to_ga_ec
+    @order = Order.find_by_order_no(params[:id]) 
+end
+</code></pre>
+
+<h2>Step 2. Route and Controller</h2>
+
+<p>在 <strong>config/routes.rb</strong></p>
+
+<p>因為加了一個action, 所以我補上一條新的routing規則</p>
+
+<pre><code>  get '/orders/send_data_to_ga_ec', :to =&gt; 'orders#send_data_to_ga_ec' 
+</code></pre>
+
+<p><em>ps. 注意！一定要放在resource :orders前面，不然會無效</em></p>
+
+<p>回到 <strong>app/controllers/orders_controller.rb</strong></p>
+
+<p>把當訂單完成後，要導向的動作，補上去</p>
+
+<pre><code>def create
+    @order = current_user.orders.build(permitted_params.order)
+      if @order 
+        @order.add_line_items_from_cart(@cart)
+            respond_to do |format|
+                if @order.save
+                    format.html { 
+                       redirect_to orders_send_data_to_ga_ec_path(:id =&gt; @order.order_no), notice: "感謝您的訂購，您可以點選[我的訂單]查看訂單資訊，或於幾分鐘後，檢查是否收到訂單確認信"
+                    }
+                else
+                    format.html { render action: 'new' }
+                end
+            end
+        end
+end
+</code></pre>
+
+<h2>Step 3. View</h2>
+
+<p>這邊就是單純把他購買的東西show出來而已！重點在下兩步！</p>
+
+<pre><code>.home-block 
+  h2.home-block-heading
+    span  這是您本次的購買資訊
+
+  table.table.cart-table.table-striped.table-bordered.table-hover.span12
+        thead
+          tr
+            th 產品名稱
+            th 購買數量
+            th 購買顏色
+            th 購買尺寸
+            th 購買時優惠方案
+        tbody
+          - @order.line_items.each do |line_item|
+              tr
+                td= link_to line_item.product.name, product_path(line_item.product.id)
+                td= line_item.count
+                td= line_item.color
+                td= line_item.size
+                td= line_item.discount_name
+</code></pre>
+
+<h2>Step 4. Application Layout</h2>
+
+<p>因為一般的GATC，我們都是裝在header，所以以Rails來說，就是寫在</p>
+
+<p><strong>app/views/layouts/application.html.slim</strong></p>
+
+<pre><code>  - if controller_name == 'orders' &amp;&amp; action_name == 'send_data_to_ga_ec'
+    = render 'shared/google_analytics_ec' , user_id: current_user.try(:id), order: @order
+  - else
+    = render 'shared/google_analytics' , user_id: current_user.try(:id) 
+</code></pre>
+
+<p> 有沒有看到那個 <strong>if controller_name == &#8216;orders&#8217; &amp;&amp; action_name == &#8216;send_data_to_ga_ec&#8217;</strong></p>
+
+<p> 就是那個讓我判斷說，當這個action時，要load不同的GATC</p>
+
+<h2>Step 5. Partial View - for google_analytics_ec</h2>
+
+<p>要填的參數，我就不再贅述了～ 請看GA 的官方 document</p>
+
+<p><strong>app/views/shared/_google_analytics_ec.html.erb</strong></p>
+
+<pre><code>&lt;script&gt;
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-XXXX-XXX', 'auto');
+  &lt;%- if user_id.present? %&gt;
+    ga('set', '&amp;uid', &lt;%= user_id %&gt;);
+  &lt;% end %&gt;
+  ga('require', 'displayfeatures');
+
+  // =========================== GA-Ecommerce Start==========================
+  ga('require', 'ecommerce');
+  ga('ecommerce:addTransaction', {
+    'id': '&lt;%= order.order_no %&gt;',                        // Transaction ID. Required.
+    'affiliation': 'Heartbeat',                           // Affiliation or store name.
+    'revenue': '&lt;%= order.total_price %&gt;',                // Grand Total.
+    'shipping': '&lt;%= order.transaction.ship_fee %&gt;',      // Shipping.
+    'tax': '' ,                                           // Tax.
+    'currency': 'TWD'                                     // local currency code.
+  });
+
+  &lt;% order.line_items.each do |line_item| %&gt;
+  ga('ecommerce:addItem', {
+    'id': '&lt;%= order.order_no %&gt;',                        // Transaction ID. Required.
+    'name': '&lt;%= line_item.product.name %&gt;',              // Product name. Required.
+    'sku': '&lt;%= line_item.product.product_no %&gt;',         // SKU/code.
+    'category': '&lt;%= line_item.product.tag_list%&gt;',       // Category or variation.
+    'price': '&lt;%= line_item.product.selling_price%&gt;',     // Unit price.
+    'quantity': '&lt;%= line_item.count%&gt;',                  // Quantity.
+    'currency': 'TWD' 
+  });
+  &lt;% end %&gt;
+  ga('ecommerce:send');
+  // =========================== GA-Ecommerce End==========================
+  ga('send', 'pageview');
+&lt;/script&gt;
+</code></pre>
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[[HOWTO] 跳出視窗，內含動態選單]]></title>
@@ -2655,209 +2808,6 @@ width="500" height="261" alt="sikuli_vm_setup_step7"></a></p>
 <p><a href="http://www.pctools.com/guides/registry/detail/264/">參數: DisableLockWorkstation</a></p>
 
 <p><a href="http://www.pctools.com/guides/registry/detail/1190/">參數: ScreenSaveActive</a></p>
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[[Installation Guide] RobotFramework 2.7.4 + Sikuli + DatabaseLibrary +SSHLibrary + Seleniumlibrary (jybot and pybot)in Ubuntu 12.04]]></title>
-    <link href="http://ccaloha.cc/blog/2012/10/16/installation-guide-robotframework-2-dot-7-4-plus-sikuli-plus-databaselibrary-plus-sshlibrary-plus-seleniumlibrary-jybot-and-pybot-in-ubuntu-12-dot-04/"/>
-    <updated>2012-10-16T11:39:00+08:00</updated>
-    <id>http://ccaloha.cc/blog/2012/10/16/installation-guide-robotframework-2-dot-7-4-plus-sikuli-plus-databaselibrary-plus-sshlibrary-plus-seleniumlibrary-jybot-and-pybot-in-ubuntu-12-dot-04</id>
-    <content type="html"><![CDATA[<h2>Prepare</h2>
-
-<ol>
-<li>ubuntu-12.04.1-desktop-i386</li>
-<li>VirtualBox</li>
-</ol>
-
-
-<h2>Installation Ubuntu in VirtualBox</h2>
-
-<p>流程請參考</p>
-
-<p><a href="http://www.deltalounge.net/wpress/2012/06/virtualbox-install-ubuntu-12-04/">VirtualBox - Install Ubuntu 12.4</a></p>
-
-<p><a href="http://blog.xuite.net/yh96301/blog/60374490-VirtualBox+4.1%E5%AE%89%E8%A3%9DUbuntu+12.04">VirtualBox 4.1安裝Ubuntu 12.04</a></p>
-
-<!--more-->
-
-
-<h2>Update / Upgrade apt-get</h2>
-
-<pre><code>$ sudo apt-get update
-$ sudo apt-get -f upgrade
-</code></pre>
-
-<h2>Install VIM</h2>
-
-<pre><code>$ sudo apt-get install vim
-</code></pre>
-
-<h2>Install Python</h2>
-
-<pre><code>$ python --version
-</code></pre>
-
-<p>Ubuntu 已經幫你安裝好了</p>
-
-<!--more-->
-
-
-<p></p>
-
-<h2>Install Java</h2>
-
-<p>（http://maketecheasier.com/install-java-runtime-in-ubuntu/2012/05/14）</p>
-
-<pre><code>$ sudo apt-get install openjdk-7-jre
-$ java -version
-</code></pre>
-
-<h2>Install Jython</h2>
-
-<pre><code>$ sudo apt-get install jython  
-</code></pre>
-
-<h2>Install Robotframework</h2>
-
-<p>Download <em>robotframework-2.7.4.tar.gz</em></p>
-
-<pre><code>$ cd Downloads
-$ tar -zxv -f robotframework-2.7.4.tar.gz
-$ cd robotframework-2.7.4
-$ sudo python setup.py install
-$ sudo jython setup.py install
-$ pybot --version
-$ jybot --version
-</code></pre>
-
-<h4>2012/10/16補充</h4>
-
-<pre><code>if you get "jybot: command not found"
-
-$ ln -s  /usr/local/bin/jybot /usr/share/jython/bin/jybot 
-</code></pre>
-
-<h2>Intall ez_install</h2>
-
-<pre><code>$ wget http://peak.telecommunity.com/dist/ez_setup.py
-$ python ez_setup.py
-</code></pre>
-
-<h2>Install Database Library (pybot only)</h2>
-
-<pre><code>$ easy_install robotframework-databaselibrary
-$ sudo apt-get install python-mysqldb
-</code></pre>
-
-<h2>Install paramiko</h2>
-
-<pre><code>$ sudo apt-get install python-paramiko
-</code></pre>
-
-<h2>Install SSH Library</h2>
-
-<pre><code>$ tar -zxv -f robotframework-sshlibrary-1.1.tar.gz 
-$ cd robotframework-sshlibrary-1.1
-$ sudo python setup.py install
-$ sudo jython setup.py install
-</code></pre>
-
-<h2>Install Seleniumlibrary</h2>
-
-<pre><code>$ tar -zxv -f robotframework-sshlibrary-1.1.tar.gz 
-$ cd robotframework-sshlibrary-1.1
-$ sudo python setup.py install
-$ sudo jython setup.py install
-</code></pre>
-
-<h2>Install SVN</h2>
-
-<pre><code>$ sudo apt-get install subversion
-</code></pre>
-
-<h2>Install Sikuli related package</h2>
-
-<pre><code>$ sudo apt-get install wmctrl
-$ sudo apt-get install libopencv-*
-$ sudo apt-get isntall python-opencv
-$ sudo apt-get install build-essential libgtk2.0-dev libjpeg-dev libtiff4-dev libjasper-dev libopenexr-dev cmake python-dev python-numpy python-tk libtbb-dev libeigen2-dev yasm libfaac-dev libopencore-amrnb-dev libopencore-amrwb-dev libtheora-dev libvorbis-dev libxvidcore-dev libx264-dev libqt4-dev libqt4-opengl-dev sphinx-common texlive-latex-extra libv4l-dev libdc1394-22-dev libavcodec-dev libavformat-dev libswscale-dev
-</code></pre>
-
-<p>上面是參考<a href="http://www.samontab.com/web/2012/06/installing-opencv-2-4-1-ubuntu-12-04-lts/">Installing OpenCV 2.4.1 in Ubuntu 12.04 LTS</a></p>
-
-<h4>2012/10/16補充</h4>
-
-<pre><code>$ echo "deb http://us.archive.ubuntu.com/ubuntu/ oneiric universe"  &gt;&gt; /etc/apt/sources.list
-$ echo "deb http://us.archive.ubuntu.com/ubuntu/ oneiric-updates universe" &gt;&gt; /etc/apt/sources.list
-$ sudo apt-get update
-$ sudo apt-get install libcv2.1 libcvaux2.1 libhighgui2.1
-</code></pre>
-
-<h2>Install Rdesktop for Windows Login (Sikuli Used)</h2>
-
-<pre><code># sudo apt-get install rdesktop
-</code></pre>
-
-<h2>Prepare Related jar for Jybot</h2>
-
-<p>你必須要下載，我是把它放在我的test folder裡面 ex: resource/keyword/LinuxEnvirement</p>
-
-<pre><code>sikuli-script.jar
-trilead-ssh2-build213.jar
-dblibrary-2.0.jar
-mysql-connector-java-5.1.18-bin.jar
-</code></pre>
-
-<h2>Ubuntu Run Script Sample</h2>
-
-<blockquote><p>PATH is very IMPORTANT</p></blockquote>
-
-<pre><code>#!/bin/bash
-
-if [ $# -lt 4 ]; then
-        echo "usage : sh run_tests.sh "Test_IP" "Database_IP" "BriefTest/FullTest" "Revison"
-        exit 1
-fi
-
-#===========================================================
-# 這一段是把我的Sikuli所要使用的圖片路徑加進AddImagePath.py裡面
-# Absolute path to this script
-SCRIPT=`readlink -f $0`
-# Absolute path this script is in
-SCRIPTPATH=`dirname $SCRIPT`
-CONFIG_FILE=$SCRIPTPATH/resource/keyword/AddImagePath.py
-echo $SCRIPTPATH
-#sed -i 's/Winbasic=.*/Winbasic=""/g' $CONFIG_FILE
-sed -i -e "s@Winbasic=.*@Winbasic=\"$SCRIPTPATH/..\/Lib\/keyword\/Others\/Sikuli\/Windows_Operating.sikuli\/ImagesOfWindowsBasicOperation\"@g" $CONFIG_FILE
-sed -i -e "s@Shutdown=.*@Shutdown=\"$SCRIPTPATH/..\/Lib\/keyword\/Others\/Sikuli\/Windows_Operating.sikuli\/ImagesOfShutdown\"@g" $CONFIG_FILE
-sed -i -e "s@CreateFile=.*@CreateFile=\"$SCRIPTPATH/..\/Lib\/keyword\/Others\/Sikuli\/Windows_Operating.sikuli\/ImagesOfCreateFile\"@g" $CONFIG_FILE
-sed -i -e "s@Format=.*@Format=\"$SCRIPTPATH/..\/Lib\/keyword\/Others\/Sikuli\/Windows_Operating.sikuli\/ImagesOfFormat\"@g" $CONFIG_FILE
-sed -i -e "s@WinRDP=.*@WinRDP=\"$SCRIPTPATH/..\/Lib\/keyword\/Others\/Sikuli\/Windows_Operating.sikuli\/ImagesOfWinRDP\"@g" $CONFIG_FILE
-#===========================================================
-
-MYDIRPATH=../Lib/keyword/Others/Sikuli/Windows_Operating.sikuli:resource/keyword
-LOCALPATH=resource/keyword/LinuxEnvirement
-
-VERSION=$4
-TESTSCALE=$3
-Test_IP=$1
-Database_IP=$2
-
-export CLASSPATH=$LOCALPATH/sikuli-script.jar:$LOCALPATH/trilead-ssh2-build213.jar:$LOCALPATH/dblibrary-2.0.jar:$LOCALPATH/mysql-connector-java-5.1.18-bin.jar
-export JYTHONPATH=/usr/share/jython/Lib:$LOCALPATH/sikuli-script.jar/Lib 
-
-
-jybot --pythonpath $MYDIRPATH  --outputdir test --exclude no_run --include $TESTSCALE --loglevel TRACE -l Windows_log_$TESTSCALE\_$VERSION -r Windows_report_$TESTSCALE\_$VERSION -o Windows_output_$TESTSCALE\_$VERSION --variable Database_IP:$Database_IP --variable Test_IP:$Test_IP Windows_TestCase.txt
-</code></pre>
-
-<p>最重要就是要告訴JYTHONPATH</p>
-
-<p>大概是這樣！</p>
-
-<p>有些lib是為了可以跑sikuli裝的 沒有時間一一去驗證是否真的需要&#8230;.</p>
-
-<blockquote><p>特別感謝 EJ 和 林旺 提供強大支援！</p></blockquote>
 ]]></content>
   </entry>
   

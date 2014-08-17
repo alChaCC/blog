@@ -1,0 +1,169 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: Ruby_on_Rails,Google_Analytics | AlohaCC]]></title>
+  <link href="http://ccaloha.cc/blog/categories/ruby-on-rails-google-analytics/atom.xml" rel="self"/>
+  <link href="http://ccaloha.cc/"/>
+  <updated>2014-08-17T21:28:11+08:00</updated>
+  <id>http://ccaloha.cc/</id>
+  <author>
+    <name><![CDATA[Aloha]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[[HOWTO] 5 steps let your EC website applying GA E-commerce using Ruby on Rails]]></title>
+    <link href="http://ccaloha.cc/blog/2014/08/17/5-steps-let-your-ec-website-applying-ga-e-commerce-using-ruby-on-rails/"/>
+    <updated>2014-08-17T21:25:55+08:00</updated>
+    <id>http://ccaloha.cc/blog/2014/08/17/5-steps-let-your-ec-website-applying-ga-e-commerce-using-ruby-on-rails</id>
+    <content type="html"><![CDATA[<p>這篇你會知道如何在 Rails 加上 GA E-commerce的 code</p>
+
+<p>基本上就是參考<a href="https://developers.google.com/analytics/devguides/collection/analyticsjs/ecommerce">GA- Ecommerce Tracking - Web Tracking (analytics.js)</a></p>
+
+<p>google 是建議 GATC(google analytic tracking code)可以埋在當使用者完成交易後的感謝頁面</p>
+
+<p>所以，我也是加上訂單created 後的動作，</p>
+
+<p>就讓我們開始吧!</p>
+
+<!-- more -->
+
+
+<p></p>
+
+<h2>Step 1. Order Controller</h2>
+
+<p>在 <strong>app/controllers/orders_controller.rb</strong></p>
+
+<p>因為需要多一個步驟，所以我是新增一個新的 action，<strong>send_data_to_ga_ec</strong></p>
+
+<pre><code>def send_data_to_ga_ec
+    @order = Order.find_by_order_no(params[:id]) 
+end
+</code></pre>
+
+<h2>Step 2. Route and Controller</h2>
+
+<p>在 <strong>config/routes.rb</strong></p>
+
+<p>因為加了一個action, 所以我補上一條新的routing規則</p>
+
+<pre><code>  get '/orders/send_data_to_ga_ec', :to =&gt; 'orders#send_data_to_ga_ec' 
+</code></pre>
+
+<p><em>ps. 注意！一定要放在resource :orders前面，不然會無效</em></p>
+
+<p>回到 <strong>app/controllers/orders_controller.rb</strong></p>
+
+<p>把當訂單完成後，要導向的動作，補上去</p>
+
+<pre><code>def create
+    @order = current_user.orders.build(permitted_params.order)
+      if @order 
+        @order.add_line_items_from_cart(@cart)
+            respond_to do |format|
+                if @order.save
+                    format.html { 
+                       redirect_to orders_send_data_to_ga_ec_path(:id =&gt; @order.order_no), notice: "感謝您的訂購，您可以點選[我的訂單]查看訂單資訊，或於幾分鐘後，檢查是否收到訂單確認信"
+                    }
+                else
+                    format.html { render action: 'new' }
+                end
+            end
+        end
+end
+</code></pre>
+
+<h2>Step 3. View</h2>
+
+<p>這邊就是單純把他購買的東西show出來而已！重點在下兩步！</p>
+
+<pre><code>.home-block 
+  h2.home-block-heading
+    span  這是您本次的購買資訊
+
+  table.table.cart-table.table-striped.table-bordered.table-hover.span12
+        thead
+          tr
+            th 產品名稱
+            th 購買數量
+            th 購買顏色
+            th 購買尺寸
+            th 購買時優惠方案
+        tbody
+          - @order.line_items.each do |line_item|
+              tr
+                td= link_to line_item.product.name, product_path(line_item.product.id)
+                td= line_item.count
+                td= line_item.color
+                td= line_item.size
+                td= line_item.discount_name
+</code></pre>
+
+<h2>Step 4. Application Layout</h2>
+
+<p>因為一般的GATC，我們都是裝在header，所以以Rails來說，就是寫在</p>
+
+<p><strong>app/views/layouts/application.html.slim</strong></p>
+
+<pre><code>  - if controller_name == 'orders' &amp;&amp; action_name == 'send_data_to_ga_ec'
+    = render 'shared/google_analytics_ec' , user_id: current_user.try(:id), order: @order
+  - else
+    = render 'shared/google_analytics' , user_id: current_user.try(:id) 
+</code></pre>
+
+<p> 有沒有看到那個 <strong>if controller_name == 'orders' &amp;&amp; action_name == 'send_data_to_ga_ec'</strong></p>
+
+<p> 就是那個讓我判斷說，當這個action時，要load不同的GATC</p>
+
+<h2>Step 5. Partial View - for google_analytics_ec</h2>
+
+<p>要填的參數，我就不再贅述了～ 請看GA 的官方 document</p>
+
+<p><strong>app/views/shared/_google_analytics_ec.html.erb</strong></p>
+
+<pre><code>&lt;script&gt;
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-XXXX-XXX', 'auto');
+  &lt;%- if user_id.present? %&gt;
+    ga('set', '&amp;uid', &lt;%= user_id %&gt;);
+  &lt;% end %&gt;
+  ga('require', 'displayfeatures');
+
+  // =========================== GA-Ecommerce Start==========================
+  ga('require', 'ecommerce');
+  ga('ecommerce:addTransaction', {
+    'id': '&lt;%= order.order_no %&gt;',                        // Transaction ID. Required.
+    'affiliation': 'Heartbeat',                           // Affiliation or store name.
+    'revenue': '&lt;%= order.total_price %&gt;',                // Grand Total.
+    'shipping': '&lt;%= order.transaction.ship_fee %&gt;',      // Shipping.
+    'tax': '' ,                                           // Tax.
+    'currency': 'TWD'                                     // local currency code.
+  });
+
+  &lt;% order.line_items.each do |line_item| %&gt;
+  ga('ecommerce:addItem', {
+    'id': '&lt;%= order.order_no %&gt;',                        // Transaction ID. Required.
+    'name': '&lt;%= line_item.product.name %&gt;',              // Product name. Required.
+    'sku': '&lt;%= line_item.product.product_no %&gt;',         // SKU/code.
+    'category': '&lt;%= line_item.product.tag_list%&gt;',       // Category or variation.
+    'price': '&lt;%= line_item.product.selling_price%&gt;',     // Unit price.
+    'quantity': '&lt;%= line_item.count%&gt;',                  // Quantity.
+    'currency': 'TWD' 
+  });
+  &lt;% end %&gt;
+  ga('ecommerce:send');
+  // =========================== GA-Ecommerce End==========================
+  ga('send', 'pageview');
+&lt;/script&gt;
+</code></pre>
+]]></content>
+  </entry>
+  
+</feed>
