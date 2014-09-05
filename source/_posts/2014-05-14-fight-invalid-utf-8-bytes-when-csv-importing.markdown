@@ -3,7 +3,7 @@ layout: post
 title: "CSV匯入中文編碼問題"
 date: 2014-05-14 11:17:11 +0800
 comments: true
-categories: ["Ruby_on_Rails,CSV"]
+categories: ["Ruby_on_Rails","CSV"]
 keywords: "UTF-8, invalid byte, Ruby on Rails, CSV, import, 中文, 字元轉碼"
 description: "Fight invalid UTF-8 bytes when CSV importing"
 ---

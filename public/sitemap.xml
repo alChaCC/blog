@@ -382,7 +382,7 @@
         <loc>
             http://ccaloha.cc/blog/2014/02/05/howto-users-can-only-post-comments-on-fb-after-login/
         </loc>
-        <lastmod>2014-02-05T22:05:16+08:00</lastmod>
+        <lastmod>2014-09-06T00:18:05+08:00</lastmod>
     </url>
     <url>
         <loc>http://ccaloha.cc/blog/2014/03/03/howto-create-youtube-link-in-ruby-on-rails/</loc>
@@ -414,39 +414,39 @@
         <loc>
             http://ccaloha.cc/blog/2014/04/30/howto-setup-sunspot-in-rails4-and-deploy-to-ubuntu12-dot-04-using-capistrano/
         </loc>
-        <lastmod>2014-04-30T10:39:51+08:00</lastmod>
+        <lastmod>2014-09-06T00:17:45+08:00</lastmod>
     </url>
     <url>
         <loc>http://ccaloha.cc/blog/2014/05/14/fight-invalid-utf-8-bytes-when-csv-importing/</loc>
-        <lastmod>2014-05-14T11:25:44+08:00</lastmod>
+        <lastmod>2014-09-06T00:17:35+08:00</lastmod>
     </url>
     <url>
         <loc>
             http://ccaloha.cc/blog/2014/06/30/dynamic-roles-and-permissions-management-using-cancan/
         </loc>
-        <lastmod>2014-06-30T15:38:46+08:00</lastmod>
+        <lastmod>2014-09-06T00:17:29+08:00</lastmod>
     </url>
     <url>
         <loc>
             http://ccaloha.cc/blog/2014/07/11/reading-note-23-plus-1-design-pattern-part3-factory-method/
         </loc>
-        <lastmod>2014-07-12T10:56:14+08:00</lastmod>
+        <lastmod>2014-09-06T00:17:23+08:00</lastmod>
     </url>
     <url>
         <loc>http://ccaloha.cc/blog/2014/08/08/howto-rails-popup-window-and-ajax-form/</loc>
-        <lastmod>2014-08-08T12:56:17+08:00</lastmod>
+        <lastmod>2014-09-06T00:16:55+08:00</lastmod>
     </url>
     <url>
         <loc>
             http://ccaloha.cc/blog/2014/08/17/5-steps-let-your-ec-website-applying-ga-e-commerce-using-ruby-on-rails/
         </loc>
-        <lastmod>2014-08-17T21:28:00+08:00</lastmod>
+        <lastmod>2014-09-06T00:16:45+08:00</lastmod>
     </url>
     <url>
         <loc>
             http://ccaloha.cc/blog/2014/09/06/using-sunspot-in-rails-including-suggestion-feature-and-deployment-to-production-machine-part1/
         </loc>
-        <lastmod>2014-09-06T00:08:38+08:00</lastmod>
+        <lastmod>2014-09-06T00:16:33+08:00</lastmod>
     </url>
     <url>
         <loc>http://ccaloha.cc/About/</loc>
@@ -462,15 +462,15 @@
     </url>
     <url>
         <loc>http://ccaloha.cc/archives/</loc>
-        <lastmod>2014-09-06T00:08:38+08:00</lastmod>
+        <lastmod>2014-09-06T00:18:05+08:00</lastmod>
     </url>
     <url>
         <loc>http://ccaloha.cc/blog/archives/</loc>
-        <lastmod>2014-09-06T00:08:38+08:00</lastmod>
+        <lastmod>2014-09-06T00:18:05+08:00</lastmod>
     </url>
     <url>
         <loc>http://ccaloha.cc/blog/</loc>
-        <lastmod>2014-09-06T00:08:38+08:00</lastmod>
+        <lastmod>2014-09-06T00:18:05+08:00</lastmod>
     </url>
     <url>
         <loc>http://ccaloha.cc/DesignPattern/</loc>
@@ -478,7 +478,7 @@
     </url>
     <url>
         <loc>http://ccaloha.cc/</loc>
-        <lastmod>2014-09-06T00:08:38+08:00</lastmod>
+        <lastmod>2014-09-06T00:18:05+08:00</lastmod>
     </url>
     <url>
         <loc>http://ccaloha.cc/Linux/</loc>

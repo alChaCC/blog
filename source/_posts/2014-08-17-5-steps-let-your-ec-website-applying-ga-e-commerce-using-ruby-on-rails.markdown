@@ -3,7 +3,7 @@ layout: post
 title: "[HOWTO] 5 steps let your EC website applying GA E-commerce using Ruby on Rails"
 date: 2014-08-17 21:25:55 +0800
 comments: true
-categories: ["Ruby_on_Rails,Google_Analytics"]
+categories: ["Ruby_on_Rails","Google_Analytics"]
 keywords: "Ruby on Rails, Google analytic, Ecommerce Tracking, 中文, multi-select, modal"
 description: "5 steps let your EC website applying GA E-commerce using Ruby on Rails"
 ---

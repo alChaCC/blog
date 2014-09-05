@@ -3,7 +3,7 @@ layout: post
 title: "[HOWTO] Using Sunspot(Solr) in Rails including easy suggestion feature and deployment to production environment - Part1"
 date: 2014-09-06 00:06:35 +0800
 comments: true
-categories: ["Ruby_on_Rails,Search"]
+categories: ["Ruby_on_Rails","Search"]
 keywords: "Ruby on Rails, Solr-powered search, full text search, sunspot, deploy, suggestion, auto complete,中文, 推薦"
 description: "Using Sunspot in Rails including suggestion feature(using solmate) and deployment in production environment"  
 ---
