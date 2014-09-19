@@ -107,6 +107,66 @@ $(document).ready(
     <article class="post">
 	<h2 class="title">
 		
+		<a href="/blog/2014/03/03/howto-create-youtube-link-in-ruby-on-rails/">
+		
+			[HowTo]- Create Youtube Link in Ruby on Rails(using Slim)</a>
+	</h2>
+	<div class="entry-content">
+		<h2>In your view where you want to show youtube link</h2>
+
+<p>ex: app/views/products/show.html.slim</p>
+
+<pre><code>- if @product.youtube_url.present?
+  = video_iframe @product.youtube_url
+</code></pre>
+
+<h2>Create a helper</h2>
+
+<p>ex: I created in application_helper.rb</p>
+
+<pre><code>def video_iframeideo_iframe(src)
+  content_tag("iframe","", {:width =&gt; 'XXX', :height =XXX&gt; 'YYY', :src =&gt;"#{src}"} )
+end
+</code></pre>
+
+<p> 
+		
+		<a href="/blog/2014/03/03/howto-create-youtube-link-in-ruby-on-rails/" class="more-link">Read on &rarr;</a>
+	</div>
+
+
+<div class="meta">
+	<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2014-03-03T23:52:08+08:00" pubdate data-updated="true">Mar 3<span>rd</span>, 2014</time></div>
+	
+
+<div class="tags">
+
+	<a class='category' href='/blog/categories/ruby-on-rails/'>Ruby_on_Rails</a>
+
+</div>
+
+
+	
+		<span class="comments"><a href="/blog/2014/03/03/howto-create-youtube-link-in-ruby-on-rails//blog/page/3/index.html#disqus_thread">Comments</a></span>
+	
+</div></article>
+
+
+    <article class="post">
+	<h2 class="title">
+		
 		<a href="/blog/2014/02/05/howto-users-can-only-post-comments-on-fb-after-login/">
 		
 			[HowTo] 讓使用者登入網站後，才允許Facebook留言 - ROR + Coffeescript + CSS + Devise</a>
@@ -532,55 +592,6 @@ $(document).ready(
 
 	
 		<span class="comments"><a href="/blog/2013/04/22/learning-english-from-useful-tools//blog/page/3/index.html#disqus_thread">Comments</a></span>
-	
-</div></article>
-
-
-    <article class="post">
-	<h2 class="title">
-		
-		<a href="/blog/2013/04/22/2013-0422-murmur/">
-		
-			20130422-murmur</a>
-	</h2>
-	<div class="entry-content">
-		<p>好久沒有寫blog了</p>
-
-<p>從碩士開始</p>
-
-<p>每年年初，我都會訂一個年度計劃</p>
-
-<p>今年就是- 出國闖闖</p>
-
-<p>In fact, 這是五年～十年的計劃</p>
-
-<p>目前計畫兩條路-唸書、工作</p>
-
-
-		
-		<a href="/blog/2013/04/22/2013-0422-murmur/" class="more-link">Read on &rarr;</a>
-	</div>
-
-
-<div class="meta">
-	<div class="date">
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2013-04-22T23:25:00+08:00" pubdate data-updated="true">Apr 22<span>nd</span>, 2013</time></div>
-	
-
-
-	
-		<span class="comments"><a href="/blog/2013/04/22/2013-0422-murmur//blog/page/3/index.html#disqus_thread">Comments</a></span>
 	
 </div></article>
 
