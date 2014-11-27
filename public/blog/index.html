@@ -107,6 +107,57 @@ $(document).ready(
     <article class="post">
 	<h2 class="title">
 		
+		<a href="/blog/2014/11/27/howto-using-elasticsearch-in-ruby-on-rails-and-setup-remote-es-server-via-vagrant/">
+		
+			[HOWTO] Using ElasticSearch in Ruby on Rails and Setup Remote ES Server via Vagrant</a>
+	</h2>
+	<div class="entry-content">
+		<p>首先，要先感謝 &#8220;老王&#8221;，和 &#8220;Marz&#8221;哥，給我參考他們的Elasticsearch的文件！</p>
+
+<p>安裝部分，就是參考他們的操作！</p>
+
+<p>這邊最主要的不一樣，是設定遠端的Elasticsearch機器！</p>
+
+<p>改天我會補上 如何實作 &#8220;搜尋字詞推薦&#8221;，而且是整合soulmate歐！！</p>
+
+
+		
+		<a href="/blog/2014/11/27/howto-using-elasticsearch-in-ruby-on-rails-and-setup-remote-es-server-via-vagrant/" class="more-link">Read on &rarr;</a>
+	</div>
+
+
+<div class="meta">
+	<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2014-11-27T07:45:20+08:00" pubdate data-updated="true">Nov 27<span>th</span>, 2014</time></div>
+	
+
+<div class="tags">
+
+	<a class='category' href='/blog/categories/elasticsearch/'>Elasticsearch</a>, <a class='category' href='/blog/categories/ruby-on-rails/'>Ruby_on_Rails</a>, <a class='category' href='/blog/categories/search/'>Search</a>, <a class='category' href='/blog/categories/ubuntu/'>Ubuntu</a>, <a class='category' href='/blog/categories/vagrant/'>Vagrant</a>
+
+</div>
+
+
+	
+		<span class="comments"><a href="/blog/2014/11/27/howto-using-elasticsearch-in-ruby-on-rails-and-setup-remote-es-server-via-vagrant//blog/index.html#disqus_thread">Comments</a></span>
+	
+</div></article>
+
+
+    <article class="post">
+	<h2 class="title">
+		
 		<a href="/blog/2014/09/19/howto-using-sunspot-access-remote-solr-instance-ubuntu-14-dot-04-in-ruby-on-rails-using-vagrant/">
 		
 			[HOWTO] Using Sunspot to Access Remote Solr instance(Ubuntu 14.04) in Ruby on Rails Using Vagrant</a>
@@ -1160,88 +1211,6 @@ end
 
 	
 		<span class="comments"><a href="/blog/2014/07/11/reading-note-23-plus-1-design-pattern-part3-factory-method//blog/index.html#disqus_thread">Comments</a></span>
-	
-</div></article>
-
-
-    <article class="post">
-	<h2 class="title">
-		
-		<a href="/blog/2014/06/30/dynamic-roles-and-permissions-management-using-cancan/">
-		
-			如何動態管理權限-使用cancan</a>
-	</h2>
-	<div class="entry-content">
-		<p>這篇是參考自<a href="http://blog.joshsoftware.com/2012/10/23/dynamic-roles-and-permissions-using-cancan/">Dynamic roles and permissions using cancan</a></p>
-
-<p>大概分成幾個流程：</p>
-
-<ol>
-<li>建立Gemfile</li>
-<li>建立需要的Model</li>
-<li>寫rake爬controller的action(懶惰專用，不想要資料庫一個一個建權限)</li>
-<li>設定Ability => 這邊是關鍵，他會去抓user的role底下的權限</li>
-<li>設定Controller => 用來擋權限,設定權限</li>
-<li>設定route</li>
-<li>建立View</li>
-</ol>
-
-
-<h1>前言</h1>
-
-<p>網站後台往往可能有多個員工進去作業，但是有些功能並不希望開放給低層級的員工使用，</p>
-
-<p>所以後台也需要做權限管理～</p>
-
-<p>但是人員進進出出，陞遷、轉職相對應的職務也會調整，總不能每次都要去改hard code吧～～</p>
-
-<p>所以才有動態權限設定的需求！</p>
-
-<h1>Step 1. Gemfile</h1>
-
-<p>因為我們要使用Railscast網站開發者兼Boss Ryanb寫的<a href="https://github.com/ryanb/cancan">cancan</a>，提供權限管理的服務</p>
-
-<p><strong>[手做]</strong> 所以，要在Gemfile寫入</p>
-
-<pre><code>gem 'cancan'
-</code></pre>
-
-<p><strong>[手做]</strong> 在terminal執行</p>
-
-<pre><code>bundle install
-</code></pre>
-
-
-		
-		<a href="/blog/2014/06/30/dynamic-roles-and-permissions-management-using-cancan/" class="more-link">Read on &rarr;</a>
-	</div>
-
-
-<div class="meta">
-	<div class="date">
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2014-06-30T15:27:55+08:00" pubdate data-updated="true">Jun 30<span>th</span>, 2014</time></div>
-	
-
-<div class="tags">
-
-	<a class='category' href='/blog/categories/ruby-on-rails/'>Ruby_on_Rails</a>, <a class='category' href='/blog/categories/cancan/'>cancan</a>
-
-</div>
-
-
-	
-		<span class="comments"><a href="/blog/2014/06/30/dynamic-roles-and-permissions-management-using-cancan//blog/index.html#disqus_thread">Comments</a></span>
 	
 </div></article>
 

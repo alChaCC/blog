@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Ruby_on_Rails | AlohaCC]]></title>
   <link href="http://ccaloha.cc/blog/categories/ruby-on-rails/atom.xml" rel="self"/>
   <link href="http://ccaloha.cc/"/>
-  <updated>2014-09-20T03:47:51+08:00</updated>
+  <updated>2014-11-27T08:33:18+08:00</updated>
   <id>http://ccaloha.cc/</id>
   <author>
     <name><![CDATA[Aloha]]></name>
@@ -12,6 +12,339 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[[HOWTO] Using ElasticSearch in Ruby on Rails and setup remote ES server via Vagrant]]></title>
+    <link href="http://ccaloha.cc/blog/2014/11/27/howto-using-elasticsearch-in-ruby-on-rails-and-setup-remote-es-server-via-vagrant/"/>
+    <updated>2014-11-27T07:45:20+08:00</updated>
+    <id>http://ccaloha.cc/blog/2014/11/27/howto-using-elasticsearch-in-ruby-on-rails-and-setup-remote-es-server-via-vagrant</id>
+    <content type="html"><![CDATA[<p>首先，要先感謝 "老王"，和 "Marz"哥，給我參考他們的Elasticsearch的文件！</p>
+
+<p>安裝部分，就是參考他們的操作！</p>
+
+<p>這邊最主要的不一樣，是設定遠端的Elasticsearch機器！</p>
+
+<p>改天我會補上 如何實作 "搜尋字詞推薦"，而且是整合soulmate歐！！</p>
+
+<!-- more -->
+
+
+<h2>Mac本機開發</h2>
+
+<h3>安裝 elastic search</h3>
+
+<pre><code>brew install elasticsearch
+</code></pre>
+
+<h3>連結</h3>
+
+<pre><code>ln -sfv /usr/local/opt/elasticsearch/*.plist ~/Library/LaunchAgents
+</code></pre>
+
+<h3>啟動</h3>
+
+<pre><code>launchctl load ~/Library/LaunchAgents/homebrew.mxcl.elasticsearch.plist
+</code></pre>
+
+<h3>關閉</h3>
+
+<pre><code>launchctl unload ~/Library/LaunchAgents/homebrew.mxcl.elasticsearch.plist
+</code></pre>
+
+<h3>Run ElasticSearch</h3>
+
+<pre><code>export JAVA_HOME="/Library/Internet Plug-Ins/JavaAppletPlugin.plugin/Contents/Home"
+elasticsearch
+
+(或是)
+
+elasticsearch --config=/usr/local/opt/elasticsearch/config/elasticsearch.yml  
+</code></pre>
+
+<h3>測試是否安裝成功</h3>
+
+<pre><code>curl -X GET http://localhost:9200
+</code></pre>
+
+<p>你應該會看到</p>
+
+<pre><code>{
+  "status" : 200,
+  "name" : "Rage",
+  "version" : {
+    "number" : "1.3.2",
+    "build_hash" : "dee175dbe2f254f3f26992f5d7591939aaefd12f",
+    "build_timestamp" : "2014-08-13T14:29:30Z",
+    "build_snapshot" : false,
+    "lucene_version" : "4.9"
+  },
+  "tagline" : "You Know, for Search"
+}
+</code></pre>
+
+<h3>Code 要加入</h3>
+
+<p>新增一個檔案</p>
+
+<p><strong>lib/tasks/elasticsearch.rake</strong></p>
+
+<p>寫入</p>
+
+<pre><code>require 'elasticsearch/rails/tasks/import'
+</code></pre>
+
+<p>修改<strong>Gemfile</strong>，加入</p>
+
+<pre><code>gem 'elasticsearch-rails'
+gem 'elasticsearch-model' 
+</code></pre>
+
+<h3>跑index</h3>
+
+<p>詳情請參考：<strong>Gem: </strong><a href="https://github.com/elasticsearch/elasticsearch-rails/tree/master/elasticsearch-rails">elasticsearch-rail</a></p>
+
+<pre><code>bundle exec rake environment elasticsearch:import:all
+</code></pre>
+
+<p>如果只需要import一個model</p>
+
+<pre><code>bundle exec rake environment elasticsearch:import:model CLASS='Article'
+</code></pre>
+
+<p>如果只需要import某些特定的scope</p>
+
+<pre><code>bundle exec rake environment elasticsearch:import:model CLASS='Article' SCOPE='published'
+</code></pre>
+
+<h3>清除index</h3>
+
+<pre><code>Article.__elasticsearch__.client.indices.delete index: Article.index_name rescue nil
+</code></pre>
+
+<h2>安裝elasticsearch 在Ubuntu 裡面</h2>
+
+<h3>使用vagrant 起三檯機器(用來模擬正式環境)</h3>
+
+<p>請查看前半部</p>
+
+<p><a href="http://ccaloha.cc/blog/2014/09/19/howto-using-sunspot-access-remote-solr-instance-ubuntu-14-dot-04-in-ruby-on-rails-using-vagrant/">HOWTO - Using Sunspot to Access Remote Solr instance(Ubuntu 14.04) in Ruby on Rails Using Vagrant</a></p>
+
+<h3>安裝 elascticsearch</h3>
+
+<pre><code>vagrant ssh search 
+sudo apt-get install openjdk-7-jre-headless -y
+sudo wget -O - http://packages.elasticsearch.org/GPG-KEY-elasticsearch | sudo apt-key add -
+</code></pre>
+
+<h3>編輯source list</h3>
+
+<pre><code>sudo vim /etc/apt/sources.list
+</code></pre>
+
+<p>把下面的code放進去</p>
+
+<pre><code>  deb http://packages.elasticsearch.org/elasticsearch/1.3/debian stable main
+</code></pre>
+
+<p>繼續安裝</p>
+
+<pre><code>  sudo apt-get update
+  sudo apt-get install elasticsearch
+  sudo update-rc.d elasticsearch defaults 95 10
+  sudo /etc/init.d/elasticsearch start
+</code></pre>
+
+<h2>Ruby on Rails 部分</h2>
+
+<h3>更改producion deploy的東東</h3>
+
+<p><strong>config/deploy/production.rb</strong></p>
+
+<pre><code>  role :app, %w{apps@33.33.13.10}
+  role :web, %w{apps@33.33.13.10}
+  role :db,  %w{apps@33.33.13.11}
+  role :crontaber, %w{apps@33.33.13.10}
+  set :rails_env, :production
+  set :unicorn_rack_env, :production
+  set :branch, 'feature/update_search_engine_to_elasticsearch'
+</code></pre>
+
+<p>我故意把ip改成 vagrant的ip</p>
+
+<p>另外，branch也用成我自己測試的branch: <strong>feature/update_search_engine_to_elasticsearch</strong></p>
+
+<h2>如何設定將elasticsearch 連到別台機器</h2>
+
+<ol>
+<li><p>新增一個 <strong>config/elasticsearch.yml</strong></p>
+
+<pre><code> default: &amp;default
+   host: 127.0.0.1:9200
+
+ development:
+   &lt;&lt;: *default
+   host: 127.0.0.1:9200
+
+ test:
+   &lt;&lt;: *default
+
+ production:
+   &lt;&lt;: *default
+   host: 33.33.13.12:9200
+</code></pre></li>
+<li><p>在application.rb加入</p>
+
+<pre><code> es = YAML.load(File.open("#{Rails.root}/config/elasticsearch.yml"))[Rails.env]
+
+   elasticsearch_config = {
+       host: es["host"],
+       transport_options: {
+       request: { timeout: 5 }
+       },
+   }
+   Elasticsearch::Model.client = Elasticsearch::Client.new(elasticsearch_config)
+</code></pre></li>
+<li><p>因為我的product需要做搜尋，所以在Product model 我這樣寫</p></li>
+</ol>
+
+
+<p>  (ps. elasticsearch 真的是博大精深，我沒有時間去深入專研，以下的指令是我try出最符合我需要的搜尋結果，所以大家可參考參考)</p>
+
+<pre><code>def self.essearch(query,sort,page)
+  if sort == 'relevance'
+
+    results = __elasticsearch__.search(
+      {
+        query: {
+          filtered: {
+            filter: {
+              range: { product_price_min: { "gt" =&gt; 0} }
+             }, 
+            query: {
+              bool: {
+                must: [
+                  multi_match: {
+                    query: query,
+                    type:  "phrase",
+                    fields: ["product_cname^10", "product_ename^10",'product_description', 'product_keyword']
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "sort" =&gt; [
+          "_score",
+          {"product_urcosme_exp" =&gt; {"order" =&gt; "desc"} } 
+        ],
+        "from" =&gt; (page.to_i-1)*5,
+        "size" =&gt; 5          
+      }
+    )
+  else
+    # 因為不是精準搜尋，所以這邊的排序就真的會依照我們給他的sort，
+    # 但是你總不希望，搜尋面膜，結果第一個結果是：淨膚儀，就因為他的上市時間最晚....囧～
+    # 所以，我還是希望第一個看到的結果是以關鍵字有出現的為佳，所以我多使用了filter的功能
+    results = __elasticsearch__.search(
+      {
+        query: {
+          filtered: {
+            filter: {
+              range: { product_price_min: { "gt" =&gt; 0} }
+             },
+            filter: {
+               exists: { field: "product_keyword" }
+             },
+            query: {
+              bool: {
+                must: [
+                  multi_match: {
+                    query: query,
+                    type:  "cross_fields",
+                    fields: ['product_cname', 'product_ename'],
+                    operator:   "and", 
+                    #minimum_should_match: '30%'
+                  }
+                ],
+                should: [
+                  { match: { "product_description" =&gt;  query}},
+                  { match: { "product_keyword" =&gt; query }}
+                ],
+              }
+            }
+          }
+        },
+        "sort" =&gt; [
+          {"#{sort}" =&gt; {"order" =&gt; "#{sort == "product_price_min"? 'asc' : 'desc'}"} } , 
+           "_score",
+          { "product_cname" =&gt; "desc" }
+        ],
+        "from" =&gt; (page.to_i-1)*5,
+        "size" =&gt; 5        
+      }
+    )
+  # 這邊目的是為了如果上面都沒有搜尋結果才做的比較rough的搜尋
+  if results.results.size == 0
+    results = __elasticsearch__.search(
+      {
+        query: {
+          filtered: {
+            filter: {
+              range: { product_price_min: { "gt" =&gt; 0} }
+             },
+            query: {
+              bool: {
+                must: [
+                  multi_match: {
+                    query: query,
+                    type:  "cross_fields",
+                    fields: ['product_cname', 'product_ename','product_description','product_keyword'],
+                    operator:   "and"
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "sort" =&gt; [
+          {"#{sort}" =&gt; {"order" =&gt; "#{sort == "product_price_min"? 'asc' : 'desc'}"} } , 
+           "_score",
+          { "product_cname" =&gt; "desc" }
+        ],
+        "from" =&gt; (page.to_i-1)*5,
+        "size" =&gt; 5          
+      }
+    )
+  end
+  end
+  return results
+end
+</code></pre>
+
+<ol>
+<li><p>在product的controller</p>
+
+<p>   @products = Product.essearch(params[:keyword],params[:sort],params[:page])</p>
+
+<p>   @products =  search.results.results</p>
+
+<p> 接下來就是丟給view顯示了～我就不提了～</p></li>
+</ol>
+
+
+<h3>接下來就是deploy加上看看有沒有成功摟</h3>
+
+<pre><code>cap production deploy #因為"config/deploy/production.rb"有改成vagrant設定，所以請放心～
+vagrant ssh search    # 登入你的搜尋機器
+elasticsearch         # 把elasticsearch 服務跑起來
+vagrant ssh app       # 登入跑服務的機器
+cd 你的專案            
+bundle exec rake environment elasticsearch:import:all  #跑index，這邊如果有成功，代表你已經連過去遠端了！
+</code></pre>
+
+<h3>完成！</h3>
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[[HOWTO] Using Sunspot to access remote Solr instance(Ubuntu 14.04) in Ruby on Rails using Vagrant]]></title>
@@ -1855,621 +2188,6 @@ btn-mini', 'data-order' =&gt; order.id
 </code></pre>
 
 <h2>打完收工！</h2>
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[如何動態管理權限-使用cancan]]></title>
-    <link href="http://ccaloha.cc/blog/2014/06/30/dynamic-roles-and-permissions-management-using-cancan/"/>
-    <updated>2014-06-30T15:27:55+08:00</updated>
-    <id>http://ccaloha.cc/blog/2014/06/30/dynamic-roles-and-permissions-management-using-cancan</id>
-    <content type="html"><![CDATA[<p>這篇是參考自<a href="http://blog.joshsoftware.com/2012/10/23/dynamic-roles-and-permissions-using-cancan/">Dynamic roles and permissions using cancan</a></p>
-
-<p>大概分成幾個流程：</p>
-
-<ol>
-<li>建立Gemfile</li>
-<li>建立需要的Model</li>
-<li>寫rake爬controller的action(懶惰專用，不想要資料庫一個一個建權限)</li>
-<li>設定Ability => 這邊是關鍵，他會去抓user的role底下的權限</li>
-<li>設定Controller => 用來擋權限,設定權限</li>
-<li>設定route</li>
-<li>建立View</li>
-</ol>
-
-
-<h1>前言</h1>
-
-<p>網站後台往往可能有多個員工進去作業，但是有些功能並不希望開放給低層級的員工使用，</p>
-
-<p>所以後台也需要做權限管理～</p>
-
-<p>但是人員進進出出，陞遷、轉職相對應的職務也會調整，總不能每次都要去改hard code吧～～</p>
-
-<p>所以才有動態權限設定的需求！</p>
-
-<h1>Step 1. Gemfile</h1>
-
-<p>因為我們要使用Railscast網站開發者兼Boss Ryanb寫的<a href="https://github.com/ryanb/cancan">cancan</a>，提供權限管理的服務</p>
-
-<p><strong>[手做]</strong> 所以，要在Gemfile寫入</p>
-
-<pre><code>gem 'cancan'
-</code></pre>
-
-<p><strong>[手做]</strong> 在terminal執行</p>
-
-<pre><code>bundle install
-</code></pre>
-
-<!-- more -->
-
-
-<h1>Step 2. 建立Model</h1>
-
-<p>由於後台的管理員，</p>
-
-<p>在建立model之前，先來看一下Model的架構，</p>
-
-<p><img src="https://dl.dropboxusercontent.com/u/22307926/Blog%20Image/%28Blog%E4%BD%BF%E7%94%A8%29%E5%8B%95%E6%85%8B%E6%AC%8A%E9%99%90%E7%AE%A1%E7%90%86%20%E8%B3%87%E6%96%99%E5%BA%AB%E8%A8%AD%E8%A8%88.jpg" alt="cancan dynamic database design"></p>
-
-<p>讓我們開始動手吧</p>
-
-<h3>Step 2-1. 建立Model: Role</h3>
-
-<p>Role 的資料表要有：</p>
-
-<pre><code># == Schema Information
-#
-# Table name: roles
-#
-#  id         :integer          not null, primary key
-#  name       :string(255)
-#  created_at :datetime
-#  updated_at :datetime
-#
-</code></pre>
-
-<p><strong>[手做]</strong> 在terminal</p>
-
-<pre><code>rails g model role
-</code></pre>
-
-<p><strong>[手做]</strong> 在檔案db/migrate/時間戳記_create_roles.rb</p>
-
-<pre><code>class CreateRoles &lt; ActiveRecord::Migration
-  def change
-    create_table :roles do |t|
-      t.string :name
-      t.timestamps
-    end
-  end
-end
-</code></pre>
-
-<p><strong>[手做]</strong> 在檔案app/models/role.rb</p>
-
-<pre><code>class Role &lt; ActiveRecord::Base
-  has_many :admin_users         
-  has_many :role_permissionships
-  has_many :permissions , :through =&gt; :role_permissionships
-
-  def set_permissions(permissions)
-    permissions.each do |id|
-      permission = Permission.find(id)
-      self.permissions &lt;&lt; permission
-    end
-  end
-
-end
-</code></pre>
-
-<p>其中set_permissions就是設定這個role底下的權限</p>
-
-<h3>Step 2-2. 建立Model: Permission</h3>
-
-<p>Permission 的資料表要有：</p>
-
-<pre><code># == Schema Information
-#
-# Table name: permissions
-#
-#  id            :integer          not null, primary key
-#  name          :string(255)
-#  subject_class :string(255)
-#  action        :string(255)
-#  created_at    :datetime
-#  updated_at    :datetime
-#
-</code></pre>
-
-<p><strong>[手做]</strong> 在terminal</p>
-
-<pre><code>rails g model permission
-</code></pre>
-
-<p><strong>[手做]</strong> 在檔案db/migrate/時間戳記_create_permissions.rb</p>
-
-<pre><code>class CreatePermissions &lt; ActiveRecord::Migration
-  def change
-    create_table :permissions do |t|
-      t.string :name
-      t.string :subject_class
-      t.string :action
-      t.timestamps
-    end
-  end
-end
-</code></pre>
-
-<p><strong>[手做]</strong> 在檔案app/models/permission.rb</p>
-
-<p>ps. 其實，permision好像不需要知道role有哪些，不過我還是保留這個關聯</p>
-
-<pre><code>class Permission &lt; ActiveRecord::Base
-  has_many :role_permissionships
-  has_many :roles , :through =&gt; :role_permissionships
-end
-</code></pre>
-
-<h3>Step 2-3. 建立Model: Role Permissionship</h3>
-
-<p>主要是想要連結Role和Permission</p>
-
-<p>RolePermissionship 的資料表要有：</p>
-
-<pre><code># == Schema Information
-#
-# Table name: role_permissionships
-#
-#  id            :integer          not null, primary key
-#  role_id       :integer
-#  permission_id :integer
-#  created_at    :datetime
-#  updated_at    :datetime
-#
-</code></pre>
-
-<p><strong>[手做]</strong> 在terminal</p>
-
-<pre><code>rails g model role_permissionship
-</code></pre>
-
-<p><strong>[手做]</strong> 在檔案db/migrate/時間戳記_create_role_permissionships.rb</p>
-
-<pre><code>class CreateRolePermissionships &lt; ActiveRecord::Migration
-  def change
-    create_table :role_permissionships do |t|
-      t.belongs_to :role
-      t.belongs_to :permission
-      t.timestamps
-    end
-  end
-end
-</code></pre>
-
-<p><strong>[手做]</strong> 在檔案app/models/role_permissionship.rb</p>
-
-<pre><code>class RolePermissionship &lt; ActiveRecord::Base
-  belongs_to :role
-  belongs_to :permission
-end
-</code></pre>
-
-<h3>Step 2-4. 補上role_id: AdminUser</h3>
-
-<p>Adminuser資料表要有：</p>
-
-<pre><code># == Schema Information
-#
-# Table name: admin_users
-#
-#  id                     :integer          not null, primary key
-#  email                  :string(255)      default(""), not null
-#  encrypted_password     :string(255)      default(""), not null
-#  reset_password_token   :string(255)
-#  reset_password_sent_at :datetime
-#  remember_created_at    :datetime
-#  sign_in_count          :integer          default(0)
-#  current_sign_in_at     :datetime
-#  last_sign_in_at        :datetime
-#  current_sign_in_ip     :string(255)
-#  last_sign_in_ip        :string(255)
-#  old_data               :text
-#  created_at             :datetime
-#  updated_at             :datetime
-#  role_id                :integer
-#
-</code></pre>
-
-<p>ps. 這是本來的admin_user (透過devise建立的)，這邊我就跳過了，主要是要加入<strong>role_id</strong></p>
-
-<p><strong>[手做]</strong> 在terminal</p>
-
-<pre><code>rails g migration add_role_id_to_admin_user
-</code></pre>
-
-<p><strong>[手做]</strong> 在檔案db/migrate/時間戳記_add_role_id_to_admin_user.rb</p>
-
-<pre><code>class AddRoleIdToAdminUser &lt; ActiveRecord::Migration
-  def change
-    add_column :admin_users, :role_id , :integer
-  end
-end
-</code></pre>
-
-<p><strong>[手做]</strong> 在檔案app/models/admin_user.rb</p>
-
-<pre><code>class AdminUser &lt; ActiveRecord::Base
-  devise :database_authenticatable, :rememberable, :trackable, :validatable,
-         :recoverable
-  serialize :old_data, Hash
-  belongs_to :role
-
-  def super_admin?
-    self.role.name == "Super Admin"
-  end
-end
-</code></pre>
-
-<h1>Step 3 寫rake 去爬 所有controller資料</h1>
-
-<p>原始程式可參考：<a href="http://blog.joshsoftware.com/2012/10/23/dynamic-roles-and-permissions-using-cancan/">Dynamic roles and permissions using cancan</a></p>
-
-<p><strong>[手做]</strong> 新增檔案permissions.rake在 lib/tasks/底下</p>
-
-<p><strong>[手做]</strong> 在檔案lib/tasks/permissions.rake</p>
-
-<p>簡單來說，就是去爬controllers/admin底下的controller的所有action然後把它建立到permission 資料表</p>
-
-<pre><code>namespace 'permissions' do 
-
-  desc "Loading all models and their related controller methods inpermissions table."
-  task(:permissions =&gt; :environment) do 
-    arr = []
-    # Load all the admin controllers
-    controllers = Dir.new("#{Rails.root}/app/controllers/admin").entries
-    controllers.each do |entry|
-      if entry =~ /_controller/
-        arr &lt;&lt; "Admin::#{entry.camelize.gsub('.rb','')}".constantize #namescoped controllers
-      end
-    end
-
-    arr.each do |controller|
-      # only that controller which represents a model
-      if controller.permission
-        # create a universal permission for that model. eg: "manage User" will allow all actions on User model.
-        write_permission(controller.permission,"manage","manage") # add permission to do CRUD for every model.
-        controller.action_methods.each do |method|
-          if method =~ /^([A-Za-z\d*]+)+([\w]*)+([A-Za-z\d*]+)$/ #add_user , add_user_info, Add_user, add_User
-            name, cancan_action = eval_cancan_action(method)
-            write_permission(controller.permission,cancan_action,name)
-          end
-        end
-      end
-    end
-  end
-end
-
-# this method returns the cancan action for the action passed.
-def eval_cancan_action(action)
-  case action.to_s
-  when "index"
-    name = 'list'
-    cancan_action = "index" #let the cancan action be the actual method name
-    action_desc = I18n.t :list
-  when "new", "create"
-    name = 'create and update'
-    cancan_action = "create"
-    action_desc = I18n.t :create
-  when "show"
-    name = "view"
-    cancan_action = "view"
-    action_desc = I18n.t :view
-  when "edit","update"
-    name = "create and update"
-    cancan_action = "update"
-    action_desc = I18n.t :update
-  when "delete", "destroy"
-    name = 'delete'
-    cancan_action = 'destroy'
-    action_desc = I18n.t :destroy
-  else
-    name = action.to_s
-    cancan_action = action.to_s
-    action_desc = "Other: " &lt; cancan_action
-  end
-  return name, cancan_action 
-end
-
-# check if the permission is present else add a new one.
-def write_permission(model, cancan_action, name)
-  permission = Permission.find(:first, :conditions =&gt; ["subject_class = ? and action = ? ", model, cancan_action])
-  unless permission
-    permission = Permission.new
-    permission.name = name
-    permission.subject_class = model
-    permission.action = cancan_action
-    permission.save    
-  end
-end
-</code></pre>
-
-<p><strong>[手做]</strong> 在terminal</p>
-
-<pre><code>rake -T #查看所有可執行的rake
-rake permissions:permissions #做剛剛那個rake file的事
-</code></pre>
-
-<h1>Step 4. 設定Ability</h1>
-
-<p><strong>[手做]</strong> 在terminal</p>
-
-<pre><code>rails g cancan:ability
-</code></pre>
-
-<p><strong>[手做]</strong> 在檔案app/models/ability.rb</p>
-
-<pre><code>class Ability
-  include CanCan::Ability
-
-  def initialize(user)
-    user.role.permissions.each do |permission|
-        if permission.subject_class == 'all'
-            can permission.action.to_sym, permission.subject_class.to_sym
-        else
-            can permission.action.to_sym, permission.subject_class.constantize
-        end
-    end
-  end
-end
-</code></pre>
-
-<p><strong>這邊就是關鍵</strong></p>
-
-<p>他會動態去load使用者，然後看他權限</p>
-
-<pre><code>user.role.permissions.each do |permission|
-      if permission.subject_class == 'all'
-          can permission.action.to_sym, permission.subject_class.to_sym
-      else
-          can permission.action.to_sym, permission.subject_class.constantize
-      end
-  end
-</code></pre>
-
-<h1>Step 5. 建立管理者、員工並給權限</h1>
-
-<p><strong>[手做]</strong> 在檔案db/seeds.rb</p>
-
-<pre><code># the highest role with all the permissions.
-Role.create!(:name =&gt; "Super Admin")
-
-# other role
-Role.create!(:name =&gt; "Staff")
-
-#create universal permission
-Permission.create!(:subject_class =&gt; "all", :action =&gt; "manage")
-
-#assign super admin the permission to manage all the models and controllers
-role = Role.find_by_name('Super Admin')
-role.permissions &lt;&lt; Permission.find_by(:subject_class =&gt; 'all', :action =&gt; "manage")
-
-user = AdminUser.new(email: 'aloha@aloha.aloha', password: '12345678')
-user.role = role
-user.save
-
-AdminUser.create(email: 'staff@staff.staff', password: '12345678', :role_id =&gt; Role.find_by_name('Staff').id)
-</code></pre>
-
-<p><strong>[手做]</strong> 在terminal</p>
-
-<pre><code>rake db:seed
-</code></pre>
-
-<p>所以等一下你可以使用aloha@aloha.aloha登入最高權限，使用staff@staff.staff登入測試</p>
-
-<h1>Step 6. 設定Controller</h1>
-
-<p>因為我是希望後台有權限管理，所以這邊我是使用admin_controller</p>
-
-<p><strong>[手做]</strong> 在檔案app/controllers/admin_controller.rb</p>
-
-<pre><code>class AdminController &lt; ApplicationController
-  rescue_from CanCan::AccessDenied do |exception|
-    flash[:alert] = "存取失敗，你沒有權限做這個動作"
-    redirect_to admin_root_path 
-  end
-  # 下面不做的話，會有CanCan ActiveModel::ForbiddenAttributesError 的問題
-  # As load_resource will only load if resource is not there. 
-  # 下面那個步驟就是要用，就是這邊resource_params 貌似要使用 send(params.require(:role).permit(:name)) 才會work
-  # def build_resource
-  #       resource = resource_base.new(resource_params || {})
-  #         .....
-  # end
-  before_filter do
-    resource = controller_path.singularize.gsub('admin/', '').to_sym
-    method = "#{resource}_params"
-    params[resource] &amp;&amp;= send(method) if respond_to?(method, true)
-  end
-  before_action :authenticate_admin_user!
-  load_and_authorize_resource
-  before_filter :load_permissions # call this after load_and_authorize else it gives a cancan error.
-  layout 'admin'
-
-  protected
-
-  # Derive the model name from the controller. EX: UsersController will return User
-  def self.permission
-    return name = self.name.gsub('Controller','').singularize.split('::').last.constantize.name rescue nil
-  end
-
-  def current_ability
-    @current_ability ||= Ability.new(current_admin_user)
-  end
-
-  # load the permissions for the current admin user so that UI can be manipulated.
-  def load_permissions 
-    @current_permissions = current_admin_user.role.permissions.collect{|i| [i.subject_class, i.action]}
-  end
-
-end
-</code></pre>
-
-<p>如果需要在後台可以編輯的話，我們當然需要role controller</p>
-
-<p><strong>[手做]</strong> 在檔案app/controllers/admin/roles_controller.rb</p>
-
-<pre><code>class Admin::RolesController &lt; AdminController
-
-  #only user with super admin role can access
-  before_filter :is_super_admin?
-
-  def index
-    #you dont want to set the permissions for Super Admin.
-    @roles = Role.all.keep_if{|i| i.name != "Super Admin"}
-  end
-
-  def show
-    @role = Role.find(params[:id])
-    @permissions = @role.permissions
-  end
-
-  def edit
-    @role = Role.find(params[:id])
-    @permissions = Permission.all
-    @role_permissions = @role.permissions.collect{|p| p.id}
-  end
-
-  def update
-    @role = Role.find(params[:id])
-    @role.permissions = []
-    @role.set_permissions(params[:permissions]) if params[:permissions]
-    if @role.save
-      redirect_to admin_roles_path and return
-    end
-    @permissions = Permission.all
-    render 'edit'
-  end
-
-  def new
-    @role = Role.new
-  end
-
-  def create
-    @role = Role.new(permitted_params.role)
-    if @role.save
-      redirect_to admin_roles_path, flash: { notice: "成功建立角色#{@role.name}" }
-    else
-      render :new
-    end
-  end
-
-  def role_params
-    params.require(:role).permit(:name)
-  end
-
-  private
-
-  def is_super_admin?
-    redirect_to admin_root_path and return unless current_admin_user.super_admin?
-  end
-end
-</code></pre>
-
-<h1>Step 7. 建立routes</h1>
-
-<p><strong>[手做]</strong> config/routes.rb</p>
-
-<p>在admin裏面新增</p>
-
-<pre><code> namespace :admin do
-  ...
-  resources :roles
-  ...
- end
-</code></pre>
-
-<h1>Step 8. 建立View</h1>
-
-<p>首先，當然是要new，但是這邊我很單純，我就是讓他先建立角色，之後再編輯權限</p>
-
-<p>所以"建立"的地方很簡單</p>
-
-<p><strong>[手做]</strong> app/views/admin/roles/new.html.slim</p>
-
-<pre><code>= simple_form_for [:admin, @role], wrapper: :admin, html: { class: 'form-horizontal' } do |f|
-  = f.input :name, label: '角色名稱'
-  .form-actions
-    = f.submit '送出', disabled_with: '送出中', class: 'btn btn-primary'
-</code></pre>
-
-<p><strong>[手做]</strong> app/views/admin/roles/edit.html.slim</p>
-
-<p>"編輯"的部分，可以用打勾的方式選取權限</p>
-
-<pre><code>.span12
-  = form_for @role , :url =&gt; admin_role_path, :method =&gt; :put do |f|
-    .fieldset
-      legend 
-        | Role： 
-        = @role.name
-      br 權限管理
-      br
-      table.table.table-bordered.table-striped.table-hover
-        thead 
-          tr 
-            th Class
-            th Action
-            th 是否有權限
-            - @permissions.each do |permission|
-              tr 
-                td= permission.subject_class
-                td= permission.action
-                td= check_box_tag 'permissions[]', permission.id, @role_permissions.include?(permission.id), {array: true, class: "check_box"}
-      .span16.offset2
-        .clearfix
-          = f.submit "更新", :class =&gt; 'btn btn-primary'
-          = link_to '取消', admin_roles_path  
-</code></pre>
-
-<p>大概會像這樣</p>
-
-<p><img src="https://dl.dropboxusercontent.com/u/22307926/Blog%20Image/Role_edit_sample.png" alt="cancan dynamic database design"></p>
-
-<p><strong>[手做]</strong> app/views/admin/roles/index.html.slim</p>
-
-<pre><code>h1 角色清單
-- content_for :btns do
-  = link_to '新增角色', new_admin_role_path, class: 'btn btn-primary'
-table.table.table-bordered.table-striped.table-hover
-  thead
-    tr
-      th Name
-      th
-      th
-  tbody
-    - @roles.each do |role|
-      tr
-        td= role.name
-        td= link_to 'Show', admin_role_path(role)
-        td= link_to 'Edit', edit_admin_role_path(role)
-br
-</code></pre>
-
-<p>大概會像這樣</p>
-
-<p><img src="https://dl.dropboxusercontent.com/u/22307926/Blog%20Image/Role_index_sample.png" alt="cancan dynamic database design"></p>
-
-<p>ps 若是你像我一樣，有一個後台的管理頁面</p>
-
-<p>你可能需要加上，在你的menu裏面</p>
-
-<pre><code>li
-  = link_to "權限管理", admin_roles_path
-</code></pre>
-
-<p>以上！大功告成</p>
 ]]></content>
   </entry>
   

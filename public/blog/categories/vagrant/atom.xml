@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Vagrant | AlohaCC]]></title>
   <link href="http://ccaloha.cc/blog/categories/vagrant/atom.xml" rel="self"/>
   <link href="http://ccaloha.cc/"/>
-  <updated>2014-09-20T03:47:51+08:00</updated>
+  <updated>2014-11-27T08:33:18+08:00</updated>
   <id>http://ccaloha.cc/</id>
   <author>
     <name><![CDATA[Aloha]]></name>
@@ -12,6 +12,339 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[[HOWTO] Using ElasticSearch in Ruby on Rails and setup remote ES server via Vagrant]]></title>
+    <link href="http://ccaloha.cc/blog/2014/11/27/howto-using-elasticsearch-in-ruby-on-rails-and-setup-remote-es-server-via-vagrant/"/>
+    <updated>2014-11-27T07:45:20+08:00</updated>
+    <id>http://ccaloha.cc/blog/2014/11/27/howto-using-elasticsearch-in-ruby-on-rails-and-setup-remote-es-server-via-vagrant</id>
+    <content type="html"><![CDATA[<p>首先，要先感謝 "老王"，和 "Marz"哥，給我參考他們的Elasticsearch的文件！</p>
+
+<p>安裝部分，就是參考他們的操作！</p>
+
+<p>這邊最主要的不一樣，是設定遠端的Elasticsearch機器！</p>
+
+<p>改天我會補上 如何實作 "搜尋字詞推薦"，而且是整合soulmate歐！！</p>
+
+<!-- more -->
+
+
+<h2>Mac本機開發</h2>
+
+<h3>安裝 elastic search</h3>
+
+<pre><code>brew install elasticsearch
+</code></pre>
+
+<h3>連結</h3>
+
+<pre><code>ln -sfv /usr/local/opt/elasticsearch/*.plist ~/Library/LaunchAgents
+</code></pre>
+
+<h3>啟動</h3>
+
+<pre><code>launchctl load ~/Library/LaunchAgents/homebrew.mxcl.elasticsearch.plist
+</code></pre>
+
+<h3>關閉</h3>
+
+<pre><code>launchctl unload ~/Library/LaunchAgents/homebrew.mxcl.elasticsearch.plist
+</code></pre>
+
+<h3>Run ElasticSearch</h3>
+
+<pre><code>export JAVA_HOME="/Library/Internet Plug-Ins/JavaAppletPlugin.plugin/Contents/Home"
+elasticsearch
+
+(或是)
+
+elasticsearch --config=/usr/local/opt/elasticsearch/config/elasticsearch.yml  
+</code></pre>
+
+<h3>測試是否安裝成功</h3>
+
+<pre><code>curl -X GET http://localhost:9200
+</code></pre>
+
+<p>你應該會看到</p>
+
+<pre><code>{
+  "status" : 200,
+  "name" : "Rage",
+  "version" : {
+    "number" : "1.3.2",
+    "build_hash" : "dee175dbe2f254f3f26992f5d7591939aaefd12f",
+    "build_timestamp" : "2014-08-13T14:29:30Z",
+    "build_snapshot" : false,
+    "lucene_version" : "4.9"
+  },
+  "tagline" : "You Know, for Search"
+}
+</code></pre>
+
+<h3>Code 要加入</h3>
+
+<p>新增一個檔案</p>
+
+<p><strong>lib/tasks/elasticsearch.rake</strong></p>
+
+<p>寫入</p>
+
+<pre><code>require 'elasticsearch/rails/tasks/import'
+</code></pre>
+
+<p>修改<strong>Gemfile</strong>，加入</p>
+
+<pre><code>gem 'elasticsearch-rails'
+gem 'elasticsearch-model' 
+</code></pre>
+
+<h3>跑index</h3>
+
+<p>詳情請參考：<strong>Gem: </strong><a href="https://github.com/elasticsearch/elasticsearch-rails/tree/master/elasticsearch-rails">elasticsearch-rail</a></p>
+
+<pre><code>bundle exec rake environment elasticsearch:import:all
+</code></pre>
+
+<p>如果只需要import一個model</p>
+
+<pre><code>bundle exec rake environment elasticsearch:import:model CLASS='Article'
+</code></pre>
+
+<p>如果只需要import某些特定的scope</p>
+
+<pre><code>bundle exec rake environment elasticsearch:import:model CLASS='Article' SCOPE='published'
+</code></pre>
+
+<h3>清除index</h3>
+
+<pre><code>Article.__elasticsearch__.client.indices.delete index: Article.index_name rescue nil
+</code></pre>
+
+<h2>安裝elasticsearch 在Ubuntu 裡面</h2>
+
+<h3>使用vagrant 起三檯機器(用來模擬正式環境)</h3>
+
+<p>請查看前半部</p>
+
+<p><a href="http://ccaloha.cc/blog/2014/09/19/howto-using-sunspot-access-remote-solr-instance-ubuntu-14-dot-04-in-ruby-on-rails-using-vagrant/">HOWTO - Using Sunspot to Access Remote Solr instance(Ubuntu 14.04) in Ruby on Rails Using Vagrant</a></p>
+
+<h3>安裝 elascticsearch</h3>
+
+<pre><code>vagrant ssh search 
+sudo apt-get install openjdk-7-jre-headless -y
+sudo wget -O - http://packages.elasticsearch.org/GPG-KEY-elasticsearch | sudo apt-key add -
+</code></pre>
+
+<h3>編輯source list</h3>
+
+<pre><code>sudo vim /etc/apt/sources.list
+</code></pre>
+
+<p>把下面的code放進去</p>
+
+<pre><code>  deb http://packages.elasticsearch.org/elasticsearch/1.3/debian stable main
+</code></pre>
+
+<p>繼續安裝</p>
+
+<pre><code>  sudo apt-get update
+  sudo apt-get install elasticsearch
+  sudo update-rc.d elasticsearch defaults 95 10
+  sudo /etc/init.d/elasticsearch start
+</code></pre>
+
+<h2>Ruby on Rails 部分</h2>
+
+<h3>更改producion deploy的東東</h3>
+
+<p><strong>config/deploy/production.rb</strong></p>
+
+<pre><code>  role :app, %w{apps@33.33.13.10}
+  role :web, %w{apps@33.33.13.10}
+  role :db,  %w{apps@33.33.13.11}
+  role :crontaber, %w{apps@33.33.13.10}
+  set :rails_env, :production
+  set :unicorn_rack_env, :production
+  set :branch, 'feature/update_search_engine_to_elasticsearch'
+</code></pre>
+
+<p>我故意把ip改成 vagrant的ip</p>
+
+<p>另外，branch也用成我自己測試的branch: <strong>feature/update_search_engine_to_elasticsearch</strong></p>
+
+<h2>如何設定將elasticsearch 連到別台機器</h2>
+
+<ol>
+<li><p>新增一個 <strong>config/elasticsearch.yml</strong></p>
+
+<pre><code> default: &amp;default
+   host: 127.0.0.1:9200
+
+ development:
+   &lt;&lt;: *default
+   host: 127.0.0.1:9200
+
+ test:
+   &lt;&lt;: *default
+
+ production:
+   &lt;&lt;: *default
+   host: 33.33.13.12:9200
+</code></pre></li>
+<li><p>在application.rb加入</p>
+
+<pre><code> es = YAML.load(File.open("#{Rails.root}/config/elasticsearch.yml"))[Rails.env]
+
+   elasticsearch_config = {
+       host: es["host"],
+       transport_options: {
+       request: { timeout: 5 }
+       },
+   }
+   Elasticsearch::Model.client = Elasticsearch::Client.new(elasticsearch_config)
+</code></pre></li>
+<li><p>因為我的product需要做搜尋，所以在Product model 我這樣寫</p></li>
+</ol>
+
+
+<p>  (ps. elasticsearch 真的是博大精深，我沒有時間去深入專研，以下的指令是我try出最符合我需要的搜尋結果，所以大家可參考參考)</p>
+
+<pre><code>def self.essearch(query,sort,page)
+  if sort == 'relevance'
+
+    results = __elasticsearch__.search(
+      {
+        query: {
+          filtered: {
+            filter: {
+              range: { product_price_min: { "gt" =&gt; 0} }
+             }, 
+            query: {
+              bool: {
+                must: [
+                  multi_match: {
+                    query: query,
+                    type:  "phrase",
+                    fields: ["product_cname^10", "product_ename^10",'product_description', 'product_keyword']
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "sort" =&gt; [
+          "_score",
+          {"product_urcosme_exp" =&gt; {"order" =&gt; "desc"} } 
+        ],
+        "from" =&gt; (page.to_i-1)*5,
+        "size" =&gt; 5          
+      }
+    )
+  else
+    # 因為不是精準搜尋，所以這邊的排序就真的會依照我們給他的sort，
+    # 但是你總不希望，搜尋面膜，結果第一個結果是：淨膚儀，就因為他的上市時間最晚....囧～
+    # 所以，我還是希望第一個看到的結果是以關鍵字有出現的為佳，所以我多使用了filter的功能
+    results = __elasticsearch__.search(
+      {
+        query: {
+          filtered: {
+            filter: {
+              range: { product_price_min: { "gt" =&gt; 0} }
+             },
+            filter: {
+               exists: { field: "product_keyword" }
+             },
+            query: {
+              bool: {
+                must: [
+                  multi_match: {
+                    query: query,
+                    type:  "cross_fields",
+                    fields: ['product_cname', 'product_ename'],
+                    operator:   "and", 
+                    #minimum_should_match: '30%'
+                  }
+                ],
+                should: [
+                  { match: { "product_description" =&gt;  query}},
+                  { match: { "product_keyword" =&gt; query }}
+                ],
+              }
+            }
+          }
+        },
+        "sort" =&gt; [
+          {"#{sort}" =&gt; {"order" =&gt; "#{sort == "product_price_min"? 'asc' : 'desc'}"} } , 
+           "_score",
+          { "product_cname" =&gt; "desc" }
+        ],
+        "from" =&gt; (page.to_i-1)*5,
+        "size" =&gt; 5        
+      }
+    )
+  # 這邊目的是為了如果上面都沒有搜尋結果才做的比較rough的搜尋
+  if results.results.size == 0
+    results = __elasticsearch__.search(
+      {
+        query: {
+          filtered: {
+            filter: {
+              range: { product_price_min: { "gt" =&gt; 0} }
+             },
+            query: {
+              bool: {
+                must: [
+                  multi_match: {
+                    query: query,
+                    type:  "cross_fields",
+                    fields: ['product_cname', 'product_ename','product_description','product_keyword'],
+                    operator:   "and"
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "sort" =&gt; [
+          {"#{sort}" =&gt; {"order" =&gt; "#{sort == "product_price_min"? 'asc' : 'desc'}"} } , 
+           "_score",
+          { "product_cname" =&gt; "desc" }
+        ],
+        "from" =&gt; (page.to_i-1)*5,
+        "size" =&gt; 5          
+      }
+    )
+  end
+  end
+  return results
+end
+</code></pre>
+
+<ol>
+<li><p>在product的controller</p>
+
+<p>   @products = Product.essearch(params[:keyword],params[:sort],params[:page])</p>
+
+<p>   @products =  search.results.results</p>
+
+<p> 接下來就是丟給view顯示了～我就不提了～</p></li>
+</ol>
+
+
+<h3>接下來就是deploy加上看看有沒有成功摟</h3>
+
+<pre><code>cap production deploy #因為"config/deploy/production.rb"有改成vagrant設定，所以請放心～
+vagrant ssh search    # 登入你的搜尋機器
+elasticsearch         # 把elasticsearch 服務跑起來
+vagrant ssh app       # 登入跑服務的機器
+cd 你的專案            
+bundle exec rake environment elasticsearch:import:all  #跑index，這邊如果有成功，代表你已經連過去遠端了！
+</code></pre>
+
+<h3>完成！</h3>
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[[HOWTO] Using Sunspot to access remote Solr instance(Ubuntu 14.04) in Ruby on Rails using Vagrant]]></title>
