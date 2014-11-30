@@ -1,6 +1,6 @@
 ---
 layout: post
-title: "GA-how to setup a/b test using GA"
+title: "蝦米！GA也可做A/B Test"
 date: 2014-11-30 22:35:34 +0800
 comments: true
 categories: ["google analytics"]
@@ -27,6 +27,10 @@ description: "I will show you how to create a a/b test page via Google Analytics
 ### Google analytics
 
 <!--more-->
+
+附上我這週報告的內容
+
+<iframe src="http://prezi.com/embed/ofpx1llymkyt/?bgcolor=ffffff&amp;lock_to_path=0&amp;autoplay=0&amp;autohide_ctrls=0&amp;features=undefined&amp;token=undefined&amp;disabled_features=undefined" width="550" height="400" frameBorder="0" webkitAllowFullScreen mozAllowFullscreen allowfullscreen></iframe>
 
 
 
