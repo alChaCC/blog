@@ -4,7 +4,7 @@
   <title><![CDATA[AlohaCC]]></title>
   <link href="http://ccaloha.cc/atom.xml" rel="self"/>
   <link href="http://ccaloha.cc/"/>
-  <updated>2014-11-27T08:33:18+08:00</updated>
+  <updated>2014-11-30T23:02:52+08:00</updated>
   <id>http://ccaloha.cc/</id>
   <author>
     <name><![CDATA[Aloha]]></name>
@@ -12,6 +12,36 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[GA-how to setup a/b test using GA]]></title>
+    <link href="http://ccaloha.cc/blog/2014/11/30/ga-how-to-setup-a-slash-b-test-using-ga/"/>
+    <updated>2014-11-30T22:35:34+08:00</updated>
+    <id>http://ccaloha.cc/blog/2014/11/30/ga-how-to-setup-a-slash-b-test-using-ga</id>
+    <content type="html"><![CDATA[<p>需求： 我想要提升大家點選連結進入&#8221;GA分類&#8221;頁面的點擊率！</p>
+
+<p>於是乎，我設計出了兩種頁面，想來看看哪種點擊率比較好！</p>
+
+<p>先分別來看兩個頁面：</p>
+
+<p><a href="http://ccaloha.herokuapp.com/google-analytics/GA_ABtest/original.html">主頁面</a></p>
+
+<p><a href="http://ccaloha.herokuapp.com/google-analytics/GA_ABtest/test.html">測試頁面</a></p>
+
+<p>但&#8230;</p>
+
+<p>我要怎麼樣讓這兩個頁面自動變換，讓我做測試勒？</p>
+
+<p>這時候，你就需要</p>
+
+<h3>Google analytics</h3>
+
+<!--more-->
+
+
+
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[[HOWTO] Using ElasticSearch in Ruby on Rails and setup remote ES server via Vagrant]]></title>
@@ -3935,62 +3965,6 @@ end
 <p><a href="https://play.google.com/store/apps/details?id=com.egloos.scienart.tedict">TEDICT</a></p>
 
 <p><em>坐公車，搭火車的好遊戲！XD，也是練聽寫我超推的app</em></p>
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[20130422-murmur]]></title>
-    <link href="http://ccaloha.cc/blog/2013/04/22/2013-0422-murmur/"/>
-    <updated>2013-04-22T23:25:00+08:00</updated>
-    <id>http://ccaloha.cc/blog/2013/04/22/2013-0422-murmur</id>
-    <content type="html"><![CDATA[<p>好久沒有寫blog了</p>
-
-<p>從碩士開始</p>
-
-<p>每年年初，我都會訂一個年度計劃</p>
-
-<p>今年就是- 出國闖闖</p>
-
-<p>In fact, 這是五年～十年的計劃</p>
-
-<p>目前計畫兩條路-唸書、工作</p>
-
-<!--more-->
-
-
-<p></p>
-
-<p>不管是唸書還是工作</p>
-
-<p>英文都非常重要(這不是廢話&#8230;)</p>
-
-<p>所以綜觀來看，我決定還是要準備 <strong>托福以及GRE</strong></p>
-
-<p>所以，這就說明了我為什麼好久沒打網誌，玩玩新玩意了</p>
-
-<p>嘖嘖</p>
-
-<p>只怪自己以前不努力阿</p>
-
-<p>前鎮子才剛被ETS洗臉…</p>
-
-<p>整個就慘不忍賭</p>
-
-<p>總之，我還是會經營我的blog，可以的話，拿來練一下寫作XD</p>
-
-<p>BTW, 今天聽到一場演講，讓我有了一些想玩的東東</p>
-
-<p><a href="https://puppetlabs.com/">puppet</a></p>
-
-<ol>
-<li><p>Auto Deploy -> 這是他最outstanding的功能，雖然我目前只有一臺server，不過我想試看看，架一個小小的Cloud= KVM + Storage ?!</p></li>
-<li><p>Status Checking -> 感覺應該可以用在工作上</p></li>
-<li><p>Self-repair -> 我覺得應該也可以做到</p></li>
-<li><p>Auto Bug-Log Mapping Tool -> 這是我還滿想要做的東東，不知道用這個好不好實現</p></li>
-</ol>
-
-
-<p>Cooooool , 準備好英文再來玩玩</p>
 ]]></content>
   </entry>
   
