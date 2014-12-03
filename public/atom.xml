@@ -4,7 +4,7 @@
   <title><![CDATA[AlohaCC]]></title>
   <link href="http://ccaloha.cc/atom.xml" rel="self"/>
   <link href="http://ccaloha.cc/"/>
-  <updated>2014-12-03T09:38:06+08:00</updated>
+  <updated>2014-12-03T09:49:11+08:00</updated>
   <id>http://ccaloha.cc/</id>
   <author>
     <name><![CDATA[Aloha]]></name>
@@ -14,55 +14,11 @@
 
   
   <entry>
-    <title type="html"><![CDATA[蝦米！GA也可做A/B Test]]></title>
-    <link href="http://ccaloha.cc/blog/2014/11/30/ga-how-to-setup-a-slash-b-test-using-ga/"/>
-    <updated>2014-11-30T22:35:34+08:00</updated>
-    <id>http://ccaloha.cc/blog/2014/11/30/ga-how-to-setup-a-slash-b-test-using-ga</id>
-    <content type="html"><![CDATA[<p>需求： 我想要提升大家點選連結進入&#8221;GA分類&#8221;頁面的點擊率！</p>
-
-<p>於是乎，我設計出了兩種頁面，想來看看哪種點擊率比較好！</p>
-
-<p>先分別來看兩個頁面：</p>
-
-<p><a href="http://ccaloha.herokuapp.com/google-analytics/GA_ABtest/original.html">主頁面</a></p>
-
-<p><a href="http://ccaloha.herokuapp.com/google-analytics/GA_ABtest/test.html">測試頁面</a></p>
-
-<p>但&#8230;</p>
-
-<p>我要怎麼樣讓這兩個頁面自動變換，讓我做測試勒？</p>
-
-<p>這時候，你就需要</p>
-
-<h3>Google analytics</h3>
-
-<!--more-->
-
-
-<p>附上我這週報告的內容</p>
-
-<iframe src="http://prezi.com/embed/ofpx1llymkyt/?bgcolor=ffffff&amp;lock_to_path=0&amp;autoplay=0&amp;autohide_ctrls=0&amp;features=undefined&amp;token=undefined&amp;disabled_features=undefined" width="550" height="400" frameBorder="0" webkitAllowFullScreen mozAllowFullscreen allowfullscreen></iframe>
-
-
-
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[Howto Implement Autocomplete Feature In Elasticsearch Using Soulmate Dot Js In Ruby On Rails Application]]></title>
-    <link href="http://ccaloha.cc/blog/2014/11/28/howto-implement-autocomplete-feature-in-elasticsearch-using-soulmate-dot-js-in-ruby-on-rails-application/"/>
-    <updated>2014-11-28T00:00:00+08:00</updated>
-    <id>http://ccaloha.cc/blog/2014/11/28/howto-implement-autocomplete-feature-in-elasticsearch-using-soulmate-dot-js-in-ruby-on-rails-application</id>
-    <content type="html"><![CDATA[<p>yout: post
-title: &#8220;[HowTo] - Implement autocomplete feature in elasticsearch using soulmate.js in Ruby on Rails application&#8221;
-date: 2014-12-03 07:50:57 +0800
-comments: true
-categories: [&#8220;Elasticsearch&#8221;, &#8220;Ruby_on_Rails&#8221;,&#8221;Search&#8221;]
-keywords: &#8220;suggest, elasticsearch, autocomplete, ruby on rails, search, 中文&#8221;</p>
-
-<h2>description: “this ariticle will show you how to build up autocomplete feature with elasticsearch using soulmate 這篇文章，你可以知道如何透過elasticsearch 達成自動化推薦的功能以及如何將此功能與 soulmate.js結合”</h2>
-
-<p>先說明一下需求，你希望使用者在搜尋框框打字的時，希望可以給他推薦就像&#8230;.</p>
+    <title type="html"><![CDATA[[HowTo] - Implement autocomplete feature in elasticsearch using soulmate.js in Ruby on Rails application]]></title>
+    <link href="http://ccaloha.cc/blog/2014/12/03/howto-implement-autocomplete-feature-in-elasticsearch-using-soulmate-dot-js-in-ruby-on-rails-application/"/>
+    <updated>2014-12-03T07:50:57+08:00</updated>
+    <id>http://ccaloha.cc/blog/2014/12/03/howto-implement-autocomplete-feature-in-elasticsearch-using-soulmate-dot-js-in-ruby-on-rails-application</id>
+    <content type="html"><![CDATA[<p>先說明一下需求，你希望使用者在搜尋框框打字的時，希望可以給他推薦就像&#8230;.</p>
 
 <p><img alt="elasticsearch autocomple sample" src="https://dl.dropboxusercontent.com/u/22307926/Blog%20Image/%5BHowTo%5D%20-%20Implement%20autocomplete%20feature%20in%20elasticsearch%20using%20soulmate.js%20in%20Ruby%20on%20Rails%20application/f1.png"></p>
 
@@ -217,6 +173,41 @@ $('#keyword').soulmate({
 </code></pre>
 
 <h2>完成！！！</h2>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[蝦米！GA也可做A/B Test]]></title>
+    <link href="http://ccaloha.cc/blog/2014/11/30/ga-how-to-setup-a-slash-b-test-using-ga/"/>
+    <updated>2014-11-30T22:35:34+08:00</updated>
+    <id>http://ccaloha.cc/blog/2014/11/30/ga-how-to-setup-a-slash-b-test-using-ga</id>
+    <content type="html"><![CDATA[<p>需求： 我想要提升大家點選連結進入&#8221;GA分類&#8221;頁面的點擊率！</p>
+
+<p>於是乎，我設計出了兩種頁面，想來看看哪種點擊率比較好！</p>
+
+<p>先分別來看兩個頁面：</p>
+
+<p><a href="http://ccaloha.herokuapp.com/google-analytics/GA_ABtest/original.html">主頁面</a></p>
+
+<p><a href="http://ccaloha.herokuapp.com/google-analytics/GA_ABtest/test.html">測試頁面</a></p>
+
+<p>但&#8230;</p>
+
+<p>我要怎麼樣讓這兩個頁面自動變換，讓我做測試勒？</p>
+
+<p>這時候，你就需要</p>
+
+<h3>Google analytics</h3>
+
+<!--more-->
+
+
+<p>附上我這週報告的內容</p>
+
+<iframe src="http://prezi.com/embed/ofpx1llymkyt/?bgcolor=ffffff&amp;lock_to_path=0&amp;autoplay=0&amp;autohide_ctrls=0&amp;features=undefined&amp;token=undefined&amp;disabled_features=undefined" width="550" height="400" frameBorder="0" webkitAllowFullScreen mozAllowFullscreen allowfullscreen></iframe>
+
+
+
 ]]></content>
   </entry>
   
