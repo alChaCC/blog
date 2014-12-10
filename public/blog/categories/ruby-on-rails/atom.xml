@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Ruby_on_Rails | AlohaCC]]></title>
   <link href="http://ccaloha.cc/blog/categories/ruby-on-rails/atom.xml" rel="self"/>
   <link href="http://ccaloha.cc/"/>
-  <updated>2014-12-03T09:49:11+08:00</updated>
+  <updated>2014-12-10T12:39:24+08:00</updated>
   <id>http://ccaloha.cc/</id>
   <author>
     <name><![CDATA[Aloha]]></name>
@@ -12,6 +12,366 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[[HOWTO]- 在Ruby on Rails 實作Ckeditor上傳圖片到各個獨立的資料夾]]></title>
+    <link href="http://ccaloha.cc/blog/2014/12/10/howto-setup-ckeditor-upload-picture-to-a-special-folder-in-ruby-on-rails/"/>
+    <updated>2014-12-10T08:04:05+08:00</updated>
+    <id>http://ccaloha.cc/blog/2014/12/10/howto-setup-ckeditor-upload-picture-to-a-special-folder-in-ruby-on-rails</id>
+    <content type="html"><![CDATA[<p>首先，要先感謝 <strong><em>Ayaya</em></strong>，主要是參考他的code而改編出來的功能！</p>
+
+<p>一樣講一下需求</p>
+
+<p>我希望使用者上傳檔案到不同特定的資料夾，譬如：A新聞的照片，只會被上傳到A新聞的資料夾</p>
+
+<p><img src="https://dl.dropboxusercontent.com/u/22307926/Blog%20Image/%5BHOWTO%5D-%20%E5%9C%A8Ruby%20on%20Rails%20%E5%AF%A6%E4%BD%9CCkeditor%E4%B8%8A%E5%82%B3%E5%9C%96%E7%89%87%E5%88%B0%E5%90%84%E5%80%8B%E7%8D%A8%E7%AB%8B%E7%9A%84%E8%B3%87%E6%96%99%E5%A4%BE/Ckeditor_upload_image_to_specific_folder.png" alt='ckeditor 上傳圖片到特定資料夾'></p>
+
+<p>之後你還可以實作 照片只能被特定使用者看到，這篇文章就不在這邊琢磨</p>
+
+<!--more-->
+
+
+<p>另外這篇文章，我不會提到 <strong>Ckedior</strong> 的基本安裝的東西，有興趣的話，請看 <strong><a href="https://github.com/galetahub/ckeditor">Github</a></strong></p>
+
+<p>上傳的部分我是使用 <strong><a href="https://github.com/galetahub/ckeditor#activerecord--carrierwave">ActiveRecord + Carrierwave</a></strong></p>
+
+<h2>Step1. Migration</h2>
+
+<p>首先，我們先從model開始，當你跑完</p>
+
+<p>  rails generate ckeditor:install --orm=active_record --backend=carrierwave</p>
+
+<p>會幫你建立model，以我的case來說，會建立<strong><em>db/migrate/20141204171531_create_ckeditor_assets.rb</em></strong></p>
+
+<p>在這邊，我要先另外加入</p>
+
+<pre><code>  t.integer :owner_id 
+  t.string  :owner_type, :limit =&gt; 30  
+</code></pre>
+
+<p>其中<strong>owner_type</strong>是要記錄哪個model</p>
+
+<p><strong>owner_id</strong>是要記錄model的ID</p>
+
+<p>舉例來說，如果你的建立產品上稿，會被記錄到 model 的就是：<strong>Product</strong>，另外ID可能是：<strong>999</strong></p>
+
+<p>所以記錄到 owner_type 就會是 "Product" ，另外owner_id 就是："999"</p>
+
+<p>最後別忘記，</p>
+
+<p>  rake db:migrate</p>
+
+<h2>Step2. [Important] Controller</h2>
+
+<p>接下來步驟，會有點麻煩</p>
+
+<p>因為我不想要用ckeditor 預設的 <strong>pictures_controller.rb</strong> 來處理上傳的動作，所以....</p>
+
+<p>來看一下，麻煩點在於</p>
+
+<p>我們是後台需要實作 ckeditor，所以controller要放在 <strong>/cooladmin/</strong> 裡面</p>
+
+<p>這個...搞了我超久，不過也是因為這樣，讓我比較了解這個機制</p>
+
+<p>好吧！ 那就開始吧！！！</p>
+
+<p>  rails g controller cooladmin/ckeditor_pictures</p>
+
+<h3>首先這個controller 必需繼承 <strong>Ckeditor::PicturesController</strong></h3>
+
+<p>所以...</p>
+
+<p>  class Cooladmin::CkeditorPicturesController &lt; Ckeditor::PicturesController</p>
+
+<p>那這個<strong><a href="https://github.com/galetahub/ckeditor/blob/master/app/controllers/ckeditor/pictures_controller.rb">Ckeditor::PicturesController</a></strong>原本怎麼寫，就請看他們官網</p>
+
+<p>由於我們不希望使用ckeditor 的before_action，所以，我們這邊都把它skip掉</p>
+
+<p>  skip_before_filter :find_asset
+  skip_before_filter :ckeditor_authorize!
+  skip_before_filter :authorize_resource</p>
+
+<h3>第一個action : <strong>index</strong></h3>
+
+<p>這個是給當使用者點選"瀏覽伺服器"時呼叫的</p>
+
+<p><img src='https://dl.dropboxusercontent.com/u/22307926/Blog%20Image/%5BHOWTO%5D-%20%E5%9C%A8Ruby%20on%20Rails%20%E5%AF%A6%E4%BD%9CCkeditor%E4%B8%8A%E5%82%B3%E5%9C%96%E7%89%87%E5%88%B0%E5%90%84%E5%80%8B%E7%8D%A8%E7%AB%8B%E7%9A%84%E8%B3%87%E6%96%99%E5%A4%BE/ckeditor_controller_index_target_1.png'></p>
+
+<p>我的寫法是：</p>
+
+<p>  def index</p>
+
+<pre><code>@pictures = Ckeditor::Paginatable.new(pictures).page(params[:page])
+respond_with(@pictures,layout: @pictures.first_page?)
+</code></pre>
+
+<p>  end</p>
+
+<p>那 <strong>pictures</strong> 這個從那裡來？</p>
+
+<p>  private</p>
+
+<pre><code>def pictures
+  @pictures ||= if owner
+              Ckeditor::CkeditorPicture.by_owner(owner)
+                  else
+                  Ckeditor::CkeditorPicture.orphan
+                  end
+end
+
+def owner
+  @owner ||=  case 
+              when params[:owner_type].present? &amp;&amp; params[:owner_id].present? 
+                params[:owner_type].singularize.classify.constantize.find(params[:owner_id])
+              else
+                nil
+              end
+end
+</code></pre>
+
+<p>ps. <strong>Ckeditor::CkeditorPicture.by_owner(owner)</strong> 這個model是我改裝model，下個章節會介紹，by_owner就是去拿到屬於這個owner的image，那owner怎麼來呢？</p>
+
+<p>主要透過 url 取得目前是在哪個model的哪個ID被啟動ckeditor，這樣的話，就只會去抓屬於這個modal和他所屬的id，以下面那個url為例，他會去找ckeditor_assets裡頭的屬於<strong>owner_type</strong>為<strong>Product</strong>以及<strong>owner_id</strong>為<strong>1</strong>的所有照片</p>
+
+<p><strong> https://XXX.XXX.XXX/cooladmin/ckeditor_pictures?owner_id=2&amp;owner_type=Product&amp;CKEditor=product_content&amp;CKEditorFuncNum=1&amp;langCode=zh </strong></p>
+
+<h3>第二個action : <strong>create</strong></h3>
+
+<p>照片上傳上來後，透過這個action去接</p>
+
+<pre><code>def create
+  if owner.present?
+    @picture = Ckeditor::CkeditorPicture.new(owner: @owner) 
+  else
+    @picture = Ckeditor::CkeditorPicture.new(owner_type: params[:owner_type]) 
+  end
+  respond_with_asset(@picture)
+end
+</code></pre>
+
+<p>判斷如果 有owner存在的話，就把這個照片new進去，並設定owner進去</p>
+
+<p>不然的話，就在建立照片時，就只設定<strong>owner_type</strong> (這邊有個問題，我還不知道怎麼解決，所以只好先丟個owner_type給他)</p>
+
+<h3>第三個action : <strong>destroy</strong></h3>
+
+<p>很明顯就是去刪除照片～但是.....基本上這個方法不會被呼叫到....因為ckeditor會default去找</p>
+
+<p>因為我們儲存到 <strong>ckeditor_assets</strong> table時，有一個欄位是 <strong>type</strong>，因為我們在new還有create時用的是 <strong>Ckeditor::CkeditorPicture.new(owner: @owner)</strong> 所以他的type就會是....<strong>Ckeditor::CkeditorPicture</strong>，所以在刪除的時候，
+他default會去找有沒有這個controller => <strong>app/controllers/ckeditor_pictures_controller.rb</strong></p>
+
+<p>這樣當然是沒有，因為我們是寫在 /cooladmin/底下啊～～～</p>
+
+<p>所以...小弟我很弱，還不知道怎麼解....所以只好copy一份出來....</p>
+
+<p>  def destroy</p>
+
+<pre><code>  @picture ||= Ckeditor::CkeditorPicture.find(params[:id])
+  @picture.destroy
+  respond_with(@picture,location: pictures_path)
+end
+</code></pre>
+
+<p>完整版：<strong>app/controllers/cooladmin/ckeditor_pictures_controller.rb</strong></p>
+
+<p>基本上這個contoller，我是直接copy一份到<strong>app/controllers/ckeditor_pictures_controller.rb</strong></p>
+
+<p>  class Cooladmin::CkeditorPicturesController &lt; Ckeditor::PicturesController</p>
+
+<pre><code>skip_before_filter :find_asset
+skip_before_filter :ckeditor_authorize!
+skip_before_filter :authorize_resource
+
+def index
+  @pictures = Ckeditor::Paginatable.new(pictures).page(params[:page])
+  respond_with(@pictures,layout: @pictures.first_page?)
+end
+
+def create
+  if owner.present?
+    @picture = Ckeditor::CkeditorPicture.new(owner: @owner) 
+  else
+    @picture = Ckeditor::CkeditorPicture.new(owner_type: params[:owner_type]) 
+  end
+  respond_with_asset(@picture)
+end
+
+def destroy
+  @picture ||= Ckeditor::CkeditorPicture.find(params[:id])
+  @picture.destroy
+  respond_with(@picture,location: pictures_path)
+end
+
+private
+
+def pictures
+  @pictures ||= if owner
+                  Ckeditor::CkeditorPicture.by_owner(owner)
+                else
+                  Ckeditor::CkeditorPicture.myupload_orphan(current_employee)
+                end
+end
+
+
+def owner
+  @owner ||=  case 
+              when params[:owner_type].present? &amp;&amp; params[:owner_id].present? 
+                params[:owner_type].singularize.classify.constantize.find(params[:owner_id])
+              else
+                nil
+              end
+end
+</code></pre>
+
+<p>  end</p>
+
+<h2>Step3. [Important] Model</h2>
+
+<p>這邊我是直接改ckeditor幫我產生的model <strong>models/ckeditor/picture.rb</strong></p>
+
+<p>我把它改成 <strong>models/ckeditor/ckeditor_picture.rb</strong></p>
+
+<p>  mv models/ckeditor/picture.rb models/ckeditor/ckeditor_picture.rb</p>
+
+<p>幾個重點：</p>
+
+<ul>
+<li>因為這個picture基本上會隸屬於不同的model 然後他們之間都是透過 owner來做type</li>
+</ul>
+
+
+<p>所以</p>
+
+<p>  belongs_to :owner, polymorphic: true</p>
+
+<ul>
+<li>幾個簡單scope</li>
+</ul>
+
+
+<p>在看這個scope我們來看一下，db裡面存的主要欄位內容</p>
+
+<table>
+<thead>
+<tr>
+<th></th>
+<th> assetable_id </th>
+<th> assetable_type </th>
+<th> type                      </th>
+<th> owner_id </th>
+<th> owner_type </th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td></td>
+<td> 1            </td>
+<td> Employee       </td>
+<td> Ckeditor::CkeditorPicture </td>
+<td> 2        </td>
+<td> Product    |</td>
+</tr>
+</tbody>
+</table>
+
+
+<p>assetable_type => 這個資料的上傳者class</p>
+
+<p>type      => 這張照片是哪個model new進來的</p>
+
+<p>owner_type    => 這張照片被用在哪個class下</p>
+
+<p>看完表格就知道我的scope在幹嘛了～</p>
+
+<pre><code>scope :myupload_orphan, -&gt; (employee_id) {where(assetable_id: employee_id, owner_id: nil)}
+  scope :by_owner_type, -&gt; (owner,employee_id) {where(owner_type: owner.class.name, owner_id: nil, assetable_id: employee_id)}
+  scope :by_owner, -&gt; (owner) { where(owner_id: owner.id)}
+</code></pre>
+
+<p>完整程式：</p>
+
+<p>  class Ckeditor::CkeditorPicture &lt; Ckeditor::Asset</p>
+
+<pre><code>belongs_to :owner, polymorphic: true
+mount_uploader :data, CkeditorPictureUploader, :mount_on =&gt; :data_file_name
+
+scope :myupload_orphan, -&gt; (employee_id) {where(assetable_id: employee_id, owner_id: nil)}
+scope :by_owner_type, -&gt; (owner,employee_id) {where(owner_type: owner.class.name, owner_id: nil, assetable_id: employee_id)}
+scope :by_owner, -&gt; (owner) { where(owner_id: owner.id)}
+
+def url_content
+  url(:content)
+end
+</code></pre>
+
+<p>  end</p>
+
+<h2>Step4. 修改ckeitor 設定</h2>
+
+<p>我是使用coffeescript</p>
+
+<p>  $(document).on 'ready page:load', -></p>
+
+<pre><code>  $('[data-content-editor]').each -&gt;
+    $this = $(this)
+    CKEDITOR.replace(
+      this
+      allowedContent: true
+
+  # 設定要處理image處理
+      filebrowserImageBrowseUrl: $this.data('upload-url')
+
+      filebrowserImageUploadUrl: $this.data('upload-url')
+    )
+</code></pre>
+
+<h2>Step5. 修改用到ckeditor的View</h2>
+
+<p>我是使用simple_form</p>
+
+<p>  = f.input :content, label: '內容', input_html: { class: 'form-control', data: {content_editor: true, upload_url: upload_url_for(@product)} }</p>
+
+<p>upload_url_for請看下面</p>
+
+<h2>Step6. helper</h2>
+
+<p>寫這個helper的原因是因為我希望不同的model都可以使用</p>
+
+<p><strong>app/helpers/cooladmin/admin_helper.rb</strong></p>
+
+<p>  module Cooladmin::AdminHelper</p>
+
+<pre><code>def upload_url_for(resource)
+  if resource.new_record?
+    cooladmin_ckeditor_pictures_path(:owner_type =&gt; resource.class.name)
+  else
+    cooladmin_ckeditor_pictures_path(:owner_type =&gt; resource.class.name, :owner_id =&gt; resource.id)
+  end
+end
+</code></pre>
+
+<p>  end</p>
+
+<h2>Step7. Route</h2>
+
+<p>  Rails.application.routes.draw do</p>
+
+<pre><code># mount Ckeditor::Engine =&gt; '/uradmin/ckeditor'
+
+resources :ckeditor_pictures, only: [:index, :create, :destroy]
+
+namespace :cooladmin do
+  # ....略
+  # ckeditor使用
+  resources :ckeditor_pictures, only: [:index, :create, :destroy]
+end
+</code></pre>
+
+<p>  end</p>
+
+<h2>完成！！！！！！！！！！！</h2>
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[[HowTo] - Implement autocomplete feature in elasticsearch using soulmate.js in Ruby on Rails application]]></title>
@@ -1790,159 +2150,6 @@ $(document).on('page:load', ready);
 <p><a href="http://josephndungu.com/tutorials/fast-autocomplete-search-terms-rails">FAST AUTOCOMPLETE SEARCH TERMS - RAILS</a></p>
 
 <p>待續......</p>
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[[HOWTO] 5 steps let your EC website applying GA E-commerce using Ruby on Rails]]></title>
-    <link href="http://ccaloha.cc/blog/2014/08/17/5-steps-let-your-ec-website-applying-ga-e-commerce-using-ruby-on-rails/"/>
-    <updated>2014-08-17T21:25:55+08:00</updated>
-    <id>http://ccaloha.cc/blog/2014/08/17/5-steps-let-your-ec-website-applying-ga-e-commerce-using-ruby-on-rails</id>
-    <content type="html"><![CDATA[<p>這篇你會知道如何在 Rails 加上 GA E-commerce的 code</p>
-
-<p>基本上就是參考<a href="https://developers.google.com/analytics/devguides/collection/analyticsjs/ecommerce">GA- Ecommerce Tracking - Web Tracking (analytics.js)</a></p>
-
-<p>google 是建議 GATC(google analytic tracking code)可以埋在當使用者完成交易後的感謝頁面</p>
-
-<p>所以，我也是加上訂單created 後的動作，</p>
-
-<p>就讓我們開始吧!</p>
-
-<!-- more -->
-
-
-<p></p>
-
-<h2>Step 1. Order Controller</h2>
-
-<p>在 <strong>app/controllers/orders_controller.rb</strong></p>
-
-<p>因為需要多一個步驟，所以我是新增一個新的 action，<strong>send_data_to_ga_ec</strong></p>
-
-<pre><code>def send_data_to_ga_ec
-    @order = Order.find_by_order_no(params[:id]) 
-end
-</code></pre>
-
-<h2>Step 2. Route and Controller</h2>
-
-<p>在 <strong>config/routes.rb</strong></p>
-
-<p>因為加了一個action, 所以我補上一條新的routing規則</p>
-
-<pre><code>  get '/orders/send_data_to_ga_ec', :to =&gt; 'orders#send_data_to_ga_ec' 
-</code></pre>
-
-<p><em>ps. 注意！一定要放在resource :orders前面，不然會無效</em></p>
-
-<p>回到 <strong>app/controllers/orders_controller.rb</strong></p>
-
-<p>把當訂單完成後，要導向的動作，補上去</p>
-
-<pre><code>def create
-    @order = current_user.orders.build(permitted_params.order)
-      if @order 
-        @order.add_line_items_from_cart(@cart)
-            respond_to do |format|
-                if @order.save
-                    format.html { 
-                       redirect_to orders_send_data_to_ga_ec_path(:id =&gt; @order.order_no), notice: "感謝您的訂購，您可以點選[我的訂單]查看訂單資訊，或於幾分鐘後，檢查是否收到訂單確認信"
-                    }
-                else
-                    format.html { render action: 'new' }
-                end
-            end
-        end
-end
-</code></pre>
-
-<h2>Step 3. View</h2>
-
-<p>這邊就是單純把他購買的東西show出來而已！重點在下兩步！</p>
-
-<pre><code>.home-block 
-  h2.home-block-heading
-    span  這是您本次的購買資訊
-
-  table.table.cart-table.table-striped.table-bordered.table-hover.span12
-        thead
-          tr
-            th 產品名稱
-            th 購買數量
-            th 購買顏色
-            th 購買尺寸
-            th 購買時優惠方案
-        tbody
-          - @order.line_items.each do |line_item|
-              tr
-                td= link_to line_item.product.name, product_path(line_item.product.id)
-                td= line_item.count
-                td= line_item.color
-                td= line_item.size
-                td= line_item.discount_name
-</code></pre>
-
-<h2>Step 4. Application Layout</h2>
-
-<p>因為一般的GATC，我們都是裝在header，所以以Rails來說，就是寫在</p>
-
-<p><strong>app/views/layouts/application.html.slim</strong></p>
-
-<pre><code>  - if controller_name == 'orders' &amp;&amp; action_name == 'send_data_to_ga_ec'
-    = render 'shared/google_analytics_ec' , user_id: current_user.try(:id), order: @order
-  - else
-    = render 'shared/google_analytics' , user_id: current_user.try(:id) 
-</code></pre>
-
-<p> 有沒有看到那個 <strong>if controller_name == 'orders' &amp;&amp; action_name == 'send_data_to_ga_ec'</strong></p>
-
-<p> 就是那個讓我判斷說，當這個action時，要load不同的GATC</p>
-
-<h2>Step 5. Partial View - for google_analytics_ec</h2>
-
-<p>要填的參數，我就不再贅述了～ 請看GA 的官方 document</p>
-
-<p><strong>app/views/shared/_google_analytics_ec.html.erb</strong></p>
-
-<pre><code>&lt;script&gt;
-  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
-  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
-  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
-  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
-
-  ga('create', 'UA-XXXX-XXX', 'auto');
-  &lt;%- if user_id.present? %&gt;
-    ga('set', '&amp;uid', &lt;%= user_id %&gt;);
-  &lt;% end %&gt;
-  ga('require', 'displayfeatures');
-
-  // =========================== GA-Ecommerce Start==========================
-  ga('require', 'ecommerce');
-  ga('ecommerce:addTransaction', {
-    'id': '&lt;%= order.order_no %&gt;',                        // Transaction ID. Required.
-    'affiliation': 'Heartbeat',                           // Affiliation or store name.
-    'revenue': '&lt;%= order.total_price %&gt;',                // Grand Total.
-    'shipping': '&lt;%= order.transaction.ship_fee %&gt;',      // Shipping.
-    'tax': '' ,                                           // Tax.
-    'currency': 'TWD'                                     // local currency code.
-  });
-
-  &lt;% order.line_items.each do |line_item| %&gt;
-  ga('ecommerce:addItem', {
-    'id': '&lt;%= order.order_no %&gt;',                        // Transaction ID. Required.
-    'name': '&lt;%= line_item.product.name %&gt;',              // Product name. Required.
-    'sku': '&lt;%= line_item.product.product_no %&gt;',         // SKU/code.
-    'category': '&lt;%= line_item.product.tag_list%&gt;',       // Category or variation.
-    'price': '&lt;%= line_item.product.selling_price%&gt;',     // Unit price.
-    'quantity': '&lt;%= line_item.count%&gt;',                  // Quantity.
-    'currency': 'TWD' 
-  });
-  &lt;% end %&gt;
-  ga('ecommerce:send');
-  // =========================== GA-Ecommerce End==========================
-  ga('send', 'pageview');
-&lt;/script&gt;
-</code></pre>
 ]]></content>
   </entry>
   
