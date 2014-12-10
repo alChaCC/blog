@@ -31,7 +31,7 @@ description: “This article show you how to implement ckeditor upload picture t
 
 首先，我們先從model開始，當你跑完
 
-  rails generate ckeditor:install --orm=active_record --backend=carrierwave
+    rails generate ckeditor:install --orm=active_record --backend=carrierwave
   
 會幫你建立model，以我的case來說，會建立**_db/migrate/20141204171531_create_ckeditor_assets.rb_**
 
@@ -50,7 +50,7 @@ description: “This article show you how to implement ckeditor upload picture t
 
 最後別忘記，
 
-  rake db:migrate
+    rake db:migrate
 
 ## Step2. [Important] Controller 
 
@@ -66,21 +66,21 @@ description: “This article show you how to implement ckeditor upload picture t
 
 好吧！ 那就開始吧！！！
 
-  rails g controller cooladmin/ckeditor_pictures
+    rails g controller cooladmin/ckeditor_pictures
 
 ### 首先這個controller 必需繼承 **Ckeditor::PicturesController**
 
 所以...
 
-  class Cooladmin::CkeditorPicturesController < Ckeditor::PicturesController
+    class Cooladmin::CkeditorPicturesController < Ckeditor::PicturesController
 
 那這個**[Ckeditor::PicturesController](https://github.com/galetahub/ckeditor/blob/master/app/controllers/ckeditor/pictures_controller.rb)**原本怎麼寫，就請看他們官網
 
 由於我們不希望使用ckeditor 的before_action，所以，我們這邊都把它skip掉
   
-  skip_before_filter :find_asset
-  skip_before_filter :ckeditor_authorize!
-  skip_before_filter :authorize_resource
+    skip_before_filter :find_asset
+    skip_before_filter :ckeditor_authorize!
+    skip_before_filter :authorize_resource
 
 ### 第一個action : **index**
 
@@ -90,32 +90,32 @@ description: “This article show you how to implement ckeditor upload picture t
 
 我的寫法是：
 
-  def index
-    @pictures = Ckeditor::Paginatable.new(pictures).page(params[:page])
-    respond_with(@pictures,layout: @pictures.first_page?)
-  end 
+    def index
+      @pictures = Ckeditor::Paginatable.new(pictures).page(params[:page])
+      respond_with(@pictures,layout: @pictures.first_page?)
+    end 
 
 
 那 **pictures** 這個從那裡來？
 
-  private
-  
-    def pictures
-      @pictures ||= if owner
-                  Ckeditor::CkeditorPicture.by_owner(owner)
-                      else
-                      Ckeditor::CkeditorPicture.orphan
-                      end
-    end
+    private
     
-    def owner
-      @owner ||=  case 
-                  when params[:owner_type].present? && params[:owner_id].present? 
-                    params[:owner_type].singularize.classify.constantize.find(params[:owner_id])
-                  else
-                    nil
-                  end
-    end
+      def pictures
+        @pictures ||= if owner
+                    Ckeditor::CkeditorPicture.by_owner(owner)
+                        else
+                        Ckeditor::CkeditorPicture.orphan
+                        end
+      end
+      
+      def owner
+        @owner ||=  case 
+                    when params[:owner_type].present? && params[:owner_id].present? 
+                      params[:owner_type].singularize.classify.constantize.find(params[:owner_id])
+                    else
+                      nil
+                    end
+      end
 
 ps. **Ckeditor::CkeditorPicture.by_owner(owner)** 這個model是我改裝model，下個章節會介紹，by_owner就是去拿到屬於這個owner的image，那owner怎麼來呢？
 
@@ -152,7 +152,7 @@ ps. **Ckeditor::CkeditorPicture.by_owner(owner)** 這個model是我改裝model�
 所以...小弟我很弱，還不知道怎麼解....所以只好copy一份出來....
 
 
-  def destroy
+    def destroy
       @picture ||= Ckeditor::CkeditorPicture.find(params[:id])
       @picture.destroy
       respond_with(@picture,location: pictures_path)
@@ -164,52 +164,52 @@ ps. **Ckeditor::CkeditorPicture.by_owner(owner)** 這個model是我改裝model�
 基本上這個contoller，我是直接copy一份到**app/controllers/ckeditor_pictures_controller.rb**
 
 
-  class Cooladmin::CkeditorPicturesController < Ckeditor::PicturesController
-    skip_before_filter :find_asset
-    skip_before_filter :ckeditor_authorize!
-    skip_before_filter :authorize_resource
-  
-    def index
-      @pictures = Ckeditor::Paginatable.new(pictures).page(params[:page])
-      respond_with(@pictures,layout: @pictures.first_page?)
-    end
-  
-    def create
-      if owner.present?
-        @picture = Ckeditor::CkeditorPicture.new(owner: @owner) 
-      else
-        @picture = Ckeditor::CkeditorPicture.new(owner_type: params[:owner_type]) 
+    class Cooladmin::CkeditorPicturesController < Ckeditor::PicturesController
+      skip_before_filter :find_asset
+      skip_before_filter :ckeditor_authorize!
+      skip_before_filter :authorize_resource
+    
+      def index
+        @pictures = Ckeditor::Paginatable.new(pictures).page(params[:page])
+        respond_with(@pictures,layout: @pictures.first_page?)
       end
-      respond_with_asset(@picture)
-    end
-  
-    def destroy
-      @picture ||= Ckeditor::CkeditorPicture.find(params[:id])
-      @picture.destroy
-      respond_with(@picture,location: pictures_path)
-    end
-  
-    private
-  
-    def pictures
-      @pictures ||= if owner
-                      Ckeditor::CkeditorPicture.by_owner(owner)
+    
+      def create
+        if owner.present?
+          @picture = Ckeditor::CkeditorPicture.new(owner: @owner) 
+        else
+          @picture = Ckeditor::CkeditorPicture.new(owner_type: params[:owner_type]) 
+        end
+        respond_with_asset(@picture)
+      end
+    
+      def destroy
+        @picture ||= Ckeditor::CkeditorPicture.find(params[:id])
+        @picture.destroy
+        respond_with(@picture,location: pictures_path)
+      end
+    
+      private
+    
+      def pictures
+        @pictures ||= if owner
+                        Ckeditor::CkeditorPicture.by_owner(owner)
+                      else
+                        Ckeditor::CkeditorPicture.myupload_orphan(current_employee)
+                      end
+      end
+    
+    
+      def owner
+        @owner ||=  case 
+                    when params[:owner_type].present? && params[:owner_id].present? 
+                      params[:owner_type].singularize.classify.constantize.find(params[:owner_id])
                     else
-                      Ckeditor::CkeditorPicture.myupload_orphan(current_employee)
+                      nil
                     end
+      end
+    
     end
-  
-  
-    def owner
-      @owner ||=  case 
-                  when params[:owner_type].present? && params[:owner_id].present? 
-                    params[:owner_type].singularize.classify.constantize.find(params[:owner_id])
-                  else
-                    nil
-                  end
-    end
-  
-  end
   
 
 ## Step3. [Important] Model
@@ -218,7 +218,7 @@ ps. **Ckeditor::CkeditorPicture.by_owner(owner)** 這個model是我改裝model�
 
 我把它改成 **models/ckeditor/ckeditor_picture.rb**
 
-  mv models/ckeditor/picture.rb models/ckeditor/ckeditor_picture.rb
+    mv models/ckeditor/picture.rb models/ckeditor/ckeditor_picture.rb
 
 幾個重點：
 
@@ -226,7 +226,7 @@ ps. **Ckeditor::CkeditorPicture.by_owner(owner)** 這個model是我改裝model�
 
 所以
 
-  belongs_to :owner, polymorphic: true
+    belongs_to :owner, polymorphic: true
   
 * 幾個簡單scope
 
@@ -245,32 +245,32 @@ owner_type    => 這張照片被用在哪個class下
 看完表格就知道我的scope在幹嘛了～
 
     scope :myupload_orphan, -> (employee_id) {where(assetable_id: employee_id, owner_id: nil)}
-      scope :by_owner_type, -> (owner,employee_id) {where(owner_type: owner.class.name, owner_id: nil, assetable_id: employee_id)}
-      scope :by_owner, -> (owner) { where(owner_id: owner.id)}
+    scope :by_owner_type, -> (owner,employee_id) {where(owner_type: owner.class.name, owner_id: nil, assetable_id: employee_id)}
+    scope :by_owner, -> (owner) { where(owner_id: owner.id)}
 
 
 
 完整程式：
   
-  class Ckeditor::CkeditorPicture < Ckeditor::Asset
-    belongs_to :owner, polymorphic: true
-    mount_uploader :data, CkeditorPictureUploader, :mount_on => :data_file_name
-  
-    scope :myupload_orphan, -> (employee_id) {where(assetable_id: employee_id, owner_id: nil)}
-    scope :by_owner_type, -> (owner,employee_id) {where(owner_type: owner.class.name, owner_id: nil, assetable_id: employee_id)}
-    scope :by_owner, -> (owner) { where(owner_id: owner.id)}
-  
-    def url_content
-      url(:content)
+    class Ckeditor::CkeditorPicture < Ckeditor::Asset
+      belongs_to :owner, polymorphic: true
+      mount_uploader :data, CkeditorPictureUploader, :mount_on => :data_file_name
+    
+      scope :myupload_orphan, -> (employee_id) {where(assetable_id: employee_id, owner_id: nil)}
+      scope :by_owner_type, -> (owner,employee_id) {where(owner_type: owner.class.name, owner_id: nil, assetable_id: employee_id)}
+      scope :by_owner, -> (owner) { where(owner_id: owner.id)}
+    
+      def url_content
+        url(:content)
+      end
     end
-  end
 
 
 ## Step4. 修改ckeitor 設定
 
 我是使用coffeescript
 
-  $(document).on 'ready page:load', ->
+    $(document).on 'ready page:load', ->
       $('[data-content-editor]').each ->
         $this = $(this)
         CKEDITOR.replace(
@@ -288,7 +288,7 @@ owner_type    => 這張照片被用在哪個class下
 
 我是使用simple_form
 
-  = f.input :content, label: '內容', input_html: { class: 'form-control', data: {content_editor: true, upload_url: upload_url_for(@product)} } 
+    = f.input :content, label: '內容', input_html: { class: 'form-control', data: {content_editor: true, upload_url: upload_url_for(@product)} } 
 
 upload_url_for請看下面
 
@@ -298,31 +298,31 @@ upload_url_for請看下面
 
 **app/helpers/cooladmin/admin_helper.rb**   
   
-  module Cooladmin::AdminHelper
-    def upload_url_for(resource)
-      if resource.new_record?
-        cooladmin_ckeditor_pictures_path(:owner_type => resource.class.name)
-      else
-        cooladmin_ckeditor_pictures_path(:owner_type => resource.class.name, :owner_id => resource.id)
+    module Cooladmin::AdminHelper
+      def upload_url_for(resource)
+        if resource.new_record?
+          cooladmin_ckeditor_pictures_path(:owner_type => resource.class.name)
+        else
+          cooladmin_ckeditor_pictures_path(:owner_type => resource.class.name, :owner_id => resource.id)
+        end
       end
     end
-  end
 
   
 ## Step7. Route
 
-  Rails.application.routes.draw do
-    # mount Ckeditor::Engine => '/uradmin/ckeditor'
-    
-    resources :ckeditor_pictures, only: [:index, :create, :destroy]
-  
-    namespace :cooladmin do
-      # ....略
-      # ckeditor使用
+    Rails.application.routes.draw do
+      # mount Ckeditor::Engine => '/uradmin/ckeditor'
+      
       resources :ckeditor_pictures, only: [:index, :create, :destroy]
-    end
     
-  end
+      namespace :cooladmin do
+        # ....略
+        # ckeditor使用
+        resources :ckeditor_pictures, only: [:index, :create, :destroy]
+      end
+      
+    end
 
 
 ## 完成！！！！！！！！！！！
