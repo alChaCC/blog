@@ -1,0 +1,301 @@
+
+<!DOCTYPE HTML>
+<html>
+<head>
+	<script data-cfasync="false" type="text/javascript" src="//use.typekit.net/axj3cfp.js"></script>
+	<script data-cfasync="false" type="text/javascript">try{Typekit.load();}catch(e){}</script>
+	<meta charset="utf-8">
+	<title>Google Analytics - Cross Device tracking in Ruby on Rails  | AlohaCC</title>
+
+<meta name="author" content="Aloha"> 
+
+<meta name="description" content="this article show you how to implement user id for google analytic cross device"> <meta name="keywords" content="Ruby on Rails, Google Analytics, 中文">
+
+	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+	<link href="http://feeds.feedburner.com/Alohacc" rel="alternate" title="AlohaCC" type="application/atom+xml">
+	<link rel="canonical" href="">
+	<link href="/favicon.png" rel="shortcut icon">
+	<link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+	<!--[if lt IE 9]><script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
+	<script src="//ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
+	<script type="text/javascript" src="/javascripts/jquery.fancybox.pack.js"></script>
+
+<script language="Javascript" type="text/javascript">
+$(document).ready(
+  function() {
+    (function($) {
+      $(".fancybox[data-content-id]").each(function() {
+        this.href = $(this).data('content-id');
+      });
+      $(".fancybox").fancybox({
+        beforeLoad: function() {
+          var el, 
+              id = $(this.element).data('title-id');
+
+          if (id) {
+            el = $('#' + id);
+
+            if (el.length) {
+              this.title = el.html();
+            }
+          }
+          if ($(this).data('content')) {
+            this.content = $(this).data('content');
+          }
+        },
+        helpers: {
+          title: {
+            type: 'inside'
+          }
+        }
+      });
+    })(jQuery);
+  }
+);
+</script>
+
+	
+</head>
+
+
+
+<body>
+	<header id="header" class="inner"><h1><a href="/">AlohaCC</a></h1>
+<h4>Try to Make Something Diff | Just For Fun |</h4>
+<nav id="main-nav"><ul>
+	<li><a href="/">Blog</a></li>
+	<li><a href="/About">About</a></li>
+	<li><a href="/presentation">Presentation</a></li>
+  	<li><a href="/RoR">Ruby on Rails</a></li>
+  	<li><a href="/ActionScript">Action Scripts</a></li>
+  	<li><a href="/DesignPattern">Design Pattern</a></li>
+	<li><a href="/archives">Archive</a></li>
+</ul>
+</nav>
+<nav id="mobile-nav">
+	<div class="alignleft menu">
+		<a class="button">Menu</a>
+		<div class="container"><ul>
+	<li><a href="/">Blog</a></li>
+	<li><a href="/About">About</a></li>
+	<li><a href="/presentation">Presentation</a></li>
+  	<li><a href="/RoR">Ruby on Rails</a></li>
+  	<li><a href="/ActionScript">Action Scripts</a></li>
+  	<li><a href="/DesignPattern">Design Pattern</a></li>
+	<li><a href="/archives">Archive</a></li>
+</ul>
+</div>
+	</div>
+	<div class="alignright search">
+		<a class="button"></a>
+		<div class="container">
+			<form action="http://google.com/search" method="get">
+				<input type="text" name="q" results="0">
+				<input type="hidden" name="q" value="site:ccaloha.cc">
+			</form>
+		</div>
+	</div>
+</nav>
+
+
+</header>
+
+	<div id="content" class="inner"><article class="post">
+	<h2 class="title">Google Analytics - Cross Device Tracking in Ruby on Rails</h2>
+	<div class="entry-content"><p>首先，先來看一下google 的說明</p>
+
+<iframe width="560" height="315" src="//www.youtube.com/embed/RsrAcxIsQHU" frameborder="0" allowfullscreen></iframe>
+
+
+
+
+<!-- more -->
+
+
+<blockquote><p>簡單來說，GA 在不同裝置瀏覽時，會依照每個裝置製作特別的ID, 但是，當user清掉Cookie或是重新安裝機器，就會把那個特別的ID重設，這樣他就會變成新訪客，而不是回流訪客。</p></blockquote>
+
+<p>當然，如果要跨Devise追蹤，既然是不同的Devise當然它的ID一定不一樣，所以一個使用者如果用電腦先在Urcosme網頁看一下等一下想要購買的商品，之後，他出發到康是美，要買產品之前拿出手機，再看一次商品確認，基本上他就會被列為兩個不同的來源</p>
+
+<p>所以要跨Device追蹤，很重要的關鍵是：</p>
+
+<blockquote><p>那個特別的ID</p></blockquote>
+
+<p>然而，Universal(新版)的GA有提供修改 user id的功能！</p>
+
+<p><a href="http://cutroni.com/blog/2014/04/10/understanding-cross-device-measurement-and-the-user-id/">Understanding Cross Device Measurement and the User-ID</a></p>
+
+<h2>那要怎麼加上user id 呢？</h2>
+
+<h3>Step1. 第一步，打開User ID的功能</h3>
+
+<p><img alt="GA User ID" src="https://dl.dropboxusercontent.com/u/22307926/Blog%20Image/GA/user%20id%20%E5%95%9F%E7%94%A8.png"></img></p>
+
+<h3>Step2. 改網站上的Code</h3>
+
+<p><img alt="GA User ID code" src="https://dl.dropboxusercontent.com/u/22307926/Blog%20Image/GA/%E8%A8%AD%E5%AE%9AUser_id%20.png"></p>
+
+<h3>Step3. 設定View名稱！</h3>
+
+<p>恭喜你 就有新的View !</p>
+
+<h3>Step4. Rails 要怎麼加入 User ID呢？</h3>
+
+<p>如果你跟我一樣是使用Devise gem作為登入的lib，</p>
+
+<h4>Step 1. 在 app/views/layouts/application.html.slim 加上</h4>
+
+<pre><code>= render 'shared/google_analytics', user_id: current_user.try(:id) 
+</code></pre>
+
+<p>ps. 若是使用 partial</p>
+
+<pre><code>= render :partial =&gt; "partials/google_analytics" , :locals =&gt; { user_id: current_user.try(:id)}
+</code></pre>
+
+<p><em>重點就是那user_id，如果不用try的話，若是current_user是nil，就會報錯！</em></p>
+
+<h4>Step 2. 編輯 app/views/shared/_google_analytics.html.erb</h4>
+
+<pre><code>&lt;script&gt;
+
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  &lt;%- if user_id.present? %&gt;
+    ga('create', 'UA-XXXX-YYYY', {'userId': '&lt;%= user_id %&gt;'})
+  &lt;%- else %&gt;
+    ga('create', 'UA-XXXX-Y', 'urbox.cc');
+  &lt;% end %&gt;
+  ga('send', 'pageview');
+
+&lt;/script&gt;
+</code></pre>
+
+<h3>那假設user沒有登入，你沒有辦法給他user id</h3>
+
+<p>Google 有推出(工作階段整合) Session Unification的功能，當你啟動了這個功能後，基本上有User ID的就會被放在一個群組，沒有User ID的就會在另外一個群組！</p>
+
+<p>但是厲害的是，Google在同一個session內，若發現這個ID(隨機產生)被重新assign過(系統assign)，他會把之前的action記錄給後來的ID</p>
+
+<h2>那套上User ID後，會有什麼差別呢？</h2>
+
+<ol>
+<li><p> 你的指標(metrics)計算方式不同，但是更精確了！</p></li>
+<li><p> 你擁有了跨裝置的報告.</p></li>
+<li><p> Limited date range.</p></li>
+</ol>
+
+
+<p>  你的Data範圍是90天。</p>
+</div>
+
+
+<div class="meta">
+	<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2014-12-12T08:13:38+08:00" pubdate data-updated="true">Dec 12<span>th</span>, 2014</time></div>
+	
+
+<div class="tags">
+
+	<a class='category' href='/blog/categories/google-analytics/'>Google Analytics</a>, <a class='category' href='/blog/categories/ruby-on-rails/'>Ruby_on_Rails</a>
+
+</div>
+
+
+	
+		<span class="comments"><a href="/blog/2014/12/12/google-analytics-cross-device-tracking-in-ruby-on-rails/#disqus_thread">Comments</a></span>
+	
+</div></article>
+
+	<div class="share">
+	<div class="addthis_toolbox addthis_default_style ">
+	
+	<a class="addthis_button_facebook_like" fb:like:layout="button_count"></a>
+	
+	
+	<a class="addthis_button_tweet"></a>
+	
+	
+	<a class="addthis_button_google_plusone" g:plusone:size="medium"></a>
+	
+<!---	<a class="addthis_counter addthis_pill_style"></a> --->
+	</div>
+  <script type="text/javascript" src="http://s7.addthis.com/js/250/addthis_widget.js#pubid="></script>
+</div>
+
+
+
+<section id="comment">
+    <h2 class="title">Comments</h2>
+    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+</section>
+</div>
+	<footer id="footer" class="inner">Copyright &copy; 2014
+
+    Aloha
+
+<br>
+Powered by Octopress.
+</footer>
+	<script src="/javascripts/slash.js"></script>
+<script src="/javascripts/jquery.fancybox.pack.js"></script>
+<script type="text/javascript">
+(function($){
+	$('.fancybox').fancybox();
+})(jQuery);
+</script> <!-- Delete or comment this line to disable Fancybox -->
+
+
+<script type="text/javascript">
+      var disqus_shortname = 'ccaloha';
+      
+        
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://ccaloha.cc/blog/2014/12/12/google-analytics-cross-device-tracking-in-ruby-on-rails/';
+        var disqus_url = 'http://ccaloha.cc/blog/2014/12/12/google-analytics-cross-device-tracking-in-ruby-on-rails/';
+        var disqus_script = 'embed.js';
+      
+    (function () {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/' + disqus_script;
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script>
+
+
+
+	<script type="text/javascript">
+		var _gaq = _gaq || [];
+		_gaq.push(['_setAccount', 'UA-29608372-1']);
+		_gaq.push(['_trackPageview']);
+
+		(function() {
+			var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+			ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+			var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+		})();
+	</script>
+
+
+<a title="Google Analytics Alternative" href="http://clicky.com/100753071"><img alt="Google Analytics Alternative" src="//static.getclicky.com/media/links/badge.gif" border="0" /></a>
+<script src="//static.getclicky.com/js" type="text/javascript"></script>
+<script type="text/javascript">try{ clicky.init(100753071); }catch(e){}</script>
+<noscript><p><img alt="Clicky" width="1" height="1" src="//in.getclicky.com/100753071ns.gif" /></p></noscript>
+
+</body>
+</html>

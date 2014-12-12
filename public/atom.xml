@@ -4,7 +4,7 @@
   <title><![CDATA[AlohaCC]]></title>
   <link href="http://ccaloha.cc/atom.xml" rel="self"/>
   <link href="http://ccaloha.cc/"/>
-  <updated>2014-12-10T12:46:06+08:00</updated>
+  <updated>2014-12-12T08:21:34+08:00</updated>
   <id>http://ccaloha.cc/</id>
   <author>
     <name><![CDATA[Aloha]]></name>
@@ -12,6 +12,101 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[Google Analytics - Cross Device tracking in Ruby on Rails]]></title>
+    <link href="http://ccaloha.cc/blog/2014/12/12/google-analytics-cross-device-tracking-in-ruby-on-rails/"/>
+    <updated>2014-12-12T08:13:38+08:00</updated>
+    <id>http://ccaloha.cc/blog/2014/12/12/google-analytics-cross-device-tracking-in-ruby-on-rails</id>
+    <content type="html"><![CDATA[<p>首先，先來看一下google 的說明</p>
+
+<iframe width="560" height="315" src="http://ccaloha.cc//www.youtube.com/embed/RsrAcxIsQHU" frameborder="0" allowfullscreen></iframe>
+
+
+
+
+<!-- more -->
+
+
+<blockquote><p>簡單來說，GA 在不同裝置瀏覽時，會依照每個裝置製作特別的ID, 但是，當user清掉Cookie或是重新安裝機器，就會把那個特別的ID重設，這樣他就會變成新訪客，而不是回流訪客。</p></blockquote>
+
+<p>當然，如果要跨Devise追蹤，既然是不同的Devise當然它的ID一定不一樣，所以一個使用者如果用電腦先在Urcosme網頁看一下等一下想要購買的商品，之後，他出發到康是美，要買產品之前拿出手機，再看一次商品確認，基本上他就會被列為兩個不同的來源</p>
+
+<p>所以要跨Device追蹤，很重要的關鍵是：</p>
+
+<blockquote><p>那個特別的ID</p></blockquote>
+
+<p>然而，Universal(新版)的GA有提供修改 user id的功能！</p>
+
+<p><a href="http://cutroni.com/blog/2014/04/10/understanding-cross-device-measurement-and-the-user-id/">Understanding Cross Device Measurement and the User-ID</a></p>
+
+<h2>那要怎麼加上user id 呢？</h2>
+
+<h3>Step1. 第一步，打開User ID的功能</h3>
+
+<p><img alt="GA User ID" src="https://dl.dropboxusercontent.com/u/22307926/Blog%20Image/GA/user%20id%20%E5%95%9F%E7%94%A8.png"></img></p>
+
+<h3>Step2. 改網站上的Code</h3>
+
+<p><img alt="GA User ID code" src="https://dl.dropboxusercontent.com/u/22307926/Blog%20Image/GA/%E8%A8%AD%E5%AE%9AUser_id%20.png"></p>
+
+<h3>Step3. 設定View名稱！</h3>
+
+<p>恭喜你 就有新的View !</p>
+
+<h3>Step4. Rails 要怎麼加入 User ID呢？</h3>
+
+<p>如果你跟我一樣是使用Devise gem作為登入的lib，</p>
+
+<h4>Step 1. 在 app/views/layouts/application.html.slim 加上</h4>
+
+<pre><code>= render 'shared/google_analytics', user_id: current_user.try(:id) 
+</code></pre>
+
+<p>ps. 若是使用 partial</p>
+
+<pre><code>= render :partial =&gt; "partials/google_analytics" , :locals =&gt; { user_id: current_user.try(:id)}
+</code></pre>
+
+<p><em>重點就是那user_id，如果不用try的話，若是current_user是nil，就會報錯！</em></p>
+
+<h4>Step 2. 編輯 app/views/shared/_google_analytics.html.erb</h4>
+
+<pre><code>&lt;script&gt;
+
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  &lt;%- if user_id.present? %&gt;
+    ga('create', 'UA-XXXX-YYYY', {'userId': '&lt;%= user_id %&gt;'})
+  &lt;%- else %&gt;
+    ga('create', 'UA-XXXX-Y', 'urbox.cc');
+  &lt;% end %&gt;
+  ga('send', 'pageview');
+
+&lt;/script&gt;
+</code></pre>
+
+<h3>那假設user沒有登入，你沒有辦法給他user id</h3>
+
+<p>Google 有推出(工作階段整合) Session Unification的功能，當你啟動了這個功能後，基本上有User ID的就會被放在一個群組，沒有User ID的就會在另外一個群組！</p>
+
+<p>但是厲害的是，Google在同一個session內，若發現這個ID(隨機產生)被重新assign過(系統assign)，他會把之前的action記錄給後來的ID</p>
+
+<h2>那套上User ID後，會有什麼差別呢？</h2>
+
+<ol>
+<li><p> 你的指標(metrics)計算方式不同，但是更精確了！</p></li>
+<li><p> 你擁有了跨裝置的報告.</p></li>
+<li><p> Limited date range.</p></li>
+</ol>
+
+
+<p>  你的Data範圍是90天。</p>
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[[HOWTO]- 在Ruby on Rails 實作Ckeditor上傳圖片到各個獨立的資料夾]]></title>
@@ -4402,31 +4497,6 @@ end
 
 <iframe src="https://www.flickr.com/photos/alohacc/11979649853/player/94ee9748ba" height="78" width="83"  frameborder="0" allowfullscreen webkitallowfullscreen mozallowfullscreen oallowfullscreen msallowfullscreen></iframe>
 
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[[Update] Introducing myself]]></title>
-    <link href="http://ccaloha.cc/blog/2013/12/13/update-introducing-myself/"/>
-    <updated>2013-12-13T19:47:28+08:00</updated>
-    <id>http://ccaloha.cc/blog/2013/12/13/update-introducing-myself</id>
-    <content type="html"><![CDATA[<p>Every years, I will review my works.</p>
-
-<p>By doing this, I am able to understand myself more deeply.</p>
-
-<!--more-->
-
-
-<p>I made an introduction of myself in 2010 in Prezi.</p>
-
-<p>Now, I add some new information including my working experience, special experience.</p>
-
-<p>If you want to know me deeply, you must check this</p>
-
-<iframe src="http://prezi.com/embed/0pcpwnx3gvxv/?bgcolor=ffffff&amp;lock_to_path=0&amp;autoplay=0&amp;autohide_ctrls=0&amp;features=undefined&amp;disabled_features=undefined" width="800" height="600" frameBorder="0"></iframe>
-
-
-<p></p>
 ]]></content>
   </entry>
   

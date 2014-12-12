@@ -107,6 +107,73 @@ $(document).ready(
     <article class="post">
 	<h2 class="title">
 		
+		<a href="/blog/2013/04/22/howto-setup-ubuntu-from-0-to-1/">
+		
+			HOWTO-Setup-Ubuntu-from-0-to-1</a>
+	</h2>
+	<div class="entry-content">
+		<h3>先升級</h3>
+
+<pre><code>sudo apt-get update
+sudo apt-get upgrade
+</code></pre>
+
+<p>ps. 如果update失敗的話，請到</p>
+
+<p>Ubuntu Software Center -> Edit -> Software Sources</p>
+
+<p>把Download from 改成其他國家(我是把它改成Server for United States)</p>
+
+<p>在試一次</p>
+
+<h3>安裝vim</h3>
+
+<pre><code>sudo apt-get install vim
+</code></pre>
+
+<h3>安裝Chrome</h3>
+
+<pre><code>連到google 網址點選下載再安裝
+</code></pre>
+
+
+		
+		<a href="/blog/2013/04/22/howto-setup-ubuntu-from-0-to-1/" class="more-link">Read on &rarr;</a>
+	</div>
+
+
+<div class="meta">
+	<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-04-22T15:11:00+08:00" pubdate data-updated="true">Apr 22<span>nd</span>, 2013</time></div>
+	
+
+<div class="tags">
+
+	<a class='category' href='/blog/categories/linux/'>Linux</a>
+
+</div>
+
+
+	
+		<span class="comments"><a href="/blog/2013/04/22/howto-setup-ubuntu-from-0-to-1//blog/page/5/index.html#disqus_thread">Comments</a></span>
+	
+</div></article>
+
+
+    <article class="post">
+	<h2 class="title">
+		
 		<a href="/blog/2012/12/02/2012-12-09-%7E-2012-12-13-kansai-travel-i-am-a-winner/">
 		
 			2012-12-09 ~ 2012-12-13 五天四夜之好爽，我是贏家，關西我來了 - 行程規劃篇</a>
@@ -400,64 +467,6 @@ $ rvm gemset use rails3tutorial2ndEd
 
 	
 		<span class="comments"><a href="/blog/2012/08/10/learning-on-ruby-on-rails-tutorial-ch9-updating//blog/page/5/index.html#disqus_thread">Comments</a></span>
-	
-</div></article>
-
-
-    <article class="post">
-	<h2 class="title">
-		
-		<a href="/blog/2012/08/10/learning-on-ruby-on-rails-tutorial-ch8-sign-in/">
-		
-			Learning on Ruby on Rails Tutorial-CH8 Sign In</a>
-	</h2>
-	<div class="entry-content">
-		<p>上一章已經可以成功註冊使用者，接下來就是要到登入登出的部分！</p>
-
-<p>一樣在開始之前，我們先開Branch</p>
-
-<pre><code>$ git checkout -b sign-in-out
-</code></pre>
-
-<h2>Session 和登入錯誤</h2>
-
-<p>Session 就是半永久存在於兩台電腦，就像用戶端跑browser和伺服器端跑rails</p>
-
-<p>我們會使用session來實作&#8221;Sign in&#8221;還有&#8221;forgetting&#8221;(當你關掉瀏覽器)，&#8221;remember me&#8221;這個check box保存session，&#8221;forever&#8221;（除非使用者自己清，不然會一直保存）</p>
-
-<p>我們可以把session看成RESTful resource的觀念，我們有一個登入的頁面，登入成功時他會有新的session，當他登出時， session會被清掉。不像User那樣，他會利用後端資料庫保存資料，然而session是使用<strong>cookie</strong>(是user瀏覽器那邊一小塊文字)。Sign in會用到的動作，大多都是基於<strong>cookie</strong>的認證機制！</p>
-
-
-		
-		<a href="/blog/2012/08/10/learning-on-ruby-on-rails-tutorial-ch8-sign-in/" class="more-link">Read on &rarr;</a>
-	</div>
-
-
-<div class="meta">
-	<div class="date">
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2012-08-10T11:05:00+08:00" pubdate data-updated="true">Aug 10<span>th</span>, 2012</time></div>
-	
-
-<div class="tags">
-
-	<a class='category' href='/blog/categories/reading/'>Reading</a>, <a class='category' href='/blog/categories/ruby-on-rails/'>Ruby_on_Rails</a>
-
-</div>
-
-
-	
-		<span class="comments"><a href="/blog/2012/08/10/learning-on-ruby-on-rails-tutorial-ch8-sign-in//blog/page/5/index.html#disqus_thread">Comments</a></span>
 	
 </div></article>
 

@@ -107,6 +107,64 @@ $(document).ready(
     <article class="post">
 	<h2 class="title">
 		
+		<a href="/blog/2012/08/10/learning-on-ruby-on-rails-tutorial-ch8-sign-in/">
+		
+			Learning on Ruby on Rails Tutorial-CH8 Sign In</a>
+	</h2>
+	<div class="entry-content">
+		<p>上一章已經可以成功註冊使用者，接下來就是要到登入登出的部分！</p>
+
+<p>一樣在開始之前，我們先開Branch</p>
+
+<pre><code>$ git checkout -b sign-in-out
+</code></pre>
+
+<h2>Session 和登入錯誤</h2>
+
+<p>Session 就是半永久存在於兩台電腦，就像用戶端跑browser和伺服器端跑rails</p>
+
+<p>我們會使用session來實作&#8221;Sign in&#8221;還有&#8221;forgetting&#8221;(當你關掉瀏覽器)，&#8221;remember me&#8221;這個check box保存session，&#8221;forever&#8221;（除非使用者自己清，不然會一直保存）</p>
+
+<p>我們可以把session看成RESTful resource的觀念，我們有一個登入的頁面，登入成功時他會有新的session，當他登出時， session會被清掉。不像User那樣，他會利用後端資料庫保存資料，然而session是使用<strong>cookie</strong>(是user瀏覽器那邊一小塊文字)。Sign in會用到的動作，大多都是基於<strong>cookie</strong>的認證機制！</p>
+
+
+		
+		<a href="/blog/2012/08/10/learning-on-ruby-on-rails-tutorial-ch8-sign-in/" class="more-link">Read on &rarr;</a>
+	</div>
+
+
+<div class="meta">
+	<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2012-08-10T11:05:00+08:00" pubdate data-updated="true">Aug 10<span>th</span>, 2012</time></div>
+	
+
+<div class="tags">
+
+	<a class='category' href='/blog/categories/reading/'>Reading</a>, <a class='category' href='/blog/categories/ruby-on-rails/'>Ruby_on_Rails</a>
+
+</div>
+
+
+	
+		<span class="comments"><a href="/blog/2012/08/10/learning-on-ruby-on-rails-tutorial-ch8-sign-in//blog/page/6/index.html#disqus_thread">Comments</a></span>
+	
+</div></article>
+
+
+    <article class="post">
+	<h2 class="title">
+		
 		<a href="/blog/2012/08/10/learning-on-ruby-on-rails-tutorial-ch7-sign-up/">
 		
 			Learning on Ruby on Rails Tutorial-CH7 Sign Up</a>
@@ -374,60 +432,6 @@ end
 
 	
 		<span class="comments"><a href="/blog/2012/06/26/learning-on-ruby-on-rails-tutorial-ch4-rails-flavored-ruby//blog/page/6/index.html#disqus_thread">Comments</a></span>
-	
-</div></article>
-
-
-    <article class="post">
-	<h2 class="title">
-		
-		<a href="/blog/2012/06/18/reading-note-23-plus-1-design-pattern-part3-adapter/">
-		
-			[閱讀筆記系列] 23 + 1 設計模式 - Part3. Adapter</a>
-	</h2>
-	<div class="entry-content">
-		<p>這個好像還滿常用的</p>
-
-<p>概念大概是這樣的</p>
-
-<p>把<strong>本來的內容</strong> 透過 <strong>轉換的東西</strong>
-變成<strong>你要的結果</strong></p>
-
-<p>主要有兩種方式來實作，一個是繼承，另外一個是委讓(交給誰做)</p>
-
-<p>下面是講<strong>繼承</strong>的寫法</p>
-
-
-		
-		<a href="/blog/2012/06/18/reading-note-23-plus-1-design-pattern-part3-adapter/" class="more-link">Read on &rarr;</a>
-	</div>
-
-
-<div class="meta">
-	<div class="date">
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2012-06-18T11:12:00+08:00" pubdate data-updated="true">Jun 18<span>th</span>, 2012</time></div>
-	
-
-<div class="tags">
-
-	<a class='category' href='/blog/categories/design-pattern/'>Design_Pattern</a>, <a class='category' href='/blog/categories/reading/'>Reading</a>
-
-</div>
-
-
-	
-		<span class="comments"><a href="/blog/2012/06/18/reading-note-23-plus-1-design-pattern-part3-adapter//blog/page/6/index.html#disqus_thread">Comments</a></span>
 	
 </div></article>
 
