@@ -7,9 +7,11 @@ sharing: true
 footer: true
 ---
 
-I am **Aloha**
+Hi, I am **Aloha**
 
 I want to be an **Entrepreneur** and **Web Rocker** 
+
+Now I'm focus on being an awesome Data Scientist especially in Web/APP.
 
 # My [Resume] [5]
 
@@ -19,12 +21,14 @@ I want to be an **Entrepreneur** and **Web Rocker**
 
 My tools
 {% blockquote %} 
-Ruby on Rails   	  
+Ruby on Rails   	 
+R 
+Google Analytics 
+Git/Github/bitbucket
 Linux 			  
 Action Script 3.0   	  
 After Effect    	  
-Android(Java)   	  
-Git/Github/bitbucket      
+Android(Java)   	        
 C/C++ /Matlab 		  
 Ukulele 		 
 RobotFramework / RF-SSHLibrary / RF+Sikuli
