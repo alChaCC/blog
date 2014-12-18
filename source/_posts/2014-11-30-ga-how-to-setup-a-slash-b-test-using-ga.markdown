@@ -3,9 +3,9 @@ layout: post
 title: "蝦米！GA也可做A/B Test"
 date: 2014-11-30 22:35:34 +0800
 comments: true
-categories: ["google analytics"]
+categories: ["Google Analytics"]
 keywords: "experiment, ga, google analytics, 中文"
-description: "I will show you how to create a a/b test page via Google Analytics" 
+description: "I will show you how to create a a/b test page via Google Analytics 簡單用GA做A/B testing" 
 ---
 
 需求： 我想要提升大家點選連結進入"GA分類"頁面的點擊率！

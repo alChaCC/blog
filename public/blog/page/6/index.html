@@ -105,6 +105,64 @@ $(document).ready(
     <article class="post">
 	<h2 class="title">
 		
+		<a href="/blog/2012/08/10/learning-on-ruby-on-rails-tutorial-ch9-updating/">
+		
+			Learning on Ruby on Rails Tutorial-CH9 Updating , Showing , and Deleting Users</a>
+	</h2>
+	<div class="entry-content">
+		<p> 這章會完成Users的REST動作，<strong>edit</strong>、<strong>update</strong>、<strong>index</strong>、<strong>destroy</strong></p>
+
+<p> 廢話不多說，從做中學！</p>
+
+<pre><code>$ git checkout -b updating-users
+</code></pre>
+
+<h2>修改使用者</h2>
+
+<p>修改其實很像新增，和新增不同的地方在於</p>
+
+<p>new是對server提出POST的要求，但是update這個動作是提出PUT這個要求</p>
+
+<p>還有一個最大的差別，就是所有人都可以註冊，但是update動作，只能給已經登入的user使用！</p>
+
+
+		
+		<a href="/blog/2012/08/10/learning-on-ruby-on-rails-tutorial-ch9-updating/" class="more-link">Read on &rarr;</a>
+	</div>
+
+
+<div class="meta">
+	<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2012-08-10T11:07:00+08:00" pubdate data-updated="true">Aug 10<span>th</span>, 2012</time></div>
+	
+
+<div class="tags">
+
+	<a class='category' href='/blog/categories/reading/'>Reading</a>, <a class='category' href='/blog/categories/ruby-on-rails/'>Ruby_on_Rails</a>
+
+</div>
+
+
+	
+		<span class="comments"><a href="/blog/2012/08/10/learning-on-ruby-on-rails-tutorial-ch9-updating//blog/page/6/index.html#disqus_thread">Comments</a></span>
+	
+</div></article>
+
+
+    <article class="post">
+	<h2 class="title">
+		
 		<a href="/blog/2012/08/10/learning-on-ruby-on-rails-tutorial-ch8-sign-in/">
 		
 			Learning on Ruby on Rails Tutorial-CH8 Sign In</a>
@@ -371,65 +429,6 @@ $ git checkout -b sign-up
 
 	
 		<span class="comments"><a href="/blog/2012/06/30/learning-on-ruby-on-rails-tutorial-ch5-filling-in-the-layout//blog/page/6/index.html#disqus_thread">Comments</a></span>
-	
-</div></article>
-
-
-    <article class="post">
-	<h2 class="title">
-		
-		<a href="/blog/2012/06/26/learning-on-ruby-on-rails-tutorial-ch4-rails-flavored-ruby/">
-		
-			Learning on Ruby on Rails Tutorial - CH4 - Rails-flavored Ruby</a>
-	</h2>
-	<div class="entry-content">
-		<p>修改app/helpers/application_helper.rb</p>
-
-<pre><code>module ApplicationHelper
-
-# Returns the full title on a per-page basis.       # Documentation comment
-def full_title(page_title)                          # Method definition
-    base_title = "Ruby on Rails Tutorial Sample App"  # Variable assignment
-    if page_title.empty?                              # Boolean test
-        base_title                                      # Implicit return
-    else
-        "#{base_title} | #{page_title}"                 # String interpolation
-        end
-    end
-end
-</code></pre>
-
-
-		
-		<a href="/blog/2012/06/26/learning-on-ruby-on-rails-tutorial-ch4-rails-flavored-ruby/" class="more-link">Read on &rarr;</a>
-	</div>
-
-
-<div class="meta">
-	<div class="date">
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2012-06-26T10:28:00+08:00" pubdate data-updated="true">Jun 26<span>th</span>, 2012</time></div>
-	
-
-<div class="tags">
-
-	<a class='category' href='/blog/categories/reading/'>Reading</a>, <a class='category' href='/blog/categories/ruby-on-rails/'>Ruby_on_Rails</a>
-
-</div>
-
-
-	
-		<span class="comments"><a href="/blog/2012/06/26/learning-on-ruby-on-rails-tutorial-ch4-rails-flavored-ruby//blog/page/6/index.html#disqus_thread">Comments</a></span>
 	
 </div></article>
 
