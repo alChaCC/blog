@@ -1,0 +1,173 @@
+---
+layout: post
+title: "[HOWTO]- 立馬拋棄Excel！利用R，取得Google Analytics的資料 -以使用者流量的時間畫heatmap為example"
+date: 2014-12-24 10:24:04 +0800
+comments: true
+categories: ["Google Analytics","R"]
+keywords: "Google Analytics, R, RGoogleAnalytics, heatmap, pageview,中文"
+description: "you can learn how to get google analytics data from R using RGoogleAnalytics and I use traffic time as an example，利用R取得使用者pageviews的時間分佈"
+---
+
+> 學習一個東西，最快的方式，就是....
+
+> > just do it !
+
+由於我想要成為一個酷炫的資料科學家！
+
+不學習R這樣對嗎～
+
+既然要學習R，那從每週的**Google Analytics**開始著手！
+
+<img src="https://dl.dropboxusercontent.com/u/22307926/Blog%20Image/HowTo-%20get%20google%20analytics%20using%20R%28RGoogleAnalytics%29%20using%20user%27s%20pageviews%20time%20as%20an%20example/Rplot.png" alt="traffic heatmap using R (RGoogleAnalytics)">
+
+<!-- more -->
+
+
+首先，在開始之前，為了要有個map !
+
+所以，當然是先看人家怎麼做
+
+瞭解一下機制和 那個Fu~~
+
+我主要是參考這篇：[Building a Traffic Heatmap with Google Analytics and R](http://viget.com/inspire/how-to-build-a-traffic-heatmap-using-google-analytics-and-r)
+
+
+但是由於他使用的 RGoogleAnalytics 是舊版的，而且，google 現在的API都需要使用 OAuth 2.0
+
+所以....做法上還是有點不同，不過完成整個設定後，擷取資料與分析，就跟他的內容大同小異了！
+
+廢話不多說，那就開始吧！
+
+## Step 1. 申請API使用權限
+
+### 1. 登入到 Google Develope Console
+
+<img src="https://dl.dropboxusercontent.com/u/22307926/Blog%20Image/HowTo-%20get%20google%20analytics%20using%20R%28RGoogleAnalytics%29%20using%20user%27s%20pageviews%20time%20as%20an%20example/%E8%9E%A2%E5%B9%95%E5%BF%AB%E7%85%A7%202014-12-24%20%E4%B8%8B%E5%8D%8811.16.19.png" alt="建立專案">
+
+### 2. 選擇啟用API
+
+<img src="https://dl.dropboxusercontent.com/u/22307926/Blog%20Image/HowTo-%20get%20google%20analytics%20using%20R%28RGoogleAnalytics%29%20using%20user%27s%20pageviews%20time%20as%20an%20example/%E8%9E%A2%E5%B9%95%E5%BF%AB%E7%85%A7%202014-12-24%20%E4%B8%8B%E5%8D%8811.16.31.png" alt="設定啟用API">
+
+### 3. 選擇要啟用的API 為 google analytics
+
+<img src="https://dl.dropboxusercontent.com/u/22307926/Blog%20Image/HowTo-%20get%20google%20analytics%20using%20R%28RGoogleAnalytics%29%20using%20user%27s%20pageviews%20time%20as%20an%20example/%E8%9E%A2%E5%B9%95%E5%BF%AB%E7%85%A7%202014-12-24%20%E4%B8%8B%E5%8D%8811.16.35.png" alt="選擇要請用的API為 Analytics API">
+
+### 4. 新增API存取所需的憑證
+
+<img src="https://dl.dropboxusercontent.com/u/22307926/Blog%20Image/HowTo-%20get%20google%20analytics%20using%20R%28RGoogleAnalytics%29%20using%20user%27s%20pageviews%20time%20as%20an%20example/%E8%9E%A2%E5%B9%95%E5%BF%AB%E7%85%A7%202014-12-24%20%E4%B8%8B%E5%8D%8811.16.45.png" alt="建立API憑證">
+
+### 5. 輸入相關資訊
+
+<img src="https://dl.dropboxusercontent.com/u/22307926/Blog%20Image/HowTo-%20get%20google%20analytics%20using%20R%28RGoogleAnalytics%29%20using%20user%27s%20pageviews%20time%20as%20an%20example/%E8%9E%A2%E5%B9%95%E5%BF%AB%E7%85%A7%202014-12-24%20%E4%B8%8B%E5%8D%8811.16.52.png" alt="輸入這個憑證的相關訊息">
+
+### 6. 記錄下來你的用戶ID與用戶密碼
+
+<img src="https://dl.dropboxusercontent.com/u/22307926/Blog%20Image/HowTo-%20get%20google%20analytics%20using%20R%28RGoogleAnalytics%29%20using%20user%27s%20pageviews%20time%20as%20an%20example/%E8%9E%A2%E5%B9%95%E5%BF%AB%E7%85%A7%202014-12-24%20%E4%B8%8B%E5%8D%8811.17.02.png" alt="記錄下來吧！">
+
+## Step2. 寫R 
+
+請看我裡面的註解吧
+
+    # 安裝套件
+    install.packages('rjson')
+    install.packages('RCurl')
+    install.packages('RColorBrewer')
+    install.packages('RGoogleAnalytics')
+    require(rjson)
+    require(RCurl)
+    require(RColorBrewer)
+    require(RGoogleAnalytics)
+     
+    # 由於 google api 現在規定使用oauth2.0 來存取
+    # R語言使用 "<-" 當作變數指派
+    token <- Auth('用戶端ID','用戶端密碼')
+     
+    # 找到目前有哪些views
+    profile <- GetProfiles(token)
+     
+    ## 上面那一行你會看到這樣的結果，使用data.frame格式儲存，data frame是R語言裡頭很常見的資料型態，你就把它想成是excel裡面的tab
+    ## id name
+    ## 85712839 所有網站資料
+     
+    # 編寫要搜尋的參數，這邊是關鍵！
+    # R： 取得data frame 列(row)裡頭一個變數
+    my_profile <- profile[profile$name == '所有網站資料',1]
+    query.list <- Init(start.date = "2014-10-01",
+              end.date = "2014-12-14",
+              dimensions = "ga:dayOfWeek, ga:hour",
+              metrics = "ga:pageviews",
+              max.results = 10000,
+              table.id = paste("ga:",my_profile,sep="",collapse=",")
+    )
+    
+    # 建立一個query等一下就是透過這個query與token拿資料！
+    ga.query <- QueryBuilder(query.list)
+     
+    # 向GA抓取資料，存成data frame
+    ga.data <- GetReportData(ga.query, token)
+     
+    # 看一下ga.data長什麼樣子
+    ## dayOfWeek hour pageviews
+    ## 0 00 19734
+    ## 0 01 11244
+    ## 0 02 6286
+    ## 0 03 3528
+    ## 0 04 1830
+    ## 0 05 1316
+    ## 0 06 910
+    ## 0 07 2168
+    ## 0 08 4547
+    ## ....
+     
+     
+    # 把ga.data裡頭dayOfWeek的 0 轉換成 sunday, 1轉成 Monday..and so on..
+    ga.data$dayOfWeek <- as.character(ga.data$dayOfWeek)
+    ga.data$dayOfWeek[ga.data$dayOfWeek == "0"] <- "Sunday"
+    ga.data$dayOfWeek[ga.data$dayOfWeek == "1"] <- "Monday"
+    ga.data$dayOfWeek[ga.data$dayOfWeek == "2"] <- "Tuesday"
+    ga.data$dayOfWeek[ga.data$dayOfWeek == "3"] <- "Wednesday"
+    ga.data$dayOfWeek[ga.data$dayOfWeek == "4"] <- "Thursday"
+    ga.data$dayOfWeek[ga.data$dayOfWeek == "5"] <- "Friday"
+    ga.data$dayOfWeek[ga.data$dayOfWeek == "6"] <- "Saturday"
+     
+    # 資料排序調整(y軸)，寫了這個factor後，他會以 sunday, monday....等方式排序呈現資料
+    ga.data$dayOfWeek <- factor(ga.data$dayOfWeek, levels = c("Sunday",
+                  "Monday",
+                  "Tuesday",
+                  "Wednesday",
+                  "Thursday",
+                  "Friday",
+                  "Saturday"))
+    ga.data[order(ga.data$dayOfWeek),]
+     
+    # 將 data frame 轉成 xtab.
+    heatmap_data <- xtabs(pageviews ~ dayOfWeek + hour, data=ga.data)
+     
+    # heatmap_data長這樣
+    # hour
+    #dayOfWeek 00 01 02 03 04 05 06 07 08 09 10 11 12
+    # Sunday 19734 11244 6286 3528 1830 1316 910 2168 4547 5991 10653 11380 13414
+    # Monday 15170 9317 5120 2252 578 536 860 1605 3127 6175 10248 12287 12654
+    # Tuesday 11958 7445 3438 1582 893 784 904 1566 3268 6106 7925 7577 9336
+    # Wednesday 11178 7898 3529 1338 1177 536 844 1250 2575 6104 8051 8910 8732
+    # Thursday 28735 19955 9645 5246 2498 2072 3379 6070 9987 17166 22617 22780 23911
+    # Friday 31564 16496 8220 3603 2209 1626 2028 3015 6750 12871 17537 18307 18358
+    # Saturday 19325 12335 6011 2808 1253 1416 1090 1981 4114 7257 9239 10438 11733
+     
+     
+    # 畫圖 ---------------------------------------------------------------------
+    heatmap(heatmap_data,
+    col=colorRampPalette(brewer.pal(9,"Reds"))(100), # Use ColorBrewer's nicer color palettes.
+    revC=TRUE, # Start the week at the top of the Y axis.
+    scale="none", # Map color density to entire week, not a day or hour slice.
+    Rowv=NA, Colv=NA, # Don't use a dendogram.
+    main="Pageviews by Day and Hour", # Title.
+    xlab="Hour") # X-axis label. 
+
+## Done 
+
+執行指令，
+
+    source('r_ga_heatmap.R')
+
+<img src="https://dl.dropboxusercontent.com/u/22307926/Blog%20Image/HowTo-%20get%20google%20analytics%20using%20R%28RGoogleAnalytics%29%20using%20user%27s%20pageviews%20time%20as%20an%20example/Rplot.png" alt="traffic heatmap using R (RGoogleAnalytics)">

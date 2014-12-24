@@ -8,9 +8,6 @@ keywords: "Google Analytics, 中文"
 description: "this article show you how to setup ga goal and funnel 秒懂GA目標與程序"
 ---
 
-<iframe width="560" height="315" src="//www.youtube.com/embed/fMeKXsl7xT8" frameborder="0" allowfullscreen></iframe>
-
-
 屬於四大分類下的........
 
 Audience(目標對象)
