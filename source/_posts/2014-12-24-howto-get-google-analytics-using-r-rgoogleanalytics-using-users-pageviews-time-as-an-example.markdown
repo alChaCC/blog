@@ -40,7 +40,7 @@ description: "you can learn how to get google analytics data from R using RGoogl
 
 ## Step 1. 申請API使用權限
 
-### 1. 登入到 Google Develope Console
+### 1. 登入到 [Google Developer Console](http://cloud.google.com/console)
 
 <img src="https://dl.dropboxusercontent.com/u/22307926/Blog%20Image/HowTo-%20get%20google%20analytics%20using%20R%28RGoogleAnalytics%29%20using%20user%27s%20pageviews%20time%20as%20an%20example/%E8%9E%A2%E5%B9%95%E5%BF%AB%E7%85%A7%202014-12-24%20%E4%B8%8B%E5%8D%8811.16.19.png" alt="建立專案">
 
