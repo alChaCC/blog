@@ -3,7 +3,7 @@ layout: post
 title: "[HowTo]- Create youtube link in Ruby on Rails(using slim)"
 date: 2014-03-03 23:52:08 +0800
 comments: true
-categories: Ruby_on_Rails
+categories: ["Ruby on Rails"]
 ---
 
 ## In your view where you want to show youtube link 

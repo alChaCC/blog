@@ -3,7 +3,7 @@ layout: post
 title: "Learning on Ruby on Rails Tutorial-CH6 User model"
 date: 2012-08-10 10:59
 comments: true
-categories: [ Reading , Ruby_on_Rails] 
+categories: [ "Reading" , "Ruby on Rails"] 
 ---
 
 Sorry 最近有點忙碌 一口氣補完全部好了～

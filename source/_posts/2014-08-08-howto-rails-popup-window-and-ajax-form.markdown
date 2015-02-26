@@ -3,7 +3,7 @@ layout: post
 title: "[HOWTO] 跳出視窗，內含動態選單"
 date: 2014-08-08 12:40:10 +0800
 comments: true
-categories: ["Ruby_on_Rails","ajax","modal"]
+categories: ["Ruby on Rails","ajax","modal"]
 keywords: "Ruby on Rails, ajax, form, jquery, multi-select, modal"
 description: "Ajax pop up box using Ruby on Rails"
 ---

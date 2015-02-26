@@ -3,7 +3,7 @@ layout: post
 title: "我的RoR學習專案-Part 7 新增附加檔案上傳功能"
 date: 2012-02-19 23:15
 comments: true
-categories: Ruby_on_Rails
+categories: ["Ruby on Rails"]
 ---
 
 快要完成啦～～～再來我想要做的功能是

@@ -3,7 +3,7 @@ layout: post
 title: "Learning on Ruby on Rails Tutorial - CH4 - Rails-flavored Ruby"
 date: 2012-06-26 10:28
 comments: true
-categories: [Reading,Ruby_on_Rails] 
+categories: ["Reading","Ruby on Rails"] 
 ---
 
 修改app/helpers/application_helper.rb

@@ -3,7 +3,7 @@ layout: post
 title: "我的RoR學習專案-Day 4 增加 admin功能"
 date: 2011-12-10 16:34
 comments: true
-categories: Ruby_on_Rails 
+categories: ["Ruby on Rails"] 
 ---
 
 我們要如何讓使用者只能編輯或刪除自己的文章而不是別人的文章～

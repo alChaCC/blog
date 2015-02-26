@@ -3,7 +3,7 @@ layout: post
 title: "我的RoR學習專案-終篇-Part 9 加上Google map"
 date: 2012-05-12 11:07
 comments: true
-categories: Ruby_on_Rails 
+categories: ["Ruby on Rails"] 
 ---
 
 [Google Map for Rails](https://github.com/apneadiving/Google-Maps-for-Rails)

@@ -3,7 +3,7 @@ layout: post
 title: "[HowTo] - Implement autocomplete feature in elasticsearch using soulmate.js in Ruby on Rails application"
 date: 2014-12-03 07:50:57 +0800
 comments: true
-categories: ["Elasticsearch", "Ruby_on_Rails","Search"]
+categories: ["Elasticsearch", "Ruby on Rails","Search"]
 keywords: "suggest, elasticsearch, autocomplete, ruby on rails, search, 中文"
 description: “this ariticle will show you how to build up autocomplete feature with elasticsearch using soulmate 這篇文章，你可以知道如何透過elasticsearch 達成自動化推薦的功能以及如何將此功能與 soulmate.js結合”
 ---

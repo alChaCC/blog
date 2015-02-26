@@ -3,7 +3,7 @@ layout: post
 title: "我的RoR學習專案-Day 6 -依照文章時間排序+論壇的文章要能夠分頁"
 date: 2012-01-14 22:30
 comments: true
-categories: Ruby_on_Rails
+categories: ["Ruby on Rails"]
 ---
 
 ＯＫ！！！！看看還有哪些功能尚未完成！！！

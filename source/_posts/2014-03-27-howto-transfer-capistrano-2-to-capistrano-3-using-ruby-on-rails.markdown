@@ -3,7 +3,7 @@ layout: post
 title: "[HOWTO] Transfer Capistrano 2 to Capistrano 3 using Ruby on Rails"
 date: 2014-03-27 11:13:09 +0800
 comments: true
-categories: ["capistrano", "Ruby_on_Rails"]
+categories: ["capistrano", "Ruby on Rails"]
 keywords: "capistrano, deploy, rails, sidekiq, whenever, upgrade"
 description: "Learning how to transfer Capistrano 2 to Capistrano 3"
 ---

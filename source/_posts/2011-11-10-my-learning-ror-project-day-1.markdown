@@ -3,7 +3,7 @@ layout: post
 title: "我的RoR學習專案-Day 1"
 date: 2011-11-10 01:13
 comments: true
-categories: Ruby_on_Rails
+categories: ["Ruby on Rails"]
 ---
 
 *建立可以連到各個頁面的首頁*

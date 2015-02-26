@@ -3,7 +3,7 @@ layout: post
 title: "我的RoR學習專案-準備"
 date: 2011-11-08 22:46
 comments: true
-categories: Ruby_on_Rails 
+categories: ["Ruby on Rails"] 
 ---
  
 安裝好開發環境 我有

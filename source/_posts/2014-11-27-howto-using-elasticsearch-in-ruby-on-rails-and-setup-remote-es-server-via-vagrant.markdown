@@ -3,7 +3,7 @@ layout: post
 title: "[HOWTO] Using ElasticSearch in Ruby on Rails and setup remote ES server via Vagrant"
 date: 2014-11-27 07:45:20 +0800
 comments: true
-categories: ["Elasticsearch", "Ruby_on_Rails","Search", "Ubuntu", "Vagrant"]
+categories: ["Elasticsearch", "Ruby on Rails","Search", "Ubuntu", "Vagrant"]
 keywords: "Elasticsearch, remote Elasticsearch , vagrant, deploy, ubuntu 14.04, Ruby on Rails, 中文, 遠端, 安裝"
 description: "This post will teach you how to setup elasticsearch in Mac OSX, and used in Ruby on Rails. Also, I will show you how to implement remote elasticsearch instance" 
 ---

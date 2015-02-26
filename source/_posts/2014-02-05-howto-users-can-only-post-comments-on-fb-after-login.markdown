@@ -3,7 +3,7 @@ layout: post
 title: "[HowTo] 讓使用者登入網站後，才允許Facebook留言 - ROR + Coffeescript + CSS + Devise"
 date: 2014-02-05 21:49:45 +0800
 comments: true
-categories: Ruby_on_Rails
+categories: ["Ruby on Rails"]
 ---
 
 ### 1.在Html page加上

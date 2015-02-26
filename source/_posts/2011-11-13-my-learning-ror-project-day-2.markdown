@@ -3,7 +3,7 @@ layout: post
 title: "我的RoR學習專案-Day 2"
 date: 2011-11-13 23:26
 comments: true
-categories: Ruby_on_Rails 
+categories: ["Ruby on Rails"] 
 ---
 
 幹.....問題是....我要怎麼到一個forum然後秀出裡頭的post勒？

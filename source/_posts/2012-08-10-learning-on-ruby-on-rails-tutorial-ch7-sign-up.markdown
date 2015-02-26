@@ -3,7 +3,7 @@ layout: post
 title: "Learning on Ruby on Rails Tutorial-CH7 Sign Up"
 date: 2012-08-10 11:02
 comments: true
-categories: [Reading , Ruby_on_Rails] 
+categories: [Reading , Ruby on Rails] 
 ---
 在開始之前，先來
 

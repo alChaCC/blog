@@ -3,7 +3,7 @@ layout: post
 title: "[HOWTO] Using Sunspot to access remote Solr instance(Ubuntu 14.04) in Ruby on Rails using Vagrant"
 date: 2014-09-19 20:16:23 +0800
 comments: true
-categories: ["Ruby_on_Rails","Search", "Ubuntu", "Solr", "Vagrant"]
+categories: ["Ruby on Rails","Search", "Ubuntu", "Solr", "Vagrant"]
 keywords: "solr, sunspot, remote sunspot, remote, vagrant, deploy, ubuntu 14.04, Ruby on Rails, sunspot, 中文, 遠端, 安裝"
 description: "Using Sunspot to access remote Solr instance(Ubuntu 14.04) in Ruby on Rails using Vagrant"  
 ---

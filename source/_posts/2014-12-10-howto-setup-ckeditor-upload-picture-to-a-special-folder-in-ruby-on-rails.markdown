@@ -3,7 +3,7 @@ layout: post
 title: "[HOWTO]- 在Ruby on Rails 實作Ckeditor上傳圖片到各個獨立的資料夾"
 date: 2014-12-10 08:04:05 +0800
 comments: true
-categories: ["Ruby_on_Rails"]
+categories: ["Ruby on Rails"]
 keywords: "ckeditor, 上傳, upload, ruby on rails, picture, 圖片, 中文"
 description: “This article show you how to implement ckeditor upload picture to specific folder depended on Model. 這篇文章你可以學到實作Ckeditor上傳圖片到各個獨立的資料夾，這個資料夾會隨model和instance而變更！”
 ---

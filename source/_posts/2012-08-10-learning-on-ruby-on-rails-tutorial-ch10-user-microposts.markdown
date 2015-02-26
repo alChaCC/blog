@@ -3,7 +3,7 @@ layout: post
 title: "Learning on Ruby on Rails Tutorial-CH10 User microposts"
 date: 2012-08-10 11:09
 comments: true
-categories: [Reading , Ruby_on_Rails] 
+categories: ["Reading" , "Ruby on Rails"] 
 ---
 這一章節，我們會完成User的微網誌！使用**has_many**和**belongs_to**的資料庫關聯性，來看每個user的po文
 

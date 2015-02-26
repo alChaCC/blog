@@ -3,7 +3,7 @@ layout: post
 title: "我的RoR學習專案-Day 5 使用wep-app-theme功能"
 date: 2011-12-11 21:11
 comments: true
-categories: Ruby_on_Rails
+categories: ["Ruby on Rails"]
 ---
 
 突然覺得我的網站，好醜....	

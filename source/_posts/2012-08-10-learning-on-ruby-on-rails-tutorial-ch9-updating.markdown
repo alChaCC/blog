@@ -3,7 +3,7 @@ layout: post
 title: "Learning on Ruby on Rails Tutorial-CH9 Updating , Showing , and deleting users"
 date: 2012-08-10 11:07
 comments: true
-categories: [ Reading , Ruby_on_Rails ]
+categories: [ "Reading" , "Ruby on Rails" ]
 ---
  這章會完成Users的REST動作，**edit**、**update**、**index**、**destroy**
  

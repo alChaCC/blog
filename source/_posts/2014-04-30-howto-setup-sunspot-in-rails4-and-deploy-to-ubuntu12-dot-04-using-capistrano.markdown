@@ -3,7 +3,7 @@ layout: post
 title: "[HowTo] Setup Sunspot in Rails 4 and Deploy to Ubuntu12.04 using Capistrano 3"
 date: 2014-04-30 10:26:44 +0800
 comments: true
-categories: ["Ruby_on_Rails","Capistrano","Ubuntu"]
+categories: ["Ruby on Rails","Capistrano","Ubuntu"]
 keywords: "Ubuntu, Ruby on Rails, sunspot, capistrano, setup, deploy"
 description: "Setup sunspot in rails 4 and deploy to Ubuntu using Capistrano"
 ---

@@ -3,8 +3,8 @@ layout: post
 title: "[HOWTO]- Build a Step-By-Step Website Introduction using crumble.js instead of intro.js"
 date: 2014-03-06 22:16:01 +0800
 comments: true
-categories: [Ruby_on_Rails, crumble.js, grumble.js]
-keywords: "Ruby_on_Rails, crumble.js, grumble.js, how to, Deploy, EC2,
+categories: [Ruby on Rails, crumble.js, grumble.js]
+keywords: "Ruby on Rails, crumble.js, grumble.js, how to, Deploy, EC2,
 step-by-step"
 description: "how to build a Step-By-Step Website Introduction using crumble.js instead of intro.js then deploy to EC2"
 ---

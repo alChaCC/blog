@@ -3,7 +3,7 @@ layout: post
 title: "Google Analytics - Cross Device tracking in Ruby on Rails"
 date: 2014-12-12 08:13:38 +0800
 comments: true
-categories:  ["Ruby_on_Rails","Google Analytics"]
+categories:  ["Ruby on Rails","Google Analytics"]
 keywords: "Ruby on Rails, Google Analytics, 中文"
 description: "this article show you how to implement user id for google analytic cross device"
 ---

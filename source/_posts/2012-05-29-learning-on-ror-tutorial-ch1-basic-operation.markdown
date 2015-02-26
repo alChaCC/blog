@@ -3,7 +3,7 @@ layout: post
 title: "Learning on RoR Tutorial - CH1 - Basic operation"
 date: 2012-05-29 10:41
 comments: true
-categories: Ruby_on_Rails  
+categories: ["Ruby on Rails"]  
 ---
 
 這個也是我學習ror的source之一！

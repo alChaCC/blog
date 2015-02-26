@@ -3,7 +3,7 @@ layout: post
 title: "Learning on RoR Tutorial - CH3 - Static Page and Add Testing"
 date: 2012-06-03 12:48
 comments: true
-categories: [Ruby_on_Rails , Reading]
+categories: ["Ruby on Rails" , "Reading"]
 ---
 
 原文請參考[Ruby on Rails Tutorial Learn Rails by Example - Michael Hartl](http://ruby.railstutorial.org/chapters/static-pages?version=3.2#top)

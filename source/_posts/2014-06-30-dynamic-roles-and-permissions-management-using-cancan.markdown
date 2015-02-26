@@ -3,7 +3,7 @@ layout: post
 title: "如何動態管理權限-使用cancan"
 date: 2014-06-30 15:27:55 +0800
 comments: true
-categories: ["Ruby_on_Rails","cancan"] 
+categories: ["Ruby on Rails","cancan"] 
 keywords: "Ruby on Rails, cancan, dynamic, permission, roles, 權限, 動態"
 description: "Dynamic roles and permissions using cancan"
 ---

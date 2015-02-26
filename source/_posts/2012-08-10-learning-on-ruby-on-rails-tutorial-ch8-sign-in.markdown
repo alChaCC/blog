@@ -3,7 +3,7 @@ layout: post
 title: "Learning on Ruby on Rails Tutorial-CH8 Sign in"
 date: 2012-08-10 11:05
 comments: true
-categories: [Reading , Ruby_on_Rails] 
+categories: ["Reading" , "Ruby on Rails"] 
 ---
 上一章已經可以成功註冊使用者，接下來就是要到登入登出的部分！
 

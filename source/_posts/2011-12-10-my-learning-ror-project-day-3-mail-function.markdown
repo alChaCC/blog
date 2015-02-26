@@ -3,7 +3,7 @@ layout: post
 title: "我的RoR學習專案-Day 3-註冊並加上mail註冊信的功能"
 date: 2011-12-10 15:46
 comments: true
-categories: Ruby_on_Rails
+categories: ["Ruby on Rails"]
 ---
 
 ##註冊並加上mail註冊信的功能

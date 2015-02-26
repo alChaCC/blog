@@ -4,7 +4,7 @@
   <title><![CDATA[AlohaCC]]></title>
   <link href="http://ccaloha.cc/atom.xml" rel="self"/>
   <link href="http://ccaloha.cc/"/>
-  <updated>2014-12-26T08:25:47+08:00</updated>
+  <updated>2015-02-26T16:43:01+08:00</updated>
   <id>http://ccaloha.cc/</id>
   <author>
     <name><![CDATA[Aloha]]></name>
@@ -12,6 +12,135 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[[Ruby on Rails] Model Version control using papertrail]]></title>
+    <link href="http://ccaloha.cc/blog/2015/02/26/model-version-control-using-papertrail/"/>
+    <updated>2015-02-26T16:30:53+08:00</updated>
+    <id>http://ccaloha.cc/blog/2015/02/26/model-version-control-using-papertrail</id>
+    <content type="html"><![CDATA[<h2>Why use papertrail ?</h2>
+
+<p><img src="https://dl.dropboxusercontent.com/u/22307926/Blog%20Image/Rails%E5%8A%A0%E5%85%A5Model%E7%89%88%E6%9C%AC%E6%8E%A7%E5%88%B6/%E8%9E%A2%E5%B9%95%E5%BF%AB%E7%85%A7%202015-01-06%20%E4%B8%8A%E5%8D%8811.57.23.png" alt="ruby toolbox - active record versioning"></p>
+
+<h2>Step1. Add lib</h2>
+
+<p><strong>Gemfile</strong></p>
+
+<pre><code>gem 'paper_trail', '~&gt; 3.0.6'
+</code></pre>
+
+<h2>Step2. create a migration</h2>
+
+<p><strong>On Terminal</strong></p>
+
+<pre><code>bundle exec rails generate paper_trail:install
+</code></pre>
+
+<p>他會建立，一個叫做<strong>versions</strong>的表</p>
+
+<h2>Step3. migrate</h2>
+
+<pre><code>bundle exec rake db:migrate
+</code></pre>
+
+<h2>Step4. Done</h2>
+
+<p>把 <strong>has_paper_trail</strong> 加上你想要追蹤的model</p>
+
+<h2>應用部分</h2>
+
+<h3>若是想要不同model使用不同追蹤table?</h3>
+
+<p>假設我想要<strong>product</strong>有自己的versions表</p>
+
+<ul>
+<li><p>Step1.</p>
+
+<pre><code>  rails g model product_version 
+</code></pre></li>
+<li><p>貼上</p>
+
+<pre><code>  class CreateProductVersions &lt; ActiveRecord::Migration
+    def change
+      create_table :product_versions do |t|
+        t.string   :item_type, :null =&gt; false
+        t.integer  :item_id,   :null =&gt; false
+        t.string   :event,     :null =&gt; false
+        t.string   :whodunnit
+        t.text     :object
+        t.datetime :created_at
+        # t.string   :author_username 如果你需要自訂一些欄位讓他記錄，也可以在migration這邊加
+      end
+      add_index :product_versions, [:item_type, :item_id]
+      end
+    end
+  end
+</code></pre></li>
+</ul>
+
+
+<p>ps. 這就是他本身內建會產生的欄位，只是我們手動把它copy一份出來</p>
+
+<ul>
+<li><p>別忘了</p>
+
+<pre><code>  bundle exec rake db:migrate
+</code></pre></li>
+<li><p>改model <strong>ProductVersion</strong></p>
+
+<pre><code>  class ProductVersion &lt; PaperTrail::Version
+    self.table_name = :product_versions
+  end
+</code></pre></li>
+<li><p>改model <strong>Product</strong></p>
+
+<pre><code>  class Product &lt; ActiveRecord::Base
+      ...
+      has_paper_trail class_name: 'ProductVersion'
+      ...
+  end
+</code></pre></li>
+</ul>
+
+
+<h3>若是想要知道誰動了資料?</h3>
+
+<p> 假設你有使用<strong>devise</strong>，然後是寫在後台</p>
+
+<p>請加在 <strong>controller/admin/admin_controller.rb</strong></p>
+
+<pre><code>def user_for_paper_trail
+    admin_signed_in? ? current_admin.email : 'System'
+end
+</code></pre>
+
+<p>假使你在前台，你可能需要這樣寫</p>
+
+<pre><code>def user_for_paper_trail
+    user_signed_in? ? current_user.email : 'Public User'
+end
+</code></pre>
+
+<h3>若某個動作不想被追蹤</h3>
+
+<pre><code>@product.without_versioning do
+  @product.update_attributes :created_at =&gt; Time.now
+end
+</code></pre>
+
+<h3>若要刪除某個versions從哪天到某天</h3>
+
+<p>方法一：<strong>下SQL</strong></p>
+
+<pre><code>delete from versions where created_at &lt; 2014-01-01;
+</code></pre>
+
+<p>方法二：<strong>在rails c底下</strong></p>
+
+<pre><code>PaperTrail::Version.delete_all ["created_at &lt; ?", 1.year.ago]
+</code></pre>
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[[HowTo] Get Google Analytics Engagement Using R]]></title>
@@ -4556,179 +4685,6 @@ simple_search: http://google.com/search
 description: "Description for the website"   #加在這邊
 keywords: "keywords, for, the, website"      #加在這邊
 </code></pre>
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[[HOWTO]- Build a Step-By-Step Website Introduction using crumble.js instead of intro.js]]></title>
-    <link href="http://ccaloha.cc/blog/2014/03/06/howto-build-step-by-step-introduction-javascript-using-crumble-instead-of-intro-dot-js/"/>
-    <updated>2014-03-06T22:16:01+08:00</updated>
-    <id>http://ccaloha.cc/blog/2014/03/06/howto-build-step-by-step-introduction-javascript-using-crumble-instead-of-intro-dot-js</id>
-    <content type="html"><![CDATA[<h2>Intro</h2>
-
-<p>Crumble.js is a interactive step-by-step tour based on grumble.js</p>
-
-<p>you might want to check the demo site.</p>
-
-<p>Please check this out => <a href="http://blog.tommoor.com/crumble">http://blog.tommoor.com/crumble</a></p>
-
-<p>You can learn from this tutorial how to use crumble.js in your Ruby on
-Rails project.</p>
-
-<p>In advance, I will show you how to deploy to AWS EC2 without pain~~~</p>
-
-<!--more-->
-
-
-<h2>Step1. Download resource file from Github</h2>
-
-<p>You can download file from</p>
-
-<pre><code>git clone https://github.com/tommoor/crumble.git 
-
-git clone https://github.com/jamescryer/grumble.js.git
-</code></pre>
-
-<p>Or&#8230;..</p>
-
-<p>Download it via Github GUI.</p>
-
-<h2>Step2. Put all required files in vender</h2>
-
-<p>Below is how I vendor folder looks like</p>
-
-<pre><code>vender
-|
-|-- images
-|   |
-|   |-- crumble
-|       |
-|       |-- bubble-sprite.png
-|
-|-- javascripts
-|   |
-|   |-- crumble
-|       |
-|       |-- Bubble.js
-|       |-- jquery.crumble.min.js
-|       |-- jquery.grumble.js
-|
-|-- stylesheets
-    |
-    |-- crumble
-        |
-        |-- crumble.css
-        |-- grumble.min.css
-</code></pre>
-
-<h2>Step3. Add require to you application</h2>
-
-<p>app/assets/javascripts/application.coffee</p>
-
-<pre><code>#= require crumble/Bubble
-#= require crumble/jquery.grumble
-#= require crumble/jquery.crumble.min
-</code></pre>
-
-<p>ps. grumble must be above the crumble</p>
-
-<p>app/assets/stylesheets/application.css.scss</p>
-
-<pre><code>*= require crumble/grumble.min
-*= require crumble/crumble
-</code></pre>
-
-<h2>Step4. Add Step-By-Step tour using html code</h2>
-
-<p>app/views/shared/_guide.html.slim</p>
-
-<pre><code>ol id = "tour"
-  li  data-target= '.root-1' data-angle= '0' data-options= 'distance: 0'
-    | Step1
-  li data-target= '.root-2' data-angle= '30' data-options= 'distance: 50'
-    | Step2
-  li data-target= '.root-3' data-angle= '0' data-options= 'distance: 0'
-    | Step3
-</code></pre>
-
-<p>ps. .root-1, .root-2, .root-3  are html tag class which you can change
-to your own</p>
-
-<p>app/views/pages/home.html.slim</p>
-
-<pre><code>/! Add where you want
-= render 'shared/guide'
-</code></pre>
-
-<h2>Step5. Add another custom setting in javascript and css file</h2>
-
-<p>app/assets/javascripts/application.coffee</p>
-
-<pre><code>$('#tour').crumble()
-</code></pre>
-
-<p>or you can customize your setting such as</p>
-
-<pre><code>$('#tour').crumble grumble: {showAfter: 1000, hideAfter: 2000}
-</code></pre>
-
-<p>app/assets/stylesheets/application.css.scss</p>
-
-<pre><code>#tour {
-  display: none;
-}
-</code></pre>
-
-<p>After you finish step5, You are able to see the awesome introduction
-tour.</p>
-
-<p>Now, you might want to deploy to your VPS. In my case, I will deploy to
-AWS EC2.</p>
-
-<h2>Step6. Deploy to AWS EC2</h2>
-
-<p>Here I want to mention the problem I met, please check
-<a href="http://stackoverflow.com/questions/22222516/rake-aborted-no-such-file-or-directory-after-write-admin-css">http://stackoverflow.com/questions/22222516/rake-aborted-no-such-file-or-directory-after-write-admin-css</a></p>
-
-<p>The solution is that you have to make sure that your project have <strong>gem
-&#8220;non-stupid-digest-assets, &#8216;1.0.3&#8217;&#8221;</strong> in your gemfile</p>
-
-<p>and</p>
-
-<pre><code>bundle install
-</code></pre>
-
-<p>Secondly, the problem is I can&#8217;t see the bubble image in my staging
-machine.</p>
-
-<p>Since my assets will be uploaded to S3, my solution is</p>
-
-<p>change <strong>grumble.min.css</strong> to <strong>grumble.min.css.scss</strong></p>
-
-<p>and update the image part in the code</p>
-
-<pre><code>.grumble{
-....
-background-image: image-url('crumble/bubble-sprite.png') 
-....
-}
-</code></pre>
-
-<p>In my opinion, since our images are uploaded to AWS S3 after
-assets:precompile.</p>
-
-<p>And procompile action will generate url automatically refer to S3 link.</p>
-
-<p>However, using &#8220;background-image: url(&#8216;XXXX&#8217;)&#8221; in your css, the compiler
-will not convert the link to S3, therefore, server will looking for the
-image in local http folder.</p>
-
-<p>So, I use <strong>image-url</strong> method in scss to fix this problem.</p>
-
-<h2>Congratulation !</h2>
-
-<p>In a nutshell, in order to lower the effort, I try to build my first
-gem. If finish, I will update in my blog.</p>
 ]]></content>
   </entry>
   

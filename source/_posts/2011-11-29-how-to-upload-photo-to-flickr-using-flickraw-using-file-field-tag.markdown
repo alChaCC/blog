@@ -3,7 +3,7 @@ layout: post
 title: "How to Upload Photo to Flickr using Flickraw - Using file_field_tag"
 date: 2011-11-29 23:22
 comments: true
-categories: Ruby_on_Rails
+categories: ["Ruby on Rails"]
 ---
 
 ##真是太感動啦！！！

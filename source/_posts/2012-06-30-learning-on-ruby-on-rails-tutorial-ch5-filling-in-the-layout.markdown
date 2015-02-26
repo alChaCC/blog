@@ -3,7 +3,7 @@ layout: post
 title: "Learning on Ruby on Rails Tutorial- CH5 - Filling in the layout"
 date: 2012-06-30 20:15
 comments: true
-categories: [Reading, Ruby_on_Rails]
+categories: [ "Reading", "Ruby on Rails"]
 ---
 來開發layout部分
 

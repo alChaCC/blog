@@ -3,7 +3,7 @@ layout: post
 title: "我的RoR學習專案-Part8 產生假資料"
 date: 2012-05-12 11:04
 comments: true
-categories: Ruby_on_Rails 
+categories: ["Ruby on Rails"] 
 ---
 
 Sorry脫稿有點久～最近有點忙，沒時間整理出之前的學習筆記～不過讓我一口氣補個兩篇吧！
