@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: Enhanced Ecommerce | AlohaCC]]></title>
+  <link href="http://ccaloha.cc/blog/categories/enhanced-ecommerce/atom.xml" rel="self"/>
+  <link href="http://ccaloha.cc/"/>
+  <updated>2015-04-13T12:25:11+08:00</updated>
+  <id>http://ccaloha.cc/</id>
+  <author>
+    <name><![CDATA[Aloha]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[[howto] Using Google Analytics Enhanced Ecommerce Tracking your awesome website via Ruby on Rails 如何在Ruby on Rails使用Google Analytics 進階電子商務追蹤]]></title>
+    <link href="http://ccaloha.cc/blog/2015/04/13/howto-use-google-analytics-enhanced-ecommerce-tracking-via-ruby-on-rails/"/>
+    <updated>2015-04-13T12:15:58+08:00</updated>
+    <id>http://ccaloha.cc/blog/2015/04/13/howto-use-google-analytics-enhanced-ecommerce-tracking-via-ruby-on-rails</id>
+    <content type="html"><![CDATA[<blockquote><p>i-TRUE 的目標是成為全世界最棒的專業型Database Media Company</p>
+
+<p>我每週一早上負責跟同事們介紹Google Analytics，這是其中一個介紹投影片！</p>
+
+<p>陸續更新中...</p></blockquote>
+
+<iframe id="iframe_container" frameborder="0" webkitallowfullscreen="" mozallowfullscreen="" allowfullscreen="" width="960" height="860" src="https://prezi.com/embed/w0azjc2vz3tf/?bgcolor=ffffff&amp;lock_to_path=0&amp;autoplay=0&amp;autohide_ctrls=0#"></iframe>
+
+
+<p>-</p>
+]]></content>
+  </entry>
+  
+</feed>

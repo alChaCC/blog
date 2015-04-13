@@ -6,7 +6,7 @@ comments: true
 categories:  ["Google Analytics", "Enhanced Ecommerce", "Ruby on Rails"]
 keywords:  "Google Analytics, prezi, Enhanced Ecommerce, how to, step by step, Ruby on Rails"
 description: "this article show you how to add enhanced Ecommerce tracking code use Ruby on Rails as an example"
---
+---
 
 > i-TRUE 的目標是成為全世界最棒的專業型Database Media Company
 > 
