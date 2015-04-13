@@ -4,7 +4,7 @@
   <title><![CDATA[AlohaCC]]></title>
   <link href="http://ccaloha.cc/atom.xml" rel="self"/>
   <link href="http://ccaloha.cc/"/>
-  <updated>2015-04-09T22:33:29+08:00</updated>
+  <updated>2015-04-13T12:19:10+08:00</updated>
   <id>http://ccaloha.cc/</id>
   <author>
     <name><![CDATA[Aloha]]></name>
@@ -12,6 +12,35 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[Howto Use Google Analytics Enhanced Ecommerce Tracking Via Ruby On Rails]]></title>
+    <link href="http://ccaloha.cc/blog/2015/04/13/howto-use-google-analytics-enhanced-ecommerce-tracking-via-ruby-on-rails/"/>
+    <updated>2015-04-13T00:00:00+08:00</updated>
+    <id>http://ccaloha.cc/blog/2015/04/13/howto-use-google-analytics-enhanced-ecommerce-tracking-via-ruby-on-rails</id>
+    <content type="html"><![CDATA[<hr />
+
+<p>layout: post
+title: &#8220;[howto] Using Google Analytics Enhanced Ecommerce Tracking your awesome website via Ruby on Rails 如何在Ruby on Rails使用Google Analytics 進階電子商務追蹤&#8221;
+date: 2015-04-13 12:15:58 +0800
+comments: true
+categories:  [&#8220;Google Analytics&#8221;, &#8220;Enhanced Ecommerce&#8221;, &#8220;Ruby on Rails&#8221;]
+keywords:  &#8220;Google Analytics, prezi, Enhanced Ecommerce, how to, step by step, Ruby on Rails&#8221;</p>
+
+<h2>description: &#8220;this article show you how to add enhanced Ecommerce tracking code use Ruby on Rails as an example&#8221;</h2>
+
+<blockquote><p>i-TRUE 的目標是成為全世界最棒的專業型Database Media Company</p>
+
+<p>我每週一早上負責跟同事們介紹Google Analytics，這是其中一個介紹投影片！</p>
+
+<p>陸續更新中&#8230;</p></blockquote>
+
+<iframe id="iframe_container" frameborder="0" webkitallowfullscreen="" mozallowfullscreen="" allowfullscreen="" width="960" height="860" src="https://prezi.com/embed/w0azjc2vz3tf/?bgcolor=ffffff&amp;lock_to_path=0&amp;autoplay=0&amp;autohide_ctrls=0#"></iframe>
+
+
+<p>-</p>
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[Integrate Ruby on Rails with Google Analytics API]]></title>
@@ -5161,59 +5190,6 @@ Backtrace:
 5. Change the path to /solr/default inside config/sunspot.yml
 6. RAILS_ENV=production bundle exec rake sunspot:solr:reindex
 </code></pre>
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[Setup both SSH and SFTP are able to login at same time in Ubuntu]]></title>
-    <link href="http://ccaloha.cc/blog/2014/04/11/setup-both-ssh-and-sftp-are-able-to-login-at-same-time-in-ubuntu/"/>
-    <updated>2014-04-11T12:24:15+08:00</updated>
-    <id>http://ccaloha.cc/blog/2014/04/11/setup-both-ssh-and-sftp-are-able-to-login-at-same-time-in-ubuntu</id>
-    <content type="html"><![CDATA[<p>這篇文章主要是參考自
-<a href="http://blog.srmklive.com/2013/04/24/how-to-setup-sftp-server-ftp-over-ssh-in-ubuntu/">http://blog.srmklive.com/2013/04/24/how-to-setup-sftp-server-ftp-over-ssh-in-ubuntu/</a>
-但是，我沒辦法同時使用ssh和sftp</p>
-
-<!--more-->
-
-
-<h1>Edit ssh config</h1>
-
-<pre><code>sudo vim /etc/ssh/sshd_config
-</code></pre>
-
-<h1>將底下那行貼上</h1>
-
-<pre><code>PasswordAuthentication no
-Subsystem sftp internal-sftp -f AUTH -1 VERBOSE
-AllowGroups newuser 
-AllowTCPForwarding no
-X11Forwarding no
-</code></pre>
-
-<h1>Configure IPtable(讓ssh可以通過)</h1>
-
-<pre><code>sudo iptables -A INPUT -p tcp --dport 22 -j ACCEPT
-</code></pre>
-
-<h2>新增User</h2>
-
-<pre><code>sudo adduser newuser
-</code></pre>
-
-<h2>將你要用來ssh或SFTP的電腦public key輸入到&#8230;</h2>
-
-<p>In local machine(我是用Mac)</p>
-
-<pre><code>scp ~/.ssh/id_rsa.pub newuser@ip:~/
-</code></pre>
-
-<p>In server</p>
-
-<pre><code>mkdir .ssh
-cat ~/id_rsa.pub &gt;&gt; ~/.ssh/authorized_keys
-</code></pre>
-
-<p>這樣就可以了！</p>
 ]]></content>
   </entry>
   
