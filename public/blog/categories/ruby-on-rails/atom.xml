@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Ruby on Rails | AlohaCC]]></title>
   <link href="http://ccaloha.cc/blog/categories/ruby-on-rails/atom.xml" rel="self"/>
   <link href="http://ccaloha.cc/"/>
-  <updated>2015-04-13T12:28:24+08:00</updated>
+  <updated>2015-04-15T14:41:34+08:00</updated>
   <id>http://ccaloha.cc/</id>
   <author>
     <name><![CDATA[Aloha]]></name>
@@ -364,7 +364,7 @@ end
     @parameters['metrics'] = "ga:pageviews,ga:sessions"
     @parameters['dimensions'] = "ga:campaign,ga:source,ga:medium,ga:adContent"
     @parameters['filters'] = "ga:campaign!=(not set)"
-    sync_to_db(@parameters)
+    query_paginate(@parameters)
   end
 
   def sync_to_db(result)

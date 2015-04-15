@@ -338,7 +338,7 @@ let's see full code.
 	    @parameters['metrics'] = "ga:pageviews,ga:sessions"
 	    @parameters['dimensions'] = "ga:campaign,ga:source,ga:medium,ga:adContent"
 	    @parameters['filters'] = "ga:campaign!=(not set)"
-	    sync_to_db(@parameters)
+	    query_paginate(@parameters)
 	  end
 	
 	  def sync_to_db(result)
