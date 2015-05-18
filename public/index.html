@@ -105,6 +105,76 @@ $(document).ready(
     <article class="post">
 	<h2 class="title">
 		
+		<a href="/blog/2015/05/18/monitoring-your-ubuntu-machine-for-dummies/">
+		
+			機器監控不求人 - 猴子都會用的 Monit(Monitoring Your Ubuntu Machine for Dummies)</a>
+	</h2>
+	<div class="entry-content">
+		<p>你是個前端工程師，但是，老闆賦予你<strong>MIS</strong>的神聖任務</p>
+
+<p>還是，你是個後端工程師，無時無刻，要去看一下<strong>mysql</strong>是否還活著，<strong>apache2</strong>是否快掛了</p>
+
+<p>還有，你是個<strong>全端工程師</strong>，雖然你已經強的跟神一樣，但是你就是不想要寫的script自動去重啟的service</p>
+
+<p>這時候，你需要的是<strong><a href="https://mmonit.com/monit/">Monit</a></strong></p>
+
+<p>他可以幫你監控你的daemon processes、檔案系統、Network、Space</p>
+
+<p>如果想要看完整的設定文件請點 <strong><a href="https://mmonit.com/monit/documentation/monit.html">Monit Documentation</a></strong></p>
+
+<p>整理一下，我的使用的感覺</p>
+
+<ol>
+<li>使用DSL，所以用起來很直覺</li>
+<li>使用 # 當作註解</li>
+<li><a href="https://mmonit.com/monit/documentation/monit.html#ACTION">不同的監控，可以有不同的動作(ex: alert, restart, stop, UNMONITOR)</a></li>
+<li><a href="https://mmonit.com/monit/documentation/monit.html#SERVICE-POLL-TIME">彈性設定時間來監控</a></li>
+<li><a href="https://mmonit.com/monit/documentation/monit.html#SERVICE-RESTART-LIMIT">彈性設定幾次重啟後，就不要再重啟了</a></li>
+<li><a href="https://mmonit.com/monit/documentation/monit.html#GENERAL-SYNTAX">可以用if, else &#8230;等來做動作判斷！</a></li>
+<li>簡單來說，超多客製化應用！網路上也滿多資源可以參考！</li>
+</ol>
+
+
+<p>但是，如果你跟我一樣是個懶人，這時候，你就需要看這篇文章</p>
+
+
+		
+		<a href="/blog/2015/05/18/monitoring-your-ubuntu-machine-for-dummies/" class="more-link">Read on &rarr;</a>
+	</div>
+
+
+<div class="meta">
+	<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2015-05-18T18:21:20+08:00" pubdate data-updated="true">May 18<span>th</span>, 2015</time></div>
+	
+
+<div class="tags">
+
+	<a class='category' href='/blog/categories/mis/'>MIS</a>
+
+</div>
+
+
+	
+		<span class="comments"><a href="/blog/2015/05/18/monitoring-your-ubuntu-machine-for-dummies//index.html#disqus_thread">Comments</a></span>
+	
+</div></article>
+
+
+    <article class="post">
+	<h2 class="title">
+		
 		<a href="/blog/2015/04/28/send-limited-mail-on-staging-environment/">
 		
 			[Ruby on Rails] Send Limited Mail on Staging Environment</a>
@@ -493,65 +563,6 @@ end
 
 	
 		<span class="comments"><a href="/blog/2015/02/26/model-version-control-using-papertrail//index.html#disqus_thread">Comments</a></span>
-	
-</div></article>
-
-
-    <article class="post">
-	<h2 class="title">
-		
-		<a href="/blog/2014/12/26/howto-get-google-analytics-engagement-using-r/">
-		
-			[HowTo] Get Google Analytics Engagement Using R</a>
-	</h2>
-	<div class="entry-content">
-		<p><img src="https://dl.dropboxusercontent.com/u/22307926/Blog%20Image/get%20google%20analytics%20engagement%20using%20R/2014%E5%B9%B4engagement-pageviews%E5%9C%96.png" alt="every months google analytic engagement(pageviews X session Duration) in 2014 using R"></p>
-
-<p><strong>使用者在網站上的參與程度</strong>，是我一直滿好奇的指標！</p>
-
-<p>在GA裡，網站參與度，如下圖</p>
-
-<p><img src="https://dl.dropboxusercontent.com/u/22307926/Blog%20Image/get%20google%20analytics%20engagement%20using%20R/%E8%9E%A2%E5%B9%95%E5%BF%AB%E7%85%A7%202014-12-22%20%E4%B8%8A%E5%8D%883.13.48.png" alt=“google analytics engagement”></p>
-
-<p>這系列的文章，我的target是 我想知道今年(2014)整體使用者參與度的變化與趨勢</p>
-
-<p>此篇文章是focus 在如何透過R抓取資料並分析成和 GA view一樣的資料！</p>
-
-<p>之後，再看看可以看到什麼樣比較有意義的資料～</p>
-
-<p>let&#8217;s go !</p>
-
-
-		
-		<a href="/blog/2014/12/26/howto-get-google-analytics-engagement-using-r/" class="more-link">Read on &rarr;</a>
-	</div>
-
-
-<div class="meta">
-	<div class="date">
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2014-12-26T08:17:04+08:00" pubdate data-updated="true">Dec 26<span>th</span>, 2014</time></div>
-	
-
-<div class="tags">
-
-	<a class='category' href='/blog/categories/google-analytics/'>Google Analytics</a>, <a class='category' href='/blog/categories/r/'>R</a>
-
-</div>
-
-
-	
-		<span class="comments"><a href="/blog/2014/12/26/howto-get-google-analytics-engagement-using-r//index.html#disqus_thread">Comments</a></span>
 	
 </div></article>
 
