@@ -4,7 +4,7 @@
   <title><![CDATA[AlohaCC]]></title>
   <link href="http://ccaloha.cc/atom.xml" rel="self"/>
   <link href="http://ccaloha.cc/"/>
-  <updated>2015-05-18T18:35:12+08:00</updated>
+  <updated>2015-05-18T18:49:08+08:00</updated>
   <id>http://ccaloha.cc/</id>
   <author>
     <name><![CDATA[Aloha]]></name>
@@ -39,6 +39,7 @@
 <li><a href="https://mmonit.com/monit/documentation/monit.html#SERVICE-POLL-TIME">彈性設定時間來監控</a></li>
 <li><a href="https://mmonit.com/monit/documentation/monit.html#SERVICE-RESTART-LIMIT">彈性設定幾次重啟後，就不要再重啟了</a></li>
 <li><a href="https://mmonit.com/monit/documentation/monit.html#GENERAL-SYNTAX">可以用if, else &#8230;等來做動作判斷！</a></li>
+<li>提供網頁GUI，讓你很好的操作或是看伺服器狀態！</li>
 <li>簡單來說，超多客製化應用！網路上也滿多資源可以參考！</li>
 </ol>
 
@@ -150,6 +151,20 @@ check filesystem root-filesystem with path /dev/xvda1
 
     sudo monit reload
 </code></pre>
+
+<h2>Web Gui</h2>
+
+<p>設定完成後，你就可以看到</p>
+
+<p><img src="https://dl.dropboxusercontent.com/u/22307926/Blog%20Image/Monitoring%20your%20ubuntu%20machine%20for%20dummies%20-%20Web%20gui.png" alt="Monitoring your ubuntu machine for dummies - Web gui"></p>
+
+<p>點擊一個監控的process，你可以發現，你可以直接透過網頁重啟歐！</p>
+
+<p><img src="https://dl.dropboxusercontent.com/u/22307926/Blog%20Image/Monitoring%20your%20ubuntu%20machine%20for%20dummies%20-%20Web%20gui%20-%20process%20status.png" alt="Monitoring your ubuntu machine for dummies - Web gui - process status"></p>
+
+<p>另外，你也可以收到email歐</p>
+
+<p><img src="https://dl.dropboxusercontent.com/u/22307926/Blog%20Image/Monitoring%20your%20ubuntu%20machine%20for%20dummies%20-%20Web%20gui%20-%20Email%20notification.png" alt="Monitoring your ubuntu machine for dummies - Web gui - Email notification"></p>
 ]]></content>
   </entry>
   

@@ -29,7 +29,8 @@ description: "this article show you how to monitor your Ubuntu machine using Mon
 4. [彈性設定時間來監控](https://mmonit.com/monit/documentation/monit.html#SERVICE-POLL-TIME)
 5. [彈性設定幾次重啟後，就不要再重啟了](https://mmonit.com/monit/documentation/monit.html#SERVICE-RESTART-LIMIT)
 6. [可以用if, else ...等來做動作判斷！](https://mmonit.com/monit/documentation/monit.html#GENERAL-SYNTAX)
-7. 簡單來說，超多客製化應用！網路上也滿多資源可以參考！
+7. 提供網頁GUI，讓你很好的操作或是看伺服器狀態！
+8. 簡單來說，超多客製化應用！網路上也滿多資源可以參考！
 
 
 但是，如果你跟我一樣是個懶人，這時候，你就需要看這篇文章 
@@ -137,4 +138,17 @@ ps. 我一開始看文件，傻傻的以為設定在 *~/.monitrc*，一切都會
 		sudo monit reload
 		
 
- 	
+## Web Gui
+
+設定完成後，你就可以看到
+
+<img src="https://dl.dropboxusercontent.com/u/22307926/Blog%20Image/Monitoring%20your%20ubuntu%20machine%20for%20dummies%20-%20Web%20gui.png" alt="Monitoring your ubuntu machine for dummies - Web gui">
+
+
+點擊一個監控的process，你可以發現，你可以直接透過網頁重啟歐！
+
+<img src="https://dl.dropboxusercontent.com/u/22307926/Blog%20Image/Monitoring%20your%20ubuntu%20machine%20for%20dummies%20-%20Web%20gui%20-%20process%20status.png" alt="Monitoring your ubuntu machine for dummies - Web gui - process status"> 
+
+另外，你也可以收到email歐
+
+<img src="https://dl.dropboxusercontent.com/u/22307926/Blog%20Image/Monitoring%20your%20ubuntu%20machine%20for%20dummies%20-%20Web%20gui%20-%20Email%20notification.png" alt="Monitoring your ubuntu machine for dummies - Web gui - Email notification">	
