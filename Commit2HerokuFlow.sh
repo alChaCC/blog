@@ -5,4 +5,5 @@ cp -r GA_ABtest public/google-analytics/
 cp Resume_Aloha.pdf public/About/
 git add .
 git commit -m 
-git push heroku master
+rake deploy 
+#git push heroku master
