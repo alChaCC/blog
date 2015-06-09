@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Ruby on Rails | AlohaCC]]></title>
   <link href="http://ccaloha.cc/blog/categories/ruby-on-rails/atom.xml" rel="self"/>
   <link href="http://ccaloha.cc/"/>
-  <updated>2015-05-18T18:49:08+08:00</updated>
+  <updated>2015-06-10T00:20:18+08:00</updated>
   <id>http://ccaloha.cc/</id>
   <author>
     <name><![CDATA[Aloha]]></name>
@@ -12,6 +12,135 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[String handling between javacript and Ruby]]></title>
+    <link href="http://ccaloha.cc/blog/2015/06/10/string-handling-between-javacript-and-ruby/"/>
+    <updated>2015-06-10T00:14:49+08:00</updated>
+    <id>http://ccaloha.cc/blog/2015/06/10/string-handling-between-javacript-and-ruby</id>
+    <content type="html"><![CDATA[<p>javascript 在做 <strong>escape</strong> 時，編碼出來的字，和Ruby的 <strong>CGI.escape</strong>、<strong>URI.escape</strong> 是不同的！</p>
+
+<p>舉例來說：</p>
+
+<p>在<strong>browser console下</strong></p>
+
+<pre><code>escape("台中市")
+&gt; "%u53F0%u4E2D%u5E02"
+</code></pre>
+
+<p>但是在<strong>rails c</strong> 下</p>
+
+<pre><code>CGI.escape("台中市")
+&gt; "%E5%8F%B0%E4%B8%AD%E5%B8%82"
+</code></pre>
+
+<p> Why?</p>
+
+<!-- more -->
+
+
+<p> 查了一下Google，發現是因為在 js 在escape中文時，是將他編成 unicode</p>
+
+<p> 所以，</p>
+
+<h2>javascript 如果要送中文字給Ruby 請使用</h2>
+
+<pre><code>encodeURIComponent("台中市")
+&gt; "%E5%8F%B0%E4%B8%AD%E5%B8%82"
+</code></pre>
+
+<h2>但是，往往沒辦法你不能去改人家的javascript，你只好.... javascripts escape string to UTF-8</h2>
+
+<p>查到的作法如下：</p>
+
+<p>在<strong>rails c</strong> 下</p>
+
+<pre><code>unicode_str = "%u53F0%u4E2D%u5E02"
+
+unicode_str.gsub(/\%u([\da-fA-F]{4})/) {|m|  [$1].pack('H*').unpack('n*').pack('U*')}
+
+=&gt; "台中市"
+</code></pre>
+
+<p> 參數解釋：</p>
+
+<p> 因為 unicode 的字串都是由 %u 開頭，外加上 4個可能是數字可能是 小寫a~f 或是 大寫A~F，所以我們先透過 <strong>gsub</strong> 這個function將符合的字抓出來處理</p>
+
+<p> 抓出來字之後，我們要使用 <strong>pack</strong> 和 <strong>unpack</strong> 方法，來將字進行解碼、編碼</p>
+
+<p> 我們先抓一個字來看，就以 "台" 為例， (ps. <strong>pack 只能用在array, unpack可以用在string</strong>)</p>
+
+<p> gsub 會將 "53F0" 丟進去處理</p>
+
+<pre><code>["53F0"].pack('H*')
+
+  =&gt; "S\xF0"
+</code></pre>
+
+<p>  # H: 代表了將他pack組成16進位字(hex string (high nibble first))</p>
+
+<pre><code>"S\xF0".unpack('n*')
+
+=&gt; [21488]
+</code></pre>
+
+<p>  # n: 他會return一個 Integer，他代表了16-bit unsigned, network (big-endian) byte order</p>
+
+<pre><code>[21488].pack('U*')
+
+=&gt; "台"
+</code></pre>
+
+<p>  # U: 將16位元NBO組成UTF-8</p>
+
+<p> REF: <br/>
+ <a href="http://www.cnphp6.com/archives/4967">UNESCAPE編碼錯誤</a></p>
+
+<h2>那反過來呢，要如何將UTF-8的字，做成像 javascript escape 後的結果</h2>
+
+<p>在<strong>rails c</strong>下</p>
+
+<pre><code>return_str = ""
+"台中市".each_char { |c| return_str += "%u#{c.unpack("U*").pack("n*").unpack("H*").first}" }
+
+
+return_str 
+&gt; "%u53f0%u4e2d%u5e02"
+</code></pre>
+
+<h2>假設，你現在要串接的使用Big5寫的API，你發現他接收的parameters 居然是%A5%78%A4%A4%A5%AB</h2>
+
+<p>因為他default是接受，用 javascript escape Big5編碼的字</p>
+
+<p>所以你要將你UTF-8的字，轉成符合他格式的字</p>
+
+<p>這時候你要這樣做：</p>
+
+<pre><code>  return_str = ""
+  Iconv.conv("BIG5", "UTF8", str).unpack("H*").first.scan(/../).each do |s|
+    return_str += "%#{s}"
+  end
+</code></pre>
+
+<p>一樣來看說明：</p>
+
+<pre><code>Iconv.conv("BIG5", "UTF8", "台中市")
+
+=&gt; "\x{A578}\x{A4A4}\x{A5AB}"
+
+
+Iconv.conv("BIG5", "UTF8", "台中市").unpack("H*")
+
+=&gt; ["a578a4a4a5ab"]
+
+Iconv.conv("BIG5", "UTF8", "台中市").unpack("H*").first.scan(/../)
+
+=&gt; ["a5", "78", "a4", "a4", "a5", "ab"]
+</code></pre>
+
+<h2>打完收工！</h2>
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[[Ruby on Rails] Send limited mail on staging environment]]></title>
@@ -835,135 +964,6 @@ end
 </code></pre>
 
 <h2>Done</h2>
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[[Ruby on Rails] Model Version control using papertrail]]></title>
-    <link href="http://ccaloha.cc/blog/2015/02/26/model-version-control-using-papertrail/"/>
-    <updated>2015-02-26T16:30:53+08:00</updated>
-    <id>http://ccaloha.cc/blog/2015/02/26/model-version-control-using-papertrail</id>
-    <content type="html"><![CDATA[<h2>Why use papertrail ?</h2>
-
-<p><img src="https://dl.dropboxusercontent.com/u/22307926/Blog%20Image/Rails%E5%8A%A0%E5%85%A5Model%E7%89%88%E6%9C%AC%E6%8E%A7%E5%88%B6/%E8%9E%A2%E5%B9%95%E5%BF%AB%E7%85%A7%202015-01-06%20%E4%B8%8A%E5%8D%8811.57.23.png" alt="ruby toolbox - active record versioning"></p>
-
-<h2>Step1. Add lib</h2>
-
-<p><strong>Gemfile</strong></p>
-
-<pre><code>gem 'paper_trail', '~&gt; 3.0.6'
-</code></pre>
-
-<h2>Step2. create a migration</h2>
-
-<p><strong>On Terminal</strong></p>
-
-<pre><code>bundle exec rails generate paper_trail:install
-</code></pre>
-
-<p>他會建立，一個叫做<strong>versions</strong>的表</p>
-
-<h2>Step3. migrate</h2>
-
-<pre><code>bundle exec rake db:migrate
-</code></pre>
-
-<h2>Step4. Done</h2>
-
-<p>把 <strong>has_paper_trail</strong> 加上你想要追蹤的model</p>
-
-<h2>應用部分</h2>
-
-<h3>若是想要不同model使用不同追蹤table?</h3>
-
-<p>假設我想要<strong>product</strong>有自己的versions表</p>
-
-<ul>
-<li><p>Step1.</p>
-
-<pre><code>  rails g model product_version 
-</code></pre></li>
-<li><p>貼上</p>
-
-<pre><code>  class CreateProductVersions &lt; ActiveRecord::Migration
-    def change
-      create_table :product_versions do |t|
-        t.string   :item_type, :null =&gt; false
-        t.integer  :item_id,   :null =&gt; false
-        t.string   :event,     :null =&gt; false
-        t.string   :whodunnit
-        t.text     :object
-        t.datetime :created_at
-        # t.string   :author_username 如果你需要自訂一些欄位讓他記錄，也可以在migration這邊加
-      end
-      add_index :product_versions, [:item_type, :item_id]
-      end
-    end
-  end
-</code></pre></li>
-</ul>
-
-
-<p>ps. 這就是他本身內建會產生的欄位，只是我們手動把它copy一份出來</p>
-
-<ul>
-<li><p>別忘了</p>
-
-<pre><code>  bundle exec rake db:migrate
-</code></pre></li>
-<li><p>改model <strong>ProductVersion</strong></p>
-
-<pre><code>  class ProductVersion &lt; PaperTrail::Version
-    self.table_name = :product_versions
-  end
-</code></pre></li>
-<li><p>改model <strong>Product</strong></p>
-
-<pre><code>  class Product &lt; ActiveRecord::Base
-      ...
-      has_paper_trail class_name: 'ProductVersion'
-      ...
-  end
-</code></pre></li>
-</ul>
-
-
-<h3>若是想要知道誰動了資料?</h3>
-
-<p> 假設你有使用<strong>devise</strong>，然後是寫在後台</p>
-
-<p>請加在 <strong>controller/admin/admin_controller.rb</strong></p>
-
-<pre><code>def user_for_paper_trail
-    admin_signed_in? ? current_admin.email : 'System'
-end
-</code></pre>
-
-<p>假使你在前台，你可能需要這樣寫</p>
-
-<pre><code>def user_for_paper_trail
-    user_signed_in? ? current_user.email : 'Public User'
-end
-</code></pre>
-
-<h3>若某個動作不想被追蹤</h3>
-
-<pre><code>@product.without_versioning do
-  @product.update_attributes :created_at =&gt; Time.now
-end
-</code></pre>
-
-<h3>若要刪除某個versions從哪天到某天</h3>
-
-<p>方法一：<strong>下SQL</strong></p>
-
-<pre><code>delete from versions where created_at &lt; 2014-01-01;
-</code></pre>
-
-<p>方法二：<strong>在rails c底下</strong></p>
-
-<pre><code>PaperTrail::Version.delete_all ["created_at &lt; ?", 1.year.ago]
-</code></pre>
 ]]></content>
   </entry>
   
