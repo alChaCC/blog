@@ -1,6 +1,6 @@
 ---
 layout: post
-title: "String handling between javacript and Ruby"
+title: "String handling between JavaScript and Ruby"
 date: 2015-06-10 00:14:49 +0800
 comments: true
 categories: ["Ruby on Rails"] 
@@ -25,7 +25,7 @@ javascript 在做 **escape** 時，編碼出來的字，和Ruby的 **CGI.escape*
  Why? 
  
 <!-- more -->
- 
+
  查了一下Google，發現是因為在 js 在escape中文時，是將他編成 unicode 
  
  
