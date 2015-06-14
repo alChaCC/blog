@@ -111,4 +111,47 @@ Analysis relationship between reviews and products
 | The cool things I've done     | <ul><li>Maintain API</li><li>Add new API for Yahoo HK</li></ul>                                                      
 | MIS + Tech      | <ul><li>Rails 4.0.4 </li><li>Ubuntu 12.04</li><li>Nginx + Passenger </li><li>Mysql (using AWS RDS)</li><li>rvm</li><li>Redis</li></ul> 
 | Member  | Aloha 、 2 ROR developer    
-| Job   | Fulltime                                    
+| Job   | Fulltime 
+
+
+# Others video portfolio
+
+All these video I'm actor, director and editor.  
+
+## My Wedding Love Story Movie
+
+This video spend 2 days filming and 2 weeks night cutting. I use 3 iphones, 1 Nikon D800 and Final Cut Pro.
+
+Cutting the scenes to 3 parts and each one put to 3 tracks respectively.
+
+Finally, I take 1 days practicing the mobile movement and 1 day final filming.
+
+<iframe width="560" height="315" src="https://www.youtube.com/embed/GjwhuK77U_s" frameborder="0" allowfullscreen></iframe>
+
+
+## 2009 birthday gift for my girl friend(now is my beautiful wife)
+
+<iframe width="420" height="315" src="https://www.youtube.com/embed/vbneaJmpQOw" frameborder="0" allowfullscreen></iframe>
+
+
+## ITRI Life 
+
+Nov 10, 2011
+
+Using Lomokino,35mm Movie Camera
+
+<iframe src="https://player.vimeo.com/video/31889834" width="500" height="281" frameborder="0" webkitallowfullscreen mozallowfullscreen allowfullscreen></iframe> <p><a href="https://vimeo.com/31889834">ITRI Life - LomoKino</a> from <a href="https://vimeo.com/user9221549">Aloha</a> on <a href="https://vimeo.com">Vimeo</a>.</p>
+
+## HK 
+
+Dec 13, 12
+
+Using Lomokino,35mm Movie Camera
+
+<iframe src="https://player.vimeo.com/video/40999933" width="500" height="283" frameborder="0" webkitallowfullscreen mozallowfullscreen allowfullscreen></iframe> <p><a href="https://vimeo.com/40999933">2011/12/31 HK</a> from <a href="https://vimeo.com/user9221549">Aloha</a> on <a href="https://vimeo.com">Vimeo</a>.</p>
+
+
+## ITRI SIT intro preview
+
+<iframe src="https://player.vimeo.com/video/40273247" width="500" height="281" frameborder="0" webkitallowfullscreen mozallowfullscreen allowfullscreen></iframe> <p><a href="https://vimeo.com/40273247">同心圓_2012/04 兇手現身</a> from <a href="https://vimeo.com/user9221549">Aloha</a> on <a href="https://vimeo.com">Vimeo</a>.</p>
+
