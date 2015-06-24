@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Ruby on Rails | AlohaCC]]></title>
   <link href="http://ccaloha.cc/blog/categories/ruby-on-rails/atom.xml" rel="self"/>
   <link href="http://ccaloha.cc/"/>
-  <updated>2015-06-14T15:31:37+08:00</updated>
+  <updated>2015-06-25T01:24:13+08:00</updated>
   <id>http://ccaloha.cc/</id>
   <author>
     <name><![CDATA[Aloha]]></name>
@@ -12,6 +12,507 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[Sign up by Devise and Crop User Avatar then Upload by Carrierwave using Ruby on Rails]]></title>
+    <link href="http://ccaloha.cc/blog/2015/06/25/sign-up-by-devise-and-crop-user-avatar-then-upload-by-carrierwave-using-ruby-on-rails/"/>
+    <updated>2015-06-25T01:15:45+08:00</updated>
+    <id>http://ccaloha.cc/blog/2015/06/25/sign-up-by-devise-and-crop-user-avatar-then-upload-by-carrierwave-using-ruby-on-rails</id>
+    <content type="html"><![CDATA[<p>ref:</p>
+
+<ol>
+<li> http://railscasts.com/episodes/182-cropping-images-revised</li>
+<li> http://stackoverflow.com/questions/12762728/how-to-crop-image-on-upload-with-rails-carrierwave-and-minimagick</li>
+<li> https://coderwall.com/p/e9d_ja/using-carrierwave-uploader-for-tableless-model-in-rails</li>
+<li> http://stackoverflow.com/questions/24262388/carrierwave-processing-only-after-the-model-has-been-saved-model-id-is-nil</li>
+</ol>
+
+
+<h2>What I done in this article</h2>
+
+<h3>1. Click Upload Image</h3>
+
+<p><img src="https://dl.dropboxusercontent.com/u/22307926/Blog%20Image/Crop%20User%20Avatar%20and%20Upload%20via%20Carrierwave%20while%20creating%20user%20using%20Ruby%20on%20Rails/Step1%20click_upload_image.png" alt="Step 1. click_upload_image"></p>
+
+<h3>2. Choose Image And Preview</h3>
+
+<p><img src="https://dl.dropboxusercontent.com/u/22307926/Blog%20Image/Crop%20User%20Avatar%20and%20Upload%20via%20Carrierwave%20while%20creating%20user%20using%20Ruby%20on%20Rails/Step2%20choose%20image%20and%20preview.png" alt="Step 2. choose image and preview"></p>
+
+<h3>3. Edit Avatar And Preview Image Synchronously</h3>
+
+<p><img src="https://dl.dropboxusercontent.com/u/22307926/Blog%20Image/Crop%20User%20Avatar%20and%20Upload%20via%20Carrierwave%20while%20creating%20user%20using%20Ruby%20on%20Rails/Step3%20edit%20avatar%20and%20preview%20sync.png" alt="Step 3. Edit Avatar And Preview Image Synchronously"></p>
+
+<h3>4. Upload to AWS S3</h3>
+
+<p><img src="https://dl.dropboxusercontent.com/u/22307926/Blog%20Image/Crop%20User%20Avatar%20and%20Upload%20via%20Carrierwave%20while%20creating%20user%20using%20Ruby%20on%20Rails/Step4%20upload%20to%20AWS%20S3.png" alt="Step 4. Upload to AWS S3"></p>
+
+<h3>5. Image Cropped And Uploaded</h3>
+
+<p><img src="https://dl.dropboxusercontent.com/u/22307926/Blog%20Image/Crop%20User%20Avatar%20and%20Upload%20via%20Carrierwave%20while%20creating%20user%20using%20Ruby%20on%20Rails/Step5%20image%20cropped%20and%20uploaded.png" alt="Step 5. Image Cropped And Uploaded"></p>
+
+<h2>Steps</h2>
+
+<h3>0. Description</h3>
+
+<p>I use Devise for sign up, Carrierwave for upload image and Jcrop for image selection. There is an User model and user has one UserImage model. Carrierwave uploader is mounted on UserImage. In this tutorial, I'll not go through upload things. You can find lots of resources such as <a href="http://railscasts.com/episodes/253-carrierwave-file-uploads">carrierwave-file-uploads</a>. Also, I'll not show all devise registration and popup(modal) things. Still, there are many resources on the Internet. Ok, let's go.</p>
+
+<h3>1. Gemfile</h3>
+
+<p>I use jcrop for cropping image. So, add jcrop library to <em>Gemfile</em>.</p>
+
+<pre><code>gem 'jcrop-rails-v2'
+</code></pre>
+
+<p>ps. don't forgot <strong>bundle install</strong></p>
+
+<h3>2. Model</h3>
+
+<p>In User model, I only need to tell that User has a main image and it refer to UserImage model, and user signup form contains UserImage's attributes, therefore, User model should accept these nested attributes. And I create a method for building image used in upload form(you can see usage in view)</p>
+
+<p><strong>app/models/user.rb</strong></p>
+
+<pre><code>class User &lt; ActiveRecord::Base
+  ...
+  has_one :main_image, :class_name =&gt; "::UserImage"
+    accepts_nested_attributes_for :main_image, reject_if: :all_blank, allow_destroy: true
+
+
+    def input_main_image
+      self.main_image ||= self.build_main_image
+      end
+  ...
+  end
+</code></pre>
+
+<p>UserImage model has "file" attribute which is used for upload, and we use carrierwave as our uploader, we need to mount this uploader to "file" attribute. <strong>[!! Important !!] I guess due to Rails work flow, when UserImageUploader upload image, the UserImage custom attributes: crop_x, crop_y, crop_w and crop_h will not available to UserImageUploader that we can't crop image as we want. So we need to skip upload callback first, and we will upload after user is saved.</strong></p>
+
+<p>Ps. if your attribute used for mount uploader named "hello",</p>
+
+<pre><code>mount_uploader :file, UserImagesUploader
+skip_callback :save, :after, :store_file!
+</code></pre>
+
+<p>will be</p>
+
+<pre><code>mount_uploader :hello, UserImagesUploader
+skip_callback :save, :after, :store_hello!
+</code></pre>
+
+<p><strong>app/models/user_image.rb</strong></p>
+
+<pre><code># == Schema Information
+#
+# Table name: user_images
+#
+#  id                 :integer          not null, primary key
+#  user_id            :integer
+#  file               :string(255)
+#  created_at         :datetime
+#  updated_at         :datetime
+#
+
+class UserImage &lt; ActiveRecord::Base
+  belongs_to :user
+
+    # Used for user avatar image edit
+    attr_accessor :crop_x, :crop_y, :crop_w, :crop_h
+
+    mount_uploader :file, UserImagesUploader
+
+    # We need to upload after all attributes assigned，so we skip upload callback first
+    skip_callback :save, :after, :store_file!  
+end
+</code></pre>
+
+<h3>3. View</h3>
+
+<p>In first picture, we have a form for sign up. Due to I have to upload an user image, we need to build it first. Then, UserImage's attributes need to be filled. And I will use some javascript methods for editing so I write some div elements such as "fake-button-upload", "fake-button-edit". Also, I need to popup a image for user editing. Below ".uploaded" codes are used for popup. Finally, you can see I setup some ids, yap~ for javascript.</p>
+
+<p><strong>app/views/users/registrations/new.html.slim</strong></p>
+
+<pre><code>.upload_personal_image
+  = f.fields_for :main_image, resource.input_main_image do |build|
+    = build.file_field :file, class: "personal-image-upload-file"
+    .preview-outer
+      = image_tag(resource.main_image.file, id: "preview") if resource.main_image
+    .personal-image-upload.icon-default-photo-150x150
+    .fake-button-upload 上傳個人照
+    .fake-button-edit 編輯大頭照
+
+    .uploaded
+      .edit-title 編輯個人照
+      = image_tag(resource.main_image.file, id: "preview-edit") if resource.main_image
+      .uploaded-image-edit-attr
+        - for attribute in [:crop_x, :crop_y, :crop_w, :crop_h]
+          = build.text_field attribute, :id =&gt; attribute
+      .edit-desc 請將想要顯示的範圍拖曳至中心圓圈處！
+      .fake-button-edit-ok 設為個人照
+</code></pre>
+
+<h3>4. CSS</h3>
+
+<p><strong>app/assets/stylesheets/front/users/registrations.css.coffee</strong></p>
+
+<p>First we need to require jquery.Jcrop. And, I hope that our crop selector is a circle so I add....</p>
+
+<pre><code>.jcrop-holder div
+{
+    -webkit-border-radius: 50% !important;
+    -moz-border-radius: 50% !important;
+    border-radius: 50% !important;
+    margin: 0 auto;
+    // opacity: 0.6 !important;
+}
+</code></pre>
+
+<p>You can ignore them but you should notice that some classes are display none such as .personal-image-upload-file,  .preview-outer and .uploaded. These classed will show by javascript control.</p>
+
+<pre><code>//=require jquery.Jcrop
+
+...
+
+.jcrop-holder div
+{
+    -webkit-border-radius: 50% !important;
+    -moz-border-radius: 50% !important;
+    border-radius: 50% !important;
+    margin: 0 auto;
+}
+
+.personal-image-upload-file {
+    display: none;
+  }
+
+  .preview-outer {
+    overflow: hidden;
+      display: none;
+      width: 150px;
+      height: 150px;
+      position: absolute;
+      left: 0px;
+      top: 0px;
+      #preview{
+        width: 150px;
+        height: 150px;
+      }
+   }
+   .uploaded {
+  background-color: #FFFFFF;
+  text-align: center;
+  display: none;
+  .edit-title {
+    font-size: 20px;
+    margin: 0px auto 20px auto;
+    padding-top: 30px;
+  }
+  img {
+    border: 1px dashed #dd406f;
+    z-index: 2;
+  }
+  .edit-desc{
+    margin-top: 10px;
+    margin-bottom: 10px;
+    font-size: 14px;
+  }
+
+  .uploaded-image-edit-attr{
+    display: none;
+  }
+  .fake-button-edit-ok{
+    width: 100px;
+    height: 30px;
+    font-size: 16px;
+    display: inline-block;
+    line-height: 30px;
+    cursor: pointer;
+    background-color: #DD406F;
+    border-radius: 3px;
+    color: #FFFFFF;
+    text-decoration: none;
+    margin-bottom: 30px;
+  }
+}
+</code></pre>
+
+<h3>5. Javascript -> most important part for cropping image and previewing image.</h3>
+
+<p>First, we need to require <strong>jquery.Jcrop</strong></p>
+
+<pre><code>#= require jquery.Jcrop
+</code></pre>
+
+<p>If user click .personal-image-upload icon or .fake-button-upload button, I'll trigger real upload file click.</p>
+
+<pre><code>$('.personal-image-upload').click -&gt; 
+  $('.personal-image-upload-file').trigger('click')
+
+$('.fake-button-upload').click -&gt;
+  $('.personal-image-upload-file').trigger('click')
+</code></pre>
+
+<p>How to preview image?</p>
+
+<p>First, I have to know original image size since if user don't resize image, I still need to send crop_x, crop_y, crop_w and crop_h to carrierwave crop function. Second, after FileReader read an image, I'll set file path to element #preview and #preview-edit src attribute. Then, I'll hide upload icon and show edit button.</p>
+
+<pre><code>initPreviewImage = -&gt;    
+    readURL = (input) -&gt;
+      if input.files and input.files[0]
+        reader = new FileReader
+
+        reader.onload = (e) -&gt;
+          img = new Image
+          img.onload = -&gt;
+            $('#crop_x').val(0);
+            $('#crop_y').val(0);
+            $('#crop_w').val(img.width);
+            $('#crop_h').val(img.height);
+          img.src = e.target.result
+
+          $('.preview-outer').css("display": "inline-block")
+          $('#preview').attr 'src', e.target.result
+          $('#preview-edit').attr 'src', e.target.result
+          $('.personal-image-upload').hide()
+          $('.fake-button-edit').css("display": "block")
+          $('.fake-button-edit').css("right": "0px")
+          $('.fake-button-upload').css("left": "0px")
+
+        reader.readAsDataURL input.files[0]
+
+    $('#user_main_image_attributes_file').change -&gt;
+      readURL this
+ initPreviewImage();
+</code></pre>
+
+<p>At last, the cropping part. I setup three global variables for jcrop_api and image size(boundx, boundy). When the element .fake-button-edit button is clicked, I will call showUserImageEdit() and call my modal method for popup function. In showUserImageEdit function, if jcrop_api already existed(user choose a file already), I have to use jcrop_api to reset new image. And #preview-edit is used for binding jcrop, when user select new area or move selection, it will  call update_crop function to update crop_x, crop_y, crop_w and crop_h(don't forgot these attributes will send to carrierwave uploaded for cropping) and I will update #preview image as well.</p>
+
+<p>Ps. you might ask why rx = 150 / coords.w and ry = 150 / coords.h ? The answer is, I give preview size 150x150px in CSS.</p>
+
+<pre><code>jcrop_api = undefined
+  boundx = undefined
+  boundy = undefined
+
+  showUserImageEdit = -&gt;
+    if jcrop_api
+      jcrop_api.setImage($('#preview').attr('src'));
+
+    update_crop = (coords) -&gt;
+      rx = 150 / coords.w
+      ry = 150 / coords.h
+      $('#preview').css
+        width: Math.round(rx * boundx) + 'px'
+        height: Math.round(ry * boundy) + 'px'
+        marginLeft: '-' + Math.round(rx * coords.x) + 'px'
+        marginTop: '-' + Math.round(ry * coords.y) + 'px'
+      $('#crop_x').val(Math.floor(coords.x));
+      $('#crop_y').val(Math.floor(coords.y));
+      $('#crop_w').val(Math.floor(coords.w));
+      $('#crop_h').val(Math.floor(coords.h));
+
+
+    $('#preview-edit').Jcrop({
+        bgOpacity: 0.4, 
+        bgColor: 'black',
+        onChange: update_crop,
+        onSelect: update_crop,
+        allowSelect: true,
+        allowResize: true,
+        setSelect: [50, 0, 150, 150],
+        aspectRatio: 1
+      }, -&gt; 
+        bounds = this.getBounds();
+        boundx = bounds[0];
+        boundy = bounds[1];
+        jcrop_api = this);
+    $('.uploaded').show()
+    $('.fake-button-edit-ok').click -&gt; 
+      myModal().setTarget($('.uploaded')).close()
+      jcrop_api.release()
+
+  initPreviewImageEdit = -&gt;
+    $('.fake-button-edit').click -&gt; 
+      showUserImageEdit();
+      myModal().setTarget($('.uploaded')).open()
+  initPreviewImageEdit();
+</code></pre>
+
+<p>whole code <strong>app/assets/javascripts/users/registrations.js.coffee</strong></p>
+
+<pre><code>#= require jquery.Jcrop
+jQuery -&gt;
+  $(document).on 'ready page:load', -&gt; 
+
+    $('.personal-image-upload').click -&gt; 
+      $('.personal-image-upload-file').trigger('click')
+
+    $('.fake-button-upload').click -&gt;
+      $('.personal-image-upload-file').trigger('click')
+
+    initPreviewImage = -&gt;    
+      readURL = (input) -&gt;
+        if input.files and input.files[0]
+          reader = new FileReader
+
+          reader.onload = (e) -&gt;
+            img = new Image
+            img.onload = -&gt;
+              $('#crop_x').val(0);
+              $('#crop_y').val(0);
+              $('#crop_w').val(img.width);
+              $('#crop_h').val(img.height);
+            img.src = e.target.result
+
+            $('.preview-outer').css("display": "inline-block")
+            $('#preview').attr 'src', e.target.result
+            $('#preview-edit').attr 'src', e.target.result
+            $('.personal-image-upload').hide()
+            $('.fake-button-edit').css("display": "block")
+            $('.fake-button-edit').css("right": "0px")
+            $('.fake-button-upload').css("left": "0px")
+
+          reader.readAsDataURL input.files[0]
+
+      $('#user_main_image_attributes_file').change -&gt;
+        readURL this
+    initPreviewImage();
+
+    jcrop_api = undefined
+    boundx = undefined
+    boundy = undefined
+
+    showUserImageEdit = -&gt;
+      if jcrop_api
+        jcrop_api.setImage($('#preview').attr('src'));
+
+      update_crop = (coords) -&gt;
+        rx = 150 / coords.w
+        ry = 150 / coords.h
+        $('#preview').css
+          width: Math.round(rx * boundx) + 'px'
+          height: Math.round(ry * boundy) + 'px'
+          marginLeft: '-' + Math.round(rx * coords.x) + 'px'
+          marginTop: '-' + Math.round(ry * coords.y) + 'px'
+
+        $('#crop_x').val(Math.floor(coords.x));
+        $('#crop_y').val(Math.floor(coords.y));
+        $('#crop_w').val(Math.floor(coords.w));
+        $('#crop_h').val(Math.floor(coords.h));
+
+
+      $('#preview-edit').Jcrop({
+          bgOpacity: 0.4, 
+          bgColor: 'black',
+          onChange: update_crop,
+          onSelect: update_crop,
+          allowSelect: true,
+          allowResize: true,
+          setSelect: [50, 0, 150, 150],
+          aspectRatio: 1
+        }, -&gt; 
+          bounds = this.getBounds();
+          boundx = bounds[0];
+          boundy = bounds[1];
+          jcrop_api = this);
+
+      $('.uploaded').show();
+
+      $('.fake-button-edit-ok').click -&gt; 
+        myModal().setTarget($('.uploaded')).close()
+        jcrop_api.release()
+
+    initPreviewImageEdit = -&gt;
+      $('.fake-button-edit').click -&gt; 
+        showUserImageEdit();
+        myModal().setTarget($('.uploaded')).open()
+    initPreviewImageEdit();
+</code></pre>
+
+<h3>6. Carrierwave uploader</h3>
+
+<p>As you can see I create a new version named _customize and it only do its job when model(UserImage model) has crop_x, crop_y, crop_w and crop_h attributes. And I use minimagick crop method to crop image before upload.</p>
+
+<pre><code>class UserImagesUploader &lt; CarrierWave::Uploader::Base
+
+  include CarrierWave::MiniMagick
+
+  storage :fog
+
+  ...
+
+  version :_customize, :if =&gt; :customize? do 
+    process :crop_img
+    resize_to_fill(150, 150)
+  end
+
+  def customize? picture
+    !model.crop_x.blank? &amp;&amp; !model.crop_y.blank? &amp;&amp; !model.crop_w.blank? &amp;&amp; !model.crop_h.blank?
+  end
+
+  def crop_img
+    if !model.crop_x.blank? &amp;&amp; !model.crop_y.blank? &amp;&amp; !model.crop_w.blank? &amp;&amp; !model.crop_h.blank?
+      manipulate! do |img|
+        x = model.crop_x.to_i
+        y = model.crop_y.to_i
+        w = model.crop_w.to_i
+        h = model.crop_h.to_i
+        img.crop("#{w}x#{h}+#{x}+#{y}")
+        img
+      end
+    end
+  end
+
+  ...
+
+end
+</code></pre>
+
+<h3>7. Final step: Upload Image</h3>
+
+<p>Do you remember that I skip upload callback in <strong>app/models/user_image.rb</strong> ?</p>
+
+<p>  skip_callback :save, :after, :store_file!</p>
+
+<p>So, when should we do upload job?</p>
+
+<p>Answer is after user save !</p>
+
+<pre><code>class Users::RegistrationsController &lt; Devise::RegistrationsController
+  after_filter :upload_avatar, :only =&gt; :create
+
+  ... 
+
+  protected
+
+  def upload_avatar
+    if resource.persisted? &amp;&amp; resource.main_image # user is created successfuly
+      resource.main_image.store_file! 
+      resource.main_image.file.recreate_versions!
+    end
+  end
+
+  ... 
+end
+</code></pre>
+
+<h3>8. Don't forgot ...</h3>
+
+<p>Since we use Devise for sign up, and we use nested attributes, we need to tell Devise permitted parameters.</p>
+
+<p><strong>app/controllers/applicatio.rb</strong></p>
+
+<pre><code>class ApplicationController &lt; ActionController::Base
+  ...
+  before_action :configure_permitted_parameters, if: :devise_controller?
+
+  private
+
+  def configure_permitted_parameters
+    devise_parameter_sanitizer.for(:sign_up) { |u| u.permit(:email, :password, :password_confirmation, main_image_attributes: ['id', '_destroy', 'file', 'crop_x', 'crop_y', 'crop_w', 'crop_h'])}
+  end 
+  ... 
+end
+</code></pre>
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[String handling between JavaScript and Ruby]]></title>
@@ -652,318 +1153,6 @@ ga_campaign.get_campaign_from_ga_api
 
 end
 </code></pre>
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[Using Google Analytics for Email Click Tracking And Open Rate Tracking in Ruby on Rails]]></title>
-    <link href="http://ccaloha.cc/blog/2015/02/27/using-google-analytics-for-email-click-tracking-and-open-rate-tracking-in-ruby-on-rails/"/>
-    <updated>2015-02-27T23:34:39+08:00</updated>
-    <id>http://ccaloha.cc/blog/2015/02/27/using-google-analytics-for-email-click-tracking-and-open-rate-tracking-in-ruby-on-rails</id>
-    <content type="html"><![CDATA[<h2>Requirement</h2>
-
-<ol>
-<li><p>每個連結的點擊數</p></li>
-<li><p>開信率</p></li>
-</ol>
-
-
-<h2>Google Analytics</h2>
-
-<p>這是一個電子報，基本上屬於一種廣告！</p>
-
-<p>那GA怎麼那麼厲害知道誰點了什麼？</p>
-
-<p>該不會Google 大神，連Email也滲透？！</p>
-
-<p>ps. 我猜他應該也差不多都知道我們在Email上的一舉一動，只要你用Gmail...</p>
-
-<h3>那GA要怎麼紀錄？</h3>
-
-<blockquote><p>基本上就是將<strong>連結網址</strong>帶上一些"參數"，當使用者點了這個連結之後，就你就會被帶到那個<strong>連結網址</strong>，這時候那個網站一定有埋GA的javascript
-，這就是他的Key~ GA透過js爬到你的網址，當他發現你有帶某些參數，他就知道你是從哪裡來的！</p></blockquote>
-
-<!-- more -->
-
-
-<p>我剛剛提到了好幾次<strong>參數</strong></p>
-
-<p>沒錯！這就是關鍵！</p>
-
-<p>讓我們來看一下 有哪些參數</p>
-
-<p><img src="https://dl.dropboxusercontent.com/u/22307926/Blog%20Image/utm%E8%A8%AD%E8%A8%88.png"></p>
-
-<p>GA在有文件說明<a href="https://support.google.com/analytics/answer/1033863">網址要如何使用</a></p>
-
-<p>而且，GA還很貼心的幫大家準備了 <a href="https://support.google.com/analytics/answer/1033867?hl=zh-Hant">網址產生器</a></p>
-
-<p>來看一下，實際上會產生什麼樣的連結：</p>
-
-<p>假設我們追蹤</p>
-
-<pre><code>透過Email點擊，來到首頁的人
-</code></pre>
-
-<p>Url 原本是長這樣</p>
-
-<pre><code>www.urcosme.com
-</code></pre>
-
-<p>ps. urcosme.com小弟目前待的公司 XDDDDD廣告一下！</p>
-
-<p>經過<del>我的</del>GA的巧手，它會長這樣</p>
-
-<pre><code>www.urcosme.com/?utm_source=%E9%9B%BB%E5%AD%90%E5%A0%B1&amp;utm_medium=%E9%9B%BB%E5%AD%90%E9%83%B5%E4%BB%B6&amp;utm_content=%E6%B8%AC%E8%A9%A6%E6%B8%AC%E8%A9%A6&amp;utm_campaign=%E6%88%91%E5%A5%BD%E5%B8%A5
-</code></pre>
-
-<p>案....這是....!？</p>
-
-<p>讓我幫你翻譯一下</p>
-
-<pre><code>www.urcosme.com/?utm_source=電子報&amp;utm_medium=電子郵件&amp;utm_content=測試測試&amp;utm_campaign=我好帥
-</code></pre>
-
-<p>當我把連結改成這樣後，基本上使用者也是會點到你的首頁，但是對於GA而言，他就知道你是從電子郵件過來</p>
-
-<p>但! 身為一個有責任感又假掰的IT，</p>
-
-<p>我們當然希望讓系統自動幫行銷的同仁帶入這些參數，讓正妹同事覺得沒有你不行～</p>
-
-<h2>1. Rails 要如何實作“點擊追蹤”</h2>
-
-<p>其實很簡單，我們要寫一個 小小小爬蟲，把內容爬過一次</p>
-
-<p>把有 &lt;a> 的找出來，然後把資訊加進去就好了！</p>
-
-<p>那...爬蟲要怎麼寫？</p>
-
-<p>各位，既然是來到 Rails ，Rails什麼不多，鐵路最多，歐不～ 是輪子最多！</p>
-
-<p>跟大家介紹個 Gem : <strong><a href="http://www.nokogiri.org/">Nokogiri</a></strong></p>
-
-<p>我們就直接用實作，來說明他可以幹麻</p>
-
-<p>直接來看的程式碼：</p>
-
-<p>這是我寫在 <strong>app/models/edm.rb</strong> 的code</p>
-
-<p>這個model資訊是這樣</p>
-
-<pre><code># == Schema Information
-#
-# Table name: edms
-#
-#  id                 :integer          not null, primary key
-#  name               :string
-#  send_at            :datetime
-#  title              :string(255)
-#  state              :string(255)
-#  content            :text
-#  created_at         :datetime
-#  updated_at         :datetime
-#
-
-
-def parse_link_in_email(user_id)
-    # 讀進email html
-    html =  Nokogiri::HTML(self.content)
-    # 找出所有 a 
-    a_nodes = html.css('a')
-    a_nodes.each do |a|
-      # 抓出href 並且加上GA 追蹤
-      tracking_a = a['href'] +  "?utm_source=#{self.name}-#{CGI.escape(a['href'])}" + 
-                                "&amp;utm_medium=email" +
-                                "&amp;utm_content=#{self.id}-#{user_id}" + 
-                                "&amp;utm_campaign=#{self.title}"
-      a['href'] = tracking_a
-    end
-    return html.to_html
- end
-</code></pre>
-
-<p>幾個重點：</p>
-
-<ol>
-<li>使用<strong>Nokogiri::HTML(self.content)</strong>  => 讀HTML進來</li>
-<li><strong>html.css('a')</strong> => 抓出所有&lt;a></li>
-<li><strong>a['href']</strong>     => 抓出這個&lt;a>，裡頭的屬性href</li>
-<li><strong>html.to_html</strong>  => 轉回HTML</li>
-</ol>
-
-
-<p>Done !</p>
-
-<p>所以當使用者點擊信件的link時，GA就會看到.....</p>
-
-<p><strong>攬客 >> 廣告活動 >> 所有廣告活動</strong></p>
-
-<p><img src="https://dl.dropboxusercontent.com/u/22307926/Blog%20Image/GA_email_click_tracking.png" alt="GA email click tracking demo"></p>
-
-<h2>2. Rails 要如何實作“開信率”</h2>
-
-<p>開信率我是參考這篇<a href="http://dyn.com/blog/tracking-email-opens-via-google-analytics/">Blog</a>來實作</p>
-
-<p>簡單來說，我們需要埋一個image tag，然而那個tag</p>
-
-<p>會帶上一些<strong>參數</strong>，讓GA知道這幹嘛的！</p>
-
-<p>為什麼要使用這種標籤的方式紀錄呢？</p>
-
-<p>假設使用者打開信之後，並且點了一個連結，</p>
-
-<p>因為這個點了連結的動作，我們知道他一定有開信，歐噎～ 做完了～</p>
-
-<p>But...........</p>
-
-<p>那如果他只有打開信，沒有點擊勒？ 如果他打開信，點了N個連結，那開信不就也被多紀錄了很多次？(ps.點擊紀錄是每點一次就紀錄一次)</p>
-
-<blockquote><p>所以我們必須透過從 Google Analytics <strong>"GET"</strong> 一個標記(就是圖片啦)，當我們跟GA要圖的時候，可以告訴GA一些<strong>參數</strong>，嘿嘿，這樣就有辦法紀錄了！</p></blockquote>
-
-<p>各位，又看到<strong>參數</strong>兩個字</p>
-
-<p>那又有哪些可以用勒？ (這邊我只列我目前有在用的，詳細可以參考<a href="https://developers.google.com/analytics/devguides/collection/protocol/v1/parameters#events">GA collections parameters</a>)</p>
-
-<table>
-<thead>
-<tr>
-<th></th>
-<th> 參數                                                                                 </th>
-<th> 說明                                                                   </th>
-<th> 舉例                                                                                 </th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td></td>
-<td> tid </td>
-<td> 要放GA的ID</td>
-<td> UA-1234567-8 |</td>
-</tr>
-<tr>
-<td></td>
-<td> uid </td>
-<td>Unique的ID(因為我們要寄信給User我是使用該User的ID)</td>
-<td> 1 |</td>
-</tr>
-<tr>
-<td></td>
-<td> t   </td>
-<td> 告訴GA這是個什麼類型的紀錄(基本上我查到都使用event) </td>
-<td> event |</td>
-</tr>
-<tr>
-<td></td>
-<td> ec  </td>
-<td> 告訴GA這個Event的Category </td>
-<td> email-測試 |</td>
-</tr>
-<tr>
-<td></td>
-<td> ea  </td>
-<td> 告訴GA這個Event的Action </td>
-<td> Open |</td>
-</tr>
-<tr>
-<td></td>
-<td> el  </td>
-<td> 告訴GA這個Event的Label </td>
-<td> user_id-1 |</td>
-</tr>
-<tr>
-<td></td>
-<td> cs  </td>
-<td> 廣告活動的來源 </td>
-<td> Email標題 |</td>
-</tr>
-<tr>
-<td></td>
-<td> cm  </td>
-<td> 廣告活動的媒介 </td>
-<td> edm |</td>
-</tr>
-<tr>
-<td></td>
-<td> cn  </td>
-<td> 廣告活動名稱   </td>
-<td> 電子報第0期 | </td>
-</tr>
-</tbody>
-</table>
-
-
-<p>那我們就不看sample，直接來看實作code</p>
-
-<pre><code>def parse_link_in_email(user_id)
-
-    ... 
-
-    body = html.at_css("body")
-    img_node = Nokogiri::XML::Node.new("img",body)
-    img_node['src'] = "https://www.google-analytics.com/collect?v=1" + 
-                      "&amp;tid=#{Settings.google_analytics_key}" + 
-                      "&amp;uid=#{user_id}"+
-                      "&amp;t=event" +
-                      "&amp;ec=email-#{self.name}-#{self.title}" + 
-                      "&amp;ea=open" + 
-                      "&amp;el=user_id-#{user_id}" + 
-                      "&amp;cs=#{self.name}" + 
-                      "&amp;cm=email" + 
-                      "&amp;cn=#{self.title}"
-    body &lt;&lt; img_node
-
-    ...
-end
-</code></pre>
-
-<p>幾個重點：</p>
-
-<ol>
-<li>使用<strong>Nokogiri::XML::Node.new("img",body)</strong>  => 新增一個&lt;img>標籤</li>
-<li><strong>img_node['src']</strong>     => 設定這個&lt;img>，裡頭的屬性src</li>
-<li><strong>body &lt;&lt; img_node</strong>  => 將code埋到body裡面</li>
-</ol>
-
-
-<p>那在GA你會看到什麼勒？</p>
-
-<p><img src="https://dl.dropboxusercontent.com/u/22307926/GA_email_open_tracking.png" alt="GA email open rate tracking demo"></p>
-
-<h2>3. Rails Mailer、its View and model</h2>
-
-<p> 剩下我沒提到的部份，不過這些就是基本寄信的功能，我就不贅述了</p>
-
-<p> <strong>app/models/edm.rb</strong></p>
-
-<pre><code>has_many :edm_user_ships  # 假設你有要寄信的清單
-has_many :users, :through =&gt; :edm_user_ships
-def send_mail
-    self.users.each do |user|
-        EdmMailer.delay.send_edm(self, user.email, user.id)
-    end
-end
-</code></pre>
-
-<p><strong>app/mailers/edm_mailer.rb</strong></p>
-
-<pre><code>class EdmMailer &lt; ActionMailer::Base
-  default from: "service@urcosme.com"
-
-  def send_edm(e_notify, email, user_id = nil)
-    @e_notify = e_notify
-    @user_id = user_id
-
-    mail to: email, subject: e_notify.title
-  end
-end
-</code></pre>
-
-<p><strong>app/views/edm_mailer/send_edm.html.slim</strong></p>
-
-<pre><code>= raw @e_notify.parse_link_in_email(@user_id)
-</code></pre>
-
-<h2>Done</h2>
 ]]></content>
   </entry>
   

@@ -4,7 +4,7 @@
   <title><![CDATA[AlohaCC]]></title>
   <link href="http://ccaloha.cc/atom.xml" rel="self"/>
   <link href="http://ccaloha.cc/"/>
-  <updated>2015-06-14T15:31:37+08:00</updated>
+  <updated>2015-06-25T01:24:13+08:00</updated>
   <id>http://ccaloha.cc/</id>
   <author>
     <name><![CDATA[Aloha]]></name>
@@ -12,6 +12,507 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[Sign up by Devise and Crop User Avatar then Upload by Carrierwave using Ruby on Rails]]></title>
+    <link href="http://ccaloha.cc/blog/2015/06/25/sign-up-by-devise-and-crop-user-avatar-then-upload-by-carrierwave-using-ruby-on-rails/"/>
+    <updated>2015-06-25T01:15:45+08:00</updated>
+    <id>http://ccaloha.cc/blog/2015/06/25/sign-up-by-devise-and-crop-user-avatar-then-upload-by-carrierwave-using-ruby-on-rails</id>
+    <content type="html"><![CDATA[<p>ref:</p>
+
+<ol>
+<li> http://railscasts.com/episodes/182-cropping-images-revised</li>
+<li> http://stackoverflow.com/questions/12762728/how-to-crop-image-on-upload-with-rails-carrierwave-and-minimagick</li>
+<li> https://coderwall.com/p/e9d_ja/using-carrierwave-uploader-for-tableless-model-in-rails</li>
+<li> http://stackoverflow.com/questions/24262388/carrierwave-processing-only-after-the-model-has-been-saved-model-id-is-nil</li>
+</ol>
+
+
+<h2>What I done in this article</h2>
+
+<h3>1. Click Upload Image</h3>
+
+<p><img src="https://dl.dropboxusercontent.com/u/22307926/Blog%20Image/Crop%20User%20Avatar%20and%20Upload%20via%20Carrierwave%20while%20creating%20user%20using%20Ruby%20on%20Rails/Step1%20click_upload_image.png" alt="Step 1. click_upload_image"></p>
+
+<h3>2. Choose Image And Preview</h3>
+
+<p><img src="https://dl.dropboxusercontent.com/u/22307926/Blog%20Image/Crop%20User%20Avatar%20and%20Upload%20via%20Carrierwave%20while%20creating%20user%20using%20Ruby%20on%20Rails/Step2%20choose%20image%20and%20preview.png" alt="Step 2. choose image and preview"></p>
+
+<h3>3. Edit Avatar And Preview Image Synchronously</h3>
+
+<p><img src="https://dl.dropboxusercontent.com/u/22307926/Blog%20Image/Crop%20User%20Avatar%20and%20Upload%20via%20Carrierwave%20while%20creating%20user%20using%20Ruby%20on%20Rails/Step3%20edit%20avatar%20and%20preview%20sync.png" alt="Step 3. Edit Avatar And Preview Image Synchronously"></p>
+
+<h3>4. Upload to AWS S3</h3>
+
+<p><img src="https://dl.dropboxusercontent.com/u/22307926/Blog%20Image/Crop%20User%20Avatar%20and%20Upload%20via%20Carrierwave%20while%20creating%20user%20using%20Ruby%20on%20Rails/Step4%20upload%20to%20AWS%20S3.png" alt="Step 4. Upload to AWS S3"></p>
+
+<h3>5. Image Cropped And Uploaded</h3>
+
+<p><img src="https://dl.dropboxusercontent.com/u/22307926/Blog%20Image/Crop%20User%20Avatar%20and%20Upload%20via%20Carrierwave%20while%20creating%20user%20using%20Ruby%20on%20Rails/Step5%20image%20cropped%20and%20uploaded.png" alt="Step 5. Image Cropped And Uploaded"></p>
+
+<h2>Steps</h2>
+
+<h3>0. Description</h3>
+
+<p>I use Devise for sign up, Carrierwave for upload image and Jcrop for image selection. There is an User model and user has one UserImage model. Carrierwave uploader is mounted on UserImage. In this tutorial, I&#8217;ll not go through upload things. You can find lots of resources such as <a href="http://railscasts.com/episodes/253-carrierwave-file-uploads">carrierwave-file-uploads</a>. Also, I&#8217;ll not show all devise registration and popup(modal) things. Still, there are many resources on the Internet. Ok, let&#8217;s go.</p>
+
+<h3>1. Gemfile</h3>
+
+<p>I use jcrop for cropping image. So, add jcrop library to <em>Gemfile</em>.</p>
+
+<pre><code>gem 'jcrop-rails-v2'
+</code></pre>
+
+<p>ps. don&#8217;t forgot <strong>bundle install</strong></p>
+
+<h3>2. Model</h3>
+
+<p>In User model, I only need to tell that User has a main image and it refer to UserImage model, and user signup form contains UserImage&#8217;s attributes, therefore, User model should accept these nested attributes. And I create a method for building image used in upload form(you can see usage in view)</p>
+
+<p><strong>app/models/user.rb</strong></p>
+
+<pre><code>class User &lt; ActiveRecord::Base
+  ...
+  has_one :main_image, :class_name =&gt; "::UserImage"
+    accepts_nested_attributes_for :main_image, reject_if: :all_blank, allow_destroy: true
+
+
+    def input_main_image
+      self.main_image ||= self.build_main_image
+      end
+  ...
+  end
+</code></pre>
+
+<p>UserImage model has &#8220;file&#8221; attribute which is used for upload, and we use carrierwave as our uploader, we need to mount this uploader to &#8220;file&#8221; attribute. <strong>[!! Important !!] I guess due to Rails work flow, when UserImageUploader upload image, the UserImage custom attributes: crop_x, crop_y, crop_w and crop_h will not available to UserImageUploader that we can&#8217;t crop image as we want. So we need to skip upload callback first, and we will upload after user is saved.</strong></p>
+
+<p>Ps. if your attribute used for mount uploader named &#8220;hello&#8221;,</p>
+
+<pre><code>mount_uploader :file, UserImagesUploader
+skip_callback :save, :after, :store_file!
+</code></pre>
+
+<p>will be</p>
+
+<pre><code>mount_uploader :hello, UserImagesUploader
+skip_callback :save, :after, :store_hello!
+</code></pre>
+
+<p><strong>app/models/user_image.rb</strong></p>
+
+<pre><code># == Schema Information
+#
+# Table name: user_images
+#
+#  id                 :integer          not null, primary key
+#  user_id            :integer
+#  file               :string(255)
+#  created_at         :datetime
+#  updated_at         :datetime
+#
+
+class UserImage &lt; ActiveRecord::Base
+  belongs_to :user
+
+    # Used for user avatar image edit
+    attr_accessor :crop_x, :crop_y, :crop_w, :crop_h
+
+    mount_uploader :file, UserImagesUploader
+
+    # We need to upload after all attributes assigned，so we skip upload callback first
+    skip_callback :save, :after, :store_file!  
+end
+</code></pre>
+
+<h3>3. View</h3>
+
+<p>In first picture, we have a form for sign up. Due to I have to upload an user image, we need to build it first. Then, UserImage&#8217;s attributes need to be filled. And I will use some javascript methods for editing so I write some div elements such as &#8220;fake-button-upload&#8221;, &#8220;fake-button-edit&#8221;. Also, I need to popup a image for user editing. Below &#8220;.uploaded&#8221; codes are used for popup. Finally, you can see I setup some ids, yap~ for javascript.</p>
+
+<p><strong>app/views/users/registrations/new.html.slim</strong></p>
+
+<pre><code>.upload_personal_image
+  = f.fields_for :main_image, resource.input_main_image do |build|
+    = build.file_field :file, class: "personal-image-upload-file"
+    .preview-outer
+      = image_tag(resource.main_image.file, id: "preview") if resource.main_image
+    .personal-image-upload.icon-default-photo-150x150
+    .fake-button-upload 上傳個人照
+    .fake-button-edit 編輯大頭照
+
+    .uploaded
+      .edit-title 編輯個人照
+      = image_tag(resource.main_image.file, id: "preview-edit") if resource.main_image
+      .uploaded-image-edit-attr
+        - for attribute in [:crop_x, :crop_y, :crop_w, :crop_h]
+          = build.text_field attribute, :id =&gt; attribute
+      .edit-desc 請將想要顯示的範圍拖曳至中心圓圈處！
+      .fake-button-edit-ok 設為個人照
+</code></pre>
+
+<h3>4. CSS</h3>
+
+<p><strong>app/assets/stylesheets/front/users/registrations.css.coffee</strong></p>
+
+<p>First we need to require jquery.Jcrop. And, I hope that our crop selector is a circle so I add&#8230;.</p>
+
+<pre><code>.jcrop-holder div
+{
+    -webkit-border-radius: 50% !important;
+    -moz-border-radius: 50% !important;
+    border-radius: 50% !important;
+    margin: 0 auto;
+    // opacity: 0.6 !important;
+}
+</code></pre>
+
+<p>You can ignore them but you should notice that some classes are display none such as .personal-image-upload-file,  .preview-outer and .uploaded. These classed will show by javascript control.</p>
+
+<pre><code>//=require jquery.Jcrop
+
+...
+
+.jcrop-holder div
+{
+    -webkit-border-radius: 50% !important;
+    -moz-border-radius: 50% !important;
+    border-radius: 50% !important;
+    margin: 0 auto;
+}
+
+.personal-image-upload-file {
+    display: none;
+  }
+
+  .preview-outer {
+    overflow: hidden;
+      display: none;
+      width: 150px;
+      height: 150px;
+      position: absolute;
+      left: 0px;
+      top: 0px;
+      #preview{
+        width: 150px;
+        height: 150px;
+      }
+   }
+   .uploaded {
+  background-color: #FFFFFF;
+  text-align: center;
+  display: none;
+  .edit-title {
+    font-size: 20px;
+    margin: 0px auto 20px auto;
+    padding-top: 30px;
+  }
+  img {
+    border: 1px dashed #dd406f;
+    z-index: 2;
+  }
+  .edit-desc{
+    margin-top: 10px;
+    margin-bottom: 10px;
+    font-size: 14px;
+  }
+
+  .uploaded-image-edit-attr{
+    display: none;
+  }
+  .fake-button-edit-ok{
+    width: 100px;
+    height: 30px;
+    font-size: 16px;
+    display: inline-block;
+    line-height: 30px;
+    cursor: pointer;
+    background-color: #DD406F;
+    border-radius: 3px;
+    color: #FFFFFF;
+    text-decoration: none;
+    margin-bottom: 30px;
+  }
+}
+</code></pre>
+
+<h3>5. Javascript -> most important part for cropping image and previewing image.</h3>
+
+<p>First, we need to require <strong>jquery.Jcrop</strong></p>
+
+<pre><code>#= require jquery.Jcrop
+</code></pre>
+
+<p>If user click .personal-image-upload icon or .fake-button-upload button, I&#8217;ll trigger real upload file click.</p>
+
+<pre><code>$('.personal-image-upload').click -&gt; 
+  $('.personal-image-upload-file').trigger('click')
+
+$('.fake-button-upload').click -&gt;
+  $('.personal-image-upload-file').trigger('click')
+</code></pre>
+
+<p>How to preview image?</p>
+
+<p>First, I have to know original image size since if user don&#8217;t resize image, I still need to send crop_x, crop_y, crop_w and crop_h to carrierwave crop function. Second, after FileReader read an image, I&#8217;ll set file path to element #preview and #preview-edit src attribute. Then, I&#8217;ll hide upload icon and show edit button.</p>
+
+<pre><code>initPreviewImage = -&gt;    
+    readURL = (input) -&gt;
+      if input.files and input.files[0]
+        reader = new FileReader
+
+        reader.onload = (e) -&gt;
+          img = new Image
+          img.onload = -&gt;
+            $('#crop_x').val(0);
+            $('#crop_y').val(0);
+            $('#crop_w').val(img.width);
+            $('#crop_h').val(img.height);
+          img.src = e.target.result
+
+          $('.preview-outer').css("display": "inline-block")
+          $('#preview').attr 'src', e.target.result
+          $('#preview-edit').attr 'src', e.target.result
+          $('.personal-image-upload').hide()
+          $('.fake-button-edit').css("display": "block")
+          $('.fake-button-edit').css("right": "0px")
+          $('.fake-button-upload').css("left": "0px")
+
+        reader.readAsDataURL input.files[0]
+
+    $('#user_main_image_attributes_file').change -&gt;
+      readURL this
+ initPreviewImage();
+</code></pre>
+
+<p>At last, the cropping part. I setup three global variables for jcrop_api and image size(boundx, boundy). When the element .fake-button-edit button is clicked, I will call showUserImageEdit() and call my modal method for popup function. In showUserImageEdit function, if jcrop_api already existed(user choose a file already), I have to use jcrop_api to reset new image. And #preview-edit is used for binding jcrop, when user select new area or move selection, it will  call update_crop function to update crop_x, crop_y, crop_w and crop_h(don&#8217;t forgot these attributes will send to carrierwave uploaded for cropping) and I will update #preview image as well.</p>
+
+<p>Ps. you might ask why rx = 150 / coords.w and ry = 150 / coords.h ? The answer is, I give preview size 150x150px in CSS.</p>
+
+<pre><code>jcrop_api = undefined
+  boundx = undefined
+  boundy = undefined
+
+  showUserImageEdit = -&gt;
+    if jcrop_api
+      jcrop_api.setImage($('#preview').attr('src'));
+
+    update_crop = (coords) -&gt;
+      rx = 150 / coords.w
+      ry = 150 / coords.h
+      $('#preview').css
+        width: Math.round(rx * boundx) + 'px'
+        height: Math.round(ry * boundy) + 'px'
+        marginLeft: '-' + Math.round(rx * coords.x) + 'px'
+        marginTop: '-' + Math.round(ry * coords.y) + 'px'
+      $('#crop_x').val(Math.floor(coords.x));
+      $('#crop_y').val(Math.floor(coords.y));
+      $('#crop_w').val(Math.floor(coords.w));
+      $('#crop_h').val(Math.floor(coords.h));
+
+
+    $('#preview-edit').Jcrop({
+        bgOpacity: 0.4, 
+        bgColor: 'black',
+        onChange: update_crop,
+        onSelect: update_crop,
+        allowSelect: true,
+        allowResize: true,
+        setSelect: [50, 0, 150, 150],
+        aspectRatio: 1
+      }, -&gt; 
+        bounds = this.getBounds();
+        boundx = bounds[0];
+        boundy = bounds[1];
+        jcrop_api = this);
+    $('.uploaded').show()
+    $('.fake-button-edit-ok').click -&gt; 
+      myModal().setTarget($('.uploaded')).close()
+      jcrop_api.release()
+
+  initPreviewImageEdit = -&gt;
+    $('.fake-button-edit').click -&gt; 
+      showUserImageEdit();
+      myModal().setTarget($('.uploaded')).open()
+  initPreviewImageEdit();
+</code></pre>
+
+<p>whole code <strong>app/assets/javascripts/users/registrations.js.coffee</strong></p>
+
+<pre><code>#= require jquery.Jcrop
+jQuery -&gt;
+  $(document).on 'ready page:load', -&gt; 
+
+    $('.personal-image-upload').click -&gt; 
+      $('.personal-image-upload-file').trigger('click')
+
+    $('.fake-button-upload').click -&gt;
+      $('.personal-image-upload-file').trigger('click')
+
+    initPreviewImage = -&gt;    
+      readURL = (input) -&gt;
+        if input.files and input.files[0]
+          reader = new FileReader
+
+          reader.onload = (e) -&gt;
+            img = new Image
+            img.onload = -&gt;
+              $('#crop_x').val(0);
+              $('#crop_y').val(0);
+              $('#crop_w').val(img.width);
+              $('#crop_h').val(img.height);
+            img.src = e.target.result
+
+            $('.preview-outer').css("display": "inline-block")
+            $('#preview').attr 'src', e.target.result
+            $('#preview-edit').attr 'src', e.target.result
+            $('.personal-image-upload').hide()
+            $('.fake-button-edit').css("display": "block")
+            $('.fake-button-edit').css("right": "0px")
+            $('.fake-button-upload').css("left": "0px")
+
+          reader.readAsDataURL input.files[0]
+
+      $('#user_main_image_attributes_file').change -&gt;
+        readURL this
+    initPreviewImage();
+
+    jcrop_api = undefined
+    boundx = undefined
+    boundy = undefined
+
+    showUserImageEdit = -&gt;
+      if jcrop_api
+        jcrop_api.setImage($('#preview').attr('src'));
+
+      update_crop = (coords) -&gt;
+        rx = 150 / coords.w
+        ry = 150 / coords.h
+        $('#preview').css
+          width: Math.round(rx * boundx) + 'px'
+          height: Math.round(ry * boundy) + 'px'
+          marginLeft: '-' + Math.round(rx * coords.x) + 'px'
+          marginTop: '-' + Math.round(ry * coords.y) + 'px'
+
+        $('#crop_x').val(Math.floor(coords.x));
+        $('#crop_y').val(Math.floor(coords.y));
+        $('#crop_w').val(Math.floor(coords.w));
+        $('#crop_h').val(Math.floor(coords.h));
+
+
+      $('#preview-edit').Jcrop({
+          bgOpacity: 0.4, 
+          bgColor: 'black',
+          onChange: update_crop,
+          onSelect: update_crop,
+          allowSelect: true,
+          allowResize: true,
+          setSelect: [50, 0, 150, 150],
+          aspectRatio: 1
+        }, -&gt; 
+          bounds = this.getBounds();
+          boundx = bounds[0];
+          boundy = bounds[1];
+          jcrop_api = this);
+
+      $('.uploaded').show();
+
+      $('.fake-button-edit-ok').click -&gt; 
+        myModal().setTarget($('.uploaded')).close()
+        jcrop_api.release()
+
+    initPreviewImageEdit = -&gt;
+      $('.fake-button-edit').click -&gt; 
+        showUserImageEdit();
+        myModal().setTarget($('.uploaded')).open()
+    initPreviewImageEdit();
+</code></pre>
+
+<h3>6. Carrierwave uploader</h3>
+
+<p>As you can see I create a new version named _customize and it only do its job when model(UserImage model) has crop_x, crop_y, crop_w and crop_h attributes. And I use minimagick crop method to crop image before upload.</p>
+
+<pre><code>class UserImagesUploader &lt; CarrierWave::Uploader::Base
+
+  include CarrierWave::MiniMagick
+
+  storage :fog
+
+  ...
+
+  version :_customize, :if =&gt; :customize? do 
+    process :crop_img
+    resize_to_fill(150, 150)
+  end
+
+  def customize? picture
+    !model.crop_x.blank? &amp;&amp; !model.crop_y.blank? &amp;&amp; !model.crop_w.blank? &amp;&amp; !model.crop_h.blank?
+  end
+
+  def crop_img
+    if !model.crop_x.blank? &amp;&amp; !model.crop_y.blank? &amp;&amp; !model.crop_w.blank? &amp;&amp; !model.crop_h.blank?
+      manipulate! do |img|
+        x = model.crop_x.to_i
+        y = model.crop_y.to_i
+        w = model.crop_w.to_i
+        h = model.crop_h.to_i
+        img.crop("#{w}x#{h}+#{x}+#{y}")
+        img
+      end
+    end
+  end
+
+  ...
+
+end
+</code></pre>
+
+<h3>7. Final step: Upload Image</h3>
+
+<p>Do you remember that I skip upload callback in <strong>app/models/user_image.rb</strong> ?</p>
+
+<p>  skip_callback :save, :after, :store_file!</p>
+
+<p>So, when should we do upload job?</p>
+
+<p>Answer is after user save !</p>
+
+<pre><code>class Users::RegistrationsController &lt; Devise::RegistrationsController
+  after_filter :upload_avatar, :only =&gt; :create
+
+  ... 
+
+  protected
+
+  def upload_avatar
+    if resource.persisted? &amp;&amp; resource.main_image # user is created successfuly
+      resource.main_image.store_file! 
+      resource.main_image.file.recreate_versions!
+    end
+  end
+
+  ... 
+end
+</code></pre>
+
+<h3>8. Don&#8217;t forgot &#8230;</h3>
+
+<p>Since we use Devise for sign up, and we use nested attributes, we need to tell Devise permitted parameters.</p>
+
+<p><strong>app/controllers/applicatio.rb</strong></p>
+
+<pre><code>class ApplicationController &lt; ActionController::Base
+  ...
+  before_action :configure_permitted_parameters, if: :devise_controller?
+
+  private
+
+  def configure_permitted_parameters
+    devise_parameter_sanitizer.for(:sign_up) { |u| u.permit(:email, :password, :password_confirmation, main_image_attributes: ['id', '_destroy', 'file', 'crop_x', 'crop_y', 'crop_w', 'crop_h'])}
+  end 
+  ... 
+end
+</code></pre>
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[String handling between JavaScript and Ruby]]></title>
@@ -4547,26 +5048,6 @@ btn-mini', 'data-order' =&gt; order.id
 </code></pre>
 
 <h2>打完收工！</h2>
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[[閱讀筆記系列] 23 + 1 設計模式 - Part4. 工廠方法(Factory Method)]]></title>
-    <link href="http://ccaloha.cc/blog/2014/07/11/reading-note-23-plus-1-design-pattern-part3-factory-method/"/>
-    <updated>2014-07-11T22:57:34+08:00</updated>
-    <id>http://ccaloha.cc/blog/2014/07/11/reading-note-23-plus-1-design-pattern-part3-factory-method</id>
-    <content type="html"><![CDATA[<p>重點在於</p>
-
-<blockquote><p>將建立物件的程式碼集中在一個物件或行為中，可避免程式碼重複，方便以後修改</p></blockquote>
-
-<p>你是否常需要建立某個object，但是這個object內容卻時常需要變化，但是又很類似</p>
-
-<p>之前的閱讀筆記(懶惰版)</p>
-
-<iframe id="xmindshare_embedviewer" src="http://www.xmind.net/embed/w4XW?size=medium" width="750px" height="450px" frameborder="0" scrolling="no"></iframe>
-
-
-
 ]]></content>
   </entry>
   
