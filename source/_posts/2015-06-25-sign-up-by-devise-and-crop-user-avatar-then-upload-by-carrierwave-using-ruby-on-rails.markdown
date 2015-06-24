@@ -15,39 +15,40 @@ ref:
   3. https://coderwall.com/p/e9d_ja/using-carrierwave-uploader-for-tableless-model-in-rails
   4. http://stackoverflow.com/questions/24262388/carrierwave-processing-only-after-the-model-has-been-saved-model-id-is-nil
 
-## What I done in this article 
+# What I done in this article 
 
-###1. Click Upload Image
+##1. Click Upload Image
 
 <img src="https://dl.dropboxusercontent.com/u/22307926/Blog%20Image/Crop%20User%20Avatar%20and%20Upload%20via%20Carrierwave%20while%20creating%20user%20using%20Ruby%20on%20Rails/Step1%20click_upload_image.png" alt="Step 1. click_upload_image">
 
-###2. Choose Image And Preview 
+##2. Choose Image And Preview 
 
 <img src="https://dl.dropboxusercontent.com/u/22307926/Blog%20Image/Crop%20User%20Avatar%20and%20Upload%20via%20Carrierwave%20while%20creating%20user%20using%20Ruby%20on%20Rails/Step2%20choose%20image%20and%20preview.png" alt="Step 2. choose image and preview">
 
 
-###3. Edit Avatar And Preview Image Synchronously
+##3. Edit Avatar And Preview Image Synchronously
 
 <img src="https://dl.dropboxusercontent.com/u/22307926/Blog%20Image/Crop%20User%20Avatar%20and%20Upload%20via%20Carrierwave%20while%20creating%20user%20using%20Ruby%20on%20Rails/Step3%20edit%20avatar%20and%20preview%20sync.png" alt="Step 3. Edit Avatar And Preview Image Synchronously">
 
 
-###4. Upload to AWS S3
+##4. Upload to AWS S3
 
 <img src="https://dl.dropboxusercontent.com/u/22307926/Blog%20Image/Crop%20User%20Avatar%20and%20Upload%20via%20Carrierwave%20while%20creating%20user%20using%20Ruby%20on%20Rails/Step4%20upload%20to%20AWS%20S3.png" alt="Step 4. Upload to AWS S3">
 
 
-###5. Image Cropped And Uploaded
+##5. Image Cropped And Uploaded
 
 <img src="https://dl.dropboxusercontent.com/u/22307926/Blog%20Image/Crop%20User%20Avatar%20and%20Upload%20via%20Carrierwave%20while%20creating%20user%20using%20Ruby%20on%20Rails/Step5%20image%20cropped%20and%20uploaded.png" alt="Step 5. Image Cropped And Uploaded">
 
+<!-- more -->
 
-## Steps
+# Steps
 
-###0. Description
+##0. Description
 
 I use Devise for sign up, Carrierwave for upload image and Jcrop for image selection. There is an User model and user has one UserImage model. Carrierwave uploader is mounted on UserImage. In this tutorial, I'll not go through upload things. You can find lots of resources such as [carrierwave-file-uploads](http://railscasts.com/episodes/253-carrierwave-file-uploads). Also, I'll not show all devise registration and popup(modal) things. Still, there are many resources on the Internet. Ok, let's go. 
 
-###1. Gemfile
+##1. Gemfile
 
 I use jcrop for cropping image. So, add jcrop library to *Gemfile*.
 
@@ -55,7 +56,7 @@ I use jcrop for cropping image. So, add jcrop library to *Gemfile*.
 
 ps. don't forgot **bundle install**
 
-###2. Model 
+##2. Model 
 
 In User model, I only need to tell that User has a main image and it refer to UserImage model, and user signup form contains UserImage's attributes, therefore, User model should accept these nested attributes. And I create a method for building image used in upload form(you can see usage in view)
 
@@ -111,7 +112,7 @@ will be
     end
 
 
-###3. View 
+##3. View 
 
 In first picture, we have a form for sign up. Due to I have to upload an user image, we need to build it first. Then, UserImage's attributes need to be filled. And I will use some javascript methods for editing so I write some div elements such as "fake-button-upload", "fake-button-edit". Also, I need to popup a image for user editing. Below ".uploaded" codes are used for popup. Finally, you can see I setup some ids, yap~ for javascript. 
 
@@ -135,7 +136,7 @@ In first picture, we have a form for sign up. Due to I have to upload an user im
           .edit-desc 請將想要顯示的範圍拖曳至中心圓圈處！
           .fake-button-edit-ok 設為個人照
 
-###4. CSS
+##4. CSS
 
 **app/assets/stylesheets/front/users/registrations.css.coffee**
 
@@ -218,7 +219,7 @@ You can ignore them but you should notice that some classes are display none suc
       }
     }
 
-###5. Javascript -> most important part for cropping image and previewing image.
+##5. Javascript -> most important part for cropping image and previewing image.
 
 First, we need to require **jquery.Jcrop** 
 
@@ -408,7 +409,7 @@ whole code **app/assets/javascripts/users/registrations.js.coffee**
         initPreviewImageEdit();
   
   
-###6. Carrierwave uploader 
+##6. Carrierwave uploader 
 
 As you can see I create a new version named _customize and it only do its job when model(UserImage model) has crop_x, crop_y, crop_w and crop_h attributes. And I use minimagick crop method to crop image before upload.
 
@@ -448,11 +449,11 @@ As you can see I create a new version named _customize and it only do its job wh
     end
     
 
-###7. Final step: Upload Image
+##7. Final step: Upload Image
 
 Do you remember that I skip upload callback in **app/models/user_image.rb** ? 
 
-  skip_callback :save, :after, :store_file!  
+    skip_callback :save, :after, :store_file!  
 
 So, when should we do upload job?
 
@@ -475,7 +476,7 @@ Answer is after user save !
       ... 
     end
   
-###8. Don't forgot ...
+##8. Don't forgot ...
 
 
 Since we use Devise for sign up, and we use nested attributes, we need to tell Devise permitted parameters.

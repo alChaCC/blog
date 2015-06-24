@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Ruby on Rails | AlohaCC]]></title>
   <link href="http://ccaloha.cc/blog/categories/ruby-on-rails/atom.xml" rel="self"/>
   <link href="http://ccaloha.cc/"/>
-  <updated>2015-06-25T01:24:13+08:00</updated>
+  <updated>2015-06-25T01:30:45+08:00</updated>
   <id>http://ccaloha.cc/</id>
   <author>
     <name><![CDATA[Aloha]]></name>
@@ -28,35 +28,38 @@
 </ol>
 
 
-<h2>What I done in this article</h2>
+<h1>What I done in this article</h1>
 
-<h3>1. Click Upload Image</h3>
+<h2>1. Click Upload Image</h2>
 
 <p><img src="https://dl.dropboxusercontent.com/u/22307926/Blog%20Image/Crop%20User%20Avatar%20and%20Upload%20via%20Carrierwave%20while%20creating%20user%20using%20Ruby%20on%20Rails/Step1%20click_upload_image.png" alt="Step 1. click_upload_image"></p>
 
-<h3>2. Choose Image And Preview</h3>
+<h2>2. Choose Image And Preview</h2>
 
 <p><img src="https://dl.dropboxusercontent.com/u/22307926/Blog%20Image/Crop%20User%20Avatar%20and%20Upload%20via%20Carrierwave%20while%20creating%20user%20using%20Ruby%20on%20Rails/Step2%20choose%20image%20and%20preview.png" alt="Step 2. choose image and preview"></p>
 
-<h3>3. Edit Avatar And Preview Image Synchronously</h3>
+<h2>3. Edit Avatar And Preview Image Synchronously</h2>
 
 <p><img src="https://dl.dropboxusercontent.com/u/22307926/Blog%20Image/Crop%20User%20Avatar%20and%20Upload%20via%20Carrierwave%20while%20creating%20user%20using%20Ruby%20on%20Rails/Step3%20edit%20avatar%20and%20preview%20sync.png" alt="Step 3. Edit Avatar And Preview Image Synchronously"></p>
 
-<h3>4. Upload to AWS S3</h3>
+<h2>4. Upload to AWS S3</h2>
 
 <p><img src="https://dl.dropboxusercontent.com/u/22307926/Blog%20Image/Crop%20User%20Avatar%20and%20Upload%20via%20Carrierwave%20while%20creating%20user%20using%20Ruby%20on%20Rails/Step4%20upload%20to%20AWS%20S3.png" alt="Step 4. Upload to AWS S3"></p>
 
-<h3>5. Image Cropped And Uploaded</h3>
+<h2>5. Image Cropped And Uploaded</h2>
 
 <p><img src="https://dl.dropboxusercontent.com/u/22307926/Blog%20Image/Crop%20User%20Avatar%20and%20Upload%20via%20Carrierwave%20while%20creating%20user%20using%20Ruby%20on%20Rails/Step5%20image%20cropped%20and%20uploaded.png" alt="Step 5. Image Cropped And Uploaded"></p>
 
-<h2>Steps</h2>
+<!-- more -->
 
-<h3>0. Description</h3>
+
+<h1>Steps</h1>
+
+<h2>0. Description</h2>
 
 <p>I use Devise for sign up, Carrierwave for upload image and Jcrop for image selection. There is an User model and user has one UserImage model. Carrierwave uploader is mounted on UserImage. In this tutorial, I'll not go through upload things. You can find lots of resources such as <a href="http://railscasts.com/episodes/253-carrierwave-file-uploads">carrierwave-file-uploads</a>. Also, I'll not show all devise registration and popup(modal) things. Still, there are many resources on the Internet. Ok, let's go.</p>
 
-<h3>1. Gemfile</h3>
+<h2>1. Gemfile</h2>
 
 <p>I use jcrop for cropping image. So, add jcrop library to <em>Gemfile</em>.</p>
 
@@ -65,7 +68,7 @@
 
 <p>ps. don't forgot <strong>bundle install</strong></p>
 
-<h3>2. Model</h3>
+<h2>2. Model</h2>
 
 <p>In User model, I only need to tell that User has a main image and it refer to UserImage model, and user signup form contains UserImage's attributes, therefore, User model should accept these nested attributes. And I create a method for building image used in upload form(you can see usage in view)</p>
 
@@ -124,7 +127,7 @@ class UserImage &lt; ActiveRecord::Base
 end
 </code></pre>
 
-<h3>3. View</h3>
+<h2>3. View</h2>
 
 <p>In first picture, we have a form for sign up. Due to I have to upload an user image, we need to build it first. Then, UserImage's attributes need to be filled. And I will use some javascript methods for editing so I write some div elements such as "fake-button-upload", "fake-button-edit". Also, I need to popup a image for user editing. Below ".uploaded" codes are used for popup. Finally, you can see I setup some ids, yap~ for javascript.</p>
 
@@ -149,7 +152,7 @@ end
       .fake-button-edit-ok 設為個人照
 </code></pre>
 
-<h3>4. CSS</h3>
+<h2>4. CSS</h2>
 
 <p><strong>app/assets/stylesheets/front/users/registrations.css.coffee</strong></p>
 
@@ -234,7 +237,7 @@ end
 }
 </code></pre>
 
-<h3>5. Javascript -> most important part for cropping image and previewing image.</h3>
+<h2>5. Javascript -> most important part for cropping image and previewing image.</h2>
 
 <p>First, we need to require <strong>jquery.Jcrop</strong></p>
 
@@ -426,7 +429,7 @@ jQuery -&gt;
     initPreviewImageEdit();
 </code></pre>
 
-<h3>6. Carrierwave uploader</h3>
+<h2>6. Carrierwave uploader</h2>
 
 <p>As you can see I create a new version named _customize and it only do its job when model(UserImage model) has crop_x, crop_y, crop_w and crop_h attributes. And I use minimagick crop method to crop image before upload.</p>
 
@@ -465,11 +468,12 @@ jQuery -&gt;
 end
 </code></pre>
 
-<h3>7. Final step: Upload Image</h3>
+<h2>7. Final step: Upload Image</h2>
 
 <p>Do you remember that I skip upload callback in <strong>app/models/user_image.rb</strong> ?</p>
 
-<p>  skip_callback :save, :after, :store_file!</p>
+<pre><code>skip_callback :save, :after, :store_file!  
+</code></pre>
 
 <p>So, when should we do upload job?</p>
 
@@ -493,7 +497,7 @@ end
 end
 </code></pre>
 
-<h3>8. Don't forgot ...</h3>
+<h2>8. Don't forgot ...</h2>
 
 <p>Since we use Devise for sign up, and we use nested attributes, we need to tell Devise permitted parameters.</p>
 
