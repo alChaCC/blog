@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Ruby on Rails | AlohaCC]]></title>
   <link href="http://ccaloha.cc/blog/categories/ruby-on-rails/atom.xml" rel="self"/>
   <link href="http://ccaloha.cc/"/>
-  <updated>2015-06-25T01:30:45+08:00</updated>
+  <updated>2015-07-14T19:53:11+08:00</updated>
   <id>http://ccaloha.cc/</id>
   <author>
     <name><![CDATA[Aloha]]></name>
@@ -12,6 +12,335 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[HowTo Performance Test in Rails 4]]></title>
+    <link href="http://ccaloha.cc/blog/2015/07/14/howto-performance-test-in-rails-4/"/>
+    <updated>2015-07-14T19:35:26+08:00</updated>
+    <id>http://ccaloha.cc/blog/2015/07/14/howto-performance-test-in-rails-4</id>
+    <content type="html"><![CDATA[<p>Inspired by</p>
+
+<ol>
+<li><p><a href="http://tekin.co.uk/2014/09/performance-test-rails-against-real-data/">PERFORMANCE TESTING RAILS AGAINST REAL DATA</a></p></li>
+<li><p><a href="http://railscasts.com/episodes/411-performance-testing">Performance Testing</a></p></li>
+<li><a href="http://railscasts.com/episodes/368-miniprofiler">http://railscasts.com/episodes/368-miniprofiler</a></li>
+</ol>
+
+
+<p><img src="https://dl.dropboxusercontent.com/u/22307926/Blog%20Image/Rails%20performance%20test/rails-perftest%20and%20ruby-prof.png"></p>
+
+<!-- more -->
+
+
+<h2>First thing you should know</h2>
+
+<p>In Rails 4, performance test functionality was extracted out ! So, you need to add</p>
+
+<pre><code># Gemfile
+gem 'rails-perftest' ,group: :benchmark
+</code></pre>
+
+<p>And if you want your <strong>rails-perftest</strong> show memory usage. You also need to add</p>
+
+<pre><code># Gemfile
+gem 'ruby-prof' ,group: :benchmark
+</code></pre>
+
+<p><strong>[! Important !]</strong> In my environment,</p>
+
+<pre><code>rails-4.1.6, ruby-2.2.2.133, x86_64-darwin14
+</code></pre>
+
+<p>After doing lots of efforts, I finally can get memory usage info.</p>
+
+<p>But I fount this issue. please check: <a href="https://github.com/ruby-prof/ruby-prof/issues/165">https://github.com/ruby-prof/ruby-prof/issues/165</a>.</p>
+
+<p>And I'm not sure that my memory usage is correct or not.</p>
+
+<p>But I'll still show you how I do these jobs. Maybe after fixing the issue, we can get correct informantion.</p>
+
+<h2>Create a new environment for performance test</h2>
+
+<h3>create a new file:  <strong>config/environments/benchmark.rb</strong></h3>
+
+<p>In fact, all contents are copied from config/environments/production.rb since we need to know performance in real world.</p>
+
+<pre><code>Rails.application.configure do
+  # Settings specified here will take precedence over those in config/application.rb.
+
+  # Code is not reloaded between requests.
+  config.cache_classes = true
+
+  # Eager load code on boot. This eager loads most of Rails and
+  # your application in memory, allowing both threaded web servers
+  # and those relying on copy on write to perform better.
+  # Rake tasks automatically ignore this option for performance.
+  config.eager_load = true
+
+  # Full error reports are disabled and caching is turned on.
+  config.consider_all_requests_local       = false
+  config.action_controller.perform_caching = true
+
+  # Enable Rack::Cache to put a simple HTTP cache in front of your application
+  # Add `rack-cache` to your Gemfile before enabling this.
+  # For large-scale production use, consider using a caching reverse proxy like nginx, varnish or squid.
+  # config.action_dispatch.rack_cache = true
+
+  # Disable Rails's static asset server (Apache or nginx will already do this).
+  config.serve_static_assets = false
+
+  # Compress JavaScripts and CSS.
+  config.assets.js_compressor = :uglifier
+  # config.assets.css_compressor = :sass
+
+  # Do not fallback to assets pipeline if a precompiled asset is missed.
+  config.assets.compile = false
+
+  # Generate digests for assets URLs.
+  config.assets.digest = true
+
+  # `config.assets.precompile` and `config.assets.version` have moved to config/initializers/assets.rb
+
+  # Specifies the header that your server uses for sending files.
+  # config.action_dispatch.x_sendfile_header = "X-Sendfile" # for apache
+  # config.action_dispatch.x_sendfile_header = 'X-Accel-Redirect' # for nginx
+
+  # Force all access to the app over SSL, use Strict-Transport-Security, and use secure cookies.
+  config.force_ssl = true
+
+  # Set to :debug to see everything in the log.
+  config.log_level = :info
+
+  # Prepend all log lines with the following tags.
+  # config.log_tags = [ :subdomain, :uuid ]
+
+  # Use a different logger for distributed setups.
+  # config.logger = ActiveSupport::TaggedLogging.new(SyslogLogger.new)
+
+  # Use a different cache store in production.
+  # config.cache_store = :mem_cache_store
+  config.cache_store = :dalli_store
+
+  # Enable serving of images, stylesheets, and JavaScripts from an asset server.
+  # config.action_controller.asset_host = "http://assets.example.com"
+
+  # Ignore bad email addresses and do not raise email delivery errors.
+  # Set this to true and configure the email server for immediate delivery to raise delivery errors.
+  # config.action_mailer.raise_delivery_errors = false
+
+  # Enable locale fallbacks for I18n (makes lookups for any locale fall back to
+  # the I18n.default_locale when a translation cannot be found).
+  config.i18n.fallbacks = true
+
+  # Send deprecation notices to registered listeners.
+  config.active_support.deprecation = :notify
+
+  # Disable automatic flushing of the log to improve performance.
+  # config.autoflush_log = false
+
+  # Use default logging formatter so that PID and timestamp are not suppressed.
+  config.log_formatter = ::Logger::Formatter.new
+
+  # Do not dump schema after migrations.
+  config.active_record.dump_schema_after_migration = false
+
+end
+</code></pre>
+
+<h3>add configuration:  <strong>config/database.yml</strong></h3>
+
+<pre><code>default: &amp;default
+  adapter: mysql2
+  encoding: utf8
+  host: 127.0.0.1
+  username: root
+  password: your_password
+
+staging:
+  &lt;&lt;: *default
+  database: your_project_development
+
+development:
+  &lt;&lt;: *default
+  database: your_project_development
+
+test:
+  &lt;&lt;: *default
+  database: your_project_test
+
+production:
+  &lt;&lt;: *default
+  database: your_project_production
+
+benchmark:
+  &lt;&lt;: *default
+  database: your_project_production 
+</code></pre>
+
+<h2>Create a test helper file to setup your benchmark tests:</h2>
+
+<p>create a new file: <strong>test/benchmark_helper.rb</strong></p>
+
+<pre><code>ENV["RAILS_ENV"] = "benchmark"
+require File.expand_path('../../config/environment', __FILE__)
+require 'rails/test_help'
+require 'rails/performance_test_help'
+
+class ActionDispatch::PerformanceTest
+   self.profile_options = { runs: 5, metrics: [:wall_time, :memory,:objects, :gc_runs, :gc_time],
+                            output: 'tmp/performance', formats: [:flat, :graph_html, :call_tree, :call_stack] }
+end
+</code></pre>
+
+<h2>Create a test file</h2>
+
+<pre><code>rails generate performance_test page
+</code></pre>
+
+<p>and it will create a file named <strong>page.rb</strong> under <strong>test/performance/</strong></p>
+
+<pre><code>require 'benchmark_helper'
+
+class PageTest &lt; ActionDispatch::PerformanceTest
+  test "homepage" do
+    get '/'
+  end
+end
+</code></pre>
+
+<h2>Add a rake task for running your real-world benchmarks (optional)</h2>
+
+<p>lib/tasks/test_benchmark.rake</p>
+
+<pre><code>Rake::TestTask.new(:real_world_benchmark =&gt; ['test:benchmark_mode']) do |t|
+    t.libs &lt;&lt; 'test'
+    t.pattern = 'test/performance/**/*_test.rb'
+  end
+end
+</code></pre>
+
+<h2>Update your Rakefile</h2>
+
+<p>Rails 4 no longer defines db:test:prepare, however, <strong>rails-perftest</strong> still use <strong>test:prepare</strong>. So, we need to workaround.</p>
+
+<pre><code>require File.expand_path('../config/application', __FILE__)
+
+Rails.application.load_tasks
+
+Rake.application.instance_eval do
+  # Remove test:prepare
+  @tasks['test:benchmark'].prerequisites.shift if @tasks['test:benchmark']
+  @tasks['test:profile'].prerequisites.shift if @tasks['test:profile']
+end
+</code></pre>
+
+<h2>For memory measurement, we need the railsexpress patches.</h2>
+
+<p><a href="https://github.com/skaes/rvm-patchsets">https://github.com/skaes/rvm-patchsets</a></p>
+
+<pre><code>rvm get stable
+</code></pre>
+
+<p>But my rvm isn't update to date correctly, So I use</p>
+
+<pre><code>cd /tmp
+git clone https://github.com/skaes/rvm-patchsets.git
+cd rvm-patchsets
+./install.sh
+</code></pre>
+
+<p>Then I run</p>
+
+<pre><code>rvm reinstall 2.2.2 --patch railsexpress
+</code></pre>
+
+<p>After reinstall Ruby, we need to recreate our gemset</p>
+
+<pre><code>cd your_project
+rvm gemset create your_project
+gem install bundler
+bundle install
+</code></pre>
+
+<h2>Finally</h2>
+
+<p>These command should work~</p>
+
+<pre><code>RAILS_ENV=benchmark bundle exec rake test:real_world_benchmark
+RAILS_ENV=benchmark bundle exec rake test:benchmark
+RAILS_ENV=benchmark bundle exec rake test:profile
+</code></pre>
+
+<p>Then these command will create some files under <strong>your_project/tmp/performance</strong></p>
+
+<p>PS. Please notice that before performance test, you should make sure that there are no any errors while visit the page.</p>
+
+<h2>Without using "rails-perftest", you might use..</h2>
+
+<h3>if You need detailed information, you can use "request_profiler"</h3>
+
+<p>inspired by <a href="https://www.coffeepowered.net/2013/08/02/ruby-prof-for-rails/">https://www.coffeepowered.net/2013/08/02/ruby-prof-for-rails/</a></p>
+
+<p>we can use <strong>request_profiler</strong>, which allows you to profile rack requests using ruby-prof.</p>
+
+<pre><code>gem 'request_profiler'
+</code></pre>
+
+<p>And you might need to add this line into <strong>config/enviornments/benchmark.rb</strong></p>
+
+<pre><code>config.middleware.use "Rack::RequestProfiler"
+</code></pre>
+
+<p>On every page you want to profile, just add <strong>?profile_request=true</strong></p>
+
+<p>for example, we want to profile "/" , just key</p>
+
+<pre><code>https://localhost:3000/?profile_request=true
+</code></pre>
+
+<p>then you wiil see file named  <strong>2015-07-14-16-49-19---profile_request=true.html</strong> under <strong>tmp/performance/</strong></p>
+
+<p><img src="https://dl.dropboxusercontent.com/u/22307926/Blog%20Image/Rails%20performance%20test/profile_request.png"></p>
+
+<h3>if You need to quickly and easily find out what is bottleneck,  "rack-mini-profiler" is best choice.</h3>
+
+<p><strong>Gemfile</strong></p>
+
+<pre><code>gem 'rack-mini-profiler', require: false  
+</code></pre>
+
+<p>Create a new file <strong>config/initializers/rack_profiler.rb</strong></p>
+
+<pre><code>if Rails.env == 'development' || Rails.env == 'benchmark'
+  require 'rack-mini-profiler'
+
+  # initialization is skipped so trigger it
+  Rack::MiniProfilerRails.initialize!(Rails.application)
+end
+</code></pre>
+
+<p>Add to <strong>app/controllers/application_controller.rb</strong></p>
+
+<pre><code>before_action :authorize_for_miniprofiler
+def authorize_for_miniprofiler
+  if Rails.env == 'development' || Rails.env == 'benchmark'
+    Rack::MiniProfiler.authorize_request
+  end
+end
+</code></pre>
+
+<p>now you can see this under development and benchmark environments</p>
+
+<p><img src="https://dl.dropboxusercontent.com/u/22307926/Blog%20Image/Rails%20performance%20test/rack-mini-profiler.png"></p>
+
+<h2>You might want to read</h2>
+
+<ol>
+<li><a href="http://code.oneapm.com/ruby/2015/04/08/ruby-profilers/">http://code.oneapm.com/ruby/2015/04/08/ruby-profilers/</a></li>
+</ol>
+
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[Sign up by Devise and Crop User Avatar then Upload by Carrierwave using Ruby on Rails]]></title>
@@ -755,408 +1084,6 @@ end
 
 <iframe id="iframe_container" frameborder="0" webkitallowfullscreen="" mozallowfullscreen="" allowfullscreen="" width="550" height="400" src="https://prezi.com/embed/w0azjc2vz3tf/?bgcolor=ffffff&amp;lock_to_path=0&amp;autoplay=0&amp;autohide_ctrls=0#"></iframe>
 
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[Integrate Ruby on Rails with Google Analytics API]]></title>
-    <link href="http://ccaloha.cc/blog/2015/04/09/integrate-ruby-on-rails-with-google-analytics-api/"/>
-    <updated>2015-04-09T22:32:24+08:00</updated>
-    <id>http://ccaloha.cc/blog/2015/04/09/integrate-ruby-on-rails-with-google-analytics-api</id>
-    <content type="html"><![CDATA[<p>In this article, I try to get some Google Analytics data via Google API. Then, I saved data into MongoDB waiting for further calculation.</p>
-
-<p>And you are able to learn</p>
-
-<ol>
-<li>How I do Google API pagination</li>
-<li>How I use module to build flexible function</li>
-<li>How I use Google Query Explorer to speed up development</li>
-<li>How to apply for google API access</li>
-</ol>
-
-
-<p>Let's check it out.</p>
-
-<!-- more -->
-
-
-<h2>Step 1. Apply Google Analytics API access authorization</h2>
-
-<h3>1-1 go to <a href="https://code.google.com/apis/console/">Google API console</a></h3>
-
-<h3>1-2 Find Google Analytics API</h3>
-
-<p> <img src="https://dl.dropboxusercontent.com/u/22307926/Blog%20Image/Integrate%20Ruby%20on%20Rails%20with%20Google%20Analytics%20API/find_google_api.png" alt="find google api"></p>
-
-<h3>1-3 Enable Google Analytics API</h3>
-
-<p> <img src="https://dl.dropboxusercontent.com/u/22307926/Blog%20Image/Integrate%20Ruby%20on%20Rails%20with%20Google%20Analytics%20API/Enable%20Google%20Analytic%20API.png" alt="enable google analytics API"></p>
-
-<h3>1-4 Create New Client ID</h3>
-
-<p><img src="https://dl.dropboxusercontent.com/u/22307926/Blog%20Image/Integrate%20Ruby%20on%20Rails%20with%20Google%20Analytics%20API/Create%20New%20Client%20ID.png" alt="Create New Client ID"></p>
-
-<h3>1-5 Choose client type</h3>
-
-<p>Since this is for server-to-server usage, I choose this</p>
-
-<p><img src="https://dl.dropboxusercontent.com/u/22307926/Blog%20Image/Integrate%20Ruby%20on%20Rails%20with%20Google%20Analytics%20API/Choose%20client%20type.png" alt="Choose client type"></p>
-
-<h3>1-6 Download key</h3>
-
-<p><img src="https://dl.dropboxusercontent.com/u/22307926/Blog%20Image/Integrate%20Ruby%20on%20Rails%20with%20Google%20Analytics%20API/download%20key.png" alt="download key"></p>
-
-<p>ps. Since I use Ruby on Rails, so I put it in <strong>config/ga_api_key_20150408.p12</strong></p>
-
-<h3>1-7 Add API user into your GA user group</h3>
-
-<p><img src="https://dl.dropboxusercontent.com/u/22307926/Blog%20Image/Integrate%20Ruby%20on%20Rails%20with%20Google%20Analytics%20API/Add%20API%20user%20into%20your%20GA%20user%20group.png"></p>
-
-<h2>2. [TIPS] Use Google Query Explorer to speed up development</h2>
-
-<h3>1. Go to <a href="https://ga-dev-tools.appspot.com/query-explorer/">Google Query Explorer</a></h3>
-
-<h3>2. Get your view id</h3>
-
-<p><img src="https://dl.dropboxusercontent.com/u/22307926/Blog%20Image/Integrate%20Ruby%20on%20Rails%20with%20Google%20Analytics%20API/Get%20your%20view%20id.png"></p>
-
-<h3>3. Try your query parameter first and know how your data look like</h3>
-
-<p><img src="https://dl.dropboxusercontent.com/u/22307926/Blog%20Image/Integrate%20Ruby%20on%20Rails%20with%20Google%20Analytics%20API/Try%20your%20query%20parameter%20first.png"></p>
-
-<p>And it provides a easy tool that you don't need to remember any parameters.</p>
-
-<p><img src="https://dl.dropboxusercontent.com/u/22307926/Blog%20Image/Integrate%20Ruby%20on%20Rails%20with%20Google%20Analytics%20API/parameter%20tool.png"></p>
-
-<h2>3. Let's write a sample code</h2>
-
-<h3>3-1 Add gem to Gemfile</h3>
-
-<pre><code>gem 'google-api-client'
-</code></pre>
-
-<h3>3-2 create a rb file</h3>
-
-<p>I update some codes copied from this page.<a href="https://gist.github.com/joost/5344705">https://gist.github.com/joost/5344705</a></p>
-
-<pre><code>  require 'google/api_client'
-  require 'date'
-
-  client = Google::APIClient.new(:application_name =&gt; 'Urcosme-GA-sync', :application_version =&gt; '1')
-
-  key_file = File.join("#{Rails.root}/config", 'ga_api_key_20150408.p12')
-  key = Google::APIClient::PKCS12.load_key(key_file, 'notasecret')
-  service_account = Google::APIClient::JWTAsserter.new(
-      'hello@developer.gserviceaccount.com',
-      ['https://www.googleapis.com/auth/analytics.readonly', 'https://www.googleapis.com/auth/prediction'],
-      key)
-  client.authorization = service_account.authorize
-
-  analytics = client.discovered_api('analytics', 'v3')
-
-  parameters = {
-        'ids'         =&gt; "ga:12345",
-        'start-date'  =&gt; (Date.today - 30).strftime("%Y-%m-%d"),
-        'end-date'    =&gt; Time.now.strftime("%Y-%m-%d"),
-        'metrics'     =&gt; "ga:avgTimeOnPage",
-        'filters'     =&gt; "ga:pagePath=~/"
-      }
-  result = client.execute(:api_method =&gt; analytics.data.ga.get, :parameters =&gt; parameters)
-</code></pre>
-
-<p>This sample code demonstrates how <strong>google-api-client</strong> work.
-However, I need to fetch different kinds of data such as specific pageviews, event, and campaign. I have to refactor it.</p>
-
-<h2>4. Let's build a flexible code</h2>
-
-<h2>4-1 create a module file: "ga.rb" in /lib/</h2>
-
-<p>In above code, it can be seperated to 2 parts. One is uniform part, the other is variable part.</p>
-
-<p>Unchange part</p>
-
-<pre><code>@client = Google::APIClient.new(:application_name =&gt; 'Urcosme-GA-sync', :application_version =&gt; '1')
-key_file = File.join("#{Rails.root}/config", 'ga_api_key_20150408.p12')
-key = Google::APIClient::PKCS12.load_key(key_file, 'notasecret')
-service_account = Google::APIClient::JWTAsserter.new(
-          'hello@developer.gserviceaccount.com',
-          ['https://www.googleapis.com/auth/analytics.readonly', 'https://www.googleapis.com/auth/prediction'],
-          key)
-@client.authorization = service_account.authorize
-@analytics = @client.discovered_api('analytics', 'v3')
-</code></pre>
-
-<p>Change part. In this code, I already write some default parameters.
-But, it can be rewrite in other place.</p>
-
-<pre><code>@data_date = Date.today - 1
-@parameters = {
-    'ids'         =&gt; "ga:12345",
-    'start-date'  =&gt; @data_date.strftime("%Y-%m-%d"),
-    'end-date'    =&gt; @data_date.strftime("%Y-%m-%d"),
-    'metrics'     =&gt; "",
-    'dimensions'  =&gt; "",
-    'max-results' =&gt; "10000"
-}
-</code></pre>
-
-<p>And the whole code show as below.</p>
-
-<p><strong>lib/ga.rb</strong></p>
-
-<pre><code>require 'google/api_client'
-require 'date'
-module GoogleAnalytic
-
-  # 每一個GA API執行前，需要初始化
-  def initialize_ga
-    @client = Google::APIClient.new(:application_name =&gt; 'Urcosme-GA-sync', :application_version =&gt; '1')
-    key_file = File.join("#{Rails.root}/config", 'ga_api_key_20150408.p12')
-    key = Google::APIClient::PKCS12.load_key(key_file, 'notasecret')
-    service_account = Google::APIClient::JWTAsserter.new(
-      'hello@developer.gserviceaccount.com',
-      ['https://www.googleapis.com/auth/analytics.readonly', 'https://www.googleapis.com/auth/prediction'],
-      key)
-    @client.authorization = service_account.authorize
-    @analytics = @client.discovered_api('analytics', 'v3')
-    @data_date = Date.today - 1
-    @parameters = {
-        'ids'         =&gt; "ga:12345",
-        'start-date'  =&gt; @data_date.strftime("%Y-%m-%d"),
-        'end-date'    =&gt; @data_date.strftime("%Y-%m-%d"),
-        'metrics'     =&gt; "",
-        'dimensions'  =&gt; "",
-        'max-results' =&gt; "10000"
-      }
-  end
-
-  # 將資料儲存到MongoDB，請複寫我
-  def sync_to_db(result)
-  end
-end
-</code></pre>
-
-<h2>4-2 let's Rails application know our lib</h2>
-
-<p><strong>config/application.rb</strong></p>
-
-<pre><code>module MyAwesomeApp
-  class Application &lt; Rails::Application
-    config.autoload_paths += %W(#{config.root}/lib)   end
-end
-</code></pre>
-
-<h2>4-3 create a model to save API data</h2>
-
-<p>Now I want to get all our campaign data. So I create ...</p>
-
-<p>ps. I use MongoDB as database.</p>
-
-<p><strong>app/models/ga_campaign.rb</strong></p>
-
-<pre><code>class GACampaign
-  include GoogleAnalytic
-  include Mongoid::Document
-  include Mongoid::Timestamps
-  field :campaign_name, type: String      # 廣告活動名稱
-  field :campaign_source, type: String    # 廣告活動來源    
-  field :campaign_medium, type: String    # 廣告活動媒介
-  field :campaign_content, type: String   # 廣告活動內容
-  field :session, type: Integer
-  field :pageview, type: Integer
-  field :data_date, type: Date            # 原始資料的時間
-
-  def get_campaign_from_ga_api
-    initialize_ga
-    @parameters['metrics'] = "ga:pageviews,ga:sessions"
-    @parameters['dimensions'] = "ga:campaign,ga:source,ga:medium,ga:adContent"
-    @parameters['filters'] = "ga:campaign!=(not set)"
-    sync_to_db(@parameters)
-  end
-
-  def sync_to_db(parameters)
-     request = {
-        :api_method =&gt; @analytics.data.ga.get,
-        :parameters =&gt; parameters
-     }
-    result = @client.execute(request)
-    result.data.rows.each do |array_data|
-        GACampaign.create(campaign_name:    array_data[0], 
-                          campaign_source:  array_data[1], 
-                          campaign_medium:  array_data[2],
-                          campaign_content: array_data[3],
-                          session:          array_data[4],
-                          pageview:         array_data[5],
-                          data_date:        @data_date)
-    end
-  end
-end
-</code></pre>
-
-<p>But.... if result is more than max-result (according to google, maximun is 10000 <a href="https://developers.google.com/analytics/devguides/reporting/core/v3/reference#maxResults">see google doc</a>)</p>
-
-<p>How can I do paginate?</p>
-
-<h2>4-4 Google API pagination</h2>
-
-<p>Since, this method will be used in every "GA model" so I put it in <strong>lib/ga.rb</strong></p>
-
-<p>according to GA document</p>
-
-<blockquote><p>If not supplied, the starting index is 1. (Result indexes are 1-based. That is, the first row is row 1, not row 0.) Use this parameter as a pagination mechanism along with the max-results parameter for situations when totalResults exceeds 10,000 and you want to retrieve rows indexed at 10,001 and beyond.</p></blockquote>
-
-<p>here is my method. Not quiet good, but it's working.</p>
-
-<pre><code>def query_paginate(parameters)
-     request = {
-      :api_method =&gt; @analytics.data.ga.get,
-      :parameters =&gt; parameters
-    }
-    count = 0
-    loop do
-      result = @client.execute(request)
-      sync_to_db(result)
-      max_count = result.data.total_results / parameters["max-results"].to_i
-      break if count == max_count
-      count += 1
-      request[:parameters]["start-index"] = parameters["max-results"].to_i * count + 1
-    end
-  end
-</code></pre>
-
-<p>let's see full code.</p>
-
-<pre><code>require 'google/api_client'
-require 'date'
-module GoogleAnalytic
-
-def initialize_ga
-    @client = Google::APIClient.new(:application_name =&gt; 'Urcosme-GA-sync', :application_version =&gt; '1')
-    key_file = File.join("#{Rails.root}/config", 'ga_api_key_20150408.p12')
-    key = Google::APIClient::PKCS12.load_key(key_file, 'notasecret')
-    service_account = Google::APIClient::JWTAsserter.new(
-      'hello@developer.gserviceaccount.com',
-      ['https://www.googleapis.com/auth/analytics.readonly', 'https://www.googleapis.com/auth/prediction'],
-      key)
-    @client.authorization = service_account.authorize
-    @analytics = @client.discovered_api('analytics', 'v3')
-    @data_date = Date.today - 1
-    @parameters = {
-        'ids'         =&gt; "ga:12345",
-        'start-date'  =&gt; @data_date.strftime("%Y-%m-%d"),
-        'end-date'    =&gt; @data_date.strftime("%Y-%m-%d"),
-        'metrics'     =&gt; "",
-        'dimensions'  =&gt; "",
-        'max-results' =&gt; "10000"
-      }
-  end
-
-  # 將資料儲存到MongoDB，請複寫我
-  def sync_to_db(result)
-  end
-
-  # 如果API存取，外加換頁功能，因為GA一次request最多一萬筆資料
-  def query_paginate(parameters)
-     request = {
-      :api_method =&gt; @analytics.data.ga.get,
-      :parameters =&gt; parameters
-    }
-    count = 0
-    loop do
-      result = @client.execute(request)
-      sync_to_db(result)
-      max_count = result.data.total_results / parameters["max-results"].to_i
-      break if count == max_count
-      count += 1
-      request[:parameters]["start-index"] = parameters["max-results"].to_i * count + 1
-    end
-  end
-end
-</code></pre>
-
-<h3>4-5 refactor <strong>app/models/ga_campaign.rb</strong></h3>
-
-<pre><code>class GACampaign
-  include GoogleAnalytic
-  include Mongoid::Document
-  include Mongoid::Timestamps
-  field :campaign_name, type: String      # 廣告活動名稱
-  field :campaign_source, type: String    # 廣告活動來源
-  field :campaign_medium, type: String    # 廣告活動媒介
-  field :campaign_content, type: String   # 廣告活動內容
-  field :session, type: Integer
-  field :pageview, type: Integer
-  field :data_date, type: Date            # 原始資料的時間
-
-  def get_campaign_from_ga_api
-    initialize_ga
-    @parameters['metrics'] = "ga:pageviews,ga:sessions"
-    @parameters['dimensions'] = "ga:campaign,ga:source,ga:medium,ga:adContent"
-    @parameters['filters'] = "ga:campaign!=(not set)"
-    query_paginate(@parameters)
-  end
-
-  def sync_to_db(result)
-        result.data.rows.each do |array_data|
-        GACampaign.create(campaign_name:    array_data[0], 
-                          campaign_source:  array_data[1], 
-                          campaign_medium:  array_data[2],
-                          campaign_content: array_data[3],
-                          session:          array_data[4],
-                          pageview:         array_data[5],
-                          data_date:        @data_date)
-    end
-  end
-end
-</code></pre>
-
-<h3>4-6 how to use</h3>
-
-<pre><code>ga_campaign = GACampaign.new
-ga_campaign.get_campaign_from_ga_api
-</code></pre>
-
-<h3>4-7 other example: fetch GA Event data</h3>
-
-<p>The things I have to change are <strong>@parameters</strong> and <strong>sync_to_db</strong></p>
-
-<p>It's easy, right~</p>
-
-<p><strong>app/models/ga_event.rb</strong></p>
-
-<pre><code>class GAEvent
-  include GoogleAnalytic
-  include Mongoid::Document
-  include Mongoid::Timestamps
-  field :event_category, type: String      # 事件類別
-  field :event_label, type: String         # 事件標籤
-  field :event_action, type: String        # 事件動作
-  field :total_events, type: Integer       
-  field :unique_events, type: Integer
-  field :data_date, type: Date            # 原始資料的時間
-
-  def get_event_from_ga_api
-    initialize_ga
-    @parameters['metrics'] = "ga:totalEvents,ga:uniqueEvents"
-    @parameters['dimensions'] = "ga:eventCategory,ga:eventLabel,ga:eventAction"
-    @parameters['filters'] = "ga:eventCategory==test"
-    query_paginate(@parameters)
-  end
-
-  def sync_to_db(result)
-    result.data.rows.each do |array_data|
-      GAEvent.create(event_category:      array_data[0], 
-                     event_label:        array_data[1], 
-                     event_action:       array_data[2],
-                     total_events:       array_data[3],
-                     unique_events:      array_data[4],
-                     data_date:        @data_date)
-
-    end
-  end
-
-end
-</code></pre>
 ]]></content>
   </entry>
   

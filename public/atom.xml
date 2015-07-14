@@ -4,7 +4,7 @@
   <title><![CDATA[AlohaCC]]></title>
   <link href="http://ccaloha.cc/atom.xml" rel="self"/>
   <link href="http://ccaloha.cc/"/>
-  <updated>2015-06-25T01:30:45+08:00</updated>
+  <updated>2015-07-14T19:53:11+08:00</updated>
   <id>http://ccaloha.cc/</id>
   <author>
     <name><![CDATA[Aloha]]></name>
@@ -12,6 +12,335 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[HowTo Performance Test in Rails 4]]></title>
+    <link href="http://ccaloha.cc/blog/2015/07/14/howto-performance-test-in-rails-4/"/>
+    <updated>2015-07-14T19:35:26+08:00</updated>
+    <id>http://ccaloha.cc/blog/2015/07/14/howto-performance-test-in-rails-4</id>
+    <content type="html"><![CDATA[<p>Inspired by</p>
+
+<ol>
+<li><p><a href="http://tekin.co.uk/2014/09/performance-test-rails-against-real-data/">PERFORMANCE TESTING RAILS AGAINST REAL DATA</a></p></li>
+<li><p><a href="http://railscasts.com/episodes/411-performance-testing">Performance Testing</a></p></li>
+<li><a href="http://railscasts.com/episodes/368-miniprofiler">http://railscasts.com/episodes/368-miniprofiler</a></li>
+</ol>
+
+
+<p><img src="https://dl.dropboxusercontent.com/u/22307926/Blog%20Image/Rails%20performance%20test/rails-perftest%20and%20ruby-prof.png"></p>
+
+<!-- more -->
+
+
+<h2>First thing you should know</h2>
+
+<p>In Rails 4, performance test functionality was extracted out ! So, you need to add</p>
+
+<pre><code># Gemfile
+gem 'rails-perftest' ,group: :benchmark
+</code></pre>
+
+<p>And if you want your <strong>rails-perftest</strong> show memory usage. You also need to add</p>
+
+<pre><code># Gemfile
+gem 'ruby-prof' ,group: :benchmark
+</code></pre>
+
+<p><strong>[! Important !]</strong> In my environment,</p>
+
+<pre><code>rails-4.1.6, ruby-2.2.2.133, x86_64-darwin14
+</code></pre>
+
+<p>After doing lots of efforts, I finally can get memory usage info.</p>
+
+<p>But I fount this issue. please check: <a href="https://github.com/ruby-prof/ruby-prof/issues/165">https://github.com/ruby-prof/ruby-prof/issues/165</a>.</p>
+
+<p>And I&#8217;m not sure that my memory usage is correct or not.</p>
+
+<p>But I&#8217;ll still show you how I do these jobs. Maybe after fixing the issue, we can get correct informantion.</p>
+
+<h2>Create a new environment for performance test</h2>
+
+<h3>create a new file:  <strong>config/environments/benchmark.rb</strong></h3>
+
+<p>In fact, all contents are copied from config/environments/production.rb since we need to know performance in real world.</p>
+
+<pre><code>Rails.application.configure do
+  # Settings specified here will take precedence over those in config/application.rb.
+
+  # Code is not reloaded between requests.
+  config.cache_classes = true
+
+  # Eager load code on boot. This eager loads most of Rails and
+  # your application in memory, allowing both threaded web servers
+  # and those relying on copy on write to perform better.
+  # Rake tasks automatically ignore this option for performance.
+  config.eager_load = true
+
+  # Full error reports are disabled and caching is turned on.
+  config.consider_all_requests_local       = false
+  config.action_controller.perform_caching = true
+
+  # Enable Rack::Cache to put a simple HTTP cache in front of your application
+  # Add `rack-cache` to your Gemfile before enabling this.
+  # For large-scale production use, consider using a caching reverse proxy like nginx, varnish or squid.
+  # config.action_dispatch.rack_cache = true
+
+  # Disable Rails's static asset server (Apache or nginx will already do this).
+  config.serve_static_assets = false
+
+  # Compress JavaScripts and CSS.
+  config.assets.js_compressor = :uglifier
+  # config.assets.css_compressor = :sass
+
+  # Do not fallback to assets pipeline if a precompiled asset is missed.
+  config.assets.compile = false
+
+  # Generate digests for assets URLs.
+  config.assets.digest = true
+
+  # `config.assets.precompile` and `config.assets.version` have moved to config/initializers/assets.rb
+
+  # Specifies the header that your server uses for sending files.
+  # config.action_dispatch.x_sendfile_header = "X-Sendfile" # for apache
+  # config.action_dispatch.x_sendfile_header = 'X-Accel-Redirect' # for nginx
+
+  # Force all access to the app over SSL, use Strict-Transport-Security, and use secure cookies.
+  config.force_ssl = true
+
+  # Set to :debug to see everything in the log.
+  config.log_level = :info
+
+  # Prepend all log lines with the following tags.
+  # config.log_tags = [ :subdomain, :uuid ]
+
+  # Use a different logger for distributed setups.
+  # config.logger = ActiveSupport::TaggedLogging.new(SyslogLogger.new)
+
+  # Use a different cache store in production.
+  # config.cache_store = :mem_cache_store
+  config.cache_store = :dalli_store
+
+  # Enable serving of images, stylesheets, and JavaScripts from an asset server.
+  # config.action_controller.asset_host = "http://assets.example.com"
+
+  # Ignore bad email addresses and do not raise email delivery errors.
+  # Set this to true and configure the email server for immediate delivery to raise delivery errors.
+  # config.action_mailer.raise_delivery_errors = false
+
+  # Enable locale fallbacks for I18n (makes lookups for any locale fall back to
+  # the I18n.default_locale when a translation cannot be found).
+  config.i18n.fallbacks = true
+
+  # Send deprecation notices to registered listeners.
+  config.active_support.deprecation = :notify
+
+  # Disable automatic flushing of the log to improve performance.
+  # config.autoflush_log = false
+
+  # Use default logging formatter so that PID and timestamp are not suppressed.
+  config.log_formatter = ::Logger::Formatter.new
+
+  # Do not dump schema after migrations.
+  config.active_record.dump_schema_after_migration = false
+
+end
+</code></pre>
+
+<h3>add configuration:  <strong>config/database.yml</strong></h3>
+
+<pre><code>default: &amp;default
+  adapter: mysql2
+  encoding: utf8
+  host: 127.0.0.1
+  username: root
+  password: your_password
+
+staging:
+  &lt;&lt;: *default
+  database: your_project_development
+
+development:
+  &lt;&lt;: *default
+  database: your_project_development
+
+test:
+  &lt;&lt;: *default
+  database: your_project_test
+
+production:
+  &lt;&lt;: *default
+  database: your_project_production
+
+benchmark:
+  &lt;&lt;: *default
+  database: your_project_production 
+</code></pre>
+
+<h2>Create a test helper file to setup your benchmark tests:</h2>
+
+<p>create a new file: <strong>test/benchmark_helper.rb</strong></p>
+
+<pre><code>ENV["RAILS_ENV"] = "benchmark"
+require File.expand_path('../../config/environment', __FILE__)
+require 'rails/test_help'
+require 'rails/performance_test_help'
+
+class ActionDispatch::PerformanceTest
+   self.profile_options = { runs: 5, metrics: [:wall_time, :memory,:objects, :gc_runs, :gc_time],
+                            output: 'tmp/performance', formats: [:flat, :graph_html, :call_tree, :call_stack] }
+end
+</code></pre>
+
+<h2>Create a test file</h2>
+
+<pre><code>rails generate performance_test page
+</code></pre>
+
+<p>and it will create a file named <strong>page.rb</strong> under <strong>test/performance/</strong></p>
+
+<pre><code>require 'benchmark_helper'
+
+class PageTest &lt; ActionDispatch::PerformanceTest
+  test "homepage" do
+    get '/'
+  end
+end
+</code></pre>
+
+<h2>Add a rake task for running your real-world benchmarks (optional)</h2>
+
+<p>lib/tasks/test_benchmark.rake</p>
+
+<pre><code>Rake::TestTask.new(:real_world_benchmark =&gt; ['test:benchmark_mode']) do |t|
+    t.libs &lt;&lt; 'test'
+    t.pattern = 'test/performance/**/*_test.rb'
+  end
+end
+</code></pre>
+
+<h2>Update your Rakefile</h2>
+
+<p>Rails 4 no longer defines db:test:prepare, however, <strong>rails-perftest</strong> still use <strong>test:prepare</strong>. So, we need to workaround.</p>
+
+<pre><code>require File.expand_path('../config/application', __FILE__)
+
+Rails.application.load_tasks
+
+Rake.application.instance_eval do
+  # Remove test:prepare
+  @tasks['test:benchmark'].prerequisites.shift if @tasks['test:benchmark']
+  @tasks['test:profile'].prerequisites.shift if @tasks['test:profile']
+end
+</code></pre>
+
+<h2>For memory measurement, we need the railsexpress patches.</h2>
+
+<p><a href="https://github.com/skaes/rvm-patchsets">https://github.com/skaes/rvm-patchsets</a></p>
+
+<pre><code>rvm get stable
+</code></pre>
+
+<p>But my rvm isn&#8217;t update to date correctly, So I use</p>
+
+<pre><code>cd /tmp
+git clone https://github.com/skaes/rvm-patchsets.git
+cd rvm-patchsets
+./install.sh
+</code></pre>
+
+<p>Then I run</p>
+
+<pre><code>rvm reinstall 2.2.2 --patch railsexpress
+</code></pre>
+
+<p>After reinstall Ruby, we need to recreate our gemset</p>
+
+<pre><code>cd your_project
+rvm gemset create your_project
+gem install bundler
+bundle install
+</code></pre>
+
+<h2>Finally</h2>
+
+<p>These command should work~</p>
+
+<pre><code>RAILS_ENV=benchmark bundle exec rake test:real_world_benchmark
+RAILS_ENV=benchmark bundle exec rake test:benchmark
+RAILS_ENV=benchmark bundle exec rake test:profile
+</code></pre>
+
+<p>Then these command will create some files under <strong>your_project/tmp/performance</strong></p>
+
+<p>PS. Please notice that before performance test, you should make sure that there are no any errors while visit the page.</p>
+
+<h2>Without using &#8220;rails-perftest&#8221;, you might use..</h2>
+
+<h3>if You need detailed information, you can use &#8220;request_profiler&#8221;</h3>
+
+<p>inspired by <a href="https://www.coffeepowered.net/2013/08/02/ruby-prof-for-rails/">https://www.coffeepowered.net/2013/08/02/ruby-prof-for-rails/</a></p>
+
+<p>we can use <strong>request_profiler</strong>, which allows you to profile rack requests using ruby-prof.</p>
+
+<pre><code>gem 'request_profiler'
+</code></pre>
+
+<p>And you might need to add this line into <strong>config/enviornments/benchmark.rb</strong></p>
+
+<pre><code>config.middleware.use "Rack::RequestProfiler"
+</code></pre>
+
+<p>On every page you want to profile, just add <strong>?profile_request=true</strong></p>
+
+<p>for example, we want to profile &#8220;/&#8221; , just key</p>
+
+<pre><code>https://localhost:3000/?profile_request=true
+</code></pre>
+
+<p>then you wiil see file named  <strong>2015-07-14-16-49-19&#8212;profile_request=true.html</strong> under <strong>tmp/performance/</strong></p>
+
+<p><img src="https://dl.dropboxusercontent.com/u/22307926/Blog%20Image/Rails%20performance%20test/profile_request.png"></p>
+
+<h3>if You need to quickly and easily find out what is bottleneck,  &#8220;rack-mini-profiler&#8221; is best choice.</h3>
+
+<p><strong>Gemfile</strong></p>
+
+<pre><code>gem 'rack-mini-profiler', require: false  
+</code></pre>
+
+<p>Create a new file <strong>config/initializers/rack_profiler.rb</strong></p>
+
+<pre><code>if Rails.env == 'development' || Rails.env == 'benchmark'
+  require 'rack-mini-profiler'
+
+  # initialization is skipped so trigger it
+  Rack::MiniProfilerRails.initialize!(Rails.application)
+end
+</code></pre>
+
+<p>Add to <strong>app/controllers/application_controller.rb</strong></p>
+
+<pre><code>before_action :authorize_for_miniprofiler
+def authorize_for_miniprofiler
+  if Rails.env == 'development' || Rails.env == 'benchmark'
+    Rack::MiniProfiler.authorize_request
+  end
+end
+</code></pre>
+
+<p>now you can see this under development and benchmark environments</p>
+
+<p><img src="https://dl.dropboxusercontent.com/u/22307926/Blog%20Image/Rails%20performance%20test/rack-mini-profiler.png"></p>
+
+<h2>You might want to read</h2>
+
+<ol>
+<li><a href="http://code.oneapm.com/ruby/2015/04/08/ruby-profilers/">http://code.oneapm.com/ruby/2015/04/08/ruby-profilers/</a></li>
+</ol>
+
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[Sign up by Devise and Crop User Avatar then Upload by Carrierwave using Ruby on Rails]]></title>
@@ -4644,414 +4973,6 @@ end
   ga('send', 'pageview');
 &lt;/script&gt;
 </code></pre>
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[[HOWTO] 跳出視窗，內含動態選單]]></title>
-    <link href="http://ccaloha.cc/blog/2014/08/08/howto-rails-popup-window-and-ajax-form/"/>
-    <updated>2014-08-08T12:40:10+08:00</updated>
-    <id>http://ccaloha.cc/blog/2014/08/08/howto-rails-popup-window-and-ajax-form</id>
-    <content type="html"><![CDATA[<p>屁話區：</p>
-
-<p>最近要準備開發比較user friendly的後台，於是乎，想到這樣的功能，</p>
-
-<p>於是，我拿了之前開發過的專案來試玩看看～～ 快來看一下中間的眉角～(ps.其實也沒有什麼眉角&#8230;都是g來的XDDDD)</p>
-
-<h2>需求描述：</h2>
-
-<p>使用者希望點選&#8221;編輯&#8221;後，直接popup編輯視窗，裡頭還包含了動態表格</p>
-
-<p>More specific, 來個簡單使用者情境：</p>
-
-<blockquote><p>後台管理人員，需要幫其中一張訂單，加購商品</p></blockquote>
-
-<p><img src="https://dl.dropboxusercontent.com/u/22307926/Blog%20Image/%5Bhowto%5D%20%E8%B7%B3%E5%87%BA%E8%A6%96%E7%AA%97%EF%BC%8C%E5%85%A7%E5%90%AB%E5%8B%95%E6%85%8B%E9%81%B8%E5%96%AE/popup%E8%A6%96%E7%AA%97.png" alt="加購商品跳出視窗"></p>
-
-<p>就讓我們繼續看下去&#8230;.這崮中有什麼訣竅～～～～</p>
-
-<!-- more -->
-
-
-<p>在文章的開始，當然要先感謝前人的知識、還有一堆Open Source</p>
-
-<h2>REF</h2>
-
-<p><a href="http://ericlondon.com/2014/03/13/rails-4-submit-modal-form-via-ajax-and-render-js-response-as-table-row.html">Rails 4 submit modal form via AJAX and render JS response as table row</a></p>
-
-<p><a href="http://www.petermac.com/rails-3-jquery-and-multi-select-dependencies/">Rails 3, jQuery and multi-select dependencies</a></p>
-
-<p><a href="http://getbootstrap.com/javascript/#modals">Bootstrap- modal.js</a> => 用來做popup視窗</p>
-
-<p><a href="http://ivaynberg.github.io/select2/">Selec2 js</a> => 用來做動態選資料</p>
-
-<h1>流程</h1>
-
-<ol>
-<li>管理人員在後台，訂單的list頁，有一個加購的button</li>
-<li>點選這個button後，會跳出一個視窗</li>
-<li>視窗裡面有一個表格，上面會預先帶入這個訂單的ID，還有一個產品編號的select功能</li>
-<li>當管理人員慢慢打字輸入了產品編號，系統會自動搜尋可能的結果</li>
-<li>選擇了一個產品編號，底下會自動跳出這個加購的資訊，例如：顏色、尺寸、數量</li>
-</ol>
-
-
-<p>ps. 我的View是使用slim</p>
-
-<h1>流程一：管理人員在後台，訂單的list頁，有一個加購的button</h1>
-
-<p>你可能會有一個訂單清單</p>
-
-<p>在 <em>app/views/orders/index.html.slim</em> 你只要加上</p>
-
-<pre><code>= link_to '加購', '#add_product_modal', 'data-toggle' =&gt; 'modal', class: 'btn 
-btn-mini', 'data-order' =&gt; order.id
-</code></pre>
-
-<p><strong>重點是那個&#8217;data-toggle&#8217; => &#8216;modal&#8217;</strong> => 加了就有modal的功效歐～～</p>
-
-<p>還有另外一個伏筆，那個 &#8216;data-order&#8217; => order.id</p>
-
-<p>慢慢讀下去你就會知道那個要幹嘛了！</p>
-
-<p>大概可能會長這樣</p>
-
-<pre><code>- @orders.each do |order|
-    = ...
-    = link_to '加購', '#add_product_modal', 'data-toggle' =&gt; 'modal', class: 'btn btn-mini', 'data-order' =&gt; order.id
-</code></pre>
-
-<p>ps. 這邊你可能會有個疑惑，囧～這個link_to 怎麼沒有 link to 的位置?! 人客啊～不要急～讓我們繼續看下去</p>
-
-<h3>成果：</h3>
-
-<p><img src="https://dl.dropboxusercontent.com/u/22307926/Blog%20Image/%5Bhowto%5D%20%E8%B7%B3%E5%87%BA%E8%A6%96%E7%AA%97%EF%BC%8C%E5%85%A7%E5%90%AB%E5%8B%95%E6%85%8B%E9%81%B8%E5%96%AE/%E8%A8%82%E5%96%AElist.png" alt="訂單list"></p>
-
-<h1>流程二：點選這個button後，會跳出一個視窗</h1>
-
-<p>在 <em>app/views/orders/index.html.slim</em> 繼續加上，我是把它加在最底下，不過你也可以考慮拉出一個partial view，depend on you摟～</p>
-
-<p>不要覺得好像很厲害(但是寫這個套件很厲害!)～這一串是從Modal官網看到的sample，只是把它拿出來用而已</p>
-
-<pre><code>.modal.fade#add_product_modal tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true"
-  .modal-dialog
-    .modal-content
-      .modal-header
-        button.close type="button" data-dismiss="modal" aria-hidden="true"
-          | &amp;times;
-        h4.modal-title#myModalLabel
-          | 加購產品
-      .modal-body
-        = render 'extra_buy_form' 
-      .modal-footer
-        button type="button" class="btn btn-default" data-dismiss="modal"
-          | 關閉
-</code></pre>
-
-<p>這裡頭有ㄧ個關鍵，就是那個跳出來視窗，裡頭的內容(在我們的例子，也就是表格)</p>
-
-<p>我把它寫成 partial view: <strong>extra_buy_form</strong></p>
-
-<p>其他的東東，我想看那個class name就知道了吧～</p>
-
-<h2>流程二 - 1 既然都已經寫好modal，那當然要記得要有他的js歐～不然不會有效果</h2>
-
-<p>加入在<em>app/assets/javascripts/admin.js</em> (這是因為我的admin有自己的版，裡頭會抓admin.js)</p>
-
-<pre><code>//= require bootstrap.min 
-</code></pre>
-
-<h1>流程三：視窗裡面有一個表格，上面會預先帶入這個訂單的ID，還有一個產品編號的select功能</h1>
-
-<p>這邊就進到了，<strong>extra_buy_form</strong>的部分，</p>
-
-<p>由於是在order底下，所以我的檔案是建立在 <em>app/views/admin/orders/_extra_buy_form.html.slim</em></p>
-
-<pre><code>= simple_form_for :line_item,:url =&gt; update_extra_buy_admin_orders_path, defaults: { input_html: { remote: true, 'data-model' =&gt; 'product'}}do |f|
-  = f.input :order_id,  label: '加入訂單編號：'
-  = f.input :product_id, input_html: {class: 'form-control', data: {product_selector: 'true'} }
-  #buying_detail
-  .text-center.small-padding
-    = submit_tag '送出', disabled_with: '送出中', class: 'btn block-btn'
-</code></pre>
-
-<p>這邊有幾個點要講：</p>
-
-<ol>
-<li>由於我們這個不屬於orde model的屬性，也沒有任何 instance variable (例如：@line_item)被帶入，所以simple_form 我是使用 symbol (:) 來表示</li>
-<li>再來，那個url，就代表著等一下這張表格會被 post到哪裡，等下會說明 order controller的部分和route</li>
-<li>第三行，就是要用select2 來實作的動態select內容的寫法，最重要的是那個：data: {product_selector}</li>
-<li>第四行非常重要的！ 當你選完產品id後，這邊就會render出這個產品的相關資訊，等一下會介紹到！！！</li>
-<li>那個order_id，嘿嘿～～ 等一下流程五會提到！</li>
-</ol>
-
-
-<h2>流程四：當管理人員慢慢打字輸入了產品編號，系統會自動搜尋可能的結果</h2>
-
-<p>這邊就是select2的實作！</p>
-
-<p>首先，先建立一個js吧～ <em>app/assets/javascripts/admin/proudct_selector.js.coffee</em></p>
-
-<pre><code>jQuery ($) -&gt;
-  $(document).on 'ready page:load', -&gt;
-    $('[data-product-selector]').each -&gt;
-      $this = $(this)
-      $this.select2(
-        placeholder: "輸入產品編號"
-        minimumInputLength: 0
-        allowClear: true
-
-        ajax:
-          url: '/admin/products/get_product_list.json'
-          data: (term, page) -&gt; q: term
-          results: (data, page) -&gt; results: data
-
-        initSelection: (element, callback) -&gt;
-          if $this.val() isnt ''
-            $.ajax(
-              url: "/admin/products/#{$this.val()}.json"
-              success: (data) -&gt; callback(data)
-            )
-      )
-</code></pre>
-
-<p>這邊有幾個點要講：</p>
-
-<ol>
-<li><strong>$(&#8216;[data-product-selector]&#8217;)</strong> 就是找到 這個 => <strong>data: {product_selector}</strong></li>
-<li><strong>url: &#8216;/admin/products/get_product_list.json&#8217;</strong> => 這邊要去跟controller要資料</li>
-<li><strong>url: &#8220;/admin/products/#{$this.val()}.json&#8221;</strong> => 這邊其實用不太到，不過，如果你可能會有預設值的話，譬如說，你是某個form 可以給人家編輯</li>
-</ol>
-
-
-<h3>成果：</h3>
-
-<p><img src="https://dl.dropboxusercontent.com/u/22307926/Blog%20Image/%5Bhowto%5D%20%E8%B7%B3%E5%87%BA%E8%A6%96%E7%AA%97%EF%BC%8C%E5%85%A7%E5%90%AB%E5%8B%95%E6%85%8B%E9%81%B8%E5%96%AE/select2%20serarch%E5%8A%9F%E8%83%BD.png" alt="select2 search"></p>
-
-<h2>流程四 - 1：既然這邊用到了select2、還有你自己寫的js，別忘了&#8230;.</h2>
-
-<p>加入在<em>app/assets/javascripts/admin.js</em> (這是因為我的admin有自己的版，裡頭會抓admin.js)</p>
-
-<pre><code>//= require select2
-//= require admin/product_selector
-</code></pre>
-
-<h2>流程四 - 2：剛剛提到說兩個 admin/products/XXX.json 就是要跟controller拿資料，所以當然我們要新增action給他摟</h2>
-
-<p>請加在： <em>app/controllers/admin/products_controller.rb</em></p>
-
-<p>首先</p>
-
-<pre><code>def serial_products(products)
-    products.map { |p| {id: p.id, text: p.product_no}}
-end
-
-def show 
-    @product = Product.find(params[:id])
-
-    respond_to do |f|
-        f.html
-        f.json { render json: serial_products(@product) } #要給ajax使用
-    end
-end
-</code></pre>
-
-<p>再來</p>
-
-<pre><code>def get_product_list
-    @products = if params[:q]
-                    Product.on_sale.filter_by(params[:q])
-                else
-                    Product.on_sale
-                end
-    respond_to do |f|
-        f.json { render json: serial_products(@products)} #只給ajax使用
-    end
-end
-</code></pre>
-
-<p>重要的眉角：</p>
-
-<pre><code>if params[:q]
-    Product.on_sale.filter_by(params[:q])
-...
-</code></pre>
-
-<p>為甚麼要有這個呢？</p>
-
-<p>那是因為<em>app/assets/javascripts/admin/proudct_selector.js.coffee</em>這個js不是有一個</p>
-
-<pre><code>url: '/admin/products/get_product_list.json'
-data: (term, page) -&gt; q: term
-</code></pre>
-
-<p>有沒有看到那個 “q“</p>
-
-<p>沒錯！ 就是那個q，他會丟一個param[:q]的值給get_product_list，</p>
-
-<p>也就是這個，我們就可以達成 <strong>慢慢打字輸入了產品編號，系統會自動搜尋可能的結果</strong></p>
-
-<h2>流程四 - 3： 從上一個步驟(四-3)裡頭有&#8221;Product.on_sale.filter_by&#8221;，這邊是model的方法</h2>
-
-<p>我們來看一下model，並加在 <em>app/models/product.rb</em></p>
-
-<pre><code>scope :on_sale, -&gt; {where(is_added: true)}
-scope :filter_by, lambda { |q| where('product_no LIKE :qurey', qurey: "%#{q}%") }
-</code></pre>
-
-<p>這邊小眉角：</p>
-
-<pre><code>where('product_no LIKE :qurey', qurey: "%#{q}%")
-</code></pre>
-
-<p>這個就是rails用來做 like搜尋(我把它稱作模糊搜尋，不知道有沒有錯)</p>
-
-<h2>流程四 - 4： 既然controller都寫完了，別忘記route歐！</h2>
-
-<p>要改：<em>config/routes.rb</em></p>
-
-<pre><code>namespace :admin do
-
-  ...
-
-  resources :products do
-    ...
-
-    collection { get :get_product_list}
-  end
-
-  resources :orders do
-    ...
-    collection { post :update_extra_buy }
-  end
-
-  ....
-
-end
-</code></pre>
-
-<h1>流程五：選擇了一個產品編號，底下會自動跳出這個加購的資訊，例如：顏色、尺寸、數量</h1>
-
-<p>這邊我們要來看，<em>app/views/admin/orders/_extra_buy_form.html.slim</em></p>
-
-<p>裡面的</p>
-
-<pre><code>  #buying_detail
-</code></pre>
-
-<p>怪怪&#8230;.為甚麼這一行，就可以讓它自動跳出加購的資訊？！</p>
-
-<p>接下來厲害了！！</p>
-
-<h2>流程五-1：表格上面select 也已經動態可以選了，那底下的動態表格，怎麼沒有render出來？！</h2>
-
-<p>這邊 我們必須使用一個javascript來監控那個select2的行為， 不過貌似可以寫在select2裡面，但是&#8230;我是覺得怪怪的～應該要猜開才是(ps. 其實是我不太會寫XDDDD)</p>
-
-<p>沒錯！ 我們需要新增 <em>app/assets/admin/order.js</em></p>
-
-<pre><code>jQuery(function($) {
-  // when the #data-product-selector field changes
-  $("[data-product-selector]").change(function() {
-    var product_id = $('[data-product-selector]').val();
-    if(product_id == "") product_id="0";
-    var product = 'product_id='+ product_id;
-    jQuery.get("/admin/products/update_product_atts",product, function(data){
-        $("#buying_detail").html(data);
-    })
-    return false;
-  });
-
-  $(document).on('click', '[data-toggle=modal]', function(e) {
-    $('#line_item_order_id').val(e.target.getAttribute('data-order'));
-  });
-
-})
-</code></pre>
-
-<p>重點：</p>
-
-<p>1.jQuery.get(&#8220;/admin/products/update_product_atts&#8221;,product, function(data){</p>
-
-<pre><code>        $("#buying_detail").html(data);
-    })
-</code></pre>
-
-<p>我覺得 可以算是本日最精彩！</p>
-
-<p>第一次知道原來partial view可以這樣用！！！！</p>
-
-<p>等一下在講那個update_product_atts</p>
-
-<p>2.<strong>$(&#8216;#line_item_order_id&#8217;).val(e.target.getAttribute(&#8216;data-order&#8217;));</strong></p>
-
-<p>這個是為了那個pop視窗 <em>app/views/admin/orders/_extra_buy_form.html.slim</em> 的裡頭預設的order id值</p>
-
-<pre><code>= simple_form_for :line_item,:url =&gt; update_extra_buy_admin_orders_path, defaults: { input_html: { remote: true, 'data-model' =&gt; 'product'}}do |f|
-  = f.input :order_id,  label: '加入訂單編號：'
-</code></pre>
-
-<p>為甚麼會有 <strong>e.target.getAttribute(&#8216;data-order&#8217;)</strong></p>
-
-<p>那是因為，我希望直接知道 使用者點的是那張訂單，所以&#8230;. 還記得&#8230;.</p>
-
-<p>在 <em>app/views/orders/index.html.slim</em> 你只要加上</p>
-
-<pre><code>= link_to '加購', '#add_product_modal', 'data-toggle' =&gt; 'modal', class: 'btn 
-btn-mini', 'data-order' =&gt; order.id
-</code></pre>
-
-<p>有沒有看到&#8217;data-order&#8217; => order.id</p>
-
-<p>所以那段js只是把 值抓出來而已，然後再餵給 <strong>f.input :order_id</strong></p>
-
-<h2>流程五-2：/admin/products/update_product_atts 、$(&#8220;#buying_detail&#8221;).html(data) 在搞什麼鬼？</h2>
-
-<p>其實從js來看，就會知道他就是要跟 products controller拿東東</p>
-
-<p>所以，繼續來編輯我們的 <em>app/controllers/admin/products_controller.rb</em></p>
-
-<pre><code> def update_product_atts
-        product = Product.find(params[:product_id]) unless params[:product_id].blank?
-        render :partial =&gt; "admin/orders/product_attrs", :locals =&gt; { :product =&gt; product} #這邊還挺酷的，只會render那個partial頁面
- end
-</code></pre>
-
-<p>還有view歐  <em>app/views/admin/order/_product_attrs.html.slim</em></p>
-
-<pre><code>- if product.present?
-  = simple_form_for :line_item_attr, defaults: { input_html: { remote: true, url: '#'}} do |f|
-    = f.input :color, label: '顏色：' , collection: "#{product.color}".split(",").map(&amp;:to_s)
-    = f.input :size, label: '尺寸：', collection: "#{product.size}".split(",").map(&amp;:to_s)
-    = f.input :count, label: '數量：' , collection: (1..50), selected: '1'
-</code></pre>
-
-<p>有沒有看到～ 那個</p>
-
-<p><strong>jQuery.get(&#8220;/admin/products/update_product_atts&#8221;,product</strong></p>
-
-<p>就是會丟出一個 params[:product_id] 給 product controller</p>
-
-<p>當controller 抓到 id 後，就把那個product 資料，依照  admin/orders/product_attrs 樣子render給data，然後讓</p>
-
-<pre><code>$("#buying_detail").html(data); 
-</code></pre>
-
-<p>把資料畫出來</p>
-
-<p>傑克！這實在太神奇了！！！！！！！！！！！！</p>
-
-<h3>成果：</h3>
-
-<p><img src="https://dl.dropboxusercontent.com/u/22307926/Blog%20Image/%5Bhowto%5D%20%E8%B7%B3%E5%87%BA%E8%A6%96%E7%AA%97%EF%BC%8C%E5%85%A7%E5%90%AB%E5%8B%95%E6%85%8B%E9%81%B8%E5%96%AE/%E8%87%AA%E5%8B%95%E5%B8%B6%E5%87%BAform.png" alt="select2 search"></p>
-
-<h2>流程五-3：既然你自己寫的js，別忘了&#8230;.</h2>
-
-<p>加入在<em>app/assets/javascripts/admin.js</em> (這是因為我的admin有自己的版，裡頭會抓admin.js)</p>
-
-<pre><code>//= require admin/orders
-</code></pre>
-
-<h2>打完收工！</h2>
 ]]></content>
   </entry>
   
