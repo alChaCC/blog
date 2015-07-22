@@ -107,6 +107,185 @@ $(document).ready(
     <article class="post">
 	<h2 class="title">
 		
+		<a href="/blog/2014/05/14/fight-invalid-utf-8-bytes-when-csv-importing/">
+		
+			CSV匯入中文編碼問題</a>
+	</h2>
+	<div class="entry-content">
+		<blockquote><p>情境ㄧ：若是使用者(window平台)先從自己系統download資料，之後要再匯入</p></blockquote>
+
+<p>對於CSV檔案本身解決方法&#8230;.</p>
+
+<h3>=>  請他先用google drive 上傳他的CSV檔，再從google抓下來</h3>
+
+<p>程式端醜陋的解法</p>
+
+<pre><code>def import(file)
+  csv_text = File.read(file.csv_textpath)
+  begin  
+    csv_text_new = Iconv.conv('utf-8','big5',csv_text) #若是使用者使用自己excel轉csv匯入
+  rescue  
+    #do nothing just keep going
+    csv_text_new = csv_text #使用者使用google線上轉換下來的csv
+  end 
+  csv = CSV.parse(csv_text_new, headers: false, quote_char: "\x00", col_sep: "\t")
+  header = csv.first.first.split(',')
+  counter = 0
+  csv.each do |row|
+    unless counter == 0
+      row = Hash[[header,row.first.split(',',header.count)].transpose]
+      order = where(order_no: row["order_no"]).first
+      if order.present?
+        order.attributes = row.to_hash
+        order.save!
+      else
+        Order.create!(row.to_hash)
+      end
+    end
+      counter+=1
+  end
+end
+</code></pre>
+
+<blockquote><p>情境二 若是使用者直接拿外部產生的csv要匯入的話</p></blockquote>
+
+<pre><code>def importingrt(file)
+  CSV.foreach(file.path, :headers =&gt; true, :col_sep =&gt; ',',encoding:'Big5:utf-8') do |row|
+      order = where(order_no: rescueow["系統訂單編號"]).first
+      if order.present?
+               if row["訂單狀態"] == '已出貨'
+          order.ship!
+            end
+      else
+        #do what you want
+      end
+    end
+</code></pre>
+
+<p>附錄：Ruby 的編碼清單</p>
+
+<pre><code>Encoding.list.map {|a| a.name}
+</code></pre>
+
+<p>=> [&#8220;ASCII-8BIT&#8221;, &#8220;UTF-8&#8221;, &#8220;US-ASCII&#8221;, &#8220;Big5&#8221;, &#8220;Big5-HKSCS&#8221;, &#8220;Big5-UAO&#8221;,
+ &#8220;CP949&#8221;, &#8220;Emacs-Mule&#8221;, &#8220;EUC-JP&#8221;, &#8220;EUC-KR&#8221;, &#8220;EUC-TW&#8221;, &#8220;GB18030&#8221;,
+ &#8220;GBK&#8221;, &#8220;ISO-8859-1&#8221;, &#8220;ISO-8859-2&#8221;, &#8220;ISO-8859-3&#8221;, &#8220;ISO-8859-4&#8221;,
+ &#8220;ISO-8859-5&#8221;, &#8220;ISO-8859-6&#8221;, &#8220;ISO-8859-7&#8221;, &#8220;ISO-8859-8&#8221;, &#8220;ISO-8859-9&#8221;,
+ &#8220;ISO-8859-10&#8221;, &#8220;ISO-8859-11&#8221;,
+ &#8220;ISO-8859-13&#8221;,
+ &#8220;ISO-8859-14&#8221;,
+ &#8220;ISO-8859-15&#8221;,
+ &#8220;ISO-8859-16&#8221;,
+ &#8220;KOI8-R&#8221;,
+ &#8220;KOI8-U&#8221;,
+ &#8220;Shift_JIS&#8221;,
+ &#8220;UTF-16BE&#8221;,
+ &#8220;UTF-16LE&#8221;,
+ &#8220;UTF-32BE&#8221;,
+ &#8220;UTF-32LE&#8221;,
+ &#8220;Windows-31J&#8221;,
+ &#8220;Windows-1251&#8221;,
+ &#8220;IBM437&#8221;,
+ &#8220;IBM737&#8221;,
+ &#8220;IBM775&#8221;,
+ &#8220;CP850&#8221;,
+ &#8220;IBM852&#8221;,
+ &#8220;CP852&#8221;,
+ &#8220;IBM855&#8221;,
+ &#8220;CP855&#8221;,
+ &#8220;IBM857&#8221;,
+ &#8220;IBM860&#8221;,
+ &#8220;IBM861&#8221;,
+ &#8220;IBM862&#8221;,
+ &#8220;IBM863&#8221;,
+ &#8220;IBM864&#8221;,
+ &#8220;IBM865&#8221;,
+ &#8220;IBM866&#8221;,
+ &#8220;IBM869&#8221;,
+ &#8220;Windows-1258&#8221;,
+ &#8220;GB1988&#8221;,
+ &#8220;macCentEuro&#8221;,
+ &#8220;macCroatian&#8221;,
+ &#8220;macCyrillic&#8221;,
+ &#8220;macGreek&#8221;,
+ &#8220;macIceland&#8221;,
+ &#8220;macRoman&#8221;,
+ &#8220;macRomania&#8221;,
+ &#8220;macThai&#8221;,
+ &#8220;macTurkish&#8221;,
+ &#8220;macUkraine&#8221;,
+ &#8220;CP950&#8221;,
+ &#8220;CP951&#8221;,
+ &#8220;stateless-ISO-2022-JP&#8221;,
+ &#8220;eucJP-ms&#8221;,
+ &#8220;CP51932&#8221;,
+ &#8220;EUC-JP-2004&#8221;,
+ &#8220;GB2312&#8221;,
+ &#8220;GB12345&#8221;,
+ &#8220;ISO-2022-JP&#8221;,
+ &#8220;ISO-2022-JP-2&#8221;,
+ &#8220;CP50220&#8221;,
+ &#8220;CP50221&#8221;,
+ &#8220;Windows-1252&#8221;,
+ &#8220;Windows-1250&#8221;,
+ &#8220;Windows-1256&#8221;,
+ &#8220;Windows-1253&#8221;,
+ &#8220;Windows-1255&#8221;,
+ &#8220;Windows-1254&#8221;,
+ &#8220;TIS-620&#8221;,
+ &#8220;Windows-874&#8221;,
+ &#8220;Windows-1257&#8221;,
+ &#8220;MacJapanese&#8221;,
+ &#8220;UTF-7&#8221;,
+ &#8220;UTF8-MAC&#8221;,
+ &#8220;UTF-16&#8221;,
+ &#8220;UTF-32&#8221;,
+ &#8220;UTF8-DoCoMo&#8221;,
+ &#8220;SJIS-DoCoMo&#8221;,
+ &#8220;UTF8-KDDI&#8221;,
+ &#8220;SJIS-KDDI&#8221;,
+ &#8220;ISO-2022-JP-KDDI&#8221;,
+ &#8220;stateless-ISO-2022-JP-KDDI&#8221;,
+ &#8220;UTF8-SoftBank&#8221;,
+ &#8220;SJIS-SoftBank&#8221;</p>
+
+		
+		
+	</div>
+
+
+<div class="meta">
+	<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2014-05-14T11:17:11+08:00" pubdate data-updated="true">May 14<span>th</span>, 2014</time></div>
+	
+
+<div class="tags">
+
+	<a class='category' href='/blog/categories/csv/'>CSV</a>, <a class='category' href='/blog/categories/ruby-on-rails/'>Ruby on Rails</a>
+
+</div>
+
+
+	
+		<span class="comments"><a href="/blog/2014/05/14/fight-invalid-utf-8-bytes-when-csv-importing//blog/page/5/index.html#disqus_thread">Comments</a></span>
+	
+</div></article>
+
+
+    <article class="post">
+	<h2 class="title">
+		
 		<a href="/blog/2014/04/30/howto-setup-sunspot-in-rails4-and-deploy-to-ubuntu12-dot-04-using-capistrano/">
 		
 			[HowTo] Setup Sunspot in Rails 4 and Deploy to Ubuntu12.04 Using Capistrano 3</a>
@@ -403,66 +582,6 @@ Rails project.</p>
 
 	
 		<span class="comments"><a href="/blog/2014/03/06/howto-build-step-by-step-introduction-javascript-using-crumble-instead-of-intro-dot-js//blog/page/5/index.html#disqus_thread">Comments</a></span>
-	
-</div></article>
-
-
-    <article class="post">
-	<h2 class="title">
-		
-		<a href="/blog/2014/03/03/howto-create-youtube-link-in-ruby-on-rails/">
-		
-			[HowTo]- Create Youtube Link in Ruby on Rails(using Slim)</a>
-	</h2>
-	<div class="entry-content">
-		<h2>In your view where you want to show youtube link</h2>
-
-<p>ex: app/views/products/show.html.slim</p>
-
-<pre><code>- if @product.youtube_url.present?
-  = video_iframe @product.youtube_url
-</code></pre>
-
-<h2>Create a helper</h2>
-
-<p>ex: I created in application_helper.rb</p>
-
-<pre><code>def video_iframeideo_iframe(src)
-  content_tag("iframe","", {:width =&gt; 'XXX', :height =XXX&gt; 'YYY', :src =&gt;"#{src}"} )
-end
-</code></pre>
-
-<p> 
-		
-		<a href="/blog/2014/03/03/howto-create-youtube-link-in-ruby-on-rails/" class="more-link">Read on &rarr;</a>
-	</div>
-
-
-<div class="meta">
-	<div class="date">
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2014-03-03T23:52:08+08:00" pubdate data-updated="true">Mar 3<span>rd</span>, 2014</time></div>
-	
-
-<div class="tags">
-
-	<a class='category' href='/blog/categories/ruby-on-rails/'>Ruby on Rails</a>
-
-</div>
-
-
-	
-		<span class="comments"><a href="/blog/2014/03/03/howto-create-youtube-link-in-ruby-on-rails//blog/page/5/index.html#disqus_thread">Comments</a></span>
 	
 </div></article>
 

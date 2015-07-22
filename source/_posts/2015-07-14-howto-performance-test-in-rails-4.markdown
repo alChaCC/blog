@@ -3,7 +3,7 @@ layout: post
 title: "HowTo Performance Test in Rails 4"
 date: 2015-07-14 19:35:26 +0800
 comments: true
-categories: ["Ruby on Rails"] 
+categories: ["Ruby on Rails", "Test"] 
 keywords: "rails-perftest,ruby-prof,request_profiler,rack-mini-profiler ,Profile ,Ruby on Rails, how to"
 description: "This tutorial show you how to do performance test"
 ---

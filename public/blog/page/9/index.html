@@ -107,6 +107,65 @@ $(document).ready(
     <article class="post">
 	<h2 class="title">
 		
+		<a href="/blog/2012/06/26/learning-on-ruby-on-rails-tutorial-ch4-rails-flavored-ruby/">
+		
+			Learning on Ruby on Rails Tutorial - CH4 - Rails-flavored Ruby</a>
+	</h2>
+	<div class="entry-content">
+		<p>修改app/helpers/application_helper.rb</p>
+
+<pre><code>module ApplicationHelper
+
+# Returns the full title on a per-page basis.       # Documentation comment
+def full_title(page_title)                          # Method definition
+    base_title = "Ruby on Rails Tutorial Sample App"  # Variable assignment
+    if page_title.empty?                              # Boolean test
+        base_title                                      # Implicit return
+    else
+        "#{base_title} | #{page_title}"                 # String interpolation
+        end
+    end
+end
+</code></pre>
+
+
+		
+		<a href="/blog/2012/06/26/learning-on-ruby-on-rails-tutorial-ch4-rails-flavored-ruby/" class="more-link">Read on &rarr;</a>
+	</div>
+
+
+<div class="meta">
+	<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2012-06-26T10:28:00+08:00" pubdate data-updated="true">Jun 26<span>th</span>, 2012</time></div>
+	
+
+<div class="tags">
+
+	<a class='category' href='/blog/categories/reading/'>Reading</a>, <a class='category' href='/blog/categories/ruby-on-rails/'>Ruby on Rails</a>
+
+</div>
+
+
+	
+		<span class="comments"><a href="/blog/2012/06/26/learning-on-ruby-on-rails-tutorial-ch4-rails-flavored-ruby//blog/page/9/index.html#disqus_thread">Comments</a></span>
+	
+</div></article>
+
+
+    <article class="post">
+	<h2 class="title">
+		
 		<a href="/blog/2012/06/18/reading-note-23-plus-1-design-pattern-part3-adapter/">
 		
 			[閱讀筆記系列] 23 + 1 設計模式 - Part3. Adapter</a>
@@ -359,59 +418,6 @@ $ mate demo_app
 
 	
 		<span class="comments"><a href="/blog/2012/05/29/learning-on-ror-tutorial-ch1-basic-operation//blog/page/9/index.html#disqus_thread">Comments</a></span>
-	
-</div></article>
-
-
-    <article class="post">
-	<h2 class="title">
-		
-		<a href="/blog/2012/05/28/reading-note-23-plus-1-design-pattern-part-1-big-outline/">
-		
-			[閱讀筆記系列] 23 + 1 設計模式 - Part1.總論</a>
-	</h2>
-	<div class="entry-content">
-		<p>這些是我看了一些設計模式的資料整理下來的東東</p>
-
-<p>參考書有下面這些</p>
-
-<p><a href="http://www.books.com.tw/exep/prod/booksfile.php?item=0010303521">Design patterns於Java 語言上的實習應用</a></p>
-
-<p><a href="http://www.books.com.tw/exep/prod/booksfile.php?item=0010309237">深入淺出設計模式</a></p>
-
-<p><a href="http://www.books.com.tw/exep/prod/booksfile.php?item=0010430101&amp;">大話設計模式</a></p>
-
-
-		
-		<a href="/blog/2012/05/28/reading-note-23-plus-1-design-pattern-part-1-big-outline/" class="more-link">Read on &rarr;</a>
-	</div>
-
-
-<div class="meta">
-	<div class="date">
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2012-05-28T14:51:00+08:00" pubdate data-updated="true">May 28<span>th</span>, 2012</time></div>
-	
-
-<div class="tags">
-
-	<a class='category' href='/blog/categories/design-pattern/'>Design_Pattern</a>, <a class='category' href='/blog/categories/reading/'>Reading</a>
-
-</div>
-
-
-	
-		<span class="comments"><a href="/blog/2012/05/28/reading-note-23-plus-1-design-pattern-part-1-big-outline//blog/page/9/index.html#disqus_thread">Comments</a></span>
 	
 </div></article>
 
