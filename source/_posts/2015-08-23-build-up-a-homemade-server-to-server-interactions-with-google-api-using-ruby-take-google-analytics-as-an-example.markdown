@@ -4,11 +4,11 @@ title: "Build up a homemade server-to-server interactions with Google API using 
 date: 2015-08-23 15:10:37 +0800
 comments: true
 categories: ["Ruby on Rails", "Google Analytics"]
-keywords:  "Google Analytics, API, 中文, Ruby on Rails, homemade"
+keywords:  "Google Analytics, API, 中文, Ruby on Rails, homemade, google-api-ruby-client"
 description: "this article show you how to make google analytics api with Ruby on Rails application by yourself"
 ---
 
-Since 'google-api-ruby-client' make a big change from [0.8 to 0.9](https://github.com/google/google-api-ruby-client/blob/master/MIGRATING.md) when my project is running out of time, and also I met this [issue](https://github.com/google/google-api-ruby-client/issues/253), So, I make a this decision, let's build a API client.
+Since 'google-api-ruby-client' make a big change from [0.8 to 0.9](https://github.com/google/google-api-ruby-client/blob/master/MIGRATING.md) when my project is running out of time, and also I met this [issue](https://github.com/google/google-api-ruby-client/issues/253), So, I make this decision, let's build a API client by myself.
 
 This implementation refer to Google [guideline](https://developers.google.com/identity/protocols/OAuth2ServiceAccount)
 
@@ -44,6 +44,8 @@ gem 'jwt'
 ```
 
 Create a file named **lib/google_anallytics.rb**
+
+Again, this implementation refer to Google [guideline](https://developers.google.com/identity/protocols/OAuth2ServiceAccount). Please, check this guideline first. Then you will understand how I write fuction get_token.  
 
 ```
 require 'typhoeus'
@@ -195,9 +197,9 @@ let's see what do we get from google analytics first.
 
 <img src="https://dl.dropboxusercontent.com/u/22307926/Blog%20Image/build%20up%20server-to-server%20interactions%20with%20Google%20API/Google%20Analytics%20Return%20Result.png" alt="Google Analytics Return Data">  
 
-Google show you the return data's column header name by "columnHeaders". And "rows" data is given as an array. And each array elements refer to "columnHeaders" respectively. For exameple, in above picture, you can see "ga:eventCategory" is in first of columnHeaders. So, in rows, each array's first element is value of "ga:eventCategory". Then I save data to model GoogleAnalyticEvent. 
+Google show you the return data's column header name by "columnHeaders". And "rows" data is given as an array. And each array's elements refer to "columnHeaders" respectively. For exameple, in above picture, you can see "ga:eventCategory" is in first of columnHeaders. So, in rows, each array's first element is value of "ga:eventCategory". Then I save data to model GoogleAnalyticEvent. 
    
-That's all fuction "sync_to_db" job.
+That's all fuction "sync_to_db" do.
  
 ```
 def sync_to_db(result)
@@ -250,7 +252,7 @@ def query_paginate(parameters)
     end
   end
 ```
-I have to get access token by "get_token", And this function all assign expire time to @exp. 
+I have to get access token by "get_token", And this function also assign expire time to @exp. 
 
 ```
 parameters['access_token'] = get_token

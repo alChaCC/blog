@@ -4,7 +4,7 @@
   <title><![CDATA[AlohaCC]]></title>
   <link href="http://ccaloha.cc/atom.xml" rel="self"/>
   <link href="http://ccaloha.cc/"/>
-  <updated>2015-08-23T15:15:08+08:00</updated>
+  <updated>2015-08-23T15:31:32+08:00</updated>
   <id>http://ccaloha.cc/</id>
   <author>
     <name><![CDATA[Aloha]]></name>
@@ -18,7 +18,7 @@
     <link href="http://ccaloha.cc/blog/2015/08/23/build-up-a-homemade-server-to-server-interactions-with-google-api-using-ruby-take-google-analytics-as-an-example/"/>
     <updated>2015-08-23T15:10:37+08:00</updated>
     <id>http://ccaloha.cc/blog/2015/08/23/build-up-a-homemade-server-to-server-interactions-with-google-api-using-ruby-take-google-analytics-as-an-example</id>
-    <content type="html"><![CDATA[<p>Since &#8216;google-api-ruby-client&#8217; make a big change from <a href="https://github.com/google/google-api-ruby-client/blob/master/MIGRATING.md">0.8 to 0.9</a> when my project is running out of time, and also I met this <a href="https://github.com/google/google-api-ruby-client/issues/253">issue</a>, So, I make a this decision, let&#8217;s build a API client.</p>
+    <content type="html"><![CDATA[<p>Since &#8216;google-api-ruby-client&#8217; make a big change from <a href="https://github.com/google/google-api-ruby-client/blob/master/MIGRATING.md">0.8 to 0.9</a> when my project is running out of time, and also I met this <a href="https://github.com/google/google-api-ruby-client/issues/253">issue</a>, So, I make this decision, let&#8217;s build a API client by myself.</p>
 
 <p>This implementation refer to Google <a href="https://developers.google.com/identity/protocols/OAuth2ServiceAccount">guideline</a></p>
 
@@ -56,6 +56,8 @@
 
 
 <p>Create a file named <strong>lib/google_anallytics.rb</strong></p>
+
+<p>Again, this implementation refer to Google <a href="https://developers.google.com/identity/protocols/OAuth2ServiceAccount">guideline</a>. Please, check this guideline first. Then you will understand how I write fuction get_token.</p>
 
 <figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
 <span class='line-number'>2</span>
@@ -327,9 +329,9 @@
 
 <p><img src="https://dl.dropboxusercontent.com/u/22307926/Blog%20Image/build%20up%20server-to-server%20interactions%20with%20Google%20API/Google%20Analytics%20Return%20Result.png" alt="Google Analytics Return Data"></p>
 
-<p>Google show you the return data&#8217;s column header name by &#8220;columnHeaders&#8221;. And &#8220;rows&#8221; data is given as an array. And each array elements refer to &#8220;columnHeaders&#8221; respectively. For exameple, in above picture, you can see &#8220;ga:eventCategory&#8221; is in first of columnHeaders. So, in rows, each array&#8217;s first element is value of &#8220;ga:eventCategory&#8221;. Then I save data to model GoogleAnalyticEvent.</p>
+<p>Google show you the return data&#8217;s column header name by &#8220;columnHeaders&#8221;. And &#8220;rows&#8221; data is given as an array. And each array&#8217;s elements refer to &#8220;columnHeaders&#8221; respectively. For exameple, in above picture, you can see &#8220;ga:eventCategory&#8221; is in first of columnHeaders. So, in rows, each array&#8217;s first element is value of &#8220;ga:eventCategory&#8221;. Then I save data to model GoogleAnalyticEvent.</p>
 
-<p>That&#8217;s all fuction &#8220;sync_to_db&#8221; job.</p>
+<p>That&#8217;s all fuction &#8220;sync_to_db&#8221; do.</p>
 
 <figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
 <span class='line-number'>2</span>
@@ -425,7 +427,7 @@
 </span><span class='line'>  end</span></code></pre></td></tr></table></div></figure>
 
 
-<p>I have to get access token by &#8220;get_token&#8221;, And this function all assign expire time to @exp.</p>
+<p>I have to get access token by &#8220;get_token&#8221;, And this function also assign expire time to @exp.</p>
 
 <figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
 </pre></td><td class='code'><pre><code class=''><span class='line'>parameters['access_token'] = get_token
