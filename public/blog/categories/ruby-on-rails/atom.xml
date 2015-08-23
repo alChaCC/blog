@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Ruby on Rails | AlohaCC]]></title>
   <link href="http://ccaloha.cc/blog/categories/ruby-on-rails/atom.xml" rel="self"/>
   <link href="http://ccaloha.cc/"/>
-  <updated>2015-07-22T09:48:02+08:00</updated>
+  <updated>2015-08-23T15:15:08+08:00</updated>
   <id>http://ccaloha.cc/</id>
   <author>
     <name><![CDATA[Aloha]]></name>
@@ -12,6 +12,324 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[Build up a homemade server-to-server interactions with Google API using Ruby - Take Google Analytics As An Example]]></title>
+    <link href="http://ccaloha.cc/blog/2015/08/23/build-up-a-homemade-server-to-server-interactions-with-google-api-using-ruby-take-google-analytics-as-an-example/"/>
+    <updated>2015-08-23T15:10:37+08:00</updated>
+    <id>http://ccaloha.cc/blog/2015/08/23/build-up-a-homemade-server-to-server-interactions-with-google-api-using-ruby-take-google-analytics-as-an-example</id>
+    <content type="html"><![CDATA[<p>Since 'google-api-ruby-client' make a big change from <a href="https://github.com/google/google-api-ruby-client/blob/master/MIGRATING.md">0.8 to 0.9</a> when my project is running out of time, and also I met this <a href="https://github.com/google/google-api-ruby-client/issues/253">issue</a>, So, I make a this decision, let's build a API client.</p>
+
+<p>This implementation refer to Google <a href="https://developers.google.com/identity/protocols/OAuth2ServiceAccount">guideline</a></p>
+
+<p><img src="https://dl.dropboxusercontent.com/u/22307926/Blog%20Image/build%20up%20server-to-server%20interactions%20with%20Google%20API/Google%20API%20server-to-server.png"></p>
+
+<!--more-->
+
+
+<h2>Step1. Preparation</h2>
+
+<h3>1. Create a Service Account</h3>
+
+<p><img src="https://dl.dropboxusercontent.com/u/22307926/Blog%20Image/build%20up%20server-to-server%20interactions%20with%20Google%20API/Add%20Credentials.png" alt="add credential"></p>
+
+<h3>2. Download JSON file</h3>
+
+<p><img src="https://dl.dropboxusercontent.com/u/22307926/Blog%20Image/build%20up%20server-to-server%20interactions%20with%20Google%20API/Download%20JSON.png" alt="Download JSON File"></p>
+
+<p>And I put JSON file into <strong>config</strong> folder.</p>
+
+<h3>3. Copy a Email and Add to Google Analytics</h3>
+
+<p><img src="https://dl.dropboxusercontent.com/u/22307926/Blog%20Image/build%20up%20server-to-server%20interactions%20with%20Google%20API/Remember%20your%20Email%20.png"></p>
+
+<p><img src="https://dl.dropboxusercontent.com/u/22307926/Blog%20Image/build%20up%20server-to-server%20interactions%20with%20Google%20API/Add%20email%20to%20Google%20Analytics%20by%20User%20Management.png" alt="Add generated email to Google analytics user"></p>
+
+<h2>Step2. Get Access Token</h2>
+
+<p>Add to <strong>Gemfile</strong></p>
+
+<p><code>
+gem "typhoeus"
+gem 'jwt'
+</code></p>
+
+<p>Create a file named <strong>lib/google_anallytics.rb</strong></p>
+
+<p>```
+require 'typhoeus'
+require "jwt"
+require 'date'
+module GoogleAnalytic</p>
+
+<p>  def get_token</p>
+
+<pre><code>json_file = File.join("#{Rails.root}/config", 'YOUR-JSON-FILE-NAME.json')
+file = File.read(json_file)
+key_hash = JSON.parse(file)
+aud     = "https://www.googleapis.com/oauth2/v3/token"
+now     = Time.new
+iat     = (now - 60).to_i
+@exp    = (now + 50.minutes).to_i
+scopes  = 'https://www.googleapis.com/auth/analytics.readonly'
+sub     = key_hash["client_email"]
+iss     = key_hash["client_email"]
+jwt_claim_set    = {
+  'iss' =&gt; iss, 
+  'sub' =&gt; sub, 
+  'scope' =&gt; scopes,
+  'aud' =&gt; aud, 
+  'exp' =&gt; @exp,
+  'iat' =&gt; iat
+  }
+token            = JWT.encode(jwt_claim_set,  OpenSSL::PKey::RSA.new(key_hash["private_key"]), 'RS256')
+
+res = Typhoeus::Request.post('https://www.googleapis.com/oauth2/v3/token', 
+  body: 
+    { 
+      grant_type: "urn:ietf:params:oauth:grant-type:jwt-bearer",
+      assertion: token
+    }
+)
+
+res_hash = MultiJson.load(res.body)
+
+token = res_hash["access_token"]
+return token
+</code></pre>
+
+<p>  end
+end
+```</p>
+
+<h2>Step3. Fetch Data</h2>
+
+<p>In my case, I create a model for saving Google Analytics data. So, I'll show you how I fetch data.</p>
+
+<p>```
+class GoogleAnalyticEvent
+  include GoogleAnalytic
+  include Mongoid::Document
+  include Mongoid::Timestamps
+  field :category, type: String      <br/>
+  field :label, type: String      <br/>
+  field :action, type: String
+  field :total_events, type: Integer     <br/>
+  field :unique_events, type: Integer
+  field :data_date, type: Date
+  index({category: 1, label: 1, data_date: 1, action:1 })</p>
+
+<p>  def get_event_from_ga_api(params={})</p>
+
+<pre><code>@data_date = Date.today - 1
+@parameters = {
+    'ids'         =&gt; "ga:12345678",
+    'start-date'  =&gt; @data_date.strftime("%Y-%m-%d"),
+    'end-date'    =&gt; @data_date.strftime("%Y-%m-%d"),
+    'metrics'     =&gt; "ga:totalEvents,ga:uniqueEvents",
+    'dimensions'  =&gt; "ga:eventCategory,ga:eventLabel,ga:eventAction",
+    'max-results' =&gt; "10000"
+  }
+query_paginate(@parameters)
+</code></pre>
+
+<p>  end</p>
+
+<p>  def query_paginate(parameters)</p>
+
+<pre><code>parameters['access_token'] = get_token
+count = 0
+loop do
+    if Time.new.to_i &gt; @exp
+      parameters['access_token'] = get_token
+    end
+   res = Typhoeus::Request.get('https://www.googleapis.com/analytics/v3/data/ga', 
+    params: parameters
+   )
+  result = MultiJson.load(res.body)
+  if result["error"].nil?
+    sync_to_db(result)  if result["totalResults"] &gt; 0
+    max_count = result["totalResults"] / parameters["max-results"].to_i
+  end
+  break if count == max_count || result["error"].present?
+  count += 1
+  parameters["start-index"] = parameters["max-results"].to_i * count + 1
+end
+</code></pre>
+
+<p>  end</p>
+
+<p>  def sync_to_db(result)</p>
+
+<pre><code>result["columnHeaders"].each_with_index do |h,i|
+  case h["name"].to_s
+  when "ga:eventCategory"
+    @category= i 
+  when "ga:eventLabel"
+    @label   = i
+  when "ga:eventAction"
+    @action  = i
+  when "ga:totalEvents" 
+    @total_events  = i
+  when "ga:uniqueEvents"
+    @unique_events = i
+  end
+end 
+result["rows"].each do |array_data|
+    GoogleAnalyticEvent.create(category:      array_data[@category], 
+                                label:        array_data[@label], 
+                                action:       array_data[@action],
+                                total_events:       array_data[@total_events],
+                                unique_events:      array_data[@unique_events],
+                                data_date:          @data_date)
+end
+</code></pre>
+
+<p>  end
+end
+```</p>
+
+<p>Let's me explain each code snapshots.</p>
+
+<h3>3-1: First of all, I initialize query parameters such as ids, start-date, ...etc in instance variable @parameters.</h3>
+
+<p>PS. you can easily understand which parameters you need by using <a href="https://ga-dev-tools.appspot.com/query-explorer/">Google Analytics Query Explorer</a>. Once, you find out which parameters you need, just copy to here like I do.</p>
+
+<p>```
+def get_event_from_ga_api(params={})</p>
+
+<pre><code>@data_date = Date.today - 1
+@parameters = {
+    'ids'         =&gt; "ga:12345678",
+    'start-date'  =&gt; @data_date.strftime("%Y-%m-%d"),
+    'end-date'    =&gt; @data_date.strftime("%Y-%m-%d"),
+    'metrics'     =&gt; "ga:totalEvents,ga:uniqueEvents",
+    'dimensions'  =&gt; "ga:eventCategory,ga:eventLabel,ga:eventAction",
+    'max-results' =&gt; "10000"
+  }
+query_paginate(@parameters)
+</code></pre>
+
+<p>  end
+```</p>
+
+<h3>3-2: Second, let's see sync_to_db first.</h3>
+
+<p>After I got Google API's response, I will save to database.</p>
+
+<p>let's see what do we get from google analytics first.</p>
+
+<p><img src="https://dl.dropboxusercontent.com/u/22307926/Blog%20Image/build%20up%20server-to-server%20interactions%20with%20Google%20API/Google%20Analytics%20Return%20Result.png" alt="Google Analytics Return Data"></p>
+
+<p>Google show you the return data's column header name by "columnHeaders". And "rows" data is given as an array. And each array elements refer to "columnHeaders" respectively. For exameple, in above picture, you can see "ga:eventCategory" is in first of columnHeaders. So, in rows, each array's first element is value of "ga:eventCategory". Then I save data to model GoogleAnalyticEvent.</p>
+
+<p>That's all fuction "sync_to_db" job.</p>
+
+<p>```
+def sync_to_db(result)</p>
+
+<pre><code>result["columnHeaders"].each_with_index do |h,i|
+  case h["name"].to_s
+  when "ga:eventCategory"
+    @category= i 
+  when "ga:eventLabel"
+    @label   = i
+  when "ga:eventAction"
+    @action  = i
+  when "ga:totalEvents" 
+    @total_events  = i
+  when "ga:uniqueEvents"
+    @unique_events = i
+  end
+end 
+result["rows"].each do |array_data|
+    GoogleAnalyticEvent.create(category:      array_data[@category], 
+                                label:        array_data[@label], 
+                                action:       array_data[@action],
+                                total_events:       array_data[@total_events],
+                                unique_events:      array_data[@unique_events],
+                                data_date:          @data_date)
+end
+</code></pre>
+
+<p>  end
+```</p>
+
+<h3>3-3: Finally, let's see function query_paginate.</h3>
+
+<p>```
+def query_paginate(parameters)</p>
+
+<pre><code>parameters['access_token'] = get_token
+count = 0
+loop do
+    if Time.new.to_i &gt; @exp
+      parameters['access_token'] = get_token
+    end
+   res = Typhoeus::Request.get('https://www.googleapis.com/analytics/v3/data/ga', 
+    params: parameters
+   )
+  result = MultiJson.load(res.body)
+  if result["error"].nil?
+    sync_to_db(result)  if result["totalResults"] &gt; 0
+    max_count = result["totalResults"] / parameters["max-results"].to_i
+  end
+  break if count == max_count || result["error"].present?
+  count += 1
+  parameters["start-index"] = parameters["max-results"].to_i * count + 1
+end
+</code></pre>
+
+<p>  end
+```
+I have to get access token by "get_token", And this function all assign expire time to @exp.</p>
+
+<p>```
+parameters['access_token'] = get_token</p>
+
+<p>```</p>
+
+<p>Then I write a loop for pagination. At first, I check token is expired or not, if is expired, I have to get token again.</p>
+
+<p>```
+if Time.new.to_i > @exp
+  parameters['access_token'] = get_token
+end</p>
+
+<p>```</p>
+
+<p>Now, I use Typhoeus::Request.get method with params fetching data from Google Analytics.</p>
+
+<p>```
+res = Typhoeus::Request.get('https://www.googleapis.com/analytics/v3/data/ga',</p>
+
+<pre><code>    params: parameters
+   )
+</code></pre>
+
+<p>result = MultiJson.load(res.body)
+```</p>
+
+<p>And if there are no any errors, I will save data to database.</p>
+
+<p><code>
+if result["error"].nil?
+  sync_to_db(result)  if result["totalResults"] &gt; 0
+  max_count = result["totalResults"] / parameters["max-results"].to_i
+end
+</code></p>
+
+<p>Finally, break or continue to get next batch data.</p>
+
+<p><code>
+break if count == max_count || result["error"].present?
+count += 1
+parameters["start-index"] = parameters["max-results"].to_i * count + 1
+</code></p>
+
+<h2>That's it.</h2>
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[For Dummies Stress Test Using JMeter in Rails 4 + Ruby 2.2]]></title>
@@ -1254,101 +1572,6 @@ Iconv.conv("BIG5", "UTF8", "台中市").unpack("H*").first.scan(/../)
 </code></pre>
 
 <h2>打完收工！</h2>
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[[Ruby on Rails] Send limited mail on staging environment]]></title>
-    <link href="http://ccaloha.cc/blog/2015/04/28/send-limited-mail-on-staging-environment/"/>
-    <updated>2015-04-28T17:16:33+08:00</updated>
-    <id>http://ccaloha.cc/blog/2015/04/28/send-limited-mail-on-staging-environment</id>
-    <content type="html"><![CDATA[<p>For simulating production environment, we will build up a stage machine.</p>
-
-<p>Plus, we usually use the copy of production database in stage server.</p>
-
-<p>In some applications, we will send email to users for some purposes such as confirmation mail after user</p>
-
-<p>register, reset password mail...etc.</p>
-
-<p>And, in staging environment, we have to avoid our operators accidentally send email to real users.</p>
-
-<p>Therefore, we have to implement some codes for filtering.</p>
-
-<p>Let's go</p>
-
-<!-- more -->
-
-
-<p>According to <a href="http://edgeguides.rubyonrails.org/action_mailer_basics.html#intercepting-emails">Action Mailer Basics</a>, we can register an interceptor to avoid some unexpected actions.</p>
-
-<p>And my requirement is I want staging server can send mail to our employees. In our case, our company mail address is <strong>xxx@itrue.com.tw</strong>. So, we have to implement code that only allow email server send to users like: <strong>XXX@itrue.com.tw</strong>.</p>
-
-<h2>Step1. <em>Gemfile</em></h2>
-
-<pre><code>gem 'settingslogic'
-</code></pre>
-
-<h2>Step2. Add a lib on <em>app/lib/settings.rb</em></h2>
-
-<pre><code>class Settings &lt; Settingslogic
-    source "#{Rails.root}/config/application.yml"
-    namespace Rails.env
-end
-</code></pre>
-
-<h2>Step3. Add your white list on <em>application.yml</em></h2>
-
-<pre><code>defaults: &amp;defaults
-  allowed_send_mail_domain: '@itrue.com.tw'
-
-development:
-  &lt;&lt;: *defaults
-
-test:
-  &lt;&lt;: *defaults
-
-production:
-  &lt;&lt;: *defaults
-</code></pre>
-
-<h2>Step4. Write a interceptor on <em>app/interceptor/staging_mail_interceptor.rb</em></h2>
-
-<p>ref: <a href="http://renderedtext.com/blog/2012/04/27/filtering-emails-on-staging/">Filtering emails on staging</a></p>
-
-<pre><code>class StagingMailInterceptor
-
-  def self.delivering_email(message)
-    message.to = extract_allowed_recepients(message)
-    message.perform_deliveries = false if message.to.empty?
-  end
-
-  private
-
-  def self.extract_allowed_recepients(message)
-    message.to.select { |address| allowed_address?(address) }
-  end
-
-  def self.allowed_address?(address)
-    allowed_domains = Settings.allowed_send_mail_domain.split(',')
-
-    matches_allowed = allowed_domains.count { |domain| address.include?(domain) }
-
-    matches_allowed != 0
-  end
-
-end
-</code></pre>
-
-<h2>Step5. Register interceptor to ActionMailer on <em>app/config/initializers/sandbox_email_interceptor.rb</em></h2>
-
-<pre><code>require 'staging_mail_interceptor'
-
-if Rails.env.staging?
-  ActionMailer::Base.register_interceptor(StagingMailInterceptor)
-end
-</code></pre>
-
-<h2>Done</h2>
 ]]></content>
   </entry>
   

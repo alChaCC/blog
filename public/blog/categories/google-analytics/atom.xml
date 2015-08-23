@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Google Analytics | AlohaCC]]></title>
   <link href="http://ccaloha.cc/blog/categories/google-analytics/atom.xml" rel="self"/>
   <link href="http://ccaloha.cc/"/>
-  <updated>2015-07-22T09:48:02+08:00</updated>
+  <updated>2015-08-23T15:15:08+08:00</updated>
   <id>http://ccaloha.cc/</id>
   <author>
     <name><![CDATA[Aloha]]></name>
@@ -12,6 +12,324 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[Build up a homemade server-to-server interactions with Google API using Ruby - Take Google Analytics As An Example]]></title>
+    <link href="http://ccaloha.cc/blog/2015/08/23/build-up-a-homemade-server-to-server-interactions-with-google-api-using-ruby-take-google-analytics-as-an-example/"/>
+    <updated>2015-08-23T15:10:37+08:00</updated>
+    <id>http://ccaloha.cc/blog/2015/08/23/build-up-a-homemade-server-to-server-interactions-with-google-api-using-ruby-take-google-analytics-as-an-example</id>
+    <content type="html"><![CDATA[<p>Since 'google-api-ruby-client' make a big change from <a href="https://github.com/google/google-api-ruby-client/blob/master/MIGRATING.md">0.8 to 0.9</a> when my project is running out of time, and also I met this <a href="https://github.com/google/google-api-ruby-client/issues/253">issue</a>, So, I make a this decision, let's build a API client.</p>
+
+<p>This implementation refer to Google <a href="https://developers.google.com/identity/protocols/OAuth2ServiceAccount">guideline</a></p>
+
+<p><img src="https://dl.dropboxusercontent.com/u/22307926/Blog%20Image/build%20up%20server-to-server%20interactions%20with%20Google%20API/Google%20API%20server-to-server.png"></p>
+
+<!--more-->
+
+
+<h2>Step1. Preparation</h2>
+
+<h3>1. Create a Service Account</h3>
+
+<p><img src="https://dl.dropboxusercontent.com/u/22307926/Blog%20Image/build%20up%20server-to-server%20interactions%20with%20Google%20API/Add%20Credentials.png" alt="add credential"></p>
+
+<h3>2. Download JSON file</h3>
+
+<p><img src="https://dl.dropboxusercontent.com/u/22307926/Blog%20Image/build%20up%20server-to-server%20interactions%20with%20Google%20API/Download%20JSON.png" alt="Download JSON File"></p>
+
+<p>And I put JSON file into <strong>config</strong> folder.</p>
+
+<h3>3. Copy a Email and Add to Google Analytics</h3>
+
+<p><img src="https://dl.dropboxusercontent.com/u/22307926/Blog%20Image/build%20up%20server-to-server%20interactions%20with%20Google%20API/Remember%20your%20Email%20.png"></p>
+
+<p><img src="https://dl.dropboxusercontent.com/u/22307926/Blog%20Image/build%20up%20server-to-server%20interactions%20with%20Google%20API/Add%20email%20to%20Google%20Analytics%20by%20User%20Management.png" alt="Add generated email to Google analytics user"></p>
+
+<h2>Step2. Get Access Token</h2>
+
+<p>Add to <strong>Gemfile</strong></p>
+
+<p><code>
+gem "typhoeus"
+gem 'jwt'
+</code></p>
+
+<p>Create a file named <strong>lib/google_anallytics.rb</strong></p>
+
+<p>```
+require 'typhoeus'
+require "jwt"
+require 'date'
+module GoogleAnalytic</p>
+
+<p>  def get_token</p>
+
+<pre><code>json_file = File.join("#{Rails.root}/config", 'YOUR-JSON-FILE-NAME.json')
+file = File.read(json_file)
+key_hash = JSON.parse(file)
+aud     = "https://www.googleapis.com/oauth2/v3/token"
+now     = Time.new
+iat     = (now - 60).to_i
+@exp    = (now + 50.minutes).to_i
+scopes  = 'https://www.googleapis.com/auth/analytics.readonly'
+sub     = key_hash["client_email"]
+iss     = key_hash["client_email"]
+jwt_claim_set    = {
+  'iss' =&gt; iss, 
+  'sub' =&gt; sub, 
+  'scope' =&gt; scopes,
+  'aud' =&gt; aud, 
+  'exp' =&gt; @exp,
+  'iat' =&gt; iat
+  }
+token            = JWT.encode(jwt_claim_set,  OpenSSL::PKey::RSA.new(key_hash["private_key"]), 'RS256')
+
+res = Typhoeus::Request.post('https://www.googleapis.com/oauth2/v3/token', 
+  body: 
+    { 
+      grant_type: "urn:ietf:params:oauth:grant-type:jwt-bearer",
+      assertion: token
+    }
+)
+
+res_hash = MultiJson.load(res.body)
+
+token = res_hash["access_token"]
+return token
+</code></pre>
+
+<p>  end
+end
+```</p>
+
+<h2>Step3. Fetch Data</h2>
+
+<p>In my case, I create a model for saving Google Analytics data. So, I'll show you how I fetch data.</p>
+
+<p>```
+class GoogleAnalyticEvent
+  include GoogleAnalytic
+  include Mongoid::Document
+  include Mongoid::Timestamps
+  field :category, type: String      <br/>
+  field :label, type: String      <br/>
+  field :action, type: String
+  field :total_events, type: Integer     <br/>
+  field :unique_events, type: Integer
+  field :data_date, type: Date
+  index({category: 1, label: 1, data_date: 1, action:1 })</p>
+
+<p>  def get_event_from_ga_api(params={})</p>
+
+<pre><code>@data_date = Date.today - 1
+@parameters = {
+    'ids'         =&gt; "ga:12345678",
+    'start-date'  =&gt; @data_date.strftime("%Y-%m-%d"),
+    'end-date'    =&gt; @data_date.strftime("%Y-%m-%d"),
+    'metrics'     =&gt; "ga:totalEvents,ga:uniqueEvents",
+    'dimensions'  =&gt; "ga:eventCategory,ga:eventLabel,ga:eventAction",
+    'max-results' =&gt; "10000"
+  }
+query_paginate(@parameters)
+</code></pre>
+
+<p>  end</p>
+
+<p>  def query_paginate(parameters)</p>
+
+<pre><code>parameters['access_token'] = get_token
+count = 0
+loop do
+    if Time.new.to_i &gt; @exp
+      parameters['access_token'] = get_token
+    end
+   res = Typhoeus::Request.get('https://www.googleapis.com/analytics/v3/data/ga', 
+    params: parameters
+   )
+  result = MultiJson.load(res.body)
+  if result["error"].nil?
+    sync_to_db(result)  if result["totalResults"] &gt; 0
+    max_count = result["totalResults"] / parameters["max-results"].to_i
+  end
+  break if count == max_count || result["error"].present?
+  count += 1
+  parameters["start-index"] = parameters["max-results"].to_i * count + 1
+end
+</code></pre>
+
+<p>  end</p>
+
+<p>  def sync_to_db(result)</p>
+
+<pre><code>result["columnHeaders"].each_with_index do |h,i|
+  case h["name"].to_s
+  when "ga:eventCategory"
+    @category= i 
+  when "ga:eventLabel"
+    @label   = i
+  when "ga:eventAction"
+    @action  = i
+  when "ga:totalEvents" 
+    @total_events  = i
+  when "ga:uniqueEvents"
+    @unique_events = i
+  end
+end 
+result["rows"].each do |array_data|
+    GoogleAnalyticEvent.create(category:      array_data[@category], 
+                                label:        array_data[@label], 
+                                action:       array_data[@action],
+                                total_events:       array_data[@total_events],
+                                unique_events:      array_data[@unique_events],
+                                data_date:          @data_date)
+end
+</code></pre>
+
+<p>  end
+end
+```</p>
+
+<p>Let's me explain each code snapshots.</p>
+
+<h3>3-1: First of all, I initialize query parameters such as ids, start-date, ...etc in instance variable @parameters.</h3>
+
+<p>PS. you can easily understand which parameters you need by using <a href="https://ga-dev-tools.appspot.com/query-explorer/">Google Analytics Query Explorer</a>. Once, you find out which parameters you need, just copy to here like I do.</p>
+
+<p>```
+def get_event_from_ga_api(params={})</p>
+
+<pre><code>@data_date = Date.today - 1
+@parameters = {
+    'ids'         =&gt; "ga:12345678",
+    'start-date'  =&gt; @data_date.strftime("%Y-%m-%d"),
+    'end-date'    =&gt; @data_date.strftime("%Y-%m-%d"),
+    'metrics'     =&gt; "ga:totalEvents,ga:uniqueEvents",
+    'dimensions'  =&gt; "ga:eventCategory,ga:eventLabel,ga:eventAction",
+    'max-results' =&gt; "10000"
+  }
+query_paginate(@parameters)
+</code></pre>
+
+<p>  end
+```</p>
+
+<h3>3-2: Second, let's see sync_to_db first.</h3>
+
+<p>After I got Google API's response, I will save to database.</p>
+
+<p>let's see what do we get from google analytics first.</p>
+
+<p><img src="https://dl.dropboxusercontent.com/u/22307926/Blog%20Image/build%20up%20server-to-server%20interactions%20with%20Google%20API/Google%20Analytics%20Return%20Result.png" alt="Google Analytics Return Data"></p>
+
+<p>Google show you the return data's column header name by "columnHeaders". And "rows" data is given as an array. And each array elements refer to "columnHeaders" respectively. For exameple, in above picture, you can see "ga:eventCategory" is in first of columnHeaders. So, in rows, each array's first element is value of "ga:eventCategory". Then I save data to model GoogleAnalyticEvent.</p>
+
+<p>That's all fuction "sync_to_db" job.</p>
+
+<p>```
+def sync_to_db(result)</p>
+
+<pre><code>result["columnHeaders"].each_with_index do |h,i|
+  case h["name"].to_s
+  when "ga:eventCategory"
+    @category= i 
+  when "ga:eventLabel"
+    @label   = i
+  when "ga:eventAction"
+    @action  = i
+  when "ga:totalEvents" 
+    @total_events  = i
+  when "ga:uniqueEvents"
+    @unique_events = i
+  end
+end 
+result["rows"].each do |array_data|
+    GoogleAnalyticEvent.create(category:      array_data[@category], 
+                                label:        array_data[@label], 
+                                action:       array_data[@action],
+                                total_events:       array_data[@total_events],
+                                unique_events:      array_data[@unique_events],
+                                data_date:          @data_date)
+end
+</code></pre>
+
+<p>  end
+```</p>
+
+<h3>3-3: Finally, let's see function query_paginate.</h3>
+
+<p>```
+def query_paginate(parameters)</p>
+
+<pre><code>parameters['access_token'] = get_token
+count = 0
+loop do
+    if Time.new.to_i &gt; @exp
+      parameters['access_token'] = get_token
+    end
+   res = Typhoeus::Request.get('https://www.googleapis.com/analytics/v3/data/ga', 
+    params: parameters
+   )
+  result = MultiJson.load(res.body)
+  if result["error"].nil?
+    sync_to_db(result)  if result["totalResults"] &gt; 0
+    max_count = result["totalResults"] / parameters["max-results"].to_i
+  end
+  break if count == max_count || result["error"].present?
+  count += 1
+  parameters["start-index"] = parameters["max-results"].to_i * count + 1
+end
+</code></pre>
+
+<p>  end
+```
+I have to get access token by "get_token", And this function all assign expire time to @exp.</p>
+
+<p>```
+parameters['access_token'] = get_token</p>
+
+<p>```</p>
+
+<p>Then I write a loop for pagination. At first, I check token is expired or not, if is expired, I have to get token again.</p>
+
+<p>```
+if Time.new.to_i > @exp
+  parameters['access_token'] = get_token
+end</p>
+
+<p>```</p>
+
+<p>Now, I use Typhoeus::Request.get method with params fetching data from Google Analytics.</p>
+
+<p>```
+res = Typhoeus::Request.get('https://www.googleapis.com/analytics/v3/data/ga',</p>
+
+<pre><code>    params: parameters
+   )
+</code></pre>
+
+<p>result = MultiJson.load(res.body)
+```</p>
+
+<p>And if there are no any errors, I will save data to database.</p>
+
+<p><code>
+if result["error"].nil?
+  sync_to_db(result)  if result["totalResults"] &gt; 0
+  max_count = result["totalResults"] / parameters["max-results"].to_i
+end
+</code></p>
+
+<p>Finally, break or continue to get next batch data.</p>
+
+<p><code>
+break if count == max_count || result["error"].present?
+count += 1
+parameters["start-index"] = parameters["max-results"].to_i * count + 1
+</code></p>
+
+<h2>That's it.</h2>
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[[howto] Using Google Analytics Enhanced Ecommerce Tracking your awesome website via Ruby on Rails 如何在Ruby on Rails使用Google Analytics 進階電子商務追蹤]]></title>
@@ -973,178 +1291,6 @@ ggsave(plot,file=paste("2014年engagement-sessions圖.png",sep=""),width=15, hei
 <p>再來看 2014年每月 sessions 與 使用者平均在線時間 的 bar chart</p>
 
 <p><img src="https://dl.dropboxusercontent.com/u/22307926/Blog%20Image/get%20google%20analytics%20engagement%20using%20R/2014%E5%B9%B4engagement-sessions%E5%9C%96.png" alt="every months google analytic engagement(sessions X session Duration) in 2014 using R"></p>
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[[HOWTO]- 立馬拋棄Excel！利用R，取得Google Analytics的資料 -以使用者流量的時間畫heatmap為example]]></title>
-    <link href="http://ccaloha.cc/blog/2014/12/24/howto-get-google-analytics-using-r-rgoogleanalytics-using-users-pageviews-time-as-an-example/"/>
-    <updated>2014-12-24T10:24:04+08:00</updated>
-    <id>http://ccaloha.cc/blog/2014/12/24/howto-get-google-analytics-using-r-rgoogleanalytics-using-users-pageviews-time-as-an-example</id>
-    <content type="html"><![CDATA[<blockquote><p>學習一個東西，最快的方式，就是....</p>
-
-<blockquote><p>just do it !</p></blockquote></blockquote>
-
-<p>由於我想要成為一個酷炫的資料科學家！</p>
-
-<p>不學習R這樣對嗎～</p>
-
-<p>既然要學習R，那從每週的<strong>Google Analytics</strong>開始著手！</p>
-
-<p><img src="https://dl.dropboxusercontent.com/u/22307926/Blog%20Image/HowTo-%20get%20google%20analytics%20using%20R%28RGoogleAnalytics%29%20using%20user%27s%20pageviews%20time%20as%20an%20example/Rplot.png" alt="traffic heatmap using R (RGoogleAnalytics)"></p>
-
-<!-- more -->
-
-
-<p>首先，在開始之前，為了要有個map !</p>
-
-<p>所以，當然是先看人家怎麼做</p>
-
-<p>瞭解一下機制和 那個Fu~~</p>
-
-<p>我主要是參考這篇：<a href="http://viget.com/inspire/how-to-build-a-traffic-heatmap-using-google-analytics-and-r">Building a Traffic Heatmap with Google Analytics and R</a></p>
-
-<p>但是由於他使用的 RGoogleAnalytics 是舊版的，而且，google 現在的API都需要使用 OAuth 2.0</p>
-
-<p>所以....做法上還是有點不同，不過完成整個設定後，擷取資料與分析，就跟他的內容大同小異了！</p>
-
-<p>廢話不多說，那就開始吧！</p>
-
-<h2>Step 1. 申請API使用權限</h2>
-
-<h3>1. 登入到 <a href="http://cloud.google.com/console">Google Developer Console</a></h3>
-
-<p><img src="https://dl.dropboxusercontent.com/u/22307926/Blog%20Image/HowTo-%20get%20google%20analytics%20using%20R%28RGoogleAnalytics%29%20using%20user%27s%20pageviews%20time%20as%20an%20example/%E8%9E%A2%E5%B9%95%E5%BF%AB%E7%85%A7%202014-12-24%20%E4%B8%8B%E5%8D%8811.16.19.png" alt="建立專案"></p>
-
-<h3>2. 選擇啟用API</h3>
-
-<p><img src="https://dl.dropboxusercontent.com/u/22307926/Blog%20Image/HowTo-%20get%20google%20analytics%20using%20R%28RGoogleAnalytics%29%20using%20user%27s%20pageviews%20time%20as%20an%20example/%E8%9E%A2%E5%B9%95%E5%BF%AB%E7%85%A7%202014-12-24%20%E4%B8%8B%E5%8D%8811.16.31.png" alt="設定啟用API"></p>
-
-<h3>3. 選擇要啟用的API 為 google analytics</h3>
-
-<p><img src="https://dl.dropboxusercontent.com/u/22307926/Blog%20Image/HowTo-%20get%20google%20analytics%20using%20R%28RGoogleAnalytics%29%20using%20user%27s%20pageviews%20time%20as%20an%20example/%E8%9E%A2%E5%B9%95%E5%BF%AB%E7%85%A7%202014-12-24%20%E4%B8%8B%E5%8D%8811.16.35.png" alt="選擇要請用的API為 Analytics API"></p>
-
-<h3>4. 新增API存取所需的憑證</h3>
-
-<p><img src="https://dl.dropboxusercontent.com/u/22307926/Blog%20Image/HowTo-%20get%20google%20analytics%20using%20R%28RGoogleAnalytics%29%20using%20user%27s%20pageviews%20time%20as%20an%20example/%E8%9E%A2%E5%B9%95%E5%BF%AB%E7%85%A7%202014-12-24%20%E4%B8%8B%E5%8D%8811.16.45.png" alt="建立API憑證"></p>
-
-<h3>5. 輸入相關資訊</h3>
-
-<p><img src="https://dl.dropboxusercontent.com/u/22307926/Blog%20Image/HowTo-%20get%20google%20analytics%20using%20R%28RGoogleAnalytics%29%20using%20user%27s%20pageviews%20time%20as%20an%20example/%E8%9E%A2%E5%B9%95%E5%BF%AB%E7%85%A7%202014-12-24%20%E4%B8%8B%E5%8D%8811.16.52.png" alt="輸入這個憑證的相關訊息"></p>
-
-<h3>6. 記錄下來你的用戶ID與用戶密碼</h3>
-
-<p><img src="https://dl.dropboxusercontent.com/u/22307926/Blog%20Image/HowTo-%20get%20google%20analytics%20using%20R%28RGoogleAnalytics%29%20using%20user%27s%20pageviews%20time%20as%20an%20example/%E8%9E%A2%E5%B9%95%E5%BF%AB%E7%85%A7%202014-12-24%20%E4%B8%8B%E5%8D%8811.17.02.png" alt="記錄下來吧！"></p>
-
-<h2>Step2. 寫R</h2>
-
-<p>請看我裡面的註解吧</p>
-
-<pre><code># 安裝套件
-install.packages('rjson')
-install.packages('RCurl')
-install.packages('RColorBrewer')
-install.packages('RGoogleAnalytics')
-require(rjson)
-require(RCurl)
-require(RColorBrewer)
-require(RGoogleAnalytics)
-
-# 由於 google api 現在規定使用oauth2.0 來存取
-# R語言使用 "&lt;-" 當作變數指派
-token &lt;- Auth('用戶端ID','用戶端密碼')
-
-# 找到目前有哪些views
-profile &lt;- GetProfiles(token)
-
-## 上面那一行你會看到這樣的結果，使用data.frame格式儲存，data frame是R語言裡頭很常見的資料型態，你就把它想成是excel裡面的tab
-## id name
-## 85712839 所有網站資料
-
-# 編寫要搜尋的參數，這邊是關鍵！
-# R： 取得data frame 列(row)裡頭一個變數
-my_profile &lt;- profile[profile$name == '所有網站資料',1]
-query.list &lt;- Init(start.date = "2014-10-01",
-          end.date = "2014-12-14",
-          dimensions = "ga:dayOfWeek, ga:hour",
-          metrics = "ga:pageviews",
-          max.results = 10000,
-          table.id = paste("ga:",my_profile,sep="",collapse=",")
-)
-
-# 建立一個query等一下就是透過這個query與token拿資料！
-ga.query &lt;- QueryBuilder(query.list)
-
-# 向GA抓取資料，存成data frame
-ga.data &lt;- GetReportData(ga.query, token)
-
-# 看一下ga.data長什麼樣子
-## dayOfWeek hour pageviews
-## 0 00 19734
-## 0 01 11244
-## 0 02 6286
-## 0 03 3528
-## 0 04 1830
-## 0 05 1316
-## 0 06 910
-## 0 07 2168
-## 0 08 4547
-## ....
-
-
-# 把ga.data裡頭dayOfWeek的 0 轉換成 sunday, 1轉成 Monday..and so on..
-ga.data$dayOfWeek &lt;- as.character(ga.data$dayOfWeek)
-ga.data$dayOfWeek[ga.data$dayOfWeek == "0"] &lt;- "Sunday"
-ga.data$dayOfWeek[ga.data$dayOfWeek == "1"] &lt;- "Monday"
-ga.data$dayOfWeek[ga.data$dayOfWeek == "2"] &lt;- "Tuesday"
-ga.data$dayOfWeek[ga.data$dayOfWeek == "3"] &lt;- "Wednesday"
-ga.data$dayOfWeek[ga.data$dayOfWeek == "4"] &lt;- "Thursday"
-ga.data$dayOfWeek[ga.data$dayOfWeek == "5"] &lt;- "Friday"
-ga.data$dayOfWeek[ga.data$dayOfWeek == "6"] &lt;- "Saturday"
-
-# 資料排序調整(y軸)，寫了這個factor後，他會以 sunday, monday....等方式排序呈現資料
-ga.data$dayOfWeek &lt;- factor(ga.data$dayOfWeek, levels = c("Sunday",
-              "Monday",
-              "Tuesday",
-              "Wednesday",
-              "Thursday",
-              "Friday",
-              "Saturday"))
-ga.data[order(ga.data$dayOfWeek),]
-
-# 將 data frame 轉成 xtab.
-heatmap_data &lt;- xtabs(pageviews ~ dayOfWeek + hour, data=ga.data)
-
-# heatmap_data長這樣
-# hour
-#dayOfWeek 00 01 02 03 04 05 06 07 08 09 10 11 12
-# Sunday 19734 11244 6286 3528 1830 1316 910 2168 4547 5991 10653 11380 13414
-# Monday 15170 9317 5120 2252 578 536 860 1605 3127 6175 10248 12287 12654
-# Tuesday 11958 7445 3438 1582 893 784 904 1566 3268 6106 7925 7577 9336
-# Wednesday 11178 7898 3529 1338 1177 536 844 1250 2575 6104 8051 8910 8732
-# Thursday 28735 19955 9645 5246 2498 2072 3379 6070 9987 17166 22617 22780 23911
-# Friday 31564 16496 8220 3603 2209 1626 2028 3015 6750 12871 17537 18307 18358
-# Saturday 19325 12335 6011 2808 1253 1416 1090 1981 4114 7257 9239 10438 11733
-
-
-# 畫圖 ---------------------------------------------------------------------
-heatmap(heatmap_data,
-col=colorRampPalette(brewer.pal(9,"Reds"))(100), # Use ColorBrewer's nicer color palettes.
-revC=TRUE, # Start the week at the top of the Y axis.
-scale="none", # Map color density to entire week, not a day or hour slice.
-Rowv=NA, Colv=NA, # Don't use a dendogram.
-main="Pageviews by Day and Hour", # Title.
-xlab="Hour") # X-axis label. 
-</code></pre>
-
-<h2>Done</h2>
-
-<p>執行指令，</p>
-
-<pre><code>source('r_ga_heatmap.R')
-</code></pre>
-
-<p><img src="https://dl.dropboxusercontent.com/u/22307926/Blog%20Image/HowTo-%20get%20google%20analytics%20using%20R%28RGoogleAnalytics%29%20using%20user%27s%20pageviews%20time%20as%20an%20example/Rplot.png" alt="traffic heatmap using R (RGoogleAnalytics)"></p>
 ]]></content>
   </entry>
   

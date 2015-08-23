@@ -4,7 +4,7 @@
   <title><![CDATA[AlohaCC]]></title>
   <link href="http://ccaloha.cc/atom.xml" rel="self"/>
   <link href="http://ccaloha.cc/"/>
-  <updated>2015-07-22T09:48:02+08:00</updated>
+  <updated>2015-08-23T15:15:08+08:00</updated>
   <id>http://ccaloha.cc/</id>
   <author>
     <name><![CDATA[Aloha]]></name>
@@ -12,6 +12,476 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[Build up a homemade server-to-server interactions with Google API using Ruby - Take Google Analytics As An Example]]></title>
+    <link href="http://ccaloha.cc/blog/2015/08/23/build-up-a-homemade-server-to-server-interactions-with-google-api-using-ruby-take-google-analytics-as-an-example/"/>
+    <updated>2015-08-23T15:10:37+08:00</updated>
+    <id>http://ccaloha.cc/blog/2015/08/23/build-up-a-homemade-server-to-server-interactions-with-google-api-using-ruby-take-google-analytics-as-an-example</id>
+    <content type="html"><![CDATA[<p>Since &#8216;google-api-ruby-client&#8217; make a big change from <a href="https://github.com/google/google-api-ruby-client/blob/master/MIGRATING.md">0.8 to 0.9</a> when my project is running out of time, and also I met this <a href="https://github.com/google/google-api-ruby-client/issues/253">issue</a>, So, I make a this decision, let&#8217;s build a API client.</p>
+
+<p>This implementation refer to Google <a href="https://developers.google.com/identity/protocols/OAuth2ServiceAccount">guideline</a></p>
+
+<p><img src="https://dl.dropboxusercontent.com/u/22307926/Blog%20Image/build%20up%20server-to-server%20interactions%20with%20Google%20API/Google%20API%20server-to-server.png"></p>
+
+<!--more-->
+
+
+<h2>Step1. Preparation</h2>
+
+<h3>1. Create a Service Account</h3>
+
+<p><img src="https://dl.dropboxusercontent.com/u/22307926/Blog%20Image/build%20up%20server-to-server%20interactions%20with%20Google%20API/Add%20Credentials.png" alt="add credential"></p>
+
+<h3>2. Download JSON file</h3>
+
+<p><img src="https://dl.dropboxusercontent.com/u/22307926/Blog%20Image/build%20up%20server-to-server%20interactions%20with%20Google%20API/Download%20JSON.png" alt="Download JSON File"></p>
+
+<p>And I put JSON file into <strong>config</strong> folder.</p>
+
+<h3>3. Copy a Email and Add to Google Analytics</h3>
+
+<p><img src="https://dl.dropboxusercontent.com/u/22307926/Blog%20Image/build%20up%20server-to-server%20interactions%20with%20Google%20API/Remember%20your%20Email%20.png"></p>
+
+<p><img src="https://dl.dropboxusercontent.com/u/22307926/Blog%20Image/build%20up%20server-to-server%20interactions%20with%20Google%20API/Add%20email%20to%20Google%20Analytics%20by%20User%20Management.png" alt="Add generated email to Google analytics user"></p>
+
+<h2>Step2. Get Access Token</h2>
+
+<p>Add to <strong>Gemfile</strong></p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>gem "typhoeus"
+</span><span class='line'>gem 'jwt'</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Create a file named <strong>lib/google_anallytics.rb</strong></p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+<span class='line-number'>32</span>
+<span class='line-number'>33</span>
+<span class='line-number'>34</span>
+<span class='line-number'>35</span>
+<span class='line-number'>36</span>
+<span class='line-number'>37</span>
+<span class='line-number'>38</span>
+<span class='line-number'>39</span>
+<span class='line-number'>40</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>require 'typhoeus'
+</span><span class='line'>require "jwt"
+</span><span class='line'>require 'date'
+</span><span class='line'>module GoogleAnalytic
+</span><span class='line'> 
+</span><span class='line'>  def get_token
+</span><span class='line'>    json_file = File.join("#{Rails.root}/config", 'YOUR-JSON-FILE-NAME.json')
+</span><span class='line'>    file = File.read(json_file)
+</span><span class='line'>    key_hash = JSON.parse(file)
+</span><span class='line'>    aud     = "https://www.googleapis.com/oauth2/v3/token"
+</span><span class='line'>    now     = Time.new
+</span><span class='line'>    iat     = (now - 60).to_i
+</span><span class='line'>    @exp    = (now + 50.minutes).to_i
+</span><span class='line'>    scopes  = 'https://www.googleapis.com/auth/analytics.readonly'
+</span><span class='line'>    sub     = key_hash["client_email"]
+</span><span class='line'>    iss     = key_hash["client_email"]
+</span><span class='line'>    jwt_claim_set    = {
+</span><span class='line'>      'iss' =&gt; iss, 
+</span><span class='line'>      'sub' =&gt; sub, 
+</span><span class='line'>      'scope' =&gt; scopes,
+</span><span class='line'>      'aud' =&gt; aud, 
+</span><span class='line'>      'exp' =&gt; @exp,
+</span><span class='line'>      'iat' =&gt; iat
+</span><span class='line'>      }
+</span><span class='line'>    token            = JWT.encode(jwt_claim_set,  OpenSSL::PKey::RSA.new(key_hash["private_key"]), 'RS256')
+</span><span class='line'>    
+</span><span class='line'>    res = Typhoeus::Request.post('https://www.googleapis.com/oauth2/v3/token', 
+</span><span class='line'>      body: 
+</span><span class='line'>        { 
+</span><span class='line'>          grant_type: "urn:ietf:params:oauth:grant-type:jwt-bearer",
+</span><span class='line'>          assertion: token
+</span><span class='line'>        }
+</span><span class='line'>    )
+</span><span class='line'>    
+</span><span class='line'>    res_hash = MultiJson.load(res.body)
+</span><span class='line'>
+</span><span class='line'>    token = res_hash["access_token"]
+</span><span class='line'>    return token
+</span><span class='line'>  end
+</span><span class='line'>end</span></code></pre></td></tr></table></div></figure>
+
+
+<h2>Step3. Fetch Data</h2>
+
+<p>In my case, I create a model for saving Google Analytics data. So, I&#8217;ll show you how I fetch data.</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+<span class='line-number'>32</span>
+<span class='line-number'>33</span>
+<span class='line-number'>34</span>
+<span class='line-number'>35</span>
+<span class='line-number'>36</span>
+<span class='line-number'>37</span>
+<span class='line-number'>38</span>
+<span class='line-number'>39</span>
+<span class='line-number'>40</span>
+<span class='line-number'>41</span>
+<span class='line-number'>42</span>
+<span class='line-number'>43</span>
+<span class='line-number'>44</span>
+<span class='line-number'>45</span>
+<span class='line-number'>46</span>
+<span class='line-number'>47</span>
+<span class='line-number'>48</span>
+<span class='line-number'>49</span>
+<span class='line-number'>50</span>
+<span class='line-number'>51</span>
+<span class='line-number'>52</span>
+<span class='line-number'>53</span>
+<span class='line-number'>54</span>
+<span class='line-number'>55</span>
+<span class='line-number'>56</span>
+<span class='line-number'>57</span>
+<span class='line-number'>58</span>
+<span class='line-number'>59</span>
+<span class='line-number'>60</span>
+<span class='line-number'>61</span>
+<span class='line-number'>62</span>
+<span class='line-number'>63</span>
+<span class='line-number'>64</span>
+<span class='line-number'>65</span>
+<span class='line-number'>66</span>
+<span class='line-number'>67</span>
+<span class='line-number'>68</span>
+<span class='line-number'>69</span>
+<span class='line-number'>70</span>
+<span class='line-number'>71</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>class GoogleAnalyticEvent
+</span><span class='line'>  include GoogleAnalytic
+</span><span class='line'>  include Mongoid::Document
+</span><span class='line'>  include Mongoid::Timestamps
+</span><span class='line'>  field :category, type: String        
+</span><span class='line'>  field :label, type: String        
+</span><span class='line'>  field :action, type: String
+</span><span class='line'>  field :total_events, type: Integer       
+</span><span class='line'>  field :unique_events, type: Integer
+</span><span class='line'>  field :data_date, type: Date
+</span><span class='line'>  index({category: 1, label: 1, data_date: 1, action:1 })
+</span><span class='line'>  
+</span><span class='line'>  def get_event_from_ga_api(params={})
+</span><span class='line'>    @data_date = Date.today - 1
+</span><span class='line'>    @parameters = {
+</span><span class='line'>        'ids'         =&gt; "ga:12345678",
+</span><span class='line'>        'start-date'  =&gt; @data_date.strftime("%Y-%m-%d"),
+</span><span class='line'>        'end-date'    =&gt; @data_date.strftime("%Y-%m-%d"),
+</span><span class='line'>        'metrics'     =&gt; "ga:totalEvents,ga:uniqueEvents",
+</span><span class='line'>        'dimensions'  =&gt; "ga:eventCategory,ga:eventLabel,ga:eventAction",
+</span><span class='line'>        'max-results' =&gt; "10000"
+</span><span class='line'>      }
+</span><span class='line'>    query_paginate(@parameters)
+</span><span class='line'>  end
+</span><span class='line'>  
+</span><span class='line'>  def query_paginate(parameters)
+</span><span class='line'>    parameters['access_token'] = get_token
+</span><span class='line'>    count = 0
+</span><span class='line'>    loop do
+</span><span class='line'>        if Time.new.to_i &gt; @exp
+</span><span class='line'>          parameters['access_token'] = get_token
+</span><span class='line'>        end
+</span><span class='line'>       res = Typhoeus::Request.get('https://www.googleapis.com/analytics/v3/data/ga', 
+</span><span class='line'>        params: parameters
+</span><span class='line'>       )
+</span><span class='line'>      result = MultiJson.load(res.body)
+</span><span class='line'>      if result["error"].nil?
+</span><span class='line'>        sync_to_db(result)  if result["totalResults"] &gt; 0
+</span><span class='line'>        max_count = result["totalResults"] / parameters["max-results"].to_i
+</span><span class='line'>      end
+</span><span class='line'>      break if count == max_count || result["error"].present?
+</span><span class='line'>      count += 1
+</span><span class='line'>      parameters["start-index"] = parameters["max-results"].to_i * count + 1
+</span><span class='line'>    end
+</span><span class='line'>  end
+</span><span class='line'>
+</span><span class='line'>  def sync_to_db(result)
+</span><span class='line'>    result["columnHeaders"].each_with_index do |h,i|
+</span><span class='line'>      case h["name"].to_s
+</span><span class='line'>      when "ga:eventCategory"
+</span><span class='line'>        @category= i 
+</span><span class='line'>      when "ga:eventLabel"
+</span><span class='line'>        @label   = i
+</span><span class='line'>      when "ga:eventAction"
+</span><span class='line'>        @action  = i
+</span><span class='line'>      when "ga:totalEvents" 
+</span><span class='line'>        @total_events  = i
+</span><span class='line'>      when "ga:uniqueEvents"
+</span><span class='line'>        @unique_events = i
+</span><span class='line'>      end
+</span><span class='line'>    end 
+</span><span class='line'>    result["rows"].each do |array_data|
+</span><span class='line'>        GoogleAnalyticEvent.create(category:      array_data[@category], 
+</span><span class='line'>                                    label:        array_data[@label], 
+</span><span class='line'>                                    action:       array_data[@action],
+</span><span class='line'>                                    total_events:       array_data[@total_events],
+</span><span class='line'>                                    unique_events:      array_data[@unique_events],
+</span><span class='line'>                                    data_date:          @data_date)
+</span><span class='line'>    end
+</span><span class='line'>  end
+</span><span class='line'>end</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Let&#8217;s me explain each code snapshots.</p>
+
+<h3>3-1: First of all, I initialize query parameters such as ids, start-date, &#8230;etc in instance variable @parameters.</h3>
+
+<p>PS. you can easily understand which parameters you need by using <a href="https://ga-dev-tools.appspot.com/query-explorer/">Google Analytics Query Explorer</a>. Once, you find out which parameters you need, just copy to here like I do.</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>def get_event_from_ga_api(params={})
+</span><span class='line'>    @data_date = Date.today - 1
+</span><span class='line'>    @parameters = {
+</span><span class='line'>        'ids'         =&gt; "ga:12345678",
+</span><span class='line'>        'start-date'  =&gt; @data_date.strftime("%Y-%m-%d"),
+</span><span class='line'>        'end-date'    =&gt; @data_date.strftime("%Y-%m-%d"),
+</span><span class='line'>        'metrics'     =&gt; "ga:totalEvents,ga:uniqueEvents",
+</span><span class='line'>        'dimensions'  =&gt; "ga:eventCategory,ga:eventLabel,ga:eventAction",
+</span><span class='line'>        'max-results' =&gt; "10000"
+</span><span class='line'>      }
+</span><span class='line'>    query_paginate(@parameters)
+</span><span class='line'>  end</span></code></pre></td></tr></table></div></figure>
+
+
+<h3>3-2: Second, let&#8217;s see sync_to_db first.</h3>
+
+<p>After I got Google API&#8217;s response, I will save to database.</p>
+
+<p>let&#8217;s see what do we get from google analytics first.</p>
+
+<p><img src="https://dl.dropboxusercontent.com/u/22307926/Blog%20Image/build%20up%20server-to-server%20interactions%20with%20Google%20API/Google%20Analytics%20Return%20Result.png" alt="Google Analytics Return Data"></p>
+
+<p>Google show you the return data&#8217;s column header name by &#8220;columnHeaders&#8221;. And &#8220;rows&#8221; data is given as an array. And each array elements refer to &#8220;columnHeaders&#8221; respectively. For exameple, in above picture, you can see &#8220;ga:eventCategory&#8221; is in first of columnHeaders. So, in rows, each array&#8217;s first element is value of &#8220;ga:eventCategory&#8221;. Then I save data to model GoogleAnalyticEvent.</p>
+
+<p>That&#8217;s all fuction &#8220;sync_to_db&#8221; job.</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>def sync_to_db(result)
+</span><span class='line'>    result["columnHeaders"].each_with_index do |h,i|
+</span><span class='line'>      case h["name"].to_s
+</span><span class='line'>      when "ga:eventCategory"
+</span><span class='line'>        @category= i 
+</span><span class='line'>      when "ga:eventLabel"
+</span><span class='line'>        @label   = i
+</span><span class='line'>      when "ga:eventAction"
+</span><span class='line'>        @action  = i
+</span><span class='line'>      when "ga:totalEvents" 
+</span><span class='line'>        @total_events  = i
+</span><span class='line'>      when "ga:uniqueEvents"
+</span><span class='line'>        @unique_events = i
+</span><span class='line'>      end
+</span><span class='line'>    end 
+</span><span class='line'>    result["rows"].each do |array_data|
+</span><span class='line'>        GoogleAnalyticEvent.create(category:      array_data[@category], 
+</span><span class='line'>                                    label:        array_data[@label], 
+</span><span class='line'>                                    action:       array_data[@action],
+</span><span class='line'>                                    total_events:       array_data[@total_events],
+</span><span class='line'>                                    unique_events:      array_data[@unique_events],
+</span><span class='line'>                                    data_date:          @data_date)
+</span><span class='line'>    end
+</span><span class='line'>  end</span></code></pre></td></tr></table></div></figure>
+
+
+<h3>3-3: Finally, let&#8217;s see function query_paginate.</h3>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>def query_paginate(parameters)
+</span><span class='line'>    parameters['access_token'] = get_token
+</span><span class='line'>    count = 0
+</span><span class='line'>    loop do
+</span><span class='line'>        if Time.new.to_i &gt; @exp
+</span><span class='line'>          parameters['access_token'] = get_token
+</span><span class='line'>        end
+</span><span class='line'>       res = Typhoeus::Request.get('https://www.googleapis.com/analytics/v3/data/ga', 
+</span><span class='line'>        params: parameters
+</span><span class='line'>       )
+</span><span class='line'>      result = MultiJson.load(res.body)
+</span><span class='line'>      if result["error"].nil?
+</span><span class='line'>        sync_to_db(result)  if result["totalResults"] &gt; 0
+</span><span class='line'>        max_count = result["totalResults"] / parameters["max-results"].to_i
+</span><span class='line'>      end
+</span><span class='line'>      break if count == max_count || result["error"].present?
+</span><span class='line'>      count += 1
+</span><span class='line'>      parameters["start-index"] = parameters["max-results"].to_i * count + 1
+</span><span class='line'>    end
+</span><span class='line'>  end</span></code></pre></td></tr></table></div></figure>
+
+
+<p>I have to get access token by &#8220;get_token&#8221;, And this function all assign expire time to @exp.</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>parameters['access_token'] = get_token
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Then I write a loop for pagination. At first, I check token is expired or not, if is expired, I have to get token again.</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>if Time.new.to_i &gt; @exp
+</span><span class='line'>  parameters['access_token'] = get_token
+</span><span class='line'>end
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Now, I use Typhoeus::Request.get method with params fetching data from Google Analytics.</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>res = Typhoeus::Request.get('https://www.googleapis.com/analytics/v3/data/ga', 
+</span><span class='line'>        params: parameters
+</span><span class='line'>       )
+</span><span class='line'>result = MultiJson.load(res.body)</span></code></pre></td></tr></table></div></figure>
+
+
+<p>And if there are no any errors, I will save data to database.</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>if result["error"].nil?
+</span><span class='line'>  sync_to_db(result)  if result["totalResults"] &gt; 0
+</span><span class='line'>  max_count = result["totalResults"] / parameters["max-results"].to_i
+</span><span class='line'>end</span></code></pre></td></tr></table></div></figure>
+
+
+<p></p>
+
+<p>Finally, break or continue to get next batch data.</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>break if count == max_count || result["error"].present?
+</span><span class='line'>count += 1
+</span><span class='line'>parameters["start-index"] = parameters["max-results"].to_i * count + 1</span></code></pre></td></tr></table></div></figure>
+
+
+<h2>That&#8217;s it.</h2>
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[For Dummies Stress Test Using JMeter in Rails 4 + Ruby 2.2]]></title>
@@ -4753,485 +5223,6 @@ end
 
 <pre><code>host: 10.0.2.2
 </code></pre>
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[[HOWTO] Using Sunspot(Solr) in Rails including easy suggestion feature and deployment to production environment - Part1]]></title>
-    <link href="http://ccaloha.cc/blog/2014/09/06/using-sunspot-in-rails-including-suggestion-feature-and-deployment-to-production-machine-part1/"/>
-    <updated>2014-09-06T00:06:35+08:00</updated>
-    <id>http://ccaloha.cc/blog/2014/09/06/using-sunspot-in-rails-including-suggestion-feature-and-deployment-to-production-machine-part1</id>
-    <content type="html"><![CDATA[<p>這系列文章，你可以學到：</p>
-
-<pre><code>1. 如何使用sunspot，作為你的全站全文搜尋
-2. 如何使用work around的方式達成sunspot搜尋的推薦字詞 - 利用solmate
-3. 如何將sunspot deploy到production 機器，並且自動做index
-4. 簡單調整sunspot
-</code></pre>
-
-<!-- more -->
-
-
-<p>首先，當然是要感謝這些文章：</p>
-
-<ol>
-<li><p>Jimmy 高手：  <a href="http://gogojimmy.net/2012/01/25/full-text-search-in-rails-with-solr">在 Rails 中使用 Solr 做全文搜尋</a></p></li>
-<li><p><a href="http://josephndungu.com/tutorials/fast-autocomplete-search-terms-rails">FAST AUTOCOMPLETE SEARCH TERMS - RAILS</a></p></li>
-<li><p><a href="https://gist.github.com/cec/5508303">Capistrano Tasks to setup and interact with SolR and SunSpot</a></p></li>
-</ol>
-
-
-<h1>Part 1. 如何使用sunspot，作為你的全站全文搜尋</h1>
-
-<h2>Step1. 使用gem</h2>
-
-<p>[手做] 修改 <strong>Gemfile</strong></p>
-
-<pre><code>gem 'sunspot_rails'
-gem 'sunspot_solr'
-</code></pre>
-
-<p>做完後，別忘了</p>
-
-<pre><code>bundle install
-</code></pre>
-
-<h2>Step2. 建立sunspot 設定檔</h2>
-
-<pre><code>rails generate sunspot_rails:install
-</code></pre>
-
-<p>他會幫你建立 <strong>config/sunspot.yml</strong></p>
-
-<pre><code>production:
- solr:
-   hostname: localhost
-   port: 8983
-   log_level: WARNING
-   path: /solr/production
-   # read_timeout: 2
-   # open_timeout: 0.5
-
-development:
- solr:
-   hostname: localhost
-   port: 8982
-   log_level: INFO
-   path: /solr/development
-
-test:
- solr:
-   hostname: localhost
-   port: 8981
-   log_level: WARNING
-   path: /solr/test
-</code></pre>
-
-<h2>Step3. 在model 建立搜尋功能</h2>
-
-<p>假設我們現在有個 產品的model叫做： <strong>Product</strong> ，我們希望它的產品名稱、描述、價錢、建立時間、是否上架列為我們要搜尋的項目(也是要建index的部分)</p>
-
-<p>所以我們需要在model加上</p>
-
-<pre><code>searchable do
-    ....
-end
-</code></pre>
-
-<p>就像：<strong>app/models/product.rb</strong></p>
-
-<pre><code># == Schema Information
-#
-# Table name: products
-#
-#  id                 :integer          not null, primary key
-#  name               :string(20)
-#  description        :text             not null
-#  price              :integer
-#  is_on_the_shelf    :boolean
-#  created_at                 :datetime
-#  updated_at                 :datetime
-#
-
-class Product &lt; ActiveRecord::Base  
-  searchable do
-    text :description,
-    string :name
-    integer :price
-    time :created_at
-    boolean :is_on_the_shelf
-  end
-end
-</code></pre>
-
-<h2>Step 4. 在controller建立搜尋動作</h2>
-
-<p>接下來，我們會透過controller來取得view的搜尋字，然後把搜尋結果印出</p>
-
-<p>假設我們希望在每一頁上方都有 搜尋bar給使用者做搜尋，在這邊我是假設用product本身的controller來做</p>
-
-<p>在 <strong>app/controllers/products_controller.rb</strong></p>
-
-<pre><code>class ProductsController &lt; ApplicationController
-    def search
-        @search = Product.search do
-            fulltext params[:keyword] do 
-              fields(:description, :name =&gt; 2.0)
-              query_phrase_slop 1
-            end
-            with(:is_on_the_shelf, true)
-            with(:created_at).less_than(Time.zone.now)
-        end
-        @products = @search.results
-    end
-end
-</code></pre>
-
-<p>上面是什麼意思呢？</p>
-
-<p>首先，起手式 - 使用搜尋引擎來做等一下的搜尋</p>
-
-<pre><code>@search = Product.search do
-            ....
-        end
-</code></pre>
-
-<p>再來，</p>
-
-<pre><code>fulltext params[:keyword] do 
-    fields(:description, :name =&gt; 2.0) 
-    # =&gt; 全文搜尋 描述 和 名稱這兩個欄位，而且，名稱的欄位重要度比較高
-    query_phrase_slop 1
-    # =&gt; 中間有空一個字也成立，所以 “great big pizza” 也會符合 "great pizza這個字"
-end
-</code></pre>
-
-<p>最後，條件部分：</p>
-
-<pre><code>with(:is_on_the_shelf, true)  
-# =&gt; 我要找所有上架的商品
-with(:created_at).less_than(Time.zone.now)
-# =&gt; 我要找所有建立時間，小於現在時間的商品
-</code></pre>
-
-<p>還有一件事：</p>
-
-<pre><code>@products = @search.results 
-# =&gt; 這樣會拿到Array 裡頭有預設 30 個 選出的Product
-</code></pre>
-
-<h2>Step 5. 在route建立搜尋link</h2>
-
-<p><strong>config/routes.rb</strong></p>
-
-<pre><code>get '/search', to: 'products#search'
-</code></pre>
-
-<h2>Step 6. 建立View</h2>
-
-<pre><code>= form_tag search_path, :method =&gt; :get, class: 'search' do
-.input-box
-  = text_field_tag :keyword, params[:keyword], class: 'input-search'
-  = button_tag "搜尋", class: 'icon-search btn btn-primary'
-</code></pre>
-
-<h2>Step 7. 恭喜本機端大致完成，只剩跑起來</h2>
-
-<p>注意歐！這邊要做index歐～ 不然不會生效！</p>
-
-<pre><code>rake sunspot:solr:start
-rake sunspot:reindex 
-</code></pre>
-
-<p>ps. 當你跑完 <strong>rake sunspot:solr:start</strong>後，你會發現產生很多檔案，基本上我只有追蹤</p>
-
-<p><strong>solr/conf/</strong>*底下的設定檔而已</p>
-
-<h2>Step 7-1. 如果在做index時，你有遇到 “illegal character”</h2>
-
-<p>請加上：</p>
-
-<p><strong>config/initializers/sunspot_fix_illegal_chars.rb</strong></p>
-
-<pre><code>module Sunspot
-  # 
-  # DataExtractors present an internal API for the indexer to use to extract
-  # field values from models for indexing. They must implement the #value_for
-  # method, which takes an object and returns the value extracted from it.
-  #
-  module DataExtractor #:nodoc: all
-    # 
-    # AttributeExtractors extract data by simply calling a method on the block.
-    #
-    class AttributeExtractor
-      def initialize(attribute_name)
-        @attribute_name = attribute_name
-      end
-
-      def value_for(object)
-        Filter.new( object.send(@attribute_name) ).value
-      end
-    end
-
-    # 
-    # BlockExtractors extract data by evaluating a block in the context of the
-    # object instance, or if the block takes an argument, by passing the object
-    # as the argument to the block. Either way, the return value of the block is
-    # the value returned by the extractor.
-    #
-    class BlockExtractor
-      def initialize(&amp;block)
-        @block = block
-      end
-
-      def value_for(object)
-        Filter.new( Util.instance_eval_or_call(object, &amp;@block) ).value
-      end
-    end
-
-    # 
-    # Constant data extractors simply return the same value for every object.
-    #
-    class Constant
-      def initialize(value)
-        @value = value
-      end
-
-      def value_for(object)
-        Filter.new(@value).value
-      end
-    end
-
-    # 
-    # A Filter to allow easy value cleaning
-    #
-    class Filter
-      def initialize(value)
-        @value = value
-      end
-      def value
-        strip_control_characters @value
-      end
-      def strip_control_characters(value)
-        return value unless value.is_a? String
-
-        value.chars.inject("") do |str, char|
-          unless char.ascii_only? and (char.ord &lt; 32 or char.ord == 127)
-            str &lt;&lt; char
-          end
-          str
-        end
-
-      end
-    end
-
-  end
-end
-</code></pre>
-
-<h1>Part 2. 如何利用solmate使用達成sunspot搜尋的推薦字詞</h1>
-
-<p>因為我實在找不太到 sunspot的設定方法，所以我只好用work around的方式做到這件事情</p>
-
-<p>我是使用 solmate這個 gem 來達成自動推薦。</p>
-
-<p>由於solmate是使用redis當作臨時儲存的空間</p>
-
-<p>若是redis 重啟&#8230;..那就gg了，你之前建的推薦資料都會不見。</p>
-
-<p>所以，我有另外新建一個model: <strong>Keyword</strong> 去記錄使用者搜尋過的關鍵字</p>
-
-<p>那就開始吧</p>
-
-<h2>Step 1. 加上Gem</h2>
-
-<p>首先，要先加入gem到 <strong>Gemfile</strong></p>
-
-<pre><code>gem 'rack-contrib'
-gem 'soulmate', :require =&gt; 'soulmate/server'
-</code></pre>
-
-<p>別忘了</p>
-
-<pre><code>bundle install
-</code></pre>
-
-<p>再來你要確保你啟用<strong>redis-server</strong></p>
-
-<pre><code>redis-server
-</code></pre>
-
-<h2>Step 2. 建立 Keyword model</h2>
-
-<pre><code>rails g model keyword
-</code></pre>
-
-<p>然後 migration檔案：(這邊的結構單純就是為了soulmate設計)</p>
-
-<pre><code>class CreateKeywords &lt; ActiveRecord::Migration
-  def change
-    create_table :keywords do |t|
-        t.string :name
-        t.integer :score
-        t.string :url
-        t.string :subtitle
-        t.string :keyword_type
-      t.timestamps
-    end
-  end
-end
-</code></pre>
-
-<p>別忘了</p>
-
-<pre><code>rake db:migrate
-</code></pre>
-
-<h2>Step 3. 將使用者輸入的關鍵字，記錄到solmate和keyword model [重要！]</h2>
-
-<p>還記得，剛剛part 1的 Step 4，基本上我們是將下面的code加進去</p>
-
-<pre><code># 如果有搜尋結果我們在記錄關鍵字 
-if @products.present?   
-    @keyword = Keyword.find_or_create_by(name: "#{params[:keyword]}") do |k|
-        k.score = 0
-        k.url = "/search?keyword=#{params[:keyword]}"
-        k.keyword_type = "Keyword"
-    end
-    @keyword.update_attribute(:score, @keyword.score+=1) #代表多搜尋了一次
-    remove_from_soulmate(@keyword) #先移除soulmate裡面的記錄
-    load_into_soulmate(@keyword)    #更新新的紀錄
-end
-
-private
-
-def load_into_soulmate(keyword)
-    loader = Soulmate::Loader.new("#{keyword.keyword_type}")
-    loader.add("term" =&gt; keyword.name, "id" =&gt; keyword.id, "score" =&gt; keyword.score, "data" =&gt; {
-  "link" =&gt; "#{keyword.url}"
-  })
-end
-
-def remove_from_soulmate(keyword)
-    loader = Soulmate::Loader.new("#{keyword.keyword_type}")
-    loader.remove("id" =&gt; keyword.id)
-end
-</code></pre>
-
-<p>所以在 <strong>app/controllers/products_controller.rb</strong>，變成了</p>
-
-<pre><code>class ProductsController &lt; ApplicationController
-    def search
-        @search = Product.search do
-            fulltext params[:keyword] do 
-              fields(:description, :name =&gt; 2.0)
-              query_phrase_slop 1
-            end
-            with(:is_on_the_shelf, true)
-            with(:created_at).less_than(Time.zone.now)
-        end
-        @products = @search.results
-
-        # 如果有搜尋結果我們在記錄關鍵字 
-        if @products.present?   
-            @keyword = Keyword.find_or_create_by(name: "#{params[:keyword]}") do |k|
-                k.score = 0
-                k.url = "/search?keyword=#{params[:keyword]}"
-                k.keyword_type = "Keyword"
-            end
-            @keyword.update_attribute(:score, @keyword.score+=1) #代表多搜尋了一次
-            remove_from_soulmate(@keyword) #先移除soulmate裡面的記錄
-            load_into_soulmate(@keyword)    #更新新的紀錄
-        end
-
-        private
-
-        def load_into_soulmate(keyword)
-            loader = Soulmate::Loader.new("#{keyword.keyword_type}")
-            loader.add("term" =&gt; keyword.name, "id" =&gt; keyword.id, "score" =&gt; keyword.score, "data" =&gt; {
-          "link" =&gt; "#{keyword.url}"
-          })
-        end
-
-        def remove_from_soulmate(keyword)
-            loader = Soulmate::Loader.new("#{keyword.keyword_type}")
-            loader.remove("id" =&gt; keyword.id)
-        end
-        return @products
-    end
-end
-</code></pre>
-
-<h2>Step 4. 當使用者在輸入關鍵字時，進行推薦</h2>
-
-<p>這邊我們需要借助 js了，這邊我就直接copy上面的參考資料了</p>
-
-<pre><code>var ready = function(){
-  var render, select;
-
-  render = function(term, data, type) {
-    return term;
-  }
-
-  select = function(term, data, type){
-    // populate our search form with the autocomplete result
-    $('#keyword').val(term);
-
-    // hide our autocomplete results
-    $('ul#soulmate').hide();
-
-    // then redirect to the result's link 
-    // remember we have the link in the 'data' metadata
-    return window.location.href = data.link
-  }
-
-  $('#keyword').soulmate({
-    url: '/autocomplete/search',
-    types: ['keyword'],
-    renderCallback : render,
-    selectCallback : select,
-    minQueryLength : 2,
-    maxResults     : 10
-  })
-
-
-}
-// when our document is ready, call our ready function
-$(document).ready(ready);
-
-// if using turbolinks, listen to the page:load event and fire our ready function
-$(document).on('page:load', ready);
-</code></pre>
-
-<h2>Step 5. 別忘了，補上 JQUERY 和 SOULMATE.JS</h2>
-
-<p>請參考： https://github.com/mcrowe/soulmate.js</p>
-
-<p>下載：https://github.com/mcrowe/soulmate.js/blob/master/src/compiled/jquery.soulmate.js</p>
-
-<p>因為它屬於第三方資源，所以我是把它放在</p>
-
-<p><strong>vender/assets/javascripts/jquery.soulmate.js</strong></p>
-
-<p>另外別忘了在你global的 <strong>app/assets/javascripts/application.js</strong>確保有</p>
-
-<pre><code>//= require jquery
-//= require jquery_ujs
-//= require jquery.soulmate
-</code></pre>
-
-<h2>Step 6. 還有route</h2>
-
-<p><strong>config/routes.rb</strong></p>
-
-<pre><code>mount Soulmate::Server, :at =&gt; "/autocomplete"
-</code></pre>
-
-<h2>Step 7. CSS的部分，就請參考</h2>
-
-<p><a href="http://josephndungu.com/tutorials/fast-autocomplete-search-terms-rails">FAST AUTOCOMPLETE SEARCH TERMS - RAILS</a></p>
-
-<p>待續&#8230;&#8230;</p>
 ]]></content>
   </entry>
   
