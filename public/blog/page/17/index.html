@@ -107,6 +107,69 @@ $(document).ready(
     <article class="post">
 	<h2 class="title">
 		
+		<a href="/blog/2011/11/04/how-to-use-robotframework-sshlibrary-execute-slash-start-command/">
+		
+			How to Use RobotFramework-sshlibrary-Execute/Start Command</a>
+	</h2>
+	<div class="entry-content">
+		<p>甲、主要的差別在於取得輸出</p>
+
+<p>Excute Command 取得輸出的方式：</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="err">$</span><span class="p">{</span><span class="n">stdout</span><span class="p">}</span> <span class="o">=</span>  <span class="no">Execute</span> <span class="no">Command</span>  <span class="n">sh</span><span class="sr"> /home/</span><span class="err">$</span><span class="p">{</span><span class="no">USERNAME</span><span class="p">}</span><span class="o">/</span><span class="err">$</span><span class="p">{</span><span class="no">ALOHA</span> <span class="no">RBT</span> <span class="no">FILE</span><span class="p">}</span><span class="o">/</span><span class="err">$</span><span class="p">{</span><span class="no">TEST</span> <span class="no">SCRIPT</span> <span class="no">NAME</span><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Start Command取得輸出的方式：</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="no">Start</span> <span class="no">Command</span>  <span class="n">sh</span><span class="sr"> /home/</span><span class="err">$</span><span class="p">{</span><span class="no">USERNAME</span><span class="p">}</span><span class="o">/</span><span class="err">$</span><span class="p">{</span><span class="no">ALOHA</span> <span class="no">RBT</span> <span class="no">FILE</span><span class="p">}</span><span class="o">/</span><span class="err">$</span><span class="p">{</span><span class="no">TEST</span> <span class="no">SCRIPT</span> <span class="no">NAME</span><span class="p">}</span>
+</span><span class='line'><span class="err">$</span><span class="p">{</span><span class="n">stdout</span><span class="p">}</span> <span class="o">=</span>  <span class="no">Read</span> <span class="no">Command</span> <span class="no">Output</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+
+
+
+		
+		<a href="/blog/2011/11/04/how-to-use-robotframework-sshlibrary-execute-slash-start-command/" class="more-link">Read on &rarr;</a>
+	</div>
+
+
+<div class="meta">
+	<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2011-11-04T19:34:00+08:00" pubdate data-updated="true">Nov 4<span>th</span>, 2011</time></div>
+	
+
+<div class="tags">
+
+	<a class='category' href='/blog/categories/robotframework/'>RobotFramework</a>
+
+</div>
+
+
+	
+		<span class="comments"><a href="/blog/2011/11/04/how-to-use-robotframework-sshlibrary-execute-slash-start-command//blog/page/17/index.html#disqus_thread">Comments</a></span>
+	
+</div></article>
+
+
+    <article class="post">
+	<h2 class="title">
+		
 		<a href="/blog/2011/11/04/how-to-ssh-to-virtualbox-using-macosx/">
 		
 			[超簡單]如何不改任何設定，用SSH 登入本機端的VirtualBox(作業系統為MacOSX)</a>
@@ -399,55 +462,6 @@ $(document).ready(
 
 	
 		<span class="comments"><a href="/blog/2011/10/28/installing-robot-framework-on-ubuntu11-dot-10//blog/page/17/index.html#disqus_thread">Comments</a></span>
-	
-</div></article>
-
-
-    <article class="post">
-	<h2 class="title">
-		
-		<a href="/blog/2011/10/26/mysqlzhong-wen-hua-latin1-zhuan-utf8/">
-		
-			MacOS-Mysql中文化-latin1 轉 Utf8</a>
-	</h2>
-	<div class="entry-content">
-		<p>之前一直沒有試中文輸入&#8230;</p>
-
-<p>結果昨天在試的時候，遇到問題了&#8230;無法輸入中文</p>
-
-<p>主要參考了兩篇文章一個是PTT的Ruby版文章1215和這篇<a href="http://yoonkit.blogspot.com/2006/03/mysql-charset-from-latin1-to-utf8.html" title="文章">文章</a></p>
-
-
-		
-		<a href="/blog/2011/10/26/mysqlzhong-wen-hua-latin1-zhuan-utf8/" class="more-link">Read on &rarr;</a>
-	</div>
-
-
-<div class="meta">
-	<div class="date">
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2011-10-26T11:14:00+08:00" pubdate data-updated="true">Oct 26<span>th</span>, 2011</time></div>
-	
-
-<div class="tags">
-
-	<a class='category' href='/blog/categories/mysql/'>MySQL</a>
-
-</div>
-
-
-	
-		<span class="comments"><a href="/blog/2011/10/26/mysqlzhong-wen-hua-latin1-zhuan-utf8//blog/page/17/index.html#disqus_thread">Comments</a></span>
 	
 </div></article>
 

@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Ruby on Rails | AlohaCC]]></title>
   <link href="http://ccaloha.cc/blog/categories/ruby-on-rails/atom.xml" rel="self"/>
   <link href="http://ccaloha.cc/"/>
-  <updated>2015-08-23T15:31:32+08:00</updated>
+  <updated>2015-08-27T17:31:10+08:00</updated>
   <id>http://ccaloha.cc/</id>
   <author>
     <name><![CDATA[Aloha]]></name>
@@ -12,6 +12,118 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[[Tips] Limit Class Only be used in Development Environment]]></title>
+    <link href="http://ccaloha.cc/blog/2015/08/27/tips-limit-some-class-only-be-used-in-development-environment/"/>
+    <updated>2015-08-27T17:22:50+08:00</updated>
+    <id>http://ccaloha.cc/blog/2015/08/27/tips-limit-some-class-only-be-used-in-development-environment</id>
+    <content type="html"><![CDATA[<p>In my project, I have to dump data from Mysql to MongoDB. And, this feature only used in development. However, Rails will load any classes under folder "app/" automatically . So, how can I avoid "Development-Only Class" loading in production environment?</p>
+
+<p>let's check it out~</p>
+
+<p>If you have a class named: <strong>DumpDataFromOldServer</strong> and it located at  folder <strong>'/app/development_only'</strong>. like this:</p>
+
+<p>```</p>
+
+<h1>app/development_only/dump_data_from_old_server.rb</h1>
+
+<p>class DumpDataFromOldServer &lt; ActiveRecord::Base</p>
+
+<pre><code>....
+</code></pre>
+
+<p>end
+```</p>
+
+<h2>Step1. Application.rb</h2>
+
+<p>you still need to let Rails know which folders should be loaded by using <strong>config.eager_load_paths</strong>.</p>
+
+<p>ps. what's difference between eager_load and auto_load?</p>
+
+<p>please check this <a href="http://stackoverflow.com/questions/19773266/confusing-about-autoload-paths-vs-eager-load-paths-in-rails-4">http://stackoverflow.com/questions/19773266/confusing-about-autoload-paths-vs-eager-load-paths-in-rails-4</a></p>
+
+<p><code>
+ config.eager_load_paths += %W(#{Rails.root}/app/development_only)
+</code></p>
+
+<p>It will be:</p>
+
+<p>```</p>
+
+<h1>config/application.rb</h1>
+
+<p>require File.expand_path('../boot', <strong>FILE</strong>)</p>
+
+<p>Bundler.require(*Rails.groups)</p>
+
+<p>module MyAwesomeProject
+  class Application &lt; Rails::Application
+   ...</p>
+
+<p>   config.eager_load_paths += %W(#{Rails.root}/app/development_only)</p>
+
+<p>   ...
+   end
+end</p>
+
+<p>```</p>
+
+<h2>Step2. Update your environment file</h2>
+
+<p>ref: <a href="http://stackoverflow.com/questions/13756986/how-to-blacklist-directory-loading-in-rails">http://stackoverflow.com/questions/13756986/how-to-blacklist-directory-loading-in-rails</a></p>
+
+<p>Add these lines</p>
+
+<p>```
+  path_rejector = lambda { |s| s.include?("app/development_only") }</p>
+
+<p>  # Remove the path from being loaded when Rails starts:
+  config.eager_load_paths = config.eager_load_paths.reject(&amp;path_rejector)</p>
+
+<p>  # Remove the path from being lazily loaded
+  ActiveSupport::Dependencies.autoload_paths.reject!(&amp;path_rejector)
+```</p>
+
+<p>It will be:</p>
+
+<p>```</p>
+
+<h1>config/environments/production.rb</h1>
+
+<p>Rails.application.configure do</p>
+
+<p>  ...</p>
+
+<p>  path_rejector = lambda { |s| s.include?("app/development_only") }</p>
+
+<p>  config.eager_load_paths = config.eager_load_paths.reject(&amp;path_rejector)</p>
+
+<p>  ActiveSupport::Dependencies.autoload_paths.reject!(&amp;path_rejector)
+end</p>
+
+<p>```</p>
+
+<h2>Step3. Test</h2>
+
+<p>```</p>
+
+<h1>In Development console: rails c</h1>
+
+<blockquote><p>DumpDataFromOldServer.all.first</p></blockquote>
+
+<p>DumpDataFromOldServer Load (0.6ms)  SELECT  <code>dump_data_from_old_server</code>.* FROM <code>dump_data_from_old_server</code>  LIMIT 1
+=> #<DumpDataFromOldServer id: 1, created_at: "2014-05-09 16:59:55"></p>
+
+<h1>In Production console: rails c -e production</h1>
+
+<blockquote><p>DumpDataFromOldServer.all.first
+NameError: uninitialized constant DumpDataFromOldServer</p></blockquote>
+
+<p>```</p>
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[Build up a homemade server-to-server interactions with Google API using Ruby - Take Google Analytics As An Example]]></title>
@@ -1445,135 +1557,6 @@ end
   ... 
 end
 </code></pre>
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[String handling between JavaScript and Ruby]]></title>
-    <link href="http://ccaloha.cc/blog/2015/06/10/string-handling-between-javacript-and-ruby/"/>
-    <updated>2015-06-10T00:14:49+08:00</updated>
-    <id>http://ccaloha.cc/blog/2015/06/10/string-handling-between-javacript-and-ruby</id>
-    <content type="html"><![CDATA[<p>javascript 在做 <strong>escape</strong> 時，編碼出來的字，和Ruby的 <strong>CGI.escape</strong>、<strong>URI.escape</strong> 是不同的！</p>
-
-<p>舉例來說：</p>
-
-<p>在<strong>browser console下</strong></p>
-
-<pre><code>escape("台中市")
-&gt; "%u53F0%u4E2D%u5E02"
-</code></pre>
-
-<p>但是在<strong>rails c</strong> 下</p>
-
-<pre><code>CGI.escape("台中市")
-&gt; "%E5%8F%B0%E4%B8%AD%E5%B8%82"
-</code></pre>
-
-<p> Why?</p>
-
-<!-- more -->
-
-
-<p> 查了一下Google，發現是因為在 js 在escape中文時，是將他編成 unicode</p>
-
-<p> 所以，</p>
-
-<h2>javascript 如果要送中文字給Ruby 請使用</h2>
-
-<pre><code>encodeURIComponent("台中市")
-&gt; "%E5%8F%B0%E4%B8%AD%E5%B8%82"
-</code></pre>
-
-<h2>但是，往往沒辦法你不能去改人家的javascript，你只好.... javascripts escape string to UTF-8</h2>
-
-<p>查到的作法如下：</p>
-
-<p>在<strong>rails c</strong> 下</p>
-
-<pre><code>unicode_str = "%u53F0%u4E2D%u5E02"
-
-unicode_str.gsub(/\%u([\da-fA-F]{4})/) {|m|  [$1].pack('H*').unpack('n*').pack('U*')}
-
-=&gt; "台中市"
-</code></pre>
-
-<p> 參數解釋：</p>
-
-<p> 因為 unicode 的字串都是由 %u 開頭，外加上 4個可能是數字可能是 小寫a~f 或是 大寫A~F，所以我們先透過 <strong>gsub</strong> 這個function將符合的字抓出來處理</p>
-
-<p> 抓出來字之後，我們要使用 <strong>pack</strong> 和 <strong>unpack</strong> 方法，來將字進行解碼、編碼</p>
-
-<p> 我們先抓一個字來看，就以 "台" 為例， (ps. <strong>pack 只能用在array, unpack可以用在string</strong>)</p>
-
-<p> gsub 會將 "53F0" 丟進去處理</p>
-
-<pre><code>["53F0"].pack('H*')
-
-  =&gt; "S\xF0"
-</code></pre>
-
-<p>  # H: 代表了將他pack組成16進位字(hex string (high nibble first))</p>
-
-<pre><code>"S\xF0".unpack('n*')
-
-=&gt; [21488]
-</code></pre>
-
-<p>  # n: 他會return一個 Integer，他代表了16-bit unsigned, network (big-endian) byte order</p>
-
-<pre><code>[21488].pack('U*')
-
-=&gt; "台"
-</code></pre>
-
-<p>  # U: 將16位元NBO組成UTF-8</p>
-
-<p> REF: <br/>
- <a href="http://www.cnphp6.com/archives/4967">UNESCAPE編碼錯誤</a></p>
-
-<h2>那反過來呢，要如何將UTF-8的字，做成像 javascript escape 後的結果</h2>
-
-<p>在<strong>rails c</strong>下</p>
-
-<pre><code>return_str = ""
-"台中市".each_char { |c| return_str += "%u#{c.unpack("U*").pack("n*").unpack("H*").first}" }
-
-
-return_str 
-&gt; "%u53f0%u4e2d%u5e02"
-</code></pre>
-
-<h2>假設，你現在要串接的使用Big5寫的API，你發現他接收的parameters 居然是%A5%78%A4%A4%A5%AB</h2>
-
-<p>因為他default是接受，用 javascript escape Big5編碼的字</p>
-
-<p>所以你要將你UTF-8的字，轉成符合他格式的字</p>
-
-<p>這時候你要這樣做：</p>
-
-<pre><code>  return_str = ""
-  Iconv.conv("BIG5", "UTF8", str).unpack("H*").first.scan(/../).each do |s|
-    return_str += "%#{s}"
-  end
-</code></pre>
-
-<p>一樣來看說明：</p>
-
-<pre><code>Iconv.conv("BIG5", "UTF8", "台中市")
-
-=&gt; "\x{A578}\x{A4A4}\x{A5AB}"
-
-
-Iconv.conv("BIG5", "UTF8", "台中市").unpack("H*")
-
-=&gt; ["a578a4a4a5ab"]
-
-Iconv.conv("BIG5", "UTF8", "台中市").unpack("H*").first.scan(/../)
-
-=&gt; ["a5", "78", "a4", "a4", "a5", "ab"]
-</code></pre>
-
-<h2>打完收工！</h2>
 ]]></content>
   </entry>
   
