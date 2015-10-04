@@ -4,7 +4,7 @@
   <title><![CDATA[AlohaCC]]></title>
   <link href="http://ccaloha.cc/atom.xml" rel="self"/>
   <link href="http://ccaloha.cc/"/>
-  <updated>2015-10-04T13:35:52+08:00</updated>
+  <updated>2015-10-04T13:53:34+08:00</updated>
   <id>http://ccaloha.cc/</id>
   <author>
     <name><![CDATA[Aloha]]></name>
@@ -195,22 +195,10 @@
 <span class='line-number'>4</span>
 <span class='line-number'>5</span>
 <span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
 </pre></td><td class='code'><pre><code class=''><span class='line'># vim /usr/local/etc/mongod.conf
 </span><span class='line'>
-</span><span class='line'>systemLog:
-</span><span class='line'>  destination: file
-</span><span class='line'>  path: /usr/local/var/log/mongodb/mongo.log
-</span><span class='line'>  logAppend: true
-</span><span class='line'>storage:
-</span><span class='line'>  dbPath: /usr/local/var/mongodb
-</span><span class='line'>net:
-</span><span class='line'>  bindIp: 127.0.0.1
+</span><span class='line'>...
+</span><span class='line'>
 </span><span class='line'>security:
 </span><span class='line'>  authorization: enabled </span></code></pre></td></tr></table></div></figure>
 
@@ -258,11 +246,11 @@
 </span><span class='line'>use your_awesome_project_development
 </span><span class='line'>
 </span><span class='line'>db.createUser(
-</span><span class='line'>  {
-</span><span class='line'>    user: 'dbadmin',
-</span><span class='line'>    pwd: '1234567890',
-</span><span class='line'>    roles: [ { role: "dbOwner", db: "your_awesome_project_development" } ]
-</span><span class='line'>  }
+</span><span class='line'>    {
+</span><span class='line'>        user: 'dbadmin',
+</span><span class='line'>        pwd: '1234567890',
+</span><span class='line'>        roles: [ { role: "dbOwner", db: "your_awesome_project_development" } ]
+</span><span class='line'>    }
 </span><span class='line'>)</span></code></pre></td></tr></table></div></figure>
 
 
@@ -279,14 +267,14 @@
 <span class='line-number'>9</span>
 <span class='line-number'>10</span>
 </pre></td><td class='code'><pre><code class=''><span class='line'>db.updateUser(
-</span><span class='line'>  "dbadmin",
-</span><span class='line'>  {
-</span><span class='line'>    pwd: 'aloha',
-</span><span class='line'>    roles: 
-</span><span class='line'>    [
-</span><span class='line'>      {role: "read", db: "your_awesome_project_development"}
-</span><span class='line'>    ]
-</span><span class='line'>  }
+</span><span class='line'>    "dbadmin",
+</span><span class='line'>    {
+</span><span class='line'>        pwd: 'aloha',
+</span><span class='line'>        roles: 
+</span><span class='line'>          [
+</span><span class='line'>              {role: "read", db: "your_awesome_project_development"}
+</span><span class='line'>          ]
+</span><span class='line'>    }
 </span><span class='line'>)</span></code></pre></td></tr></table></div></figure>
 
 
@@ -296,19 +284,13 @@
 
 <h2>Setup Rails Projects</h2>
 
-<ol>
-<li>create a project without active-record</li>
-</ol>
-
+<h3>1. create a project without active-record</h3>
 
 <figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-</pre></td><td class='code'><pre><code class=''><span class='line'>rails new your_awesome_project_development --skip-active-record</span></code></pre></td></tr></table></div></figure>
+</pre></td><td class='code'><pre><code class=''><span class='line'>rails new your_awesome_project --skip-active-record</span></code></pre></td></tr></table></div></figure>
 
 
-<ol>
-<li>add Mongoid to Gemfile</li>
-</ol>
-
+<h3>2. add Mongoid to Gemfile</h3>
 
 <figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
 <span class='line-number'>2</span>
@@ -318,10 +300,7 @@
 </span><span class='line'>gem 'mongoid', '~&gt; 5.0.0'</span></code></pre></td></tr></table></div></figure>
 
 
-<ol>
-<li>Create a mongoid.yml</li>
-</ol>
-
+<h3>3. Create a mongoid.yml</h3>
 
 <figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
 <span class='line-number'>2</span>
@@ -329,10 +308,7 @@
 </span><span class='line'>rails g mongoid:config</span></code></pre></td></tr></table></div></figure>
 
 
-<ol>
-<li>Update yout mongoid.yml</li>
-</ol>
-
+<h3>4. Update yout mongoid.yml</h3>
 
 <figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
 <span class='line-number'>2</span>

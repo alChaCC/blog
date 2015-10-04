@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Mongoid | AlohaCC]]></title>
   <link href="http://ccaloha.cc/blog/categories/mongoid/atom.xml" rel="self"/>
   <link href="http://ccaloha.cc/"/>
-  <updated>2015-10-04T13:35:52+08:00</updated>
+  <updated>2015-10-04T13:53:34+08:00</updated>
   <id>http://ccaloha.cc/</id>
   <author>
     <name><![CDATA[Aloha]]></name>
@@ -154,15 +154,9 @@ $ db.createUser(
 
 <h1>vim /usr/local/etc/mongod.conf</h1>
 
-<p>systemLog:
-  destination: file
-  path: /usr/local/var/log/mongodb/mongo.log
-  logAppend: true
-storage:
-  dbPath: /usr/local/var/mongodb
-net:
-  bindIp: 127.0.0.1
-security:
+<p>...</p>
+
+<p>security:
   authorization: enabled
 ```</p>
 
@@ -195,34 +189,34 @@ mongo --host localhost --port 27017 --username siteUserAdmin --password  --authe
 
 <p>use your_awesome_project_development</p>
 
-<p>db.createUser(
-  {</p>
+<p>db.createUser(</p>
 
-<pre><code>user: 'dbadmin',
-pwd: '1234567890',
-roles: [ { role: "dbOwner", db: "your_awesome_project_development" } ]
+<pre><code>{
+    user: 'dbadmin',
+    pwd: '1234567890',
+    roles: [ { role: "dbOwner", db: "your_awesome_project_development" } ]
+}
 </code></pre>
 
-<p>  }
-)
+<p>)
 ```</p>
 
 <p>if you want to update user's setting.</p>
 
 <p>```
-db.updateUser(
-  "dbadmin",
-  {</p>
+db.updateUser(</p>
 
-<pre><code>pwd: 'aloha',
-roles: 
-[
-  {role: "read", db: "your_awesome_project_development"}
-]
+<pre><code>"dbadmin",
+{
+    pwd: 'aloha',
+    roles: 
+      [
+          {role: "read", db: "your_awesome_project_development"}
+      ]
+}
 </code></pre>
 
-<p>  }
-)
+<p>)
 ```</p>
 
 <p>if you want to know which roles can perform which  actions, you can find anwser here:</p>
@@ -231,15 +225,13 @@ roles:
 
 <h2>Setup Rails Projects</h2>
 
-<ol>
-<li>create a project without active-record</li>
-</ol>
-
+<h3>1. create a project without active-record</h3>
 
 <p><code>
-rails new your_awesome_project_development --skip-active-record
-</code>
-2. add Mongoid to Gemfile</p>
+rails new your_awesome_project --skip-active-record
+</code></p>
+
+<h3>2. add Mongoid to Gemfile</h3>
 
 <p>```</p>
 
@@ -248,20 +240,14 @@ rails new your_awesome_project_development --skip-active-record
 <p>gem 'mongoid', '~> 5.0.0'
 ```</p>
 
-<ol>
-<li>Create a mongoid.yml</li>
-</ol>
-
+<h3>3. Create a mongoid.yml</h3>
 
 <p><code>
 bundle install
 rails g mongoid:config
 </code></p>
 
-<ol>
-<li>Update yout mongoid.yml</li>
-</ol>
-
+<h3>4. Update yout mongoid.yml</h3>
 
 <p>```
 development:

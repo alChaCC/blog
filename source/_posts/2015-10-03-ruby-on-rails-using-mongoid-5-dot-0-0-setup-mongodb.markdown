@@ -134,14 +134,8 @@ In MacOSX
 ```
 # vim /usr/local/etc/mongod.conf
 
-systemLog:
-  destination: file
-  path: /usr/local/var/log/mongodb/mongo.log
-  logAppend: true
-storage:
-  dbPath: /usr/local/var/mongodb
-net:
-  bindIp: 127.0.0.1
+...
+
 security:
   authorization: enabled 
 ```
@@ -174,11 +168,11 @@ Now, we will create an user  named 'dbadmin' who has 'dbOwner' role.
 use your_awesome_project_development
 
 db.createUser(
-  {
-    user: 'dbadmin',
-    pwd: '1234567890',
-    roles: [ { role: "dbOwner", db: "your_awesome_project_development" } ]
-  }
+    {
+        user: 'dbadmin',
+        pwd: '1234567890',
+        roles: [ { role: "dbOwner", db: "your_awesome_project_development" } ]
+    }
 )
 ```
 
@@ -186,14 +180,14 @@ if you want to update user's setting.
 
 ```
 db.updateUser(
-  "dbadmin",
-  {
-    pwd: 'aloha',
-    roles: 
-    [
-      {role: "read", db: "your_awesome_project_development"}
-    ]
-  }
+    "dbadmin",
+    {
+        pwd: 'aloha',
+        roles: 
+          [
+              {role: "read", db: "your_awesome_project_development"}
+          ]
+    }
 )
 ```
 
@@ -204,12 +198,12 @@ if you want to know which roles can perform which  actions, you can find anwser 
 
 ## Setup Rails Projects
 
-1. create a project without active-record 
+### 1. create a project without active-record 
 
 ```
-rails new your_awesome_project_development --skip-active-record
+rails new your_awesome_project --skip-active-record
 ```
-2. add Mongoid to Gemfile
+### 2. add Mongoid to Gemfile
 
 ```
 # Gemfile
@@ -217,14 +211,14 @@ rails new your_awesome_project_development --skip-active-record
 gem 'mongoid', '~> 5.0.0'
 ```
 
-3. Create a mongoid.yml
+### 3. Create a mongoid.yml
 
 ```
 bundle install
 rails g mongoid:config
 ```
 
-4. Update yout mongoid.yml
+### 4. Update yout mongoid.yml
 
 ```
 development:
