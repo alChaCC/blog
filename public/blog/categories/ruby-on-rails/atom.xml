@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Ruby on Rails | AlohaCC]]></title>
   <link href="http://ccaloha.cc/blog/categories/ruby-on-rails/atom.xml" rel="self"/>
   <link href="http://ccaloha.cc/"/>
-  <updated>2015-08-27T17:31:10+08:00</updated>
+  <updated>2015-10-04T13:35:52+08:00</updated>
   <id>http://ccaloha.cc/</id>
   <author>
     <name><![CDATA[Aloha]]></name>
@@ -12,6 +12,311 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[Ruby on Rails Development using Mongoid 5.0.0 - 1. Setup MongoDB]]></title>
+    <link href="http://ccaloha.cc/blog/2015/10/03/ruby-on-rails-using-mongoid-5-dot-0-0-setup-mongodb/"/>
+    <updated>2015-10-03T22:33:34+08:00</updated>
+    <id>http://ccaloha.cc/blog/2015/10/03/ruby-on-rails-using-mongoid-5-dot-0-0-setup-mongodb</id>
+    <content type="html"><![CDATA[<p><img src="https://dl.dropboxusercontent.com/u/22307926/Blog%20Image/Ruby%20on%20Rails%20Development%20using%20Mongoid%205.0.0%20-%20Setup%20MongoDB/MongoDB-Logo.png" alt="MongoDB"></p>
+
+<p>This tutorial series will help you start your Rails project with MongoDB.</p>
+
+<p>And I use Mongoid 5.0.0 as an example.</p>
+
+<p>In this tutorial, you will be able to see how to</p>
+
+<ol>
+<li><p>Install MongoDB in Mac OSX</p></li>
+<li><p>Create Some Database Users in MongoDB</p></li>
+<li><p>Setup Rails Projects</p></li>
+</ol>
+
+
+<p>(Tips)</p>
+
+<ol>
+<li><p>Dump Data</p></li>
+<li><p>Restore Data</p></li>
+</ol>
+
+
+<p>Let's go !</p>
+
+<!--more-->
+
+
+<h2>Install MongoDB in Mac OSX</h2>
+
+<p>```</p>
+
+<h1>Intall Homebrew (Mac OSX package manager)</h1>
+
+<p>ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"</p>
+
+<h1>Update the Hombrew packages first</h1>
+
+<p>brew update</p>
+
+<h1>Install MongoDB</h1>
+
+<p>brew install MongoDB
+```</p>
+
+<p>If you want to see where MongoDB is installed</p>
+
+<p><code>
+brew ls mongodb
+</code></p>
+
+<h2>Create Some Database Users in MongoDB</h2>
+
+<p>Since I want to enable access control on a MongoDB instance, just like Mysql, I have to use username and password to access MongoDB.</p>
+
+<p>First, you must to know where you can setup MongoDB.</p>
+
+<p>```</p>
+
+<h1>In MacOSX</h1>
+
+<p>vim /usr/local/etc/mongod.conf</p>
+
+<h1>In Ubuntu</h1>
+
+<p>vim /etc/mongod.conf
+```</p>
+
+<p>Second, you have to make sure that authorization is disable.</p>
+
+<p>In MacOSX</p>
+
+<p>```</p>
+
+<h1>/usr/local/etc/mongod.conf</h1>
+
+<p>systemLog:
+  destination: file
+  path: /usr/local/var/log/mongodb/mongo.log
+  logAppend: true
+storage:
+  dbPath: /usr/local/var/mongodb
+net:
+  bindIp: 127.0.0.1
+security:
+  authorization: disabled
+```</p>
+
+<p>In Ubuntu</p>
+
+<p>```</p>
+
+<h1>/etc/mongod.conf</h1>
+
+<p>...</p>
+
+<p>noauth = true
+...</p>
+
+<p>```</p>
+
+<p>Then (re)start MongoDB</p>
+
+<p>```</p>
+
+<h1>In Ubuntu</h1>
+
+<p>sudo service mongod restart</p>
+
+<h1>In Mac OSX</h1>
+
+<p>mongod --config /usr/local/etc/mongod.conf
+```</p>
+
+<p>Ok, now you are a super user, you can access any database and perform any action. let's create an administrator named 'siteUserAdmin' and he has "userAdminAnyDatabase" role first.</p>
+
+<p><code>
+$ mongo
+$ use admin
+$ db.createUser(
+ {
+  user: 'siteUserAdmin',
+  pwd: '1234567890',
+  roles: [ { role: "userAdminAnyDatabase", db: "admin" } ]
+ }
+)
+</code></p>
+
+<p>Ok, now we can enable authorization mode.</p>
+
+<p>In MacOSX</p>
+
+<p>```</p>
+
+<h1>vim /usr/local/etc/mongod.conf</h1>
+
+<p>systemLog:
+  destination: file
+  path: /usr/local/var/log/mongodb/mongo.log
+  logAppend: true
+storage:
+  dbPath: /usr/local/var/mongodb
+net:
+  bindIp: 127.0.0.1
+security:
+  authorization: enabled
+```</p>
+
+<p>In Ubuntu</p>
+
+<p>```</p>
+
+<h1>/etc/mongod.conf</h1>
+
+<p>...</p>
+
+<p>auth = true
+...</p>
+
+<p>```</p>
+
+<p>And don't forgot restart MongoDB.</p>
+
+<p>Then we now have to use user name and password to access database.</p>
+
+<p><code>
+mongo --host localhost --port 27017 --username siteUserAdmin --password  --authenticationDatabase admin
+</code></p>
+
+<p>Now, we will create an user  named 'dbadmin' who has 'dbOwner' role.</p>
+
+<p>```</p>
+
+<h1>assume your project will use database: 'your_awesome_project_development'</h1>
+
+<p>use your_awesome_project_development</p>
+
+<p>db.createUser(
+  {</p>
+
+<pre><code>user: 'dbadmin',
+pwd: '1234567890',
+roles: [ { role: "dbOwner", db: "your_awesome_project_development" } ]
+</code></pre>
+
+<p>  }
+)
+```</p>
+
+<p>if you want to update user's setting.</p>
+
+<p>```
+db.updateUser(
+  "dbadmin",
+  {</p>
+
+<pre><code>pwd: 'aloha',
+roles: 
+[
+  {role: "read", db: "your_awesome_project_development"}
+]
+</code></pre>
+
+<p>  }
+)
+```</p>
+
+<p>if you want to know which roles can perform which  actions, you can find anwser here:</p>
+
+<p><a href="http://docs.mongodb.org/master/reference/built-in-roles/#userAdmin">http://docs.mongodb.org/master/reference/built-in-roles/#userAdmin</a></p>
+
+<h2>Setup Rails Projects</h2>
+
+<ol>
+<li>create a project without active-record</li>
+</ol>
+
+
+<p><code>
+rails new your_awesome_project_development --skip-active-record
+</code>
+2. add Mongoid to Gemfile</p>
+
+<p>```</p>
+
+<h1>Gemfile</h1>
+
+<p>gem 'mongoid', '~> 5.0.0'
+```</p>
+
+<ol>
+<li>Create a mongoid.yml</li>
+</ol>
+
+
+<p><code>
+bundle install
+rails g mongoid:config
+</code></p>
+
+<ol>
+<li>Update yout mongoid.yml</li>
+</ol>
+
+
+<p>```
+development:
+  clients:</p>
+
+<pre><code>default:
+  database: your_awesome_project_development
+  hosts:
+    - localhost:27017
+  options:
+    user: 'dbadmin'
+    password: '1234567890'
+    roles:
+      - 'dbOwner'
+</code></pre>
+
+<p>test:
+  clients:</p>
+
+<pre><code>default:
+  database: your_awesome_project_test
+  hosts:
+    - localhost:27017
+  options:
+    max_retries: 1
+    retry_interval: 0
+    user: 'dbadmin_tester'
+    password: '1234567890'
+    roles:
+      - 'dbOwner'
+</code></pre>
+
+<p>```</p>
+
+<h2>Dump Data</h2>
+
+<p>Please make sure that you have backup role in production MongoDB.</p>
+
+<p>I use 'readWriteAnyDatabase' role.</p>
+
+<p>Assume that you need to dump data from production data and restore to local mongo server.</p>
+
+<p><code>
+mongodump --host your.production.mongo.server.ip --port 37017 --username user --password --out /Users/AlohaCC/Desktop/production-mongodump-2015-10-04
+</code></p>
+
+<h2>Restore Data</h2>
+
+<p>Please make sure that you have backup role in local MongoDB.</p>
+
+<p><code>
+mongorestore --host localhost --port 3017 --username user --password  /Users/AlohaCC/Desktop/production-mongodump-2015-10-04
+</code></p>
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[[Tips] Limit Class Only be used in Development Environment]]></title>
@@ -1052,511 +1357,6 @@ end
 <li><a href="http://code.oneapm.com/ruby/2015/04/08/ruby-profilers/">http://code.oneapm.com/ruby/2015/04/08/ruby-profilers/</a></li>
 </ol>
 
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[Sign up by Devise and Crop User Avatar then Upload by Carrierwave using Ruby on Rails]]></title>
-    <link href="http://ccaloha.cc/blog/2015/06/25/sign-up-by-devise-and-crop-user-avatar-then-upload-by-carrierwave-using-ruby-on-rails/"/>
-    <updated>2015-06-25T01:15:45+08:00</updated>
-    <id>http://ccaloha.cc/blog/2015/06/25/sign-up-by-devise-and-crop-user-avatar-then-upload-by-carrierwave-using-ruby-on-rails</id>
-    <content type="html"><![CDATA[<p>ref:</p>
-
-<ol>
-<li> http://railscasts.com/episodes/182-cropping-images-revised</li>
-<li> http://stackoverflow.com/questions/12762728/how-to-crop-image-on-upload-with-rails-carrierwave-and-minimagick</li>
-<li> https://coderwall.com/p/e9d_ja/using-carrierwave-uploader-for-tableless-model-in-rails</li>
-<li> http://stackoverflow.com/questions/24262388/carrierwave-processing-only-after-the-model-has-been-saved-model-id-is-nil</li>
-</ol>
-
-
-<h1>What I done in this article</h1>
-
-<h2>1. Click Upload Image</h2>
-
-<p><img src="https://dl.dropboxusercontent.com/u/22307926/Blog%20Image/Crop%20User%20Avatar%20and%20Upload%20via%20Carrierwave%20while%20creating%20user%20using%20Ruby%20on%20Rails/Step1%20click_upload_image.png" alt="Step 1. click_upload_image"></p>
-
-<h2>2. Choose Image And Preview</h2>
-
-<p><img src="https://dl.dropboxusercontent.com/u/22307926/Blog%20Image/Crop%20User%20Avatar%20and%20Upload%20via%20Carrierwave%20while%20creating%20user%20using%20Ruby%20on%20Rails/Step2%20choose%20image%20and%20preview.png" alt="Step 2. choose image and preview"></p>
-
-<h2>3. Edit Avatar And Preview Image Synchronously</h2>
-
-<p><img src="https://dl.dropboxusercontent.com/u/22307926/Blog%20Image/Crop%20User%20Avatar%20and%20Upload%20via%20Carrierwave%20while%20creating%20user%20using%20Ruby%20on%20Rails/Step3%20edit%20avatar%20and%20preview%20sync.png" alt="Step 3. Edit Avatar And Preview Image Synchronously"></p>
-
-<h2>4. Upload to AWS S3</h2>
-
-<p><img src="https://dl.dropboxusercontent.com/u/22307926/Blog%20Image/Crop%20User%20Avatar%20and%20Upload%20via%20Carrierwave%20while%20creating%20user%20using%20Ruby%20on%20Rails/Step4%20upload%20to%20AWS%20S3.png" alt="Step 4. Upload to AWS S3"></p>
-
-<h2>5. Image Cropped And Uploaded</h2>
-
-<p><img src="https://dl.dropboxusercontent.com/u/22307926/Blog%20Image/Crop%20User%20Avatar%20and%20Upload%20via%20Carrierwave%20while%20creating%20user%20using%20Ruby%20on%20Rails/Step5%20image%20cropped%20and%20uploaded.png" alt="Step 5. Image Cropped And Uploaded"></p>
-
-<!-- more -->
-
-
-<h1>Steps</h1>
-
-<h2>0. Description</h2>
-
-<p>I use Devise for sign up, Carrierwave for upload image and Jcrop for image selection. There is an User model and user has one UserImage model. Carrierwave uploader is mounted on UserImage. In this tutorial, I'll not go through upload things. You can find lots of resources such as <a href="http://railscasts.com/episodes/253-carrierwave-file-uploads">carrierwave-file-uploads</a>. Also, I'll not show all devise registration and popup(modal) things. Still, there are many resources on the Internet. Ok, let's go.</p>
-
-<h2>1. Gemfile</h2>
-
-<p>I use jcrop for cropping image. So, add jcrop library to <em>Gemfile</em>.</p>
-
-<pre><code>gem 'jcrop-rails-v2'
-</code></pre>
-
-<p>ps. don't forgot <strong>bundle install</strong></p>
-
-<h2>2. Model</h2>
-
-<p>In User model, I only need to tell that User has a main image and it refer to UserImage model, and user signup form contains UserImage's attributes, therefore, User model should accept these nested attributes. And I create a method for building image used in upload form(you can see usage in view)</p>
-
-<p><strong>app/models/user.rb</strong></p>
-
-<pre><code>class User &lt; ActiveRecord::Base
-  ...
-  has_one :main_image, :class_name =&gt; "::UserImage"
-    accepts_nested_attributes_for :main_image, reject_if: :all_blank, allow_destroy: true
-
-
-    def input_main_image
-      self.main_image ||= self.build_main_image
-      end
-  ...
-  end
-</code></pre>
-
-<p>UserImage model has "file" attribute which is used for upload, and we use carrierwave as our uploader, we need to mount this uploader to "file" attribute. <strong>[!! Important !!] I guess due to Rails work flow, when UserImageUploader upload image, the UserImage custom attributes: crop_x, crop_y, crop_w and crop_h will not available to UserImageUploader that we can't crop image as we want. So we need to skip upload callback first, and we will upload after user is saved.</strong></p>
-
-<p>Ps. if your attribute used for mount uploader named "hello",</p>
-
-<pre><code>mount_uploader :file, UserImagesUploader
-skip_callback :save, :after, :store_file!
-</code></pre>
-
-<p>will be</p>
-
-<pre><code>mount_uploader :hello, UserImagesUploader
-skip_callback :save, :after, :store_hello!
-</code></pre>
-
-<p><strong>app/models/user_image.rb</strong></p>
-
-<pre><code># == Schema Information
-#
-# Table name: user_images
-#
-#  id                 :integer          not null, primary key
-#  user_id            :integer
-#  file               :string(255)
-#  created_at         :datetime
-#  updated_at         :datetime
-#
-
-class UserImage &lt; ActiveRecord::Base
-  belongs_to :user
-
-    # Used for user avatar image edit
-    attr_accessor :crop_x, :crop_y, :crop_w, :crop_h
-
-    mount_uploader :file, UserImagesUploader
-
-    # We need to upload after all attributes assigned，so we skip upload callback first
-    skip_callback :save, :after, :store_file!  
-end
-</code></pre>
-
-<h2>3. View</h2>
-
-<p>In first picture, we have a form for sign up. Due to I have to upload an user image, we need to build it first. Then, UserImage's attributes need to be filled. And I will use some javascript methods for editing so I write some div elements such as "fake-button-upload", "fake-button-edit". Also, I need to popup a image for user editing. Below ".uploaded" codes are used for popup. Finally, you can see I setup some ids, yap~ for javascript.</p>
-
-<p><strong>app/views/users/registrations/new.html.slim</strong></p>
-
-<pre><code>.upload_personal_image
-  = f.fields_for :main_image, resource.input_main_image do |build|
-    = build.file_field :file, class: "personal-image-upload-file"
-    .preview-outer
-      = image_tag(resource.main_image.file, id: "preview") if resource.main_image
-    .personal-image-upload.icon-default-photo-150x150
-    .fake-button-upload 上傳個人照
-    .fake-button-edit 編輯大頭照
-
-    .uploaded
-      .edit-title 編輯個人照
-      = image_tag(resource.main_image.file, id: "preview-edit") if resource.main_image
-      .uploaded-image-edit-attr
-        - for attribute in [:crop_x, :crop_y, :crop_w, :crop_h]
-          = build.text_field attribute, :id =&gt; attribute
-      .edit-desc 請將想要顯示的範圍拖曳至中心圓圈處！
-      .fake-button-edit-ok 設為個人照
-</code></pre>
-
-<h2>4. CSS</h2>
-
-<p><strong>app/assets/stylesheets/front/users/registrations.css.coffee</strong></p>
-
-<p>First we need to require jquery.Jcrop. And, I hope that our crop selector is a circle so I add....</p>
-
-<pre><code>.jcrop-holder div
-{
-    -webkit-border-radius: 50% !important;
-    -moz-border-radius: 50% !important;
-    border-radius: 50% !important;
-    margin: 0 auto;
-    // opacity: 0.6 !important;
-}
-</code></pre>
-
-<p>You can ignore them but you should notice that some classes are display none such as .personal-image-upload-file,  .preview-outer and .uploaded. These classed will show by javascript control.</p>
-
-<pre><code>//=require jquery.Jcrop
-
-...
-
-.jcrop-holder div
-{
-    -webkit-border-radius: 50% !important;
-    -moz-border-radius: 50% !important;
-    border-radius: 50% !important;
-    margin: 0 auto;
-}
-
-.personal-image-upload-file {
-    display: none;
-  }
-
-  .preview-outer {
-    overflow: hidden;
-      display: none;
-      width: 150px;
-      height: 150px;
-      position: absolute;
-      left: 0px;
-      top: 0px;
-      #preview{
-        width: 150px;
-        height: 150px;
-      }
-   }
-   .uploaded {
-  background-color: #FFFFFF;
-  text-align: center;
-  display: none;
-  .edit-title {
-    font-size: 20px;
-    margin: 0px auto 20px auto;
-    padding-top: 30px;
-  }
-  img {
-    border: 1px dashed #dd406f;
-    z-index: 2;
-  }
-  .edit-desc{
-    margin-top: 10px;
-    margin-bottom: 10px;
-    font-size: 14px;
-  }
-
-  .uploaded-image-edit-attr{
-    display: none;
-  }
-  .fake-button-edit-ok{
-    width: 100px;
-    height: 30px;
-    font-size: 16px;
-    display: inline-block;
-    line-height: 30px;
-    cursor: pointer;
-    background-color: #DD406F;
-    border-radius: 3px;
-    color: #FFFFFF;
-    text-decoration: none;
-    margin-bottom: 30px;
-  }
-}
-</code></pre>
-
-<h2>5. Javascript -> most important part for cropping image and previewing image.</h2>
-
-<p>First, we need to require <strong>jquery.Jcrop</strong></p>
-
-<pre><code>#= require jquery.Jcrop
-</code></pre>
-
-<p>If user click .personal-image-upload icon or .fake-button-upload button, I'll trigger real upload file click.</p>
-
-<pre><code>$('.personal-image-upload').click -&gt; 
-  $('.personal-image-upload-file').trigger('click')
-
-$('.fake-button-upload').click -&gt;
-  $('.personal-image-upload-file').trigger('click')
-</code></pre>
-
-<p>How to preview image?</p>
-
-<p>First, I have to know original image size since if user don't resize image, I still need to send crop_x, crop_y, crop_w and crop_h to carrierwave crop function. Second, after FileReader read an image, I'll set file path to element #preview and #preview-edit src attribute. Then, I'll hide upload icon and show edit button.</p>
-
-<pre><code>initPreviewImage = -&gt;    
-    readURL = (input) -&gt;
-      if input.files and input.files[0]
-        reader = new FileReader
-
-        reader.onload = (e) -&gt;
-          img = new Image
-          img.onload = -&gt;
-            $('#crop_x').val(0);
-            $('#crop_y').val(0);
-            $('#crop_w').val(img.width);
-            $('#crop_h').val(img.height);
-          img.src = e.target.result
-
-          $('.preview-outer').css("display": "inline-block")
-          $('#preview').attr 'src', e.target.result
-          $('#preview-edit').attr 'src', e.target.result
-          $('.personal-image-upload').hide()
-          $('.fake-button-edit').css("display": "block")
-          $('.fake-button-edit').css("right": "0px")
-          $('.fake-button-upload').css("left": "0px")
-
-        reader.readAsDataURL input.files[0]
-
-    $('#user_main_image_attributes_file').change -&gt;
-      readURL this
- initPreviewImage();
-</code></pre>
-
-<p>At last, the cropping part. I setup three global variables for jcrop_api and image size(boundx, boundy). When the element .fake-button-edit button is clicked, I will call showUserImageEdit() and call my modal method for popup function. In showUserImageEdit function, if jcrop_api already existed(user choose a file already), I have to use jcrop_api to reset new image. And #preview-edit is used for binding jcrop, when user select new area or move selection, it will  call update_crop function to update crop_x, crop_y, crop_w and crop_h(don't forgot these attributes will send to carrierwave uploaded for cropping) and I will update #preview image as well.</p>
-
-<p>Ps. you might ask why rx = 150 / coords.w and ry = 150 / coords.h ? The answer is, I give preview size 150x150px in CSS.</p>
-
-<pre><code>jcrop_api = undefined
-  boundx = undefined
-  boundy = undefined
-
-  showUserImageEdit = -&gt;
-    if jcrop_api
-      jcrop_api.setImage($('#preview').attr('src'));
-
-    update_crop = (coords) -&gt;
-      rx = 150 / coords.w
-      ry = 150 / coords.h
-      $('#preview').css
-        width: Math.round(rx * boundx) + 'px'
-        height: Math.round(ry * boundy) + 'px'
-        marginLeft: '-' + Math.round(rx * coords.x) + 'px'
-        marginTop: '-' + Math.round(ry * coords.y) + 'px'
-      $('#crop_x').val(Math.floor(coords.x));
-      $('#crop_y').val(Math.floor(coords.y));
-      $('#crop_w').val(Math.floor(coords.w));
-      $('#crop_h').val(Math.floor(coords.h));
-
-
-    $('#preview-edit').Jcrop({
-        bgOpacity: 0.4, 
-        bgColor: 'black',
-        onChange: update_crop,
-        onSelect: update_crop,
-        allowSelect: true,
-        allowResize: true,
-        setSelect: [50, 0, 150, 150],
-        aspectRatio: 1
-      }, -&gt; 
-        bounds = this.getBounds();
-        boundx = bounds[0];
-        boundy = bounds[1];
-        jcrop_api = this);
-    $('.uploaded').show()
-    $('.fake-button-edit-ok').click -&gt; 
-      myModal().setTarget($('.uploaded')).close()
-      jcrop_api.release()
-
-  initPreviewImageEdit = -&gt;
-    $('.fake-button-edit').click -&gt; 
-      showUserImageEdit();
-      myModal().setTarget($('.uploaded')).open()
-  initPreviewImageEdit();
-</code></pre>
-
-<p>whole code <strong>app/assets/javascripts/users/registrations.js.coffee</strong></p>
-
-<pre><code>#= require jquery.Jcrop
-jQuery -&gt;
-  $(document).on 'ready page:load', -&gt; 
-
-    $('.personal-image-upload').click -&gt; 
-      $('.personal-image-upload-file').trigger('click')
-
-    $('.fake-button-upload').click -&gt;
-      $('.personal-image-upload-file').trigger('click')
-
-    initPreviewImage = -&gt;    
-      readURL = (input) -&gt;
-        if input.files and input.files[0]
-          reader = new FileReader
-
-          reader.onload = (e) -&gt;
-            img = new Image
-            img.onload = -&gt;
-              $('#crop_x').val(0);
-              $('#crop_y').val(0);
-              $('#crop_w').val(img.width);
-              $('#crop_h').val(img.height);
-            img.src = e.target.result
-
-            $('.preview-outer').css("display": "inline-block")
-            $('#preview').attr 'src', e.target.result
-            $('#preview-edit').attr 'src', e.target.result
-            $('.personal-image-upload').hide()
-            $('.fake-button-edit').css("display": "block")
-            $('.fake-button-edit').css("right": "0px")
-            $('.fake-button-upload').css("left": "0px")
-
-          reader.readAsDataURL input.files[0]
-
-      $('#user_main_image_attributes_file').change -&gt;
-        readURL this
-    initPreviewImage();
-
-    jcrop_api = undefined
-    boundx = undefined
-    boundy = undefined
-
-    showUserImageEdit = -&gt;
-      if jcrop_api
-        jcrop_api.setImage($('#preview').attr('src'));
-
-      update_crop = (coords) -&gt;
-        rx = 150 / coords.w
-        ry = 150 / coords.h
-        $('#preview').css
-          width: Math.round(rx * boundx) + 'px'
-          height: Math.round(ry * boundy) + 'px'
-          marginLeft: '-' + Math.round(rx * coords.x) + 'px'
-          marginTop: '-' + Math.round(ry * coords.y) + 'px'
-
-        $('#crop_x').val(Math.floor(coords.x));
-        $('#crop_y').val(Math.floor(coords.y));
-        $('#crop_w').val(Math.floor(coords.w));
-        $('#crop_h').val(Math.floor(coords.h));
-
-
-      $('#preview-edit').Jcrop({
-          bgOpacity: 0.4, 
-          bgColor: 'black',
-          onChange: update_crop,
-          onSelect: update_crop,
-          allowSelect: true,
-          allowResize: true,
-          setSelect: [50, 0, 150, 150],
-          aspectRatio: 1
-        }, -&gt; 
-          bounds = this.getBounds();
-          boundx = bounds[0];
-          boundy = bounds[1];
-          jcrop_api = this);
-
-      $('.uploaded').show();
-
-      $('.fake-button-edit-ok').click -&gt; 
-        myModal().setTarget($('.uploaded')).close()
-        jcrop_api.release()
-
-    initPreviewImageEdit = -&gt;
-      $('.fake-button-edit').click -&gt; 
-        showUserImageEdit();
-        myModal().setTarget($('.uploaded')).open()
-    initPreviewImageEdit();
-</code></pre>
-
-<h2>6. Carrierwave uploader</h2>
-
-<p>As you can see I create a new version named _customize and it only do its job when model(UserImage model) has crop_x, crop_y, crop_w and crop_h attributes. And I use minimagick crop method to crop image before upload.</p>
-
-<pre><code>class UserImagesUploader &lt; CarrierWave::Uploader::Base
-
-  include CarrierWave::MiniMagick
-
-  storage :fog
-
-  ...
-
-  version :_customize, :if =&gt; :customize? do 
-    process :crop_img
-    resize_to_fill(150, 150)
-  end
-
-  def customize? picture
-    !model.crop_x.blank? &amp;&amp; !model.crop_y.blank? &amp;&amp; !model.crop_w.blank? &amp;&amp; !model.crop_h.blank?
-  end
-
-  def crop_img
-    if !model.crop_x.blank? &amp;&amp; !model.crop_y.blank? &amp;&amp; !model.crop_w.blank? &amp;&amp; !model.crop_h.blank?
-      manipulate! do |img|
-        x = model.crop_x.to_i
-        y = model.crop_y.to_i
-        w = model.crop_w.to_i
-        h = model.crop_h.to_i
-        img.crop("#{w}x#{h}+#{x}+#{y}")
-        img
-      end
-    end
-  end
-
-  ...
-
-end
-</code></pre>
-
-<h2>7. Final step: Upload Image</h2>
-
-<p>Do you remember that I skip upload callback in <strong>app/models/user_image.rb</strong> ?</p>
-
-<pre><code>skip_callback :save, :after, :store_file!  
-</code></pre>
-
-<p>So, when should we do upload job?</p>
-
-<p>Answer is after user save !</p>
-
-<pre><code>class Users::RegistrationsController &lt; Devise::RegistrationsController
-  after_filter :upload_avatar, :only =&gt; :create
-
-  ... 
-
-  protected
-
-  def upload_avatar
-    if resource.persisted? &amp;&amp; resource.main_image # user is created successfuly
-      resource.main_image.store_file! 
-      resource.main_image.file.recreate_versions!
-    end
-  end
-
-  ... 
-end
-</code></pre>
-
-<h2>8. Don't forgot ...</h2>
-
-<p>Since we use Devise for sign up, and we use nested attributes, we need to tell Devise permitted parameters.</p>
-
-<p><strong>app/controllers/applicatio.rb</strong></p>
-
-<pre><code>class ApplicationController &lt; ActionController::Base
-  ...
-  before_action :configure_permitted_parameters, if: :devise_controller?
-
-  private
-
-  def configure_permitted_parameters
-    devise_parameter_sanitizer.for(:sign_up) { |u| u.permit(:email, :password, :password_confirmation, main_image_attributes: ['id', '_destroy', 'file', 'crop_x', 'crop_y', 'crop_w', 'crop_h'])}
-  end 
-  ... 
-end
-</code></pre>
 ]]></content>
   </entry>
   

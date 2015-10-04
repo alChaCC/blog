@@ -1,0 +1,321 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: Mongoid | AlohaCC]]></title>
+  <link href="http://ccaloha.cc/blog/categories/mongoid/atom.xml" rel="self"/>
+  <link href="http://ccaloha.cc/"/>
+  <updated>2015-10-04T13:35:52+08:00</updated>
+  <id>http://ccaloha.cc/</id>
+  <author>
+    <name><![CDATA[Aloha]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[Ruby on Rails Development using Mongoid 5.0.0 - 1. Setup MongoDB]]></title>
+    <link href="http://ccaloha.cc/blog/2015/10/03/ruby-on-rails-using-mongoid-5-dot-0-0-setup-mongodb/"/>
+    <updated>2015-10-03T22:33:34+08:00</updated>
+    <id>http://ccaloha.cc/blog/2015/10/03/ruby-on-rails-using-mongoid-5-dot-0-0-setup-mongodb</id>
+    <content type="html"><![CDATA[<p><img src="https://dl.dropboxusercontent.com/u/22307926/Blog%20Image/Ruby%20on%20Rails%20Development%20using%20Mongoid%205.0.0%20-%20Setup%20MongoDB/MongoDB-Logo.png" alt="MongoDB"></p>
+
+<p>This tutorial series will help you start your Rails project with MongoDB.</p>
+
+<p>And I use Mongoid 5.0.0 as an example.</p>
+
+<p>In this tutorial, you will be able to see how to</p>
+
+<ol>
+<li><p>Install MongoDB in Mac OSX</p></li>
+<li><p>Create Some Database Users in MongoDB</p></li>
+<li><p>Setup Rails Projects</p></li>
+</ol>
+
+
+<p>(Tips)</p>
+
+<ol>
+<li><p>Dump Data</p></li>
+<li><p>Restore Data</p></li>
+</ol>
+
+
+<p>Let's go !</p>
+
+<!--more-->
+
+
+<h2>Install MongoDB in Mac OSX</h2>
+
+<p>```</p>
+
+<h1>Intall Homebrew (Mac OSX package manager)</h1>
+
+<p>ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"</p>
+
+<h1>Update the Hombrew packages first</h1>
+
+<p>brew update</p>
+
+<h1>Install MongoDB</h1>
+
+<p>brew install MongoDB
+```</p>
+
+<p>If you want to see where MongoDB is installed</p>
+
+<p><code>
+brew ls mongodb
+</code></p>
+
+<h2>Create Some Database Users in MongoDB</h2>
+
+<p>Since I want to enable access control on a MongoDB instance, just like Mysql, I have to use username and password to access MongoDB.</p>
+
+<p>First, you must to know where you can setup MongoDB.</p>
+
+<p>```</p>
+
+<h1>In MacOSX</h1>
+
+<p>vim /usr/local/etc/mongod.conf</p>
+
+<h1>In Ubuntu</h1>
+
+<p>vim /etc/mongod.conf
+```</p>
+
+<p>Second, you have to make sure that authorization is disable.</p>
+
+<p>In MacOSX</p>
+
+<p>```</p>
+
+<h1>/usr/local/etc/mongod.conf</h1>
+
+<p>systemLog:
+  destination: file
+  path: /usr/local/var/log/mongodb/mongo.log
+  logAppend: true
+storage:
+  dbPath: /usr/local/var/mongodb
+net:
+  bindIp: 127.0.0.1
+security:
+  authorization: disabled
+```</p>
+
+<p>In Ubuntu</p>
+
+<p>```</p>
+
+<h1>/etc/mongod.conf</h1>
+
+<p>...</p>
+
+<p>noauth = true
+...</p>
+
+<p>```</p>
+
+<p>Then (re)start MongoDB</p>
+
+<p>```</p>
+
+<h1>In Ubuntu</h1>
+
+<p>sudo service mongod restart</p>
+
+<h1>In Mac OSX</h1>
+
+<p>mongod --config /usr/local/etc/mongod.conf
+```</p>
+
+<p>Ok, now you are a super user, you can access any database and perform any action. let's create an administrator named 'siteUserAdmin' and he has "userAdminAnyDatabase" role first.</p>
+
+<p><code>
+$ mongo
+$ use admin
+$ db.createUser(
+ {
+  user: 'siteUserAdmin',
+  pwd: '1234567890',
+  roles: [ { role: "userAdminAnyDatabase", db: "admin" } ]
+ }
+)
+</code></p>
+
+<p>Ok, now we can enable authorization mode.</p>
+
+<p>In MacOSX</p>
+
+<p>```</p>
+
+<h1>vim /usr/local/etc/mongod.conf</h1>
+
+<p>systemLog:
+  destination: file
+  path: /usr/local/var/log/mongodb/mongo.log
+  logAppend: true
+storage:
+  dbPath: /usr/local/var/mongodb
+net:
+  bindIp: 127.0.0.1
+security:
+  authorization: enabled
+```</p>
+
+<p>In Ubuntu</p>
+
+<p>```</p>
+
+<h1>/etc/mongod.conf</h1>
+
+<p>...</p>
+
+<p>auth = true
+...</p>
+
+<p>```</p>
+
+<p>And don't forgot restart MongoDB.</p>
+
+<p>Then we now have to use user name and password to access database.</p>
+
+<p><code>
+mongo --host localhost --port 27017 --username siteUserAdmin --password  --authenticationDatabase admin
+</code></p>
+
+<p>Now, we will create an user  named 'dbadmin' who has 'dbOwner' role.</p>
+
+<p>```</p>
+
+<h1>assume your project will use database: 'your_awesome_project_development'</h1>
+
+<p>use your_awesome_project_development</p>
+
+<p>db.createUser(
+  {</p>
+
+<pre><code>user: 'dbadmin',
+pwd: '1234567890',
+roles: [ { role: "dbOwner", db: "your_awesome_project_development" } ]
+</code></pre>
+
+<p>  }
+)
+```</p>
+
+<p>if you want to update user's setting.</p>
+
+<p>```
+db.updateUser(
+  "dbadmin",
+  {</p>
+
+<pre><code>pwd: 'aloha',
+roles: 
+[
+  {role: "read", db: "your_awesome_project_development"}
+]
+</code></pre>
+
+<p>  }
+)
+```</p>
+
+<p>if you want to know which roles can perform which  actions, you can find anwser here:</p>
+
+<p><a href="http://docs.mongodb.org/master/reference/built-in-roles/#userAdmin">http://docs.mongodb.org/master/reference/built-in-roles/#userAdmin</a></p>
+
+<h2>Setup Rails Projects</h2>
+
+<ol>
+<li>create a project without active-record</li>
+</ol>
+
+
+<p><code>
+rails new your_awesome_project_development --skip-active-record
+</code>
+2. add Mongoid to Gemfile</p>
+
+<p>```</p>
+
+<h1>Gemfile</h1>
+
+<p>gem 'mongoid', '~> 5.0.0'
+```</p>
+
+<ol>
+<li>Create a mongoid.yml</li>
+</ol>
+
+
+<p><code>
+bundle install
+rails g mongoid:config
+</code></p>
+
+<ol>
+<li>Update yout mongoid.yml</li>
+</ol>
+
+
+<p>```
+development:
+  clients:</p>
+
+<pre><code>default:
+  database: your_awesome_project_development
+  hosts:
+    - localhost:27017
+  options:
+    user: 'dbadmin'
+    password: '1234567890'
+    roles:
+      - 'dbOwner'
+</code></pre>
+
+<p>test:
+  clients:</p>
+
+<pre><code>default:
+  database: your_awesome_project_test
+  hosts:
+    - localhost:27017
+  options:
+    max_retries: 1
+    retry_interval: 0
+    user: 'dbadmin_tester'
+    password: '1234567890'
+    roles:
+      - 'dbOwner'
+</code></pre>
+
+<p>```</p>
+
+<h2>Dump Data</h2>
+
+<p>Please make sure that you have backup role in production MongoDB.</p>
+
+<p>I use 'readWriteAnyDatabase' role.</p>
+
+<p>Assume that you need to dump data from production data and restore to local mongo server.</p>
+
+<p><code>
+mongodump --host your.production.mongo.server.ip --port 37017 --username user --password --out /Users/AlohaCC/Desktop/production-mongodump-2015-10-04
+</code></p>
+
+<h2>Restore Data</h2>
+
+<p>Please make sure that you have backup role in local MongoDB.</p>
+
+<p><code>
+mongorestore --host localhost --port 3017 --username user --password  /Users/AlohaCC/Desktop/production-mongodump-2015-10-04
+</code></p>
+]]></content>
+  </entry>
+  
+</feed>

@@ -4,7 +4,7 @@
   <title><![CDATA[AlohaCC]]></title>
   <link href="http://ccaloha.cc/atom.xml" rel="self"/>
   <link href="http://ccaloha.cc/"/>
-  <updated>2015-08-27T17:31:10+08:00</updated>
+  <updated>2015-10-04T13:35:52+08:00</updated>
   <id>http://ccaloha.cc/</id>
   <author>
     <name><![CDATA[Aloha]]></name>
@@ -12,6 +12,399 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[Ruby on Rails Development using Mongoid 5.0.0 - 1. Setup MongoDB]]></title>
+    <link href="http://ccaloha.cc/blog/2015/10/03/ruby-on-rails-using-mongoid-5-dot-0-0-setup-mongodb/"/>
+    <updated>2015-10-03T22:33:34+08:00</updated>
+    <id>http://ccaloha.cc/blog/2015/10/03/ruby-on-rails-using-mongoid-5-dot-0-0-setup-mongodb</id>
+    <content type="html"><![CDATA[<p><img src="https://dl.dropboxusercontent.com/u/22307926/Blog%20Image/Ruby%20on%20Rails%20Development%20using%20Mongoid%205.0.0%20-%20Setup%20MongoDB/MongoDB-Logo.png" alt="MongoDB"></p>
+
+<p>This tutorial series will help you start your Rails project with MongoDB.</p>
+
+<p>And I use Mongoid 5.0.0 as an example.</p>
+
+<p>In this tutorial, you will be able to see how to</p>
+
+<ol>
+<li><p>Install MongoDB in Mac OSX</p></li>
+<li><p>Create Some Database Users in MongoDB</p></li>
+<li><p>Setup Rails Projects</p></li>
+</ol>
+
+
+<p>(Tips)</p>
+
+<ol>
+<li><p>Dump Data</p></li>
+<li><p>Restore Data</p></li>
+</ol>
+
+
+<p>Let&#8217;s go !</p>
+
+<!--more-->
+
+
+<h2>Install MongoDB in Mac OSX</h2>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'># Intall Homebrew (Mac OSX package manager)
+</span><span class='line'>
+</span><span class='line'>ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
+</span><span class='line'>
+</span><span class='line'># Update the Hombrew packages first
+</span><span class='line'>
+</span><span class='line'>brew update
+</span><span class='line'>
+</span><span class='line'># Install MongoDB
+</span><span class='line'>
+</span><span class='line'>brew install MongoDB</span></code></pre></td></tr></table></div></figure>
+
+
+<p>If you want to see where MongoDB is installed</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>brew ls mongodb</span></code></pre></td></tr></table></div></figure>
+
+
+<h2>Create Some Database Users in MongoDB</h2>
+
+<p>Since I want to enable access control on a MongoDB instance, just like Mysql, I have to use username and password to access MongoDB.</p>
+
+<p>First, you must to know where you can setup MongoDB.</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'># In MacOSX
+</span><span class='line'>
+</span><span class='line'>vim /usr/local/etc/mongod.conf
+</span><span class='line'>
+</span><span class='line'># In Ubuntu 
+</span><span class='line'>
+</span><span class='line'>vim /etc/mongod.conf</span></code></pre></td></tr></table></div></figure>
+
+
+<p></p>
+
+<p>Second, you have to make sure that authorization is disable.</p>
+
+<p>In MacOSX</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'># /usr/local/etc/mongod.conf
+</span><span class='line'>
+</span><span class='line'>systemLog:
+</span><span class='line'>  destination: file
+</span><span class='line'>  path: /usr/local/var/log/mongodb/mongo.log
+</span><span class='line'>  logAppend: true
+</span><span class='line'>storage:
+</span><span class='line'>  dbPath: /usr/local/var/mongodb
+</span><span class='line'>net:
+</span><span class='line'>  bindIp: 127.0.0.1
+</span><span class='line'>security:
+</span><span class='line'>  authorization: disabled </span></code></pre></td></tr></table></div></figure>
+
+
+<p>In Ubuntu</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'># /etc/mongod.conf
+</span><span class='line'>
+</span><span class='line'>...
+</span><span class='line'>
+</span><span class='line'>noauth = true
+</span><span class='line'>...
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Then (re)start MongoDB</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'># In Ubuntu
+</span><span class='line'>sudo service mongod restart
+</span><span class='line'>
+</span><span class='line'># In Mac OSX
+</span><span class='line'>mongod --config /usr/local/etc/mongod.conf</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Ok, now you are a super user, you can access any database and perform any action. let&#8217;s create an administrator named &#8216;siteUserAdmin&#8217; and he has &#8220;userAdminAnyDatabase&#8221; role first.</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>$ mongo
+</span><span class='line'>$ use admin
+</span><span class='line'>$ db.createUser(
+</span><span class='line'> {
+</span><span class='line'>  user: 'siteUserAdmin',
+</span><span class='line'>  pwd: '1234567890',
+</span><span class='line'>  roles: [ { role: "userAdminAnyDatabase", db: "admin" } ]
+</span><span class='line'> }
+</span><span class='line'>)</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Ok, now we can enable authorization mode.</p>
+
+<p>In MacOSX</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'># vim /usr/local/etc/mongod.conf
+</span><span class='line'>
+</span><span class='line'>systemLog:
+</span><span class='line'>  destination: file
+</span><span class='line'>  path: /usr/local/var/log/mongodb/mongo.log
+</span><span class='line'>  logAppend: true
+</span><span class='line'>storage:
+</span><span class='line'>  dbPath: /usr/local/var/mongodb
+</span><span class='line'>net:
+</span><span class='line'>  bindIp: 127.0.0.1
+</span><span class='line'>security:
+</span><span class='line'>  authorization: enabled </span></code></pre></td></tr></table></div></figure>
+
+
+<p>In Ubuntu</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'># /etc/mongod.conf
+</span><span class='line'>
+</span><span class='line'>...
+</span><span class='line'>
+</span><span class='line'>auth = true
+</span><span class='line'>...
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>And don&#8217;t forgot restart MongoDB.</p>
+
+<p>Then we now have to use user name and password to access database.</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>mongo --host localhost --port 27017 --username siteUserAdmin --password  --authenticationDatabase admin</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Now, we will create an user  named &#8216;dbadmin&#8217; who has &#8216;dbOwner&#8217; role.</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'># assume your project will use database: 'your_awesome_project_development'
+</span><span class='line'>
+</span><span class='line'>use your_awesome_project_development
+</span><span class='line'>
+</span><span class='line'>db.createUser(
+</span><span class='line'>  {
+</span><span class='line'>    user: 'dbadmin',
+</span><span class='line'>    pwd: '1234567890',
+</span><span class='line'>    roles: [ { role: "dbOwner", db: "your_awesome_project_development" } ]
+</span><span class='line'>  }
+</span><span class='line'>)</span></code></pre></td></tr></table></div></figure>
+
+
+<p>if you want to update user&#8217;s setting.</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>db.updateUser(
+</span><span class='line'>  "dbadmin",
+</span><span class='line'>  {
+</span><span class='line'>    pwd: 'aloha',
+</span><span class='line'>    roles: 
+</span><span class='line'>    [
+</span><span class='line'>      {role: "read", db: "your_awesome_project_development"}
+</span><span class='line'>    ]
+</span><span class='line'>  }
+</span><span class='line'>)</span></code></pre></td></tr></table></div></figure>
+
+
+<p>if you want to know which roles can perform which  actions, you can find anwser here:</p>
+
+<p><a href="http://docs.mongodb.org/master/reference/built-in-roles/#userAdmin">http://docs.mongodb.org/master/reference/built-in-roles/#userAdmin</a></p>
+
+<h2>Setup Rails Projects</h2>
+
+<ol>
+<li>create a project without active-record</li>
+</ol>
+
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>rails new your_awesome_project_development --skip-active-record</span></code></pre></td></tr></table></div></figure>
+
+
+<ol>
+<li>add Mongoid to Gemfile</li>
+</ol>
+
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'># Gemfile
+</span><span class='line'>
+</span><span class='line'>gem 'mongoid', '~&gt; 5.0.0'</span></code></pre></td></tr></table></div></figure>
+
+
+<ol>
+<li>Create a mongoid.yml</li>
+</ol>
+
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>bundle install
+</span><span class='line'>rails g mongoid:config</span></code></pre></td></tr></table></div></figure>
+
+
+<ol>
+<li>Update yout mongoid.yml</li>
+</ol>
+
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>development:
+</span><span class='line'>  clients:
+</span><span class='line'>    default:
+</span><span class='line'>      database: your_awesome_project_development
+</span><span class='line'>      hosts:
+</span><span class='line'>        - localhost:27017
+</span><span class='line'>      options:
+</span><span class='line'>        user: 'dbadmin'
+</span><span class='line'>        password: '1234567890'
+</span><span class='line'>        roles:
+</span><span class='line'>          - 'dbOwner'
+</span><span class='line'>test:
+</span><span class='line'>  clients:
+</span><span class='line'>    default:
+</span><span class='line'>      database: your_awesome_project_test
+</span><span class='line'>      hosts:
+</span><span class='line'>        - localhost:27017
+</span><span class='line'>      options:
+</span><span class='line'>        max_retries: 1
+</span><span class='line'>        retry_interval: 0
+</span><span class='line'>        user: 'dbadmin_tester'
+</span><span class='line'>        password: '1234567890'
+</span><span class='line'>        roles:
+</span><span class='line'>          - 'dbOwner'</span></code></pre></td></tr></table></div></figure>
+
+
+<h2>Dump Data</h2>
+
+<p>Please make sure that you have backup role in production MongoDB.</p>
+
+<p>I use &#8216;readWriteAnyDatabase&#8217; role.</p>
+
+<p>Assume that you need to dump data from production data and restore to local mongo server.</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>mongodump --host your.production.mongo.server.ip --port 37017 --username user --password --out /Users/AlohaCC/Desktop/production-mongodump-2015-10-04</span></code></pre></td></tr></table></div></figure>
+
+
+<h2>Restore Data</h2>
+
+<p>Please make sure that you have backup role in local MongoDB.</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>mongorestore --host localhost --port 3017 --username user --password  /Users/AlohaCC/Desktop/production-mongodump-2015-10-04</span></code></pre></td></tr></table></div></figure>
+
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[[Tips] Limit Class Only be used in Development Environment]]></title>
@@ -4235,339 +4628,6 @@ $('#keyword').soulmate({
 
 
 
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[[HOWTO] Using ElasticSearch in Ruby on Rails and setup remote ES server via Vagrant]]></title>
-    <link href="http://ccaloha.cc/blog/2014/11/27/howto-using-elasticsearch-in-ruby-on-rails-and-setup-remote-es-server-via-vagrant/"/>
-    <updated>2014-11-27T07:45:20+08:00</updated>
-    <id>http://ccaloha.cc/blog/2014/11/27/howto-using-elasticsearch-in-ruby-on-rails-and-setup-remote-es-server-via-vagrant</id>
-    <content type="html"><![CDATA[<p>首先，要先感謝 &#8220;老王&#8221;，和 &#8220;Marz&#8221;哥，給我參考他們的Elasticsearch的文件！</p>
-
-<p>安裝部分，就是參考他們的操作！</p>
-
-<p>這邊最主要的不一樣，是設定遠端的Elasticsearch機器！</p>
-
-<p>改天我會補上 如何實作 &#8220;搜尋字詞推薦&#8221;，而且是整合soulmate歐！！</p>
-
-<!-- more -->
-
-
-<h2>Mac本機開發</h2>
-
-<h3>安裝 elastic search</h3>
-
-<pre><code>brew install elasticsearch
-</code></pre>
-
-<h3>連結</h3>
-
-<pre><code>ln -sfv /usr/local/opt/elasticsearch/*.plist ~/Library/LaunchAgents
-</code></pre>
-
-<h3>啟動</h3>
-
-<pre><code>launchctl load ~/Library/LaunchAgents/homebrew.mxcl.elasticsearch.plist
-</code></pre>
-
-<h3>關閉</h3>
-
-<pre><code>launchctl unload ~/Library/LaunchAgents/homebrew.mxcl.elasticsearch.plist
-</code></pre>
-
-<h3>Run ElasticSearch</h3>
-
-<pre><code>export JAVA_HOME="/Library/Internet Plug-Ins/JavaAppletPlugin.plugin/Contents/Home"
-elasticsearch
-
-(或是)
-
-elasticsearch --config=/usr/local/opt/elasticsearch/config/elasticsearch.yml  
-</code></pre>
-
-<h3>測試是否安裝成功</h3>
-
-<pre><code>curl -X GET http://localhost:9200
-</code></pre>
-
-<p>你應該會看到</p>
-
-<pre><code>{
-  "status" : 200,
-  "name" : "Rage",
-  "version" : {
-    "number" : "1.3.2",
-    "build_hash" : "dee175dbe2f254f3f26992f5d7591939aaefd12f",
-    "build_timestamp" : "2014-08-13T14:29:30Z",
-    "build_snapshot" : false,
-    "lucene_version" : "4.9"
-  },
-  "tagline" : "You Know, for Search"
-}
-</code></pre>
-
-<h3>Code 要加入</h3>
-
-<p>新增一個檔案</p>
-
-<p><strong>lib/tasks/elasticsearch.rake</strong></p>
-
-<p>寫入</p>
-
-<pre><code>require 'elasticsearch/rails/tasks/import'
-</code></pre>
-
-<p>修改<strong>Gemfile</strong>，加入</p>
-
-<pre><code>gem 'elasticsearch-rails'
-gem 'elasticsearch-model' 
-</code></pre>
-
-<h3>跑index</h3>
-
-<p>詳情請參考：<strong>Gem: </strong><a href="https://github.com/elasticsearch/elasticsearch-rails/tree/master/elasticsearch-rails">elasticsearch-rail</a></p>
-
-<pre><code>bundle exec rake environment elasticsearch:import:all
-</code></pre>
-
-<p>如果只需要import一個model</p>
-
-<pre><code>bundle exec rake environment elasticsearch:import:model CLASS='Article'
-</code></pre>
-
-<p>如果只需要import某些特定的scope</p>
-
-<pre><code>bundle exec rake environment elasticsearch:import:model CLASS='Article' SCOPE='published'
-</code></pre>
-
-<h3>清除index</h3>
-
-<pre><code>Article.__elasticsearch__.client.indices.delete index: Article.index_name rescue nil
-</code></pre>
-
-<h2>安裝elasticsearch 在Ubuntu 裡面</h2>
-
-<h3>使用vagrant 起三檯機器(用來模擬正式環境)</h3>
-
-<p>請查看前半部</p>
-
-<p><a href="http://ccaloha.cc/blog/2014/09/19/howto-using-sunspot-access-remote-solr-instance-ubuntu-14-dot-04-in-ruby-on-rails-using-vagrant/">HOWTO - Using Sunspot to Access Remote Solr instance(Ubuntu 14.04) in Ruby on Rails Using Vagrant</a></p>
-
-<h3>安裝 elascticsearch</h3>
-
-<pre><code>vagrant ssh search 
-sudo apt-get install openjdk-7-jre-headless -y
-sudo wget -O - http://packages.elasticsearch.org/GPG-KEY-elasticsearch | sudo apt-key add -
-</code></pre>
-
-<h3>編輯source list</h3>
-
-<pre><code>sudo vim /etc/apt/sources.list
-</code></pre>
-
-<p>把下面的code放進去</p>
-
-<pre><code>  deb http://packages.elasticsearch.org/elasticsearch/1.3/debian stable main
-</code></pre>
-
-<p>繼續安裝</p>
-
-<pre><code>  sudo apt-get update
-  sudo apt-get install elasticsearch
-  sudo update-rc.d elasticsearch defaults 95 10
-  sudo /etc/init.d/elasticsearch start
-</code></pre>
-
-<h2>Ruby on Rails 部分</h2>
-
-<h3>更改producion deploy的東東</h3>
-
-<p><strong>config/deploy/production.rb</strong></p>
-
-<pre><code>  role :app, %w{apps@33.33.13.10}
-  role :web, %w{apps@33.33.13.10}
-  role :db,  %w{apps@33.33.13.11}
-  role :crontaber, %w{apps@33.33.13.10}
-  set :rails_env, :production
-  set :unicorn_rack_env, :production
-  set :branch, 'feature/update_search_engine_to_elasticsearch'
-</code></pre>
-
-<p>我故意把ip改成 vagrant的ip</p>
-
-<p>另外，branch也用成我自己測試的branch: <strong>feature/update_search_engine_to_elasticsearch</strong></p>
-
-<h2>如何設定將elasticsearch 連到別台機器</h2>
-
-<ol>
-<li><p>新增一個 <strong>config/elasticsearch.yml</strong></p>
-
-<pre><code> default: &amp;default
-   host: 127.0.0.1:9200
-
- development:
-   &lt;&lt;: *default
-   host: 127.0.0.1:9200
-
- test:
-   &lt;&lt;: *default
-
- production:
-   &lt;&lt;: *default
-   host: 33.33.13.12:9200
-</code></pre></li>
-<li><p>在application.rb加入</p>
-
-<pre><code> es = YAML.load(File.open("#{Rails.root}/config/elasticsearch.yml"))[Rails.env]
-
-   elasticsearch_config = {
-       host: es["host"],
-       transport_options: {
-       request: { timeout: 5 }
-       },
-   }
-   Elasticsearch::Model.client = Elasticsearch::Client.new(elasticsearch_config)
-</code></pre></li>
-<li><p>因為我的product需要做搜尋，所以在Product model 我這樣寫</p></li>
-</ol>
-
-
-<p>  (ps. elasticsearch 真的是博大精深，我沒有時間去深入專研，以下的指令是我try出最符合我需要的搜尋結果，所以大家可參考參考)</p>
-
-<pre><code>def self.essearch(query,sort,page)
-  if sort == 'relevance'
-
-    results = __elasticsearch__.search(
-      {
-        query: {
-          filtered: {
-            filter: {
-              range: { product_price_min: { "gt" =&gt; 0} }
-             }, 
-            query: {
-              bool: {
-                must: [
-                  multi_match: {
-                    query: query,
-                    type:  "phrase",
-                    fields: ["product_cname^10", "product_ename^10",'product_description', 'product_keyword']
-                  }
-                ]
-              }
-            }
-          }
-        },
-        "sort" =&gt; [
-          "_score",
-          {"product_urcosme_exp" =&gt; {"order" =&gt; "desc"} } 
-        ],
-        "from" =&gt; (page.to_i-1)*5,
-        "size" =&gt; 5          
-      }
-    )
-  else
-    # 因為不是精準搜尋，所以這邊的排序就真的會依照我們給他的sort，
-    # 但是你總不希望，搜尋面膜，結果第一個結果是：淨膚儀，就因為他的上市時間最晚....囧～
-    # 所以，我還是希望第一個看到的結果是以關鍵字有出現的為佳，所以我多使用了filter的功能
-    results = __elasticsearch__.search(
-      {
-        query: {
-          filtered: {
-            filter: {
-              range: { product_price_min: { "gt" =&gt; 0} }
-             },
-            filter: {
-               exists: { field: "product_keyword" }
-             },
-            query: {
-              bool: {
-                must: [
-                  multi_match: {
-                    query: query,
-                    type:  "cross_fields",
-                    fields: ['product_cname', 'product_ename'],
-                    operator:   "and", 
-                    #minimum_should_match: '30%'
-                  }
-                ],
-                should: [
-                  { match: { "product_description" =&gt;  query}},
-                  { match: { "product_keyword" =&gt; query }}
-                ],
-              }
-            }
-          }
-        },
-        "sort" =&gt; [
-          {"#{sort}" =&gt; {"order" =&gt; "#{sort == "product_price_min"? 'asc' : 'desc'}"} } , 
-           "_score",
-          { "product_cname" =&gt; "desc" }
-        ],
-        "from" =&gt; (page.to_i-1)*5,
-        "size" =&gt; 5        
-      }
-    )
-  # 這邊目的是為了如果上面都沒有搜尋結果才做的比較rough的搜尋
-  if results.results.size == 0
-    results = __elasticsearch__.search(
-      {
-        query: {
-          filtered: {
-            filter: {
-              range: { product_price_min: { "gt" =&gt; 0} }
-             },
-            query: {
-              bool: {
-                must: [
-                  multi_match: {
-                    query: query,
-                    type:  "cross_fields",
-                    fields: ['product_cname', 'product_ename','product_description','product_keyword'],
-                    operator:   "and"
-                  }
-                ]
-              }
-            }
-          }
-        },
-        "sort" =&gt; [
-          {"#{sort}" =&gt; {"order" =&gt; "#{sort == "product_price_min"? 'asc' : 'desc'}"} } , 
-           "_score",
-          { "product_cname" =&gt; "desc" }
-        ],
-        "from" =&gt; (page.to_i-1)*5,
-        "size" =&gt; 5          
-      }
-    )
-  end
-  end
-  return results
-end
-</code></pre>
-
-<ol>
-<li><p>在product的controller</p>
-
-<p>   @products = Product.essearch(params[:keyword],params[:sort],params[:page])</p>
-
-<p>   @products =  search.results.results</p>
-
-<p> 接下來就是丟給view顯示了～我就不提了～</p></li>
-</ol>
-
-
-<h3>接下來就是deploy加上看看有沒有成功摟</h3>
-
-<pre><code>cap production deploy #因為"config/deploy/production.rb"有改成vagrant設定，所以請放心～
-vagrant ssh search    # 登入你的搜尋機器
-elasticsearch         # 把elasticsearch 服務跑起來
-vagrant ssh app       # 登入跑服務的機器
-cd 你的專案            
-bundle exec rake environment elasticsearch:import:all  #跑index，這邊如果有成功，代表你已經連過去遠端了！
-</code></pre>
-
-<h3>完成！</h3>
 ]]></content>
   </entry>
   

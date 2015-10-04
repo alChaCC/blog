@@ -1,0 +1,599 @@
+
+<!DOCTYPE HTML>
+<html>
+<head>
+	<script data-cfasync="false" type="text/javascript" src="//use.typekit.net/axj3cfp.js"></script>
+	<script data-cfasync="false" type="text/javascript">try{Typekit.load();}catch(e){}</script>
+	<meta charset="utf-8">
+	<title>Ruby on Rails Development using Mongoid 5.0.0 - 1. Setup MongoDB  | AlohaCC</title>
+
+<meta name="author" content="Aloha"> 
+
+<meta name="description" content="this article show you how to setup MongoDB for Ruby on Rails Development such as create users, dump data"> <meta name="keywords" content="Mongoid 5.0.0, MongoDB, Ruby on Rails, Mac OSX, Ubuntu, setup, create user">
+
+	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+	<link href="http://feeds.feedburner.com/Alohacc" rel="alternate" title="AlohaCC" type="application/atom+xml">
+	<link rel="canonical" href="">
+	<link href="/favicon.png" rel="shortcut icon">
+	<link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+	<!--[if lt IE 9]><script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
+	<script src="//ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
+	<script type="text/javascript" src="/javascripts/jquery.fancybox.pack.js"></script>
+
+<script language="Javascript" type="text/javascript">
+$(document).ready(
+  function() {
+    (function($) {
+      $(".fancybox[data-content-id]").each(function() {
+        this.href = $(this).data('content-id');
+      });
+      $(".fancybox").fancybox({
+        beforeLoad: function() {
+          var el, 
+              id = $(this.element).data('title-id');
+
+          if (id) {
+            el = $('#' + id);
+
+            if (el.length) {
+              this.title = el.html();
+            }
+          }
+          if ($(this).data('content')) {
+            this.content = $(this).data('content');
+          }
+        },
+        helpers: {
+          title: {
+            type: 'inside'
+          }
+        }
+      });
+    })(jQuery);
+  }
+);
+</script>
+
+	
+</head>
+
+
+
+<body>
+	<header id="header" class="inner"><h1><a href="/">AlohaCC</a></h1>
+<h4>Stay Hungry. Stay Foolish.</h4>
+<nav id="main-nav"><ul>
+	<li><a href="/">Blog</a></li>
+	<li><a href="/About">About</a></li>
+  <li><a href="/protfolio">Protfolio</a></li>
+	<li><a href="/presentation">Presentation</a></li>
+  <li><a href="/blog/categories/ruby-on-rails">Ruby on Rails</a></li>
+  <li><a href="/blog/categories/google-analytics">Google Analytics</a></li>
+	<li><a href="/archives">Archive</a></li>
+</ul>
+</nav>
+<nav id="mobile-nav">
+	<div class="alignleft menu">
+		<a class="button">Menu</a>
+		<div class="container"><ul>
+	<li><a href="/">Blog</a></li>
+	<li><a href="/About">About</a></li>
+  <li><a href="/protfolio">Protfolio</a></li>
+	<li><a href="/presentation">Presentation</a></li>
+  <li><a href="/blog/categories/ruby-on-rails">Ruby on Rails</a></li>
+  <li><a href="/blog/categories/google-analytics">Google Analytics</a></li>
+	<li><a href="/archives">Archive</a></li>
+</ul>
+</div>
+	</div>
+	<div class="alignright search">
+		<a class="button"></a>
+		<div class="container">
+			<form action="http://google.com/search" method="get">
+				<input type="text" name="q" results="0">
+				<input type="hidden" name="q" value="site:ccaloha.cc">
+			</form>
+		</div>
+	</div>
+</nav>
+
+
+</header>
+
+	<div id="content" class="inner"><article class="post">
+	<h2 class="title">Ruby on Rails Development Using Mongoid 5.0.0 - 1. Setup MongoDB</h2>
+	<div class="entry-content"><p><img src="https://dl.dropboxusercontent.com/u/22307926/Blog%20Image/Ruby%20on%20Rails%20Development%20using%20Mongoid%205.0.0%20-%20Setup%20MongoDB/MongoDB-Logo.png" alt="MongoDB"></p>
+
+<p>This tutorial series will help you start your Rails project with MongoDB.</p>
+
+<p>And I use Mongoid 5.0.0 as an example.</p>
+
+<p>In this tutorial, you will be able to see how to</p>
+
+<ol>
+<li><p>Install MongoDB in Mac OSX</p></li>
+<li><p>Create Some Database Users in MongoDB</p></li>
+<li><p>Setup Rails Projects</p></li>
+</ol>
+
+
+<p>(Tips)</p>
+
+<ol>
+<li><p>Dump Data</p></li>
+<li><p>Restore Data</p></li>
+</ol>
+
+
+<p>Let&#8217;s go !</p>
+
+<!--more-->
+
+
+<h2>Install MongoDB in Mac OSX</h2>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'># Intall Homebrew (Mac OSX package manager)
+</span><span class='line'>
+</span><span class='line'>ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
+</span><span class='line'>
+</span><span class='line'># Update the Hombrew packages first
+</span><span class='line'>
+</span><span class='line'>brew update
+</span><span class='line'>
+</span><span class='line'># Install MongoDB
+</span><span class='line'>
+</span><span class='line'>brew install MongoDB</span></code></pre></td></tr></table></div></figure>
+
+
+<p>If you want to see where MongoDB is installed</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>brew ls mongodb</span></code></pre></td></tr></table></div></figure>
+
+
+<h2>Create Some Database Users in MongoDB</h2>
+
+<p>Since I want to enable access control on a MongoDB instance, just like Mysql, I have to use username and password to access MongoDB.</p>
+
+<p>First, you must to know where you can setup MongoDB.</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'># In MacOSX
+</span><span class='line'>
+</span><span class='line'>vim /usr/local/etc/mongod.conf
+</span><span class='line'>
+</span><span class='line'># In Ubuntu 
+</span><span class='line'>
+</span><span class='line'>vim /etc/mongod.conf</span></code></pre></td></tr></table></div></figure>
+
+
+<p></p>
+
+<p>Second, you have to make sure that authorization is disable.</p>
+
+<p>In MacOSX</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'># /usr/local/etc/mongod.conf
+</span><span class='line'>
+</span><span class='line'>systemLog:
+</span><span class='line'>  destination: file
+</span><span class='line'>  path: /usr/local/var/log/mongodb/mongo.log
+</span><span class='line'>  logAppend: true
+</span><span class='line'>storage:
+</span><span class='line'>  dbPath: /usr/local/var/mongodb
+</span><span class='line'>net:
+</span><span class='line'>  bindIp: 127.0.0.1
+</span><span class='line'>security:
+</span><span class='line'>  authorization: disabled </span></code></pre></td></tr></table></div></figure>
+
+
+<p>In Ubuntu</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'># /etc/mongod.conf
+</span><span class='line'>
+</span><span class='line'>...
+</span><span class='line'>
+</span><span class='line'>noauth = true
+</span><span class='line'>...
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Then (re)start MongoDB</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'># In Ubuntu
+</span><span class='line'>sudo service mongod restart
+</span><span class='line'>
+</span><span class='line'># In Mac OSX
+</span><span class='line'>mongod --config /usr/local/etc/mongod.conf</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Ok, now you are a super user, you can access any database and perform any action. let&#8217;s create an administrator named &#8216;siteUserAdmin&#8217; and he has &#8220;userAdminAnyDatabase&#8221; role first.</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>$ mongo
+</span><span class='line'>$ use admin
+</span><span class='line'>$ db.createUser(
+</span><span class='line'> {
+</span><span class='line'>  user: 'siteUserAdmin',
+</span><span class='line'>  pwd: '1234567890',
+</span><span class='line'>  roles: [ { role: "userAdminAnyDatabase", db: "admin" } ]
+</span><span class='line'> }
+</span><span class='line'>)</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Ok, now we can enable authorization mode.</p>
+
+<p>In MacOSX</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'># vim /usr/local/etc/mongod.conf
+</span><span class='line'>
+</span><span class='line'>systemLog:
+</span><span class='line'>  destination: file
+</span><span class='line'>  path: /usr/local/var/log/mongodb/mongo.log
+</span><span class='line'>  logAppend: true
+</span><span class='line'>storage:
+</span><span class='line'>  dbPath: /usr/local/var/mongodb
+</span><span class='line'>net:
+</span><span class='line'>  bindIp: 127.0.0.1
+</span><span class='line'>security:
+</span><span class='line'>  authorization: enabled </span></code></pre></td></tr></table></div></figure>
+
+
+<p>In Ubuntu</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'># /etc/mongod.conf
+</span><span class='line'>
+</span><span class='line'>...
+</span><span class='line'>
+</span><span class='line'>auth = true
+</span><span class='line'>...
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>And don&#8217;t forgot restart MongoDB.</p>
+
+<p>Then we now have to use user name and password to access database.</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>mongo --host localhost --port 27017 --username siteUserAdmin --password  --authenticationDatabase admin</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Now, we will create an user  named &#8216;dbadmin&#8217; who has &#8216;dbOwner&#8217; role.</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'># assume your project will use database: 'your_awesome_project_development'
+</span><span class='line'>
+</span><span class='line'>use your_awesome_project_development
+</span><span class='line'>
+</span><span class='line'>db.createUser(
+</span><span class='line'>  {
+</span><span class='line'>    user: 'dbadmin',
+</span><span class='line'>    pwd: '1234567890',
+</span><span class='line'>    roles: [ { role: "dbOwner", db: "your_awesome_project_development" } ]
+</span><span class='line'>  }
+</span><span class='line'>)</span></code></pre></td></tr></table></div></figure>
+
+
+<p>if you want to update user&#8217;s setting.</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>db.updateUser(
+</span><span class='line'>  "dbadmin",
+</span><span class='line'>  {
+</span><span class='line'>    pwd: 'aloha',
+</span><span class='line'>    roles: 
+</span><span class='line'>    [
+</span><span class='line'>      {role: "read", db: "your_awesome_project_development"}
+</span><span class='line'>    ]
+</span><span class='line'>  }
+</span><span class='line'>)</span></code></pre></td></tr></table></div></figure>
+
+
+<p>if you want to know which roles can perform which  actions, you can find anwser here:</p>
+
+<p><a href="http://docs.mongodb.org/master/reference/built-in-roles/#userAdmin">http://docs.mongodb.org/master/reference/built-in-roles/#userAdmin</a></p>
+
+<h2>Setup Rails Projects</h2>
+
+<ol>
+<li>create a project without active-record</li>
+</ol>
+
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>rails new your_awesome_project_development --skip-active-record</span></code></pre></td></tr></table></div></figure>
+
+
+<ol>
+<li>add Mongoid to Gemfile</li>
+</ol>
+
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'># Gemfile
+</span><span class='line'>
+</span><span class='line'>gem 'mongoid', '~&gt; 5.0.0'</span></code></pre></td></tr></table></div></figure>
+
+
+<ol>
+<li>Create a mongoid.yml</li>
+</ol>
+
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>bundle install
+</span><span class='line'>rails g mongoid:config</span></code></pre></td></tr></table></div></figure>
+
+
+<ol>
+<li>Update yout mongoid.yml</li>
+</ol>
+
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>development:
+</span><span class='line'>  clients:
+</span><span class='line'>    default:
+</span><span class='line'>      database: your_awesome_project_development
+</span><span class='line'>      hosts:
+</span><span class='line'>        - localhost:27017
+</span><span class='line'>      options:
+</span><span class='line'>        user: 'dbadmin'
+</span><span class='line'>        password: '1234567890'
+</span><span class='line'>        roles:
+</span><span class='line'>          - 'dbOwner'
+</span><span class='line'>test:
+</span><span class='line'>  clients:
+</span><span class='line'>    default:
+</span><span class='line'>      database: your_awesome_project_test
+</span><span class='line'>      hosts:
+</span><span class='line'>        - localhost:27017
+</span><span class='line'>      options:
+</span><span class='line'>        max_retries: 1
+</span><span class='line'>        retry_interval: 0
+</span><span class='line'>        user: 'dbadmin_tester'
+</span><span class='line'>        password: '1234567890'
+</span><span class='line'>        roles:
+</span><span class='line'>          - 'dbOwner'</span></code></pre></td></tr></table></div></figure>
+
+
+<h2>Dump Data</h2>
+
+<p>Please make sure that you have backup role in production MongoDB.</p>
+
+<p>I use &#8216;readWriteAnyDatabase&#8217; role.</p>
+
+<p>Assume that you need to dump data from production data and restore to local mongo server.</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>mongodump --host your.production.mongo.server.ip --port 37017 --username user --password --out /Users/AlohaCC/Desktop/production-mongodump-2015-10-04</span></code></pre></td></tr></table></div></figure>
+
+
+<h2>Restore Data</h2>
+
+<p>Please make sure that you have backup role in local MongoDB.</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>mongorestore --host localhost --port 3017 --username user --password  /Users/AlohaCC/Desktop/production-mongodump-2015-10-04</span></code></pre></td></tr></table></div></figure>
+
+</div>
+
+
+<div class="meta">
+	<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2015-10-03T22:33:34+08:00" pubdate data-updated="true">Oct 3<span>rd</span>, 2015</time></div>
+	
+
+<div class="tags">
+
+	<a class='category' href='/blog/categories/mongoid/'>Mongoid</a>, <a class='category' href='/blog/categories/ruby-on-rails/'>Ruby on Rails</a>
+
+</div>
+
+
+	
+		<span class="comments"><a href="/blog/2015/10/03/ruby-on-rails-using-mongoid-5-dot-0-0-setup-mongodb/#disqus_thread">Comments</a></span>
+	
+</div></article>
+
+	<div class="share">
+	<div class="addthis_toolbox addthis_default_style ">
+	
+	<a class="addthis_button_facebook_like" fb:like:layout="button_count"></a>
+	
+	
+	<a class="addthis_button_tweet"></a>
+	
+	
+	<a class="addthis_button_google_plusone" g:plusone:size="medium"></a>
+	
+<!---	<a class="addthis_counter addthis_pill_style"></a> --->
+	</div>
+  <script type="text/javascript" src="http://s7.addthis.com/js/250/addthis_widget.js#pubid="></script>
+</div>
+
+
+
+<section id="comment">
+    <h2 class="title">Comments</h2>
+    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+</section>
+</div>
+	<footer id="footer" class="inner">Copyright &copy; 2015
+
+    Aloha
+
+<br>
+Powered by Octopress.
+</footer>
+	<script src="/javascripts/slash.js"></script>
+<script src="/javascripts/jquery.fancybox.pack.js"></script>
+<script type="text/javascript">
+(function($){
+	$('.fancybox').fancybox();
+})(jQuery);
+</script> <!-- Delete or comment this line to disable Fancybox -->
+
+
+<script type="text/javascript">
+      var disqus_shortname = 'ccaloha';
+      
+        
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://ccaloha.cc/blog/2015/10/03/ruby-on-rails-using-mongoid-5-dot-0-0-setup-mongodb/';
+        var disqus_url = 'http://ccaloha.cc/blog/2015/10/03/ruby-on-rails-using-mongoid-5-dot-0-0-setup-mongodb/';
+        var disqus_script = 'embed.js';
+      
+    (function () {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/' + disqus_script;
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script>
+
+
+
+	<script type="text/javascript">
+		var _gaq = _gaq || [];
+		_gaq.push(['_setAccount', 'UA-29608372-1']);
+		_gaq.push(['_trackPageview']);
+
+		(function() {
+			var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+			ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+			var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+		})();
+	</script>
+
+
+<a title="Google Analytics Alternative" href="http://clicky.com/100753071"><img alt="Google Analytics Alternative" src="//static.getclicky.com/media/links/badge.gif" border="0" /></a>
+<script src="//static.getclicky.com/js" type="text/javascript"></script>
+<script type="text/javascript">try{ clicky.init(100753071); }catch(e){}</script>
+<noscript><p><img alt="Clicky" width="1" height="1" src="//in.getclicky.com/100753071ns.gif" /></p></noscript>
+
+</body>
+</html>
