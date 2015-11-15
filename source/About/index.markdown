@@ -18,17 +18,19 @@ I like to discover any things new and try to merge into my project.
 My boss and colleague always said that "Aloha, you learn a new thing god damn fast"  
 
 
-## My old [Resume] [5]  
-(I use to apply CS program on 2014 autumn. And I got admission from university of colorado boulder.)
+## [Resume] [5]  
 
-*You must must check this*
 
+## Aloha - Prezi version
 <iframe src="http://prezi.com/embed/0pcpwnx3gvxv/?bgcolor=ffffff&amp;lock_to_path=0&amp;autoplay=0&amp;autohide_ctrls=0&amp;features=undefined&amp;disabled_features=undefined" width="800" height="600" frameBorder="0"></iframe>
 
-My tools
+My Daily Used tools
 
 * Ruby on Rails   	 
-* R 
+* R
+* Javascript
+* CSS
+* MongoDB/MySQL 
 * Google Analytics [My Google Analytics Certification](https://www.google.com/partners/?hl=zh-TW#i_profile;idtf=110397369067401303349;)
 * Git/Github/bitbucket
 * Linux 

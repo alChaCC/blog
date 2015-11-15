@@ -1,6 +1,6 @@
 ---
 layout: page
-title: "protfolio"
+title: "Portfolio"
 date: 2015-06-10 09:20
 comments: true
 sharing: true
@@ -24,12 +24,11 @@ footer: true
 ## New Urcosme
 
 ### Urcosme is the largest cosmetic review website in Taiwan. 
-
-*new website is not available until 2015 Q3* 
+<img src="https://dl.dropboxusercontent.com/u/22307926/Porofolio/www.urcosme.com.png">
 
 | Period    | 2014/10 - now                                                            |
 |---------  |-------------------------------------------------------------------------|
-| Website   | not avaliable until 2015/8                                                   
+| Website   | https://www.urcosme.com                                                   
 | The cool things I've done     | <ul><li>Systems Design</li><li>Build Up Administrator Platform</li><li>Administrators Authorization using Cancan</li><li>Model Version Control using paper_trail</li><li>Email Subscription </li><li>Email Auto Tracking using Google Analytics</li><li>Implement Schedule Jobs for fetching event/pageview data from Google Analytics</li><li>Facebook Integration using Koala</li><li>Custimize Ckeditor Uploader(every models has its own folder...etc)</li><li>Build Up Some Front-End Page such as Header, Footer, Ranking page(following UX/UI designer's mockup)</li><li>AWS Environment Preparation and Configuration</li><li>Capistrano Deployment</li><li>[Crop User Avatar Image and Upload to S3](http://ccaloha.cc/blog/2015/06/25/sign-up-by-devise-and-crop-user-avatar-then-upload-by-carrierwave-using-ruby-on-rails/)</li><li>[Build up Performance Test](http://ccaloha.cc/blog/2015/07/14/howto-performance-test-in-rails-4/)</li><li>[Build up Stress Test](http://ccaloha.cc/blog/2015/07/22/for-dummies-stress-test-using-jmeter-in-rails-4-plus-ruby-2-dot-2/)</li>
 
 </ul>                                                      
