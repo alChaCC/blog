@@ -57,5 +57,5 @@ Past familiar tools
 [2]: http://twitter.com/#!/Al000ha 			   	"Twitter"
 [3]: http://www.plurk.com/sharehoper				"Plurk"
 [4]: http://www.anobii.com/01f129989be3af5d62/books 		"aNobii"
-[5]: http://ccaloha.herokuapp.com/About/Resume_Aloha.pdf	"Resume"
+[5]: http://ccaloha.cc/About/Resume_Aloha.pdf	"Resume"
 [6]: https://tw.linkedin.com/in/alohacc     "Linkedin"

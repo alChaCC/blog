@@ -29,22 +29,35 @@ footer: true
 | Period    | 2014/10 - now                                                            |
 |---------  |-------------------------------------------------------------------------|
 | Website   | https://www.urcosme.com                                                   
-| The cool things I've done     | <ul><li>Systems Design</li><li>Build Up Administrator Platform</li><li>Administrators Authorization using Cancan</li><li>Model Version Control using paper_trail</li><li>Email Subscription </li><li>Email Auto Tracking using Google Analytics</li><li>Implement Schedule Jobs for fetching event/pageview data from Google Analytics</li><li>Facebook Integration using Koala</li><li>Custimize Ckeditor Uploader(every models has its own folder...etc)</li><li>Build Up Some Front-End Page such as Header, Footer, Ranking page(following UX/UI designer's mockup)</li><li>AWS Environment Preparation and Configuration</li><li>Capistrano Deployment</li><li>[Crop User Avatar Image and Upload to S3](http://ccaloha.cc/blog/2015/06/25/sign-up-by-devise-and-crop-user-avatar-then-upload-by-carrierwave-using-ruby-on-rails/)</li><li>[Build up Performance Test](http://ccaloha.cc/blog/2015/07/14/howto-performance-test-in-rails-4/)</li><li>[Build up Stress Test](http://ccaloha.cc/blog/2015/07/22/for-dummies-stress-test-using-jmeter-in-rails-4-plus-ruby-2-dot-2/)</li>
-
-</ul>                                                      
+| The cool things I've done     | <ul><li>Systems Design</li><li>Build Up Administrator Platform</li><li>Administrators Authorization using Cancan</li><li>Model Version Control using paper_trail</li><li>Email Subscription </li><li>Email Auto Tracking using Google Analytics</li><li>Implement Schedule Jobs for fetching event/pageview data from Google Analytics</li><li>Facebook Integration using Koala</li><li>Custimize Ckeditor Uploader(every models has its own folder...etc)</li><li>Build Up Some Front-End Page such as Header, Footer, Ranking page(following UX/UI designer's mockup)</li><li>AWS Environment Preparation and Configuration</li><li>Capistrano Deployment</li><li>[Crop User Avatar Image and Upload to S3](http://ccaloha.cc/blog/2015/06/25/sign-up-by-devise-and-crop-user-avatar-then-upload-by-carrierwave-using-ruby-on-rails/)</li><li>[Build up Performance Test](http://ccaloha.cc/blog/2015/07/14/howto-performance-test-in-rails-4/)</li><li>[Build up Stress Test](http://ccaloha.cc/blog/2015/07/22/for-dummies-stress-test-using-jmeter-in-rails-4-plus-ruby-2-dot-2/)</li></ul>                                                   
 | MIS + Tech      | <ul><li>Mysql</li><li>Ruby 2.1.2</li><li>Rails 4.1.6</li><li>Ubuntu 14.04</li><li>Nginx + Passenger </li><li>Rvm</li><li>Redis</li><li>Memcached</li></ul> 
 | Member  | 8 members   
 | Job   | Fulltime                                     
 
 ## Urcosme Data Manage Platform 
+<img src="https://dl.dropboxusercontent.com/u/22307926/Porofolio/Urcosme%20Data%20Manage%20Platform%20-%20admin1.png">
+
+<img src="https://dl.dropboxusercontent.com/u/22307926/Porofolio/Urcosme%20Data%20Manage%20Platform%20-%20admin2.png">
 
 | Period    | 2015/2 - now                                                            |
 |---------  |-------------------------------------------------------------------------|
 | Website   | not avaliable                                                   
-| The cool things I've done     | <ul><li>Implement API Client for fetching pageviews、events ...etc </li><li>Implement Javascript Tracking Code</li><li>Implement MongoDB Map-Reduce for search and data preaggregate(such as calculate pageviews)</li><li>Implement Hierarchical Aggregation using Mongoid + Ruby(more detail I've implemented please check[Hierarchical Aggregation](http://docs.mongodb.org/ecoSystem/use-cases/hierarchical-aggregation/)) </li><li>AWS Environment Preparation and Configuration</li><li>Setup MongoDB Server</li><li>Capistrano Deployment</li></ul>                                                      
+| The cool things I've done     | <ul><li>Implement API Client for fetching pageviews、events ...etc </li><li>Implement Javascript Tracking Code</li><li>Implement MongoDB Map-Reduce for search and data preaggregate(such as calculate pageviews)</li><li>Implement Hierarchical Aggregation using Mongoid + Ruby(more detail I've implemented please check[Hierarchical Aggregation](http://docs.mongodb.org/ecoSystem/use-cases/hierarchical-aggregation/)) </li><li>Build a administrator platform</li><li>AWS Environment Preparation and Configuration</li><li>Setup MongoDB Server</li><li>Capistrano Deployment</li></ul>                                                      
 | MIS + Tech      | <ul><li>MongoDB</li><li>Ruby 2.1.2</li><li>Rails 4.1.6</li><li>Ubuntu 14.04</li><li>Nginx + Passenger </li><li>Rvm</li><li>Redis</li></ul> 
 | Member  | Aloha(Project Leader)、Oliver(Urcosme COO)、Shane    
 | Job   | Fulltime                                     
+
+## Urcosme Keyword Analytics Platform
+
+<img src="https://dl.dropboxusercontent.com/u/22307926/Porofolio/urcosme-keyword.png">
+
+| Period    | 2015/9 - now                                                            |
+|---------  |-------------------------------------------------------------------------|
+| Website   | not avaliable                                                   
+| The cool things I've done     | <ul><li>Using text segmentation、scikit-learn for finding the relationship between keywords and cosmetic products</li><li>AWS Environment Preparation and Configuration</li><li>Setup MongoDB Server</li><li>Capistrano Deployment</li></ul>                                                      
+| MIS + Tech      | <ul><li>MongoDB</li><li>Ruby 2.1.2</li><li>Rails 4.1.6</li><li>Ubuntu 14.04</li><li>Nginx + Passenger </li><li>Rvm</li></ul> 
+| Member  | Loeb Chen (Project Leader)、Aloha   
+| Job   | Fulltime 
 
 ## Urcosme X Lotame 
 
