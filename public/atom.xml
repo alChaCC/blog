@@ -4,7 +4,7 @@
   <title><![CDATA[AlohaCC]]></title>
   <link href="http://ccaloha.cc/atom.xml" rel="self"/>
   <link href="http://ccaloha.cc/"/>
-  <updated>2015-11-26T11:22:12+08:00</updated>
+  <updated>2015-12-04T14:13:37+08:00</updated>
   <id>http://ccaloha.cc/</id>
   <author>
     <name><![CDATA[Aloha]]></name>
@@ -12,6 +12,16 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[[HowTo] Integrate Google Analytics And Google AdWords for customize Ads retargeting]]></title>
+    <link href="http://ccaloha.cc/blog/2015/12/04/howto-integrate-google-analytics-and-google-adwords-for-customize-ads-retargeting/"/>
+    <updated>2015-12-04T14:08:20+08:00</updated>
+    <id>http://ccaloha.cc/blog/2015/12/04/howto-integrate-google-analytics-and-google-adwords-for-customize-ads-retargeting</id>
+    <content type="html"><![CDATA[<iframe id="iframe_container" frameborder="0" webkitallowfullscreen="" mozallowfullscreen="" allowfullscreen="" width="550" height="400" src="https://prezi.com/embed/n9iuo7dh40jc/?bgcolor=ffffff&amp;lock_to_path=0&amp;autoplay=0&amp;autohide_ctrls=0&amp;landing_data=bHVZZmNaNDBIWnNjdEVENDRhZDFNZGNIUE43MHdLNWpsdFJLb2ZHanI5bDNCUnpwRENZWkRYN3EvQ1N5VHhxdENnPT0&amp;landing_sign=e7opC2uX0_T7quFGuT0JpREwZJQtJ9MWUVT6tb-n_Lc"></iframe>
+
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[Ruby on Rails Development using Mongoid 5.0.0 - 1. Setup MongoDB]]></title>
@@ -4569,41 +4579,6 @@ $('#keyword').soulmate({
 </code></pre>
 
 <h2>完成！！！</h2>
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[蝦米！GA也可做A/B Test]]></title>
-    <link href="http://ccaloha.cc/blog/2014/11/30/ga-how-to-setup-a-slash-b-test-using-ga/"/>
-    <updated>2014-11-30T22:35:34+08:00</updated>
-    <id>http://ccaloha.cc/blog/2014/11/30/ga-how-to-setup-a-slash-b-test-using-ga</id>
-    <content type="html"><![CDATA[<p>需求： 我想要提升大家點選連結進入&#8221;GA分類&#8221;頁面的點擊率！</p>
-
-<p>於是乎，我設計出了兩種頁面，想來看看哪種點擊率比較好！</p>
-
-<p>先分別來看兩個頁面：</p>
-
-<p><a href="http://ccaloha.herokuapp.com/google-analytics/GA_ABtest/original.html">主頁面</a></p>
-
-<p><a href="http://ccaloha.herokuapp.com/google-analytics/GA_ABtest/test.html">測試頁面</a></p>
-
-<p>但&#8230;</p>
-
-<p>我要怎麼樣讓這兩個頁面自動變換，讓我做測試勒？</p>
-
-<p>這時候，你就需要</p>
-
-<h3>Google analytics</h3>
-
-<!--more-->
-
-
-<p>附上我這週報告的內容</p>
-
-<iframe src="http://prezi.com/embed/ofpx1llymkyt/?bgcolor=ffffff&amp;lock_to_path=0&amp;autoplay=0&amp;autohide_ctrls=0&amp;features=undefined&amp;token=undefined&amp;disabled_features=undefined" width="550" height="400" frameBorder="0" webkitAllowFullScreen mozAllowFullscreen allowfullscreen></iframe>
-
-
-
 ]]></content>
   </entry>
   

@@ -107,6 +107,81 @@ $(document).ready(
     <article class="post">
 	<h2 class="title">
 		
+		<a href="/blog/2015/06/25/sign-up-by-devise-and-crop-user-avatar-then-upload-by-carrierwave-using-ruby-on-rails/">
+		
+			Sign Up by Devise and Crop User Avatar Then Upload by Carrierwave Using Ruby on Rails</a>
+	</h2>
+	<div class="entry-content">
+		<p>ref:</p>
+
+<ol>
+<li> http://railscasts.com/episodes/182-cropping-images-revised</li>
+<li> http://stackoverflow.com/questions/12762728/how-to-crop-image-on-upload-with-rails-carrierwave-and-minimagick</li>
+<li> https://coderwall.com/p/e9d_ja/using-carrierwave-uploader-for-tableless-model-in-rails</li>
+<li> http://stackoverflow.com/questions/24262388/carrierwave-processing-only-after-the-model-has-been-saved-model-id-is-nil</li>
+</ol>
+
+
+<h1>What I done in this article</h1>
+
+<h2>1. Click Upload Image</h2>
+
+<p><img src="https://dl.dropboxusercontent.com/u/22307926/Blog%20Image/Crop%20User%20Avatar%20and%20Upload%20via%20Carrierwave%20while%20creating%20user%20using%20Ruby%20on%20Rails/Step1%20click_upload_image.png" alt="Step 1. click_upload_image"></p>
+
+<h2>2. Choose Image And Preview</h2>
+
+<p><img src="https://dl.dropboxusercontent.com/u/22307926/Blog%20Image/Crop%20User%20Avatar%20and%20Upload%20via%20Carrierwave%20while%20creating%20user%20using%20Ruby%20on%20Rails/Step2%20choose%20image%20and%20preview.png" alt="Step 2. choose image and preview"></p>
+
+<h2>3. Edit Avatar And Preview Image Synchronously</h2>
+
+<p><img src="https://dl.dropboxusercontent.com/u/22307926/Blog%20Image/Crop%20User%20Avatar%20and%20Upload%20via%20Carrierwave%20while%20creating%20user%20using%20Ruby%20on%20Rails/Step3%20edit%20avatar%20and%20preview%20sync.png" alt="Step 3. Edit Avatar And Preview Image Synchronously"></p>
+
+<h2>4. Upload to AWS S3</h2>
+
+<p><img src="https://dl.dropboxusercontent.com/u/22307926/Blog%20Image/Crop%20User%20Avatar%20and%20Upload%20via%20Carrierwave%20while%20creating%20user%20using%20Ruby%20on%20Rails/Step4%20upload%20to%20AWS%20S3.png" alt="Step 4. Upload to AWS S3"></p>
+
+<h2>5. Image Cropped And Uploaded</h2>
+
+<p><img src="https://dl.dropboxusercontent.com/u/22307926/Blog%20Image/Crop%20User%20Avatar%20and%20Upload%20via%20Carrierwave%20while%20creating%20user%20using%20Ruby%20on%20Rails/Step5%20image%20cropped%20and%20uploaded.png" alt="Step 5. Image Cropped And Uploaded"></p>
+
+
+		
+		<a href="/blog/2015/06/25/sign-up-by-devise-and-crop-user-avatar-then-upload-by-carrierwave-using-ruby-on-rails/" class="more-link">Read on &rarr;</a>
+	</div>
+
+
+<div class="meta">
+	<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2015-06-25T01:15:45+08:00" pubdate data-updated="true">Jun 25<span>th</span>, 2015</time></div>
+	
+
+<div class="tags">
+
+	<a class='category' href='/blog/categories/ruby-on-rails/'>Ruby on Rails</a>
+
+</div>
+
+
+	
+		<span class="comments"><a href="/blog/2015/06/25/sign-up-by-devise-and-crop-user-avatar-then-upload-by-carrierwave-using-ruby-on-rails//blog/page/2/index.html#disqus_thread">Comments</a></span>
+	
+</div></article>
+
+
+    <article class="post">
+	<h2 class="title">
+		
 		<a href="/blog/2015/06/10/string-handling-between-javacript-and-ruby/">
 		
 			String Handling Between JavaScript and Ruby</a>
@@ -397,72 +472,6 @@ $(document).ready(
 
 	
 		<span class="comments"><a href="/blog/2015/04/09/integrate-ruby-on-rails-with-google-analytics-api//blog/page/2/index.html#disqus_thread">Comments</a></span>
-	
-</div></article>
-
-
-    <article class="post">
-	<h2 class="title">
-		
-		<a href="/blog/2015/02/27/using-google-analytics-for-email-click-tracking-and-open-rate-tracking-in-ruby-on-rails/">
-		
-			Using Google Analytics for Email Click Tracking and Open Rate Tracking in Ruby on Rails</a>
-	</h2>
-	<div class="entry-content">
-		<h2>Requirement</h2>
-
-<ol>
-<li><p>每個連結的點擊數</p></li>
-<li><p>開信率</p></li>
-</ol>
-
-
-<h2>Google Analytics</h2>
-
-<p>這是一個電子報，基本上屬於一種廣告！</p>
-
-<p>那GA怎麼那麼厲害知道誰點了什麼？</p>
-
-<p>該不會Google 大神，連Email也滲透？！</p>
-
-<p>ps. 我猜他應該也差不多都知道我們在Email上的一舉一動，只要你用Gmail&#8230;</p>
-
-<h3>那GA要怎麼紀錄？</h3>
-
-<blockquote><p>基本上就是將<strong>連結網址</strong>帶上一些&#8221;參數&#8221;，當使用者點了這個連結之後，就你就會被帶到那個<strong>連結網址</strong>，這時候那個網站一定有埋GA的javascript
-，這就是他的Key~ GA透過js爬到你的網址，當他發現你有帶某些參數，他就知道你是從哪裡來的！</p></blockquote>
-
-
-		
-		<a href="/blog/2015/02/27/using-google-analytics-for-email-click-tracking-and-open-rate-tracking-in-ruby-on-rails/" class="more-link">Read on &rarr;</a>
-	</div>
-
-
-<div class="meta">
-	<div class="date">
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2015-02-27T23:34:39+08:00" pubdate data-updated="true">Feb 27<span>th</span>, 2015</time></div>
-	
-
-<div class="tags">
-
-	<a class='category' href='/blog/categories/google-analytics/'>Google Analytics</a>, <a class='category' href='/blog/categories/ruby-on-rails/'>Ruby on Rails</a>
-
-</div>
-
-
-	
-		<span class="comments"><a href="/blog/2015/02/27/using-google-analytics-for-email-click-tracking-and-open-rate-tracking-in-ruby-on-rails//blog/page/2/index.html#disqus_thread">Comments</a></span>
 	
 </div></article>
 
