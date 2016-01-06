@@ -107,6 +107,168 @@ $(document).ready(
     <article class="post">
 	<h2 class="title">
 		
+		<a href="/blog/2014/02/05/howto-users-can-only-post-comments-on-fb-after-login/">
+		
+			[HowTo] 讓使用者登入網站後，才允許Facebook留言 - ROR + Coffeescript + CSS + Devise</a>
+	</h2>
+	<div class="entry-content">
+		<h3>1.在Html page加上</h3>
+
+<pre><code>    &lt;div class="fb_comment_container"&gt;
+    &lt;div class="event_fb_blur"&gt;
+        &lt;p&gt;&lt;a href="javascript:;" onclick="App.check_login_status();"&gt;請登入會員先&lt;/a&gt;&lt;/p&gt;
+    &lt;/div&gt;
+    &lt;div class="fb-comments" data-colorscheme="light" data-href="http://XXX.OOO" data-numposts="50" data-width="600"&gt;&lt;/div&gt;
+    &lt;/div&gt;
+</code></pre>
+
+<p>App.check_login_status() => <em>寫在application.coffee裏</em></p>
+
+<h3>2.加上CSS</h3>
+
+<p>目的：加上遮罩讓使用者無法點入留言</p>
+
+<pre><code>    .fb_comment_container {
+      text-align: center;
+      -webkit-border-radius: 10px;
+      -moz-border-radius: 10px;
+      border-radius: 10px;
+    }
+
+    .event_fb_blur {
+      width: 800px;
+      height: 95px;
+      background: rgba(0, 0, 0, 0.8);
+      margin: 0 auto;
+      position: absolute;
+      z-index: 100;
+      left: 230px;
+      padding: 0 14px;
+      }
+
+    .event_fb_blur p{
+    position: relative;
+    margin: 0 auto;
+    color: white;
+    font-size: 30px;
+    cursor:pointer;
+    line-height: 104px;
+    text-decoration: underline
+    }
+</code></pre>
+
+<h3>3.在config/initializers/devise.rb 加上</h3>
+
+<p>目的：使得devise在登入成功或登出時，寫出session讓javascript可以知道是否有登入成功</p>
+
+<pre><code>      Warden::Manager.after_set_user do |user,auth,opts|
+        auth.cookies[:signed_in] = 1
+      end
+
+      Warden::Manager.before_logout do |user,auth,opts|
+        auth.cookies.delete :signed_in
+      end
+</code></pre>
+
+<h3>4.在app/controllers/application_controller.rb加上</h3>
+
+<p>目的：儲存之前瀏覽的位置，並且在登入成功後，導向回去</p>
+
+<pre><code>      after_filter :store_location
+
+      def store_location 
+        if (
+          request.fullpath != "/account/sign_in" &amp;&amp;
+          request.fullpath != "/account/sign_up" &amp;&amp;
+          request.fullpath != "/account/password" &amp;&amp;
+          request.fullpath != "/account/sign_out" &amp;&amp;
+          !request.xhr?) # don't store ajax calls
+        session[:previous_url] = request.fullpath 
+        end
+
+        if request.fullpath == "/admin_users/sign_in"
+          session[:previous_url] = "/admin"
+        end
+
+      end
+
+    def after_sign_in_path_for(resource)
+       session[:previous_url] || root_path
+    end
+</code></pre>
+
+<h3>5.在app/assets/javascripts/application.coffee加上</h3>
+
+<p>目的：使用js來達成功能</p>
+
+<pre><code>    getCookie: (match) -&gt;
+        key = match + "="
+        for c in document.cookie.split(';')
+          c.substring(1, c.length) while c.charAt(0) is ''
+          return c.substring(key.length, c.length) if c.indexOf(key) &gt;= 0 
+        return null
+
+    check_login_status: () -&gt;
+        window.open('/account/sign_in','_self',width=600,height=300,
+        toolbar=0,menubar=0,location=1,status=1,scrollbars=1,
+        resizable=1,left=0,top=0)
+
+    init: () -&gt;
+        is_signed = window.App.getCookie("signed_in")
+        if is_signed is '=1' or  is_signed is '1' #剛登入成功時，is_signed的值是1，但是之後就會變成=1，顆顆～
+            $(".event_fb_blur").css({"display":"none"})
+
+    $(document).ready -&gt;
+        App.init()
+</code></pre>
+
+<h3>完成!</h3>
+
+<p>Bug:</p>
+
+<ol>
+<li>當頁面縮放時，遮罩不會隨著變動</li>
+<li>尚未整合使用者留言後，可以直接記錄到user model</li>
+</ol>
+
+
+		
+		
+	</div>
+
+
+<div class="meta">
+	<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2014-02-05T21:49:45+08:00" pubdate data-updated="true">Feb 5<span>th</span>, 2014</time></div>
+	
+
+<div class="tags">
+
+	<a class='category' href='/blog/categories/ruby-on-rails/'>Ruby on Rails</a>
+
+</div>
+
+
+	
+		<span class="comments"><a href="/blog/2014/02/05/howto-users-can-only-post-comments-on-fb-after-login//blog/page/7/index.html#disqus_thread">Comments</a></span>
+	
+</div></article>
+
+
+    <article class="post">
+	<h2 class="title">
+		
 		<a href="/blog/2014/01/16/how-to-setup-google-chrome-incognito-as-default-setting-in-mac-osx/">
 		
 			[HowTo] 在Mac 設定Chrome Default 打開為無痕模式</a>
@@ -422,73 +584,6 @@ $(document).ready(
 	
 </div></article>
 
-
-    <article class="post">
-	<h2 class="title">
-		
-		<a href="/blog/2013/04/22/howto-setup-ubuntu-from-0-to-1/">
-		
-			HOWTO-Setup-Ubuntu-from-0-to-1</a>
-	</h2>
-	<div class="entry-content">
-		<h3>先升級</h3>
-
-<pre><code>sudo apt-get update
-sudo apt-get upgrade
-</code></pre>
-
-<p>ps. 如果update失敗的話，請到</p>
-
-<p>Ubuntu Software Center -> Edit -> Software Sources</p>
-
-<p>把Download from 改成其他國家(我是把它改成Server for United States)</p>
-
-<p>在試一次</p>
-
-<h3>安裝vim</h3>
-
-<pre><code>sudo apt-get install vim
-</code></pre>
-
-<h3>安裝Chrome</h3>
-
-<pre><code>連到google 網址點選下載再安裝
-</code></pre>
-
-
-		
-		<a href="/blog/2013/04/22/howto-setup-ubuntu-from-0-to-1/" class="more-link">Read on &rarr;</a>
-	</div>
-
-
-<div class="meta">
-	<div class="date">
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2013-04-22T15:11:00+08:00" pubdate data-updated="true">Apr 22<span>nd</span>, 2013</time></div>
-	
-
-<div class="tags">
-
-	<a class='category' href='/blog/categories/linux/'>Linux</a>
-
-</div>
-
-
-	
-		<span class="comments"><a href="/blog/2013/04/22/howto-setup-ubuntu-from-0-to-1//blog/page/7/index.html#disqus_thread">Comments</a></span>
-	
-</div></article>
-
 <nav id="pagenavi">
     
         <a href="/blog/page/6/" class="prev">Prev</a>
@@ -498,7 +593,7 @@ sudo apt-get upgrade
     
     <div class="center"><a href="/archives">Blog Archives</a></div>
 </nav></div>
-	<footer id="footer" class="inner">Copyright &copy; 2015
+	<footer id="footer" class="inner">Copyright &copy; 2016
 
     Aloha
 

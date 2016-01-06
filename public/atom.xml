@@ -4,7 +4,7 @@
   <title><![CDATA[AlohaCC]]></title>
   <link href="http://ccaloha.cc/atom.xml" rel="self"/>
   <link href="http://ccaloha.cc/"/>
-  <updated>2015-12-04T14:13:37+08:00</updated>
+  <updated>2016-01-06T14:02:52+08:00</updated>
   <id>http://ccaloha.cc/</id>
   <author>
     <name><![CDATA[Aloha]]></name>
@@ -12,6 +12,344 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[Ruby on Rails Development Using Mongoid 5.0.0 - 2. How to use Aggregation to get pageview data]]></title>
+    <link href="http://ccaloha.cc/blog/2016/01/06/ruby-on-rails-development-using-mongoid-5-dot-0-0-2-how-to-use-aggregation-to-get-pageview-data/"/>
+    <updated>2016-01-06T13:57:37+08:00</updated>
+    <id>http://ccaloha.cc/blog/2016/01/06/ruby-on-rails-development-using-mongoid-5-dot-0-0-2-how-to-use-aggregation-to-get-pageview-data</id>
+    <content type="html"><![CDATA[<p>What is Aggregation ?</p>
+
+<blockquote><p>Aggregations are operations that process data records and return computed results.</p></blockquote>
+
+<p>In my opinion, it just like queries but it can do some operations step by step when processing the query just like a pipeline.</p>
+
+<p><img src='https://dl.dropboxusercontent.com/u/22307926/Blog%20Image/Ruby%20on%20Rails%20Development%20Using%20Mongoid%20-%202%20How%20to%20use%20Aggregation%20to%20get%20pageview%20data/%E8%9E%A2%E5%B9%95%E5%BF%AB%E7%85%A7%202016-01-05%2017.31.06.png' alt='MongoDB Aggregation'></p>
+
+<p>if you want more details, please check <a href="https://docs.mongodb.org/manual/core/aggregation-introduction/">official documents</a></p>
+
+<!--more-->
+
+
+<p>Here are my models,</p>
+
+<p><img src='https://dl.dropboxusercontent.com/u/22307926/Blog%20Image/Ruby%20on%20Rails%20Development%20Using%20Mongoid%20-%202%20How%20to%20use%20Aggregation%20to%20get%20pageview%20data/model.png' alt='aggregation model example'></p>
+
+<h2>Get Data using &#8220;match&#8221;</h2>
+
+<p>If I want to find pageview from 2016/1/1 to 2016/1/5</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>sort_stage = {
+</span><span class='line'>        '$sort' =&gt; { 'created_at' =&gt; 1 }
+</span><span class='line'>    }
+</span><span class='line'>    
+</span><span class='line'>match_stage = {
+</span><span class='line'>          '$match' =&gt; {
+</span><span class='line'>            "created_at" =&gt; {
+</span><span class='line'>              "$gte" =&gt; Time.parse('2016-01-01').beginning_of_day, 
+</span><span class='line'>              "$lte" =&gt; Time.parse('2016-01-05').end_of_day
+</span><span class='line'>            }
+</span><span class='line'>          }
+</span><span class='line'>        }
+</span><span class='line'>
+</span><span class='line'>result = PageTracking.collection.aggregate([sort_stage,match_stage])
+</span><span class='line'>result.each do |page|
+</span><span class='line'>  puts page
+</span><span class='line'>end</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Here is my result:</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>{"_id"=&gt;BSON::ObjectId('568a1ef77db99bc968000002'), "pathname"=&gt;"/", "daily_total_count"=&gt;2, "created_at"=&gt;2016-01-03 16:00:00 UTC, "user_id"=&gt;BSON::ObjectId('568a1ef77db99bc968000000'), "updated_at"=&gt;2016-01-04 07:27:51 UTC }
+</span><span class='line'>{"_id"=&gt;BSON::ObjectId('568b28ad7db99b1ae8000002'), "pathname"=&gt;"/", "daily_total_count"=&gt;1, "created_at"=&gt;2016-01-04 16:00:00 UTC, "user_id"=&gt;BSON::ObjectId('568b28ad7db99b1ae8000000'), "updated_at"=&gt;2016-01-05 02:21:33 UTC}
+</span><span class='line'>{"_id"=&gt;BSON::ObjectId('568b28e67db99b1ae8000005'), "pathname"=&gt;"/", "daily_total_count"=&gt;3, "created_at"=&gt;2016-01-04 16:00:00 UTC, "user_id"=&gt;BSON::ObjectId('568b28e67db99b1ae8000003'), "updated_at"=&gt;2016-01-05 02:22:30 UTC}
+</span><span class='line'>{"_id"=&gt;BSON::ObjectId('568b7d307db99b9a30000011'), "pathname"=&gt;"/activities", "daily_total_count"=&gt;1, "created_at"=&gt;2016-01-04 16:00:00 UTC, "user_id"=&gt;BSON::ObjectId('568b28e67db99b1ae8000003'), "updated_at"=&gt;2016-01-05 08:22:08 UTC}
+</span><span class='line'>{"_id"=&gt;BSON::ObjectId('568b7d8e7db99b9a30000013'), "pathname"=&gt;"/activities/hadalabo01", "daily_total_count"=&gt;1, "created_at"=&gt;2016-01-04 16:00:00 UTC, "user_id"=&gt;BSON::ObjectId('568b28e67db99b1ae8000003'), "updated_at"=&gt;2016-01-05 08:23:42 UTC}
+</span><span class='line'>{"_id"=&gt;BSON::ObjectId('568b7e5e7db99b9a30000017'), "pathname"=&gt;"/beautybuzz", "daily_total_count"=&gt;1, "created_at"=&gt;2016-01-04 16:00:00 UTC, "user_id"=&gt;BSON::ObjectId('568b28e67db99b1ae8000003'), "updated_at"=&gt;2016-01-05 08:27:10 UTC}
+</span><span class='line'>{"_id"=&gt;BSON::ObjectId('568b78c07db99b9a30000001'), "pathname"=&gt;"/beautynews", "daily_total_count"=&gt;1, "created_at"=&gt;2016-01-04 16:00:00 UTC, "user_id"=&gt;BSON::ObjectId('568b28e67db99b1ae8000003'), "updated_at"=&gt;2016-01-05 08:03:12 UTC}</span></code></pre></td></tr></table></div></figure>
+
+
+<p>ps. I add a sort stage in front of match stage due to the official suggestion.<a href="https://docs.mongodb.org/manual/core/aggregation-pipeline-optimization/#sort-match-sequence-optimization">Aggregation Pipeline Optimization</a></p>
+
+<h2>Group Data using &#8220;group&#8221;</h2>
+
+<p>Oops, in fact, I want all records with <strong>pathname => &#8216;/&#8217;</strong> should be summed up to one record just like <strong>group_by</strong> in MySQL</p>
+
+<p>So, we can add a new stage</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>group_stage = {
+</span><span class='line'>          "$group" =&gt; {
+</span><span class='line'>            "_id" =&gt; {
+</span><span class='line'>              "pathname" =&gt; "$pathname"
+</span><span class='line'>            },
+</span><span class='line'>            "page_count" =&gt; { "$sum" =&gt; "$daily_total_count" }
+</span><span class='line'>          }
+</span><span class='line'>         }
+</span><span class='line'>result = PageTracking.collection.aggregate([sort_stage,match_stage,group_stage])
+</span><span class='line'>
+</span><span class='line'>result.each do |page|
+</span><span class='line'>  puts page
+</span><span class='line'>end
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>which mean we can group by &#8220;pathname&#8221; and when we do grouping we can sum all daily_total_count into &#8220;page_count&#8221;</p>
+
+<p>Here is my result</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>{"_id"=&gt;{"pathname"=&gt;"/beautybuzz"}, "page_count"=&gt;1}
+</span><span class='line'>{"_id"=&gt;{"pathname"=&gt;"/activities/hadalabo01"}, "page_count"=&gt;1}
+</span><span class='line'>{"_id"=&gt;{"pathname"=&gt;"/activities"}, "page_count"=&gt;1}
+</span><span class='line'>{"_id"=&gt;{"pathname"=&gt;"/beautynews"}, "page_count"=&gt;1}
+</span><span class='line'>{"_id"=&gt;{"pathname"=&gt;"/"}, "page_count"=&gt;6}</span></code></pre></td></tr></table></div></figure>
+
+
+<h2>Add more information while grouping Data using &#8220;push&#8221;</h2>
+
+<p>Ok, great! But, I got an another requirement, Hi, Aloha, Can you tell me that who see each pages?</p>
+
+<p>Easy, let&#8217;s add some codes in group_stage</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>group_stage = {
+</span><span class='line'>          "$group" =&gt; {
+</span><span class='line'>            "_id" =&gt; {
+</span><span class='line'>              "pathname" =&gt; "$pathname"
+</span><span class='line'>            },
+</span><span class='line'>            "page_count" =&gt; { "$sum" =&gt; "$daily_total_count" },
+</span><span class='line'>            "users" =&gt; {
+</span><span class='line'>              "$push" =&gt; {
+</span><span class='line'>                "user" =&gt; "$user_id"
+</span><span class='line'>              }
+</span><span class='line'>            }
+</span><span class='line'>          }
+</span><span class='line'>         }
+</span><span class='line'>result = PageTracking.collection.aggregate([sort_stage,match_stage,group_stage])
+</span><span class='line'>
+</span><span class='line'>result.each do |page|
+</span><span class='line'>  puts page
+</span><span class='line'>end
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Here is my result</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>{"_id"=&gt;{"pathname"=&gt;"/beautybuzz"}, "page_count"=&gt;1, "users"=&gt;[{"user"=&gt;BSON::ObjectId('568b28e67db99b1ae8000003')}]}
+</span><span class='line'>{"_id"=&gt;{"pathname"=&gt;"/activities/hadalabo01"}, "page_count"=&gt;1, "users"=&gt;[{"user"=&gt;BSON::ObjectId('568b28e67db99b1ae8000003')}]}
+</span><span class='line'>{"_id"=&gt;{"pathname"=&gt;"/activities"}, "page_count"=&gt;1, "users"=&gt;[{"user"=&gt;BSON::ObjectId('568b28e67db99b1ae8000003')}]}
+</span><span class='line'>{"_id"=&gt;{"pathname"=&gt;"/beautynews"}, "page_count"=&gt;1, "users"=&gt;[{"user"=&gt;BSON::ObjectId('568b28e67db99b1ae8000003')}]}
+</span><span class='line'>{"_id"=&gt;{"pathname"=&gt;"/"}, "page_count"=&gt;6, "users"=&gt;[{"user"=&gt;BSON::ObjectId('568a1ef77db99bc968000000')}, {"user"=&gt;BSON::ObjectId('568b28ad7db99b1ae8000000')}, {"user"=&gt;BSON::ObjectId('568b28e67db99b1ae8000003')}]}</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Cool, our aggregation run smoothly.</p>
+
+<h2>Aggregate Big Data</h2>
+
+<p>After 3 months, we found that some fetch pageview operations will fail.</p>
+
+<p>Oops, since these fetch operations use big time range (ex: get pageview data from 2015/9/1 ~ 2016/1/1)</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>match_stage = {
+</span><span class='line'>          '$match' =&gt; {
+</span><span class='line'>            "created_at" =&gt; {
+</span><span class='line'>              "$gte" =&gt; Time.parse('2015-09-01').beginning_of_day, 
+</span><span class='line'>              "$lte" =&gt; Time.parse('2016-01-01').end_of_day
+</span><span class='line'>            }
+</span><span class='line'>          }
+</span><span class='line'>        }
+</span><span class='line'>
+</span><span class='line'>result = PageTracking.collection.aggregate([sort_stage,match_stage,group_stage])
+</span><span class='line'>
+</span><span class='line'>result.each do |page|
+</span><span class='line'>  puts page
+</span><span class='line'>end
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>I got this error message:</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>aggregate | FAILED | exception: Exceeded memory limit for $group, but didn't allow external sort. Pass allowDiskUse:true to opt in. (16945) | 9.955263s
+</span><span class='line'>Mongo::Error::OperationFailure: exception: Exceeded memory limit for $group, but didn't allow external sort. Pass allowDiskUse:true to opt in. (16945)</span></code></pre></td></tr></table></div></figure>
+
+
+<p>How can we solve this problem?</p>
+
+<p>Just like message says, add <strong>allowDiskUse:true</strong> to it.</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>result = PageTracking.collection.aggregate(
+</span><span class='line'>            [sort_stage,match_stage,group_stage],
+</span><span class='line'>            :allow_disk_use =&gt; true
+</span><span class='line'>          )
+</span><span class='line'>result.each do |page|
+</span><span class='line'>  puts page
+</span><span class='line'>end</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Yay, bug fixed.</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>...
+</span><span class='line'>you will got a lots of data ....
+</span><span class='line'>...</span></code></pre></td></tr></table></div></figure>
+
+
+<h2>Limit data using &#8220;limit&#8221;</h2>
+
+<p>if you just want 1000 data pass to next stage</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>sort_stage = {
+</span><span class='line'>        '$sort' =&gt; { 'created_at' =&gt; -1 }
+</span><span class='line'>    }
+</span><span class='line'>
+</span><span class='line'>limit_stage = {
+</span><span class='line'>      '$limit' =&gt; 1000
+</span><span class='line'>    }
+</span><span class='line'>    
+</span><span class='line'>result = UserPageTracking.collection.aggregate(
+</span><span class='line'>      [sort_stage, limit_stage , match_stage, group_stage],
+</span><span class='line'>      :allow_disk_use =&gt; true
+</span><span class='line'>    )
+</span><span class='line'>result.each do |page|
+</span><span class='line'>  puts page
+</span><span class='line'>end</span></code></pre></td></tr></table></div></figure>
+
+
+<h2>Only want some specific data using &#8220;project&#8221;</h2>
+
+<p>If fact, we don&#8217;t need created_at, updated_at attributes in group stage, so we can &#8230;</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>project_stage = 
+</span><span class='line'>      { 
+</span><span class='line'>        "$project" =&gt; { user_id: 1, pathname: 1, daily_total_count: 1}
+</span><span class='line'>      }
+</span><span class='line'>
+</span><span class='line'>result = PageTracking.collection.aggregate(
+</span><span class='line'>            [sort_stage,match_stage, project_stage, group_stage]
+</span><span class='line'>          )
+</span><span class='line'>result.each do |page|
+</span><span class='line'>  puts page
+</span><span class='line'>end
+</span></code></pre></td></tr></table></div></figure>
+
+
+
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[[HowTo] Integrate Google Analytics And Google AdWords for customize Ads retargeting]]></title>
@@ -4416,169 +4754,6 @@ end
 </code></pre>
 
 <h2>完成！！！！！！！！！！！</h2>
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[[HowTo] - Implement autocomplete feature in elasticsearch using soulmate.js in Ruby on Rails application]]></title>
-    <link href="http://ccaloha.cc/blog/2014/12/03/howto-implement-autocomplete-feature-in-elasticsearch-using-soulmate-dot-js-in-ruby-on-rails-application/"/>
-    <updated>2014-12-03T07:50:57+08:00</updated>
-    <id>http://ccaloha.cc/blog/2014/12/03/howto-implement-autocomplete-feature-in-elasticsearch-using-soulmate-dot-js-in-ruby-on-rails-application</id>
-    <content type="html"><![CDATA[<p>先說明一下需求，你希望使用者在搜尋框框打字的時，希望可以給他推薦就像&#8230;.</p>
-
-<p><img alt="elasticsearch autocomple sample" src="https://dl.dropboxusercontent.com/u/22307926/Blog%20Image/%5BHowTo%5D%20-%20Implement%20autocomplete%20feature%20in%20elasticsearch%20using%20soulmate.js%20in%20Ruby%20on%20Rails%20application/f1.png"></p>
-
-<p>故這篇文章，你可以知道，如何透過elasticsearch 達成 自動化推薦的功能！</p>
-
-<p>以及 如何將此功能與 soulmate.js結合 (因為我之前是用soulmate來實作，但是會推薦的詞，一定是user有打過有搜尋過的字)</p>
-
-<!-- more -->
-
-
-<h2>Step0. 你可以先玩看看 soulmate.js</h2>
-
-<p><a href="http://josephndungu.com/tutorials/fast-autocomplete-search-terms-rails">FAST AUTOCOMPLETE SEARCH TERMS - RAILS</a></p>
-
-<p>另外這篇主要是參考</p>
-
-<p><a href="https://shellycloud.com/blog/2013/10/adding-search-and-autocomplete-to-a-rails-app-with-elasticsearch">Adding search and autocomplete to a Rails app with Elasticsearch</a></p>
-
-<h2>Step1. Searchkick</h2>
-
-<p>下面加入到 <strong><em>Gemfile</em></strong>:</p>
-
-<pre><code>gem 'searchkick'
-</code></pre>
-
-<h2>Step2. Routing</h2>
-
-<p>因為我是要在產品搜尋時做自動推薦，所以在product的routing 加上 autocomplete</p>
-
-<p>下面加入到 <strong><em>config/routes.rb</em></strong></p>
-
-<pre><code>  #下面那行之前沒有elasticsearch幫忙，直接用soulmate實作時的做法
-  #mount Soulmate::Server, :at =&gt; "/autocomplete" 
-
-  resources :products do
-    collection do
-      get :autocomplete
-      get :search
-    end
-  end 
-</code></pre>
-
-<h2>Step3. Model</h2>
-
-<p>為了要吐給soulmate json (你可以參考：https://github.com/seatgeek/soulmate#loading-items)</p>
-
-<p>下面加上在<strong><em>app/models/product.rb</em></strong></p>
-
-<pre><code># 讓elasticsearch知道這兩個欄位要做autocomplete功能(他會針對這兩個欄位做不一樣的index)
-searchkick autocomplete: ['name', 'description']
-
-
-# 到時候要吐給soulmate的json格式，你可以參考：https://github.com/seatgeek/soulmate#loading-items)
-
-def to_soulmate
-    {
-      "term" =&gt; "#{brand.name}-#{name}",
-      "id" =&gt; "#{product_id}",
-      "score" =&gt; "",
-      "data" =&gt; {
-        "link" =&gt; "/product_searchs/product?keyword=#{name}"
-      }
-    }
-end
-</code></pre>
-
-<p>另外我有create 一個<strong>keyword</strong>的model這邊就不特別說了～controller會用到</p>
-
-<h2>Step4. Controller</h2>
-
-<p>關鍵！</p>
-
-<p>加在 <strong><em>app/controllers/products_controller.rb</em></strong></p>
-
-<pre><code>def autocomplete
-    # searchkick做autocomplete
-    @products = Product.search params[:term], limit: 10, fields: [{"description" =&gt; :word},{"name" =&gt; :word}]
-
-    # 為了拼出讓soulmate知道的url
-    callback_str = params[:callback]
-    return_data = {
-        "term" =&gt;  "#{params[:term]}", 
-        "results" =&gt; {
-            "keyword" =&gt;  @products.map(&amp;:to_soulmate)
-        }
-    }
-    # 以下是為了拼出給soulmate的callback
-    render json: callback_str + "(" + "#{return_data.to_json}" + ")"
-end
-
-def search
-    if params[:keyword].present?
-        @products = Product.searchkick(params[:keyword],sort,search_page)
-
-        if @products.present?
-            @keyword = Keyword.find_or_create_by(name: "#{params[:keyword]}") do |k|
-                k.score = 0
-                k.url = "/products/search?keyword=#{params[:keyword]}"
-                k.keyword_type = "Keyword"
-            end
-            @keyword.update_attribute(:score, @keyword.score+=1) #代表多搜尋了一次
-            # remove_from_soulmate(@keyword) #已用不到
-            # load_into_soulmate(@keyword)  #已用不到
-        end
-    end
-end
-
-def load_into_soulmate(keyword)
-    loader = Soulmate::Loader.new("#{keyword.keyword_type}")
-    loader.add("term" =&gt; keyword.name, "id" =&gt; keyword.id, "score" =&gt; keyword.score, "data" =&gt; { "link" =&gt; "#{keyword.url}"})
-end
-
-def remove_from_soulmate(keyword)
-    loader = Soulmate::Loader.new("#{keyword.keyword_type}")
-  loader.remove("id" =&gt; keyword.id)
-end
-</code></pre>
-
-<p>這邊很重要的是，你使用soulmate.js去做autocomplete時，他會丟出一串callback給server，基本上你的response也要包含這個callback，我覺得很像jsonp</p>
-
-<p>[注意！] 我把load_into_soulmate還有remove_from_soulmate留著只是單純給你看之前的做法，</p>
-
-<p>但是我還是有保留keyword的model這樣我才知道哪些關鍵字被打了最多次！(當然你可以用GA但是由於隱私權設定，你很多會看到not provided&#8230;.囧)</p>
-
-<h2>Step5. View</h2>
-
-<p>加上你想要搜尋的頁面，我們希望使用者可以在所有網頁都看到，所以是放在</p>
-
-<p><strong><em>app/views/layouts/application.html.slim</em></strong></p>
-
-<pre><code>= text_field_tag 'keyword', '輸入產品關鍵字', class: "form-control"
-= button_tag "搜尋", id: "product_search", class: "btn btn-default"
-</code></pre>
-
-<h2>Step6. javascript</h2>
-
-<pre><code># 這是要給product_search點擊後使用
-$("#product_search").click(function(){
-    window.location = '&lt;%= search_products_path %&gt;?keyword=' + $("#keyword").val();
-})
-
-#這是soulmate用法：注意我把url改掉了！
-$('#keyword').soulmate({
-    url: '/products/autocomplete',
-    types: ['product','review','keyword'],
-    renderCallback : render,
-    selectCallback : select,
-    minQueryLength : 1,
-    maxResults     : 10,
-    timeout:    5000
-})
-</code></pre>
-
-<h2>完成！！！</h2>
 ]]></content>
   </entry>
   
