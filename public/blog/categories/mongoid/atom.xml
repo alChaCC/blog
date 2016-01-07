@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Mongoid | AlohaCC]]></title>
   <link href="http://ccaloha.cc/blog/categories/mongoid/atom.xml" rel="self"/>
   <link href="http://ccaloha.cc/"/>
-  <updated>2016-01-06T14:02:52+08:00</updated>
+  <updated>2016-01-07T16:41:01+08:00</updated>
   <id>http://ccaloha.cc/</id>
   <author>
     <name><![CDATA[Aloha]]></name>
@@ -12,6 +12,525 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[Ruby on Rails Development Using Mongoid 5.0.0 - 3. How to use MapReduce to get pageview data]]></title>
+    <link href="http://ccaloha.cc/blog/2016/01/07/ruby-on-rails-development-using-mongoid-5-dot-0-0-3-how-to-use-mapreduce-to-get-pageview-data/"/>
+    <updated>2016-01-07T16:38:55+08:00</updated>
+    <id>http://ccaloha.cc/blog/2016/01/07/ruby-on-rails-development-using-mongoid-5-dot-0-0-3-how-to-use-mapreduce-to-get-pageview-data</id>
+    <content type="html"><![CDATA[<p>What is MapReduce?</p>
+
+<blockquote><p>Map-reduce is a data processing paradigm for condensing large volumes of data into useful aggregated results.</p></blockquote>
+
+<p><strong>MapReduce</strong> is a popular big data term in recent years proposed by Google. It is a method for manipulate large data sets parallelly and distributedly on   many machines. In my words, I usually said that Map-Reduce, "Map" is to assign match function to many machines for cutting a huge data into small data sets(group matched data), and then use "Reduce" to aggregate these calculated data.</p>
+
+<blockquote><p>In this map-reduce operation, MongoDB applies the map phase to each input document (i.e. the documents in the collection that match the query condition). The map function emits key-value pairs. For those keys that have multiple values, MongoDB applies the reduce phase, which collects and condenses the aggregated data. MongoDB then stores the results in a collection. Optionally, the output of the reduce function may pass through a finalize function to further condense or process the results of the aggregation.</p></blockquote>
+
+<p><img src='https://dl.dropboxusercontent.com/u/22307926/Blog%20Image/Ruby%20on%20Rails%20Development%20Using%20Mongoid%205.0.0%20-%203.%20How%20to%20use%20MapReduce%20to%20get%20pageview%20data/%E8%9E%A2%E5%B9%95%E5%BF%AB%E7%85%A7%202016-01-06%2016.12.54.png' alt='MongoDB MapReduce'></p>
+
+<p>if you want more details, please check <a href="https://docs.mongodb.org/manual/core/map-reduce/">official documents</a></p>
+
+<p>Let's go check how to use <strong>map reduce</strong> in Mongoid.</p>
+
+<!--more-->
+
+
+<p>I also write an article for aggregation method. Please check: <a href="http://ccaloha.cc/blog/2016/01/06/ruby-on-rails-development-using-mongoid-5-dot-0-0-2-how-to-use-aggregation-to-get-pageview-data/">Ruby on Rails Development Using Mongoid 5.0.0 - 2. How to Use Aggregation to Get Pageview Data</a></p>
+
+<p>Again, Here are my models,</p>
+
+<p><img src='https://dl.dropboxusercontent.com/u/22307926/Blog%20Image/Ruby%20on%20Rails%20Development%20Using%20Mongoid%20-%202%20How%20to%20use%20Aggregation%20to%20get%20pageview%20data/model.png' alt='Mongoid map-reduce model example'></p>
+
+<h2>Calculate Unique Pageviews from 2016/1/1 to 2016/1/5</h2>
+
+<p>First, MongoDB use custom Javascript functions to do map and reduce operations. So, we need to write JS code as a string and pass to MongoDB.</p>
+
+<p>In this example, I hope that the same page a user watched in the same day should be calculated just one time(eg. If I watch path '/' 3 times a day, the pageview should be 1 not 3). So, I call it unique pageviews.</p>
+
+<h3>Let's Check Map Function</h3>
+
+<p>I use "pathname" as an identifier(key) and use {"total": 1} as a value. In my opinion, value is the result that you want to obtain.</p>
+
+<blockquote><p>In the map function, reference the current document as <strong>this</strong> within the function.</p></blockquote>
+
+<p>```
+map = %q{</p>
+
+<pre><code>          function() {
+            emit(
+              this.pathname,
+              {
+                total: 1
+              } 
+            );
+          } 
+      }
+</code></pre>
+
+<p>```</p>
+
+<h3>How About Reduce Function?</h3>
+
+<p>Reduce function will get the key and value from map function.</p>
+
+<p>```
+reduce = %q{</p>
+
+<pre><code>          function(key, values){
+            print("=====================");
+            print("Key is:" + key);
+            print("Value is:" + JSON.stringify(values));
+            var r = { total: 0};
+            for (var idx  = 0; idx &lt; values.length; idx++) {
+              var tt = values[idx].total;
+              r.total += tt
+            }
+            return r;
+          }
+        }
+</code></pre>
+
+<p>```</p>
+
+<blockquote><p>Tips: we can use "print" for debugging.</p></blockquote>
+
+<h3>Using MapReduce in Mongoid</h3>
+
+<p>Now, we can put map and reduce function together.</p>
+
+<p><code>
+res = PageTracking.where(:created_at.gte =&gt; Time.parse('2016-01-01').beginning_of_day ,
+:created_at.lte =&gt; Time.parse('2016-01-05').end_of_day)
+.order_by(:created_at =&gt; 'desc')
+.map_reduce(map,reduce)
+.out(inline: true)
+</code></p>
+
+<p>console will show like below</p>
+
+<p>```
+=> #&lt;Mongoid::Contextual::MapReduce
+  selector: {"created_at"=>{"$gte"=>2015-12-31 16:00:00 UTC, "$lte"=>2016-01-05 15:59:59 UTC}}
+  class:    PageTracking
+  map:</p>
+
+<pre><code>          function() {
+            emit(
+              this.pathname,
+              {
+                total: 1
+              }
+</code></pre>
+
+<p>);
+}</p>
+
+<p>  reduce:</p>
+
+<pre><code>          function(key, values){
+            print("=====================");
+            print("Key is:" + key);
+            print("Value is:" + JSON.stringify(values));
+            var r = { total: 0};
+            for (var idx  = 0; idx &lt; values.length; idx++) {
+              var tt = values[idx].total;
+              r.total += tt
+            }
+</code></pre>
+
+<p>return r;
+}</p>
+
+<p>  finalize:
+  out:      {:inline=>true}></p>
+
+<p>```</p>
+
+<p>Let's get all results.</p>
+
+<p><code>
+res.to_a
+</code>
+Here is my result.</p>
+
+<p><code>
+[{"_id"=&gt;"/", "value"=&gt;{"total"=&gt;3.0}},
+ {"_id"=&gt;"/activities", "value"=&gt;{"total"=&gt;1.0}},
+ {"_id"=&gt;"/activities/hadalabo01", "value"=&gt;{"total"=&gt;1.0}},
+ {"_id"=&gt;"/beautybuzz", "value"=&gt;{"total"=&gt;1.0}},
+ {"_id"=&gt;"/beautynews", "value"=&gt;{"total"=&gt;1.0}}]
+</code></p>
+
+<p>ps. If you want to check the debugging message, you can</p>
+
+<p>```</p>
+
+<h1>check the location of MongoDB system log</h1>
+
+<p>cat /usr/local/etc/mongod.conf</p>
+
+<h1>In my case, it will be located in /usr/local/var/log/mongodb/mongo.log</h1>
+
+<p>tail -1000f /usr/local/var/log/mongodb/mongo.log
+```</p>
+
+<p>And I see</p>
+
+<p><code>
+2016-01-07T11:49:24.460+0800 I -        [conn3] =====================
+2016-01-07T11:49:24.460+0800 I -        [conn3] Key is:/
+2016-01-07T11:49:24.460+0800 I -        [conn3] Value is:[{"total":1},{"total":1},{"total":1}]
+</code></p>
+
+<p>It's weird, in result, I have many different "_id" such as '/', '/activities', '/beautybuzz'. But, in MongoDB system log, I just see '/'. Why?</p>
+
+<p>According to <a href="https://docs.mongodb.org/manual/reference/command/mapReduce/#requirements-for-the-reduce-function">Requirements for the reduce Function</a>.</p>
+
+<blockquote><p>MongoDB will not call the reduce function for a key that has only a single value. The values argument is an array whose elements are the value objects that are “mapped” to the key.</p></blockquote>
+
+<p>Let's check the data in my MongoDB,</p>
+
+<p><code>
+PageTracking.where(:created_at.gte =&gt; Time.parse('2016-01-01').beginning_of_day , :created_at.lte =&gt; Time.parse('2016-01-05').end_of_day).order_by(:created_at =&gt; 'desc').to_a
+</code></p>
+
+<p>As you can see, pathname except '/' are just have one record. So, it will not be handled by reduce function.</p>
+
+<p><code>
+[#&lt;UserPageTracking _id: 568b78c07db99b9a30000001, created_at: 2016-01-04 16:00:00 UTC, updated_at: 2016-01-05 08:03:12 UTC, pathname: "/beautynews", daily_total_count: 1, user_id: BSON::ObjectId('568b28e67db99b1ae8000003')&gt;,
+ #&lt;UserPageTracking _id: 568b7e5e7db99b9a30000017, created_at: 2016-01-04 16:00:00 UTC, updated_at: 2016-01-05 08:27:10 UTC, pathname: "/beautybuzz", daily_total_count: 1, user_id: BSON::ObjectId('568b28e67db99b1ae8000003')&gt;,
+ #&lt;UserPageTracking _id: 568b7d8e7db99b9a30000013, created_at: 2016-01-04 16:00:00 UTC, updated_at: 2016-01-05 08:23:42 UTC, pathname: "/activities/hadalabo01", daily_total_count: 1, user_id: BSON::ObjectId('568b28e67db99b1ae8000003')&gt;,
+ #&lt;UserPageTracking _id: 568b7d307db99b9a30000011, created_at: 2016-01-04 16:00:00 UTC, updated_at: 2016-01-05 08:22:08 UTC, pathname: "/activities", daily_total_count: 1, user_id: BSON::ObjectId('568b28e67db99b1ae8000003')&gt;,
+ #&lt;UserPageTracking _id: 568b28e67db99b1ae8000005, created_at: 2016-01-04 16:00:00 UTC, updated_at: 2016-01-05 02:22:30 UTC, pathname: "/", daily_total_count: 3, user_id: BSON::ObjectId('568b28e67db99b1ae8000003')&gt;,
+ #&lt;UserPageTracking _id: 568b28ad7db99b1ae8000002, created_at: 2016-01-04 16:00:00 UTC, updated_at: 2016-01-05 02:21:33 UTC, pathname: "/", daily_total_count: 1, user_id: BSON::ObjectId('568b28ad7db99b1ae8000000')&gt;,
+ #&lt;UserPageTracking _id: 568a1ef77db99bc968000002, created_at: 2016-01-03 16:00:00 UTC, updated_at: 2016-01-04 07:27:51 UTC, pathname: "/", daily_total_count: 2, user_id: BSON::ObjectId('568a1ef77db99bc968000000')&gt;]
+</code></p>
+
+<p>If I watch '/activities' again, and run MapReduce again.</p>
+
+<p>yay, I can see /activities in system log.</p>
+
+<p><code>
+2016-01-07T14:42:23.349+0800 I -        [conn3] =====================
+2016-01-07T14:42:23.349+0800 I -        [conn3] Key is:/
+2016-01-07T14:42:23.350+0800 I -        [conn3] Value is:[{"total":1},{"total":1},{"total":1}]
+2016-01-07T14:42:23.350+0800 I -        [conn3] =====================
+2016-01-07T14:42:23.350+0800 I -        [conn3] Key is:/activities
+2016-01-07T14:42:23.350+0800 I -        [conn3] Value is:[{"total":1},{"total":1}]
+</code></p>
+
+<h2>Calculate Non-Unique Pageviews</h2>
+
+<p>In this example, I don't care a user watched same page in the same day. I want all pageviews. (eg. If I watch path '/' 3 times a day, the pageview should be 3). So, I call it non-unique pageviews.</p>
+
+<p>The only thing I have to update is map function. Change <strong>total: 1</strong> to <strong>total: this.daily_total_count</strong></p>
+
+<p>```
+total_map = %q{</p>
+
+<pre><code>          function() {
+            emit(
+              this.pathname,
+              {
+                total: this.daily_total_count
+              } 
+            );
+          } 
+      }
+</code></pre>
+
+<p>```</p>
+
+<p>yay!</p>
+
+<p><code>
+[{"_id"=&gt;"/", "value"=&gt;{"total"=&gt;6.0}},
+ {"_id"=&gt;"/activities", "value"=&gt;{"total"=&gt;2.0}},
+ {"_id"=&gt;"/activities/hadalabo01", "value"=&gt;{"total"=&gt;1.0}},
+ {"_id"=&gt;"/beautybuzz", "value"=&gt;{"total"=&gt;1.0}},
+ {"_id"=&gt;"/beautynews", "value"=&gt;{"total"=&gt;1.0}}]
+</code></p>
+
+<h2>Calculate Pageviews and Get Who Watch The Page</h2>
+
+<p>In this example, beside calculate pageviews, I want to get user who watch the page as well.</p>
+
+<p>```
+map_with_user = %q{</p>
+
+<pre><code>          function() {
+            var key = {
+              pathname: this.pathname
+            };
+            emit(
+              key,
+              {
+                total:  this.daily_total_count,
+                user_id:   this.user_id
+              } 
+            );
+          } 
+      }
+</code></pre>
+
+<p>reduce_with_user = %q{</p>
+
+<pre><code>          function(key, values){
+            print("=====================");
+            print("Key is:" + JSON.stringify(key));
+            print("Value is:" +  JSON.stringify(values));
+            var r = { 
+                total: 0,
+                users: []
+            };
+            for (var idx  = 0; idx &lt; values.length; idx++) {
+                r.total += values[idx].total;
+                r.users.push(values[idx].user_id);
+            }
+            return r;
+          }
+        }
+</code></pre>
+
+<p>PageTracking.where(:created_at.gte => Time.parse('2016-01-01').beginning_of_day ,
+:created_at.lte => Time.parse('2016-01-07').end_of_day)
+.order_by(:created_at => 'desc')
+.map_reduce(map_with_user,reduce_with_user)
+.out(inline: true).to_a</p>
+
+<p>```</p>
+
+<blockquote><p>Tips: key can also be a hash.</p></blockquote>
+
+<p>Since we want to get all users so I add <strong>users: []</strong>, then I just push user_id in it.</p>
+
+<p>The result is...</p>
+
+<p>```
+[
+{<br/>
+  "_id"  =>  {</p>
+
+<pre><code>"pathname"    =&gt;"/"
+</code></pre>
+
+<p>  },
+  "value"  =>  {</p>
+
+<pre><code>"total"    =&gt;6.0,
+"users"    =&gt;    [  
+  BSON::ObjectId('568b28e67db99b1ae8000003'),
+  BSON::ObjectId('568b28ad7db99b1ae8000000'),
+  BSON::ObjectId('568a1ef77db99bc968000000')
+]
+</code></pre>
+
+<p>  }
+},
+{<br/>
+  "_id"  =>  {</p>
+
+<pre><code>"pathname"    =&gt;"/activities"
+</code></pre>
+
+<p>  },
+  "value"  =>  {</p>
+
+<pre><code>"total"    =&gt;3.0,
+"users"    =&gt;    [  
+  BSON::ObjectId('568e08937db99b12c1000000'),
+  BSON::ObjectId('568b28e67db99b1ae8000003')
+]
+</code></pre>
+
+<p>  }
+},
+{<br/>
+  "_id"  =>  {</p>
+
+<pre><code>"pathname"    =&gt;"/activities/hadalabo01"
+</code></pre>
+
+<p>  },
+  "value"  =>  {</p>
+
+<pre><code>"total"    =&gt;1.0,
+"user_id"    =&gt;BSON::ObjectId('568b28e67db99b1ae8000003')
+</code></pre>
+
+<p>  }
+},
+{<br/>
+  "_id"  =>  {</p>
+
+<pre><code>"pathname"    =&gt;"/beautybuzz"
+</code></pre>
+
+<p>  },
+  "value"  =>  {</p>
+
+<pre><code>"total"    =&gt;1.0,
+"user_id"    =&gt;BSON::ObjectId('568b28e67db99b1ae8000003')
+</code></pre>
+
+<p>  }
+},
+{<br/>
+  "_id"  =>  {</p>
+
+<pre><code>"pathname"    =&gt;"/beautynews"
+</code></pre>
+
+<p>  },
+  "value"  =>  {</p>
+
+<pre><code>"total"    =&gt;1.0,
+"user_id"    =&gt;BSON::ObjectId('568b28e67db99b1ae8000003')
+</code></pre>
+
+<p>  }
+}
+]
+```</p>
+
+<p>Take a look of system log, to see what's key and values pass to reduce function.</p>
+
+<p><code>
+2016-01-07T15:43:24.520+0800 I -        [conn3] =====================
+2016-01-07T15:43:24.520+0800 I -        [conn3] Key is:{"pathname":"/"}
+2016-01-07T15:43:24.521+0800 I -        [conn3] Value is:[{"total":3,"user_id":{"str":"568b28e67db99b1ae8000003"}},{"total":1,"user_id":{"str":"568b28ad7db99b1ae8000000"}},{"total":2,"user_id":{"str":"568a1ef77db99bc968000000"}}]
+2016-01-07T15:43:24.521+0800 I -        [conn3] =====================
+2016-01-07T15:43:24.521+0800 I -        [conn3] Key is:{"pathname":"/activities"}
+2016-01-07T15:43:24.521+0800 I -        [conn3] Value is:[{"total":2,"user_id":{"str":"568e08937db99b12c1000000"}},{"total":1,"user_id":{"str":"568b28e67db99b1ae8000003"}}]
+</code></p>
+
+<p>Here, you will notice that there are some values has <strong>user_id</strong> and some has <strong>users</strong>. Again, since some keys only has single value, it will not be processed by reduce function.</p>
+
+<h2>Use "finalize" function to beautify the result</h2>
+
+<p>It's annoying, if data format is not consistent. So, I use finalize function to solve this problem.</p>
+
+<p>```
+finalize = %q{
+  function(key, reducedValue){</p>
+
+<pre><code>print("=====================");
+print("Key is:" + JSON.stringify(key));
+print("reducedValue is:" + JSON.stringify(reducedValue));
+var result = {
+  user_data: []
+}
+if(reducedValue.users){
+  reducedValue.users.forEach(function(u){
+    result.user_data.push(u);
+   });
+} else {
+  result.user_data.push(reducedValue.user_id);
+}
+return result
+</code></pre>
+
+<p>  }
+}</p>
+
+<p>PageTracking.where(:created_at.gte => Time.parse('2016-01-01').beginning_of_day ,
+:created_at.lte => Time.parse('2016-01-07').end_of_day)
+.order_by(:created_at => 'desc')
+.map_reduce(map_with_user,reduce_with_user)
+.finalize(finalize)
+.out(inline: true).to_a
+```</p>
+
+<p>Yay, every results looks same~~</p>
+
+<p>```
+[
+{<br/>
+  "_id"  =>  {</p>
+
+<pre><code>"pathname"    =&gt;"/"
+</code></pre>
+
+<p>  },
+  "value"  =>  {</p>
+
+<pre><code>"user_data"    =&gt;    [  
+  BSON::ObjectId('568b28e67db99b1ae8000003'),
+  BSON::ObjectId('568b28ad7db99b1ae8000000'),
+  BSON::ObjectId('568a1ef77db99bc968000000')
+]
+</code></pre>
+
+<p>  }
+},
+{<br/>
+  "_id"  =>  {</p>
+
+<pre><code>"pathname"    =&gt;"/activities"
+</code></pre>
+
+<p>  },
+  "value"  =>  {</p>
+
+<pre><code>"user_data"    =&gt;    [  
+  BSON::ObjectId('568e08937db99b12c1000000'),
+  BSON::ObjectId('568b28e67db99b1ae8000003')
+]
+</code></pre>
+
+<p>  }
+},
+{<br/>
+  "_id"  =>  {</p>
+
+<pre><code>"pathname"    =&gt;"/activities/hadalabo01"
+</code></pre>
+
+<p>  },
+  "value"  =>  {</p>
+
+<pre><code>"user_data"    =&gt;    [  
+  BSON::ObjectId('568b28e67db99b1ae8000003')
+]
+</code></pre>
+
+<p>  }
+},
+{<br/>
+  "_id"  =>  {</p>
+
+<pre><code>"pathname"    =&gt;"/beautybuzz"
+</code></pre>
+
+<p>  },
+  "value"  =>  {</p>
+
+<pre><code>"user_data"    =&gt;    [  
+  BSON::ObjectId('568b28e67db99b1ae8000003')
+]
+</code></pre>
+
+<p>  }
+},
+{<br/>
+  "_id"  =>  {</p>
+
+<pre><code>"pathname"    =&gt;"/beautynews"
+</code></pre>
+
+<p>  },
+  "value"  =>  {</p>
+
+<pre><code>"user_data"    =&gt;    [  
+  BSON::ObjectId('568b28e67db99b1ae8000003')
+]
+</code></pre>
+
+<p>  }
+}]
+```</p>
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[Ruby on Rails Development Using Mongoid 5.0.0 - 2. How to use Aggregation to get pageview data]]></title>

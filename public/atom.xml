@@ -4,7 +4,7 @@
   <title><![CDATA[AlohaCC]]></title>
   <link href="http://ccaloha.cc/atom.xml" rel="self"/>
   <link href="http://ccaloha.cc/"/>
-  <updated>2016-01-06T14:02:52+08:00</updated>
+  <updated>2016-01-07T16:41:01+08:00</updated>
   <id>http://ccaloha.cc/</id>
   <author>
     <name><![CDATA[Aloha]]></name>
@@ -12,6 +12,702 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[Ruby on Rails Development Using Mongoid 5.0.0 - 3. How to use MapReduce to get pageview data]]></title>
+    <link href="http://ccaloha.cc/blog/2016/01/07/ruby-on-rails-development-using-mongoid-5-dot-0-0-3-how-to-use-mapreduce-to-get-pageview-data/"/>
+    <updated>2016-01-07T16:38:55+08:00</updated>
+    <id>http://ccaloha.cc/blog/2016/01/07/ruby-on-rails-development-using-mongoid-5-dot-0-0-3-how-to-use-mapreduce-to-get-pageview-data</id>
+    <content type="html"><![CDATA[<p>What is MapReduce?</p>
+
+<blockquote><p>Map-reduce is a data processing paradigm for condensing large volumes of data into useful aggregated results.</p></blockquote>
+
+<p><strong>MapReduce</strong> is a popular big data term in recent years proposed by Google. It is a method for manipulate large data sets parallelly and distributedly on   many machines. In my words, I usually said that Map-Reduce, &#8220;Map&#8221; is to assign match function to many machines for cutting a huge data into small data sets(group matched data), and then use &#8220;Reduce&#8221; to aggregate these calculated data.</p>
+
+<blockquote><p>In this map-reduce operation, MongoDB applies the map phase to each input document (i.e. the documents in the collection that match the query condition). The map function emits key-value pairs. For those keys that have multiple values, MongoDB applies the reduce phase, which collects and condenses the aggregated data. MongoDB then stores the results in a collection. Optionally, the output of the reduce function may pass through a finalize function to further condense or process the results of the aggregation.</p></blockquote>
+
+<p><img src='https://dl.dropboxusercontent.com/u/22307926/Blog%20Image/Ruby%20on%20Rails%20Development%20Using%20Mongoid%205.0.0%20-%203.%20How%20to%20use%20MapReduce%20to%20get%20pageview%20data/%E8%9E%A2%E5%B9%95%E5%BF%AB%E7%85%A7%202016-01-06%2016.12.54.png' alt='MongoDB MapReduce'></p>
+
+<p>if you want more details, please check <a href="https://docs.mongodb.org/manual/core/map-reduce/">official documents</a></p>
+
+<p>Let&#8217;s go check how to use <strong>map reduce</strong> in Mongoid.</p>
+
+<!--more-->
+
+
+<p>I also write an article for aggregation method. Please check: <a href="http://ccaloha.cc/blog/2016/01/06/ruby-on-rails-development-using-mongoid-5-dot-0-0-2-how-to-use-aggregation-to-get-pageview-data/">Ruby on Rails Development Using Mongoid 5.0.0 - 2. How to Use Aggregation to Get Pageview Data</a></p>
+
+<p>Again, Here are my models,</p>
+
+<p><img src='https://dl.dropboxusercontent.com/u/22307926/Blog%20Image/Ruby%20on%20Rails%20Development%20Using%20Mongoid%20-%202%20How%20to%20use%20Aggregation%20to%20get%20pageview%20data/model.png' alt='Mongoid map-reduce model example'></p>
+
+<h2>Calculate Unique Pageviews from 2016/1/1 to 2016/1/5</h2>
+
+<p>First, MongoDB use custom Javascript functions to do map and reduce operations. So, we need to write JS code as a string and pass to MongoDB.</p>
+
+<p>In this example, I hope that the same page a user watched in the same day should be calculated just one time(eg. If I watch path &#8216;/&#8217; 3 times a day, the pageview should be 1 not 3). So, I call it unique pageviews.</p>
+
+<h3>Let&#8217;s Check Map Function</h3>
+
+<p>I use &#8220;pathname&#8221; as an identifier(key) and use {&#8220;total&#8221;: 1} as a value. In my opinion, value is the result that you want to obtain.</p>
+
+<blockquote><p>In the map function, reference the current document as <strong>this</strong> within the function.</p></blockquote>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>map = %q{ 
+</span><span class='line'>              function() {
+</span><span class='line'>                emit(
+</span><span class='line'>                  this.pathname,
+</span><span class='line'>                  {
+</span><span class='line'>                    total: 1
+</span><span class='line'>                  } 
+</span><span class='line'>                );
+</span><span class='line'>              } 
+</span><span class='line'>          }
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h3>How About Reduce Function?</h3>
+
+<p>Reduce function will get the key and value from map function.</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>reduce = %q{
+</span><span class='line'>              function(key, values){
+</span><span class='line'>                print("=====================");
+</span><span class='line'>                print("Key is:" + key);
+</span><span class='line'>                print("Value is:" + JSON.stringify(values));
+</span><span class='line'>                var r = { total: 0};
+</span><span class='line'>                for (var idx  = 0; idx &lt; values.length; idx++) {
+</span><span class='line'>                  var tt = values[idx].total;
+</span><span class='line'>                  r.total += tt
+</span><span class='line'>                }
+</span><span class='line'>                return r;
+</span><span class='line'>              }
+</span><span class='line'>            }</span></code></pre></td></tr></table></div></figure>
+
+
+<blockquote><p>Tips: we can use &#8220;print&#8221; for debugging.</p></blockquote>
+
+<h3>Using MapReduce in Mongoid</h3>
+
+<p>Now, we can put map and reduce function together.</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>res = PageTracking.where(:created_at.gte =&gt; Time.parse('2016-01-01').beginning_of_day , 
+</span><span class='line'>:created_at.lte =&gt; Time.parse('2016-01-05').end_of_day)
+</span><span class='line'>.order_by(:created_at =&gt; 'desc')
+</span><span class='line'>.map_reduce(map,reduce)
+</span><span class='line'>.out(inline: true)</span></code></pre></td></tr></table></div></figure>
+
+
+<p>console will show like below</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>=&gt; #&lt;Mongoid::Contextual::MapReduce
+</span><span class='line'>  selector: {"created_at"=&gt;{"$gte"=&gt;2015-12-31 16:00:00 UTC, "$lte"=&gt;2016-01-05 15:59:59 UTC}}
+</span><span class='line'>  class:    PageTracking
+</span><span class='line'>  map:
+</span><span class='line'>              function() {
+</span><span class='line'>                emit(
+</span><span class='line'>                  this.pathname,
+</span><span class='line'>                  {
+</span><span class='line'>                    total: 1
+</span><span class='line'>                  }
+</span><span class='line'>);
+</span><span class='line'>}
+</span><span class='line'>
+</span><span class='line'>  reduce:
+</span><span class='line'>              function(key, values){
+</span><span class='line'>                print("=====================");
+</span><span class='line'>                print("Key is:" + key);
+</span><span class='line'>                print("Value is:" + JSON.stringify(values));
+</span><span class='line'>                var r = { total: 0};
+</span><span class='line'>                for (var idx  = 0; idx &lt; values.length; idx++) {
+</span><span class='line'>                  var tt = values[idx].total;
+</span><span class='line'>                  r.total += tt
+</span><span class='line'>                }
+</span><span class='line'>return r;
+</span><span class='line'>}
+</span><span class='line'>
+</span><span class='line'>  finalize:
+</span><span class='line'>  out:      {:inline=&gt;true}&gt;
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Let&#8217;s get all results.</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>res.to_a</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Here is my result.</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>[{"_id"=&gt;"/", "value"=&gt;{"total"=&gt;3.0}},
+</span><span class='line'> {"_id"=&gt;"/activities", "value"=&gt;{"total"=&gt;1.0}},
+</span><span class='line'> {"_id"=&gt;"/activities/hadalabo01", "value"=&gt;{"total"=&gt;1.0}},
+</span><span class='line'> {"_id"=&gt;"/beautybuzz", "value"=&gt;{"total"=&gt;1.0}},
+</span><span class='line'> {"_id"=&gt;"/beautynews", "value"=&gt;{"total"=&gt;1.0}}]</span></code></pre></td></tr></table></div></figure>
+
+
+<p>ps. If you want to check the debugging message, you can</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'># check the location of MongoDB system log
+</span><span class='line'>cat /usr/local/etc/mongod.conf
+</span><span class='line'>
+</span><span class='line'># In my case, it will be located in /usr/local/var/log/mongodb/mongo.log
+</span><span class='line'>tail -1000f /usr/local/var/log/mongodb/mongo.log</span></code></pre></td></tr></table></div></figure>
+
+
+<p></p>
+
+<p>And I see</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>2016-01-07T11:49:24.460+0800 I -        [conn3] =====================
+</span><span class='line'>2016-01-07T11:49:24.460+0800 I -        [conn3] Key is:/
+</span><span class='line'>2016-01-07T11:49:24.460+0800 I -        [conn3] Value is:[{"total":1},{"total":1},{"total":1}]</span></code></pre></td></tr></table></div></figure>
+
+
+<p>It&#8217;s weird, in result, I have many different &#8220;_id&#8221; such as &#8216;/&#8217;, &#8216;/activities&#8217;, &#8216;/beautybuzz&#8217;. But, in MongoDB system log, I just see &#8216;/&#8217;. Why?</p>
+
+<p>According to <a href="https://docs.mongodb.org/manual/reference/command/mapReduce/#requirements-for-the-reduce-function">Requirements for the reduce Function</a>.</p>
+
+<blockquote><p>MongoDB will not call the reduce function for a key that has only a single value. The values argument is an array whose elements are the value objects that are “mapped” to the key.</p></blockquote>
+
+<p>Let&#8217;s check the data in my MongoDB,</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>PageTracking.where(:created_at.gte =&gt; Time.parse('2016-01-01').beginning_of_day , :created_at.lte =&gt; Time.parse('2016-01-05').end_of_day).order_by(:created_at =&gt; 'desc').to_a</span></code></pre></td></tr></table></div></figure>
+
+
+<p>As you can see, pathname except &#8216;/&#8217; are just have one record. So, it will not be handled by reduce function.</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>[#&lt;UserPageTracking _id: 568b78c07db99b9a30000001, created_at: 2016-01-04 16:00:00 UTC, updated_at: 2016-01-05 08:03:12 UTC, pathname: "/beautynews", daily_total_count: 1, user_id: BSON::ObjectId('568b28e67db99b1ae8000003')&gt;,
+</span><span class='line'> #&lt;UserPageTracking _id: 568b7e5e7db99b9a30000017, created_at: 2016-01-04 16:00:00 UTC, updated_at: 2016-01-05 08:27:10 UTC, pathname: "/beautybuzz", daily_total_count: 1, user_id: BSON::ObjectId('568b28e67db99b1ae8000003')&gt;,
+</span><span class='line'> #&lt;UserPageTracking _id: 568b7d8e7db99b9a30000013, created_at: 2016-01-04 16:00:00 UTC, updated_at: 2016-01-05 08:23:42 UTC, pathname: "/activities/hadalabo01", daily_total_count: 1, user_id: BSON::ObjectId('568b28e67db99b1ae8000003')&gt;,
+</span><span class='line'> #&lt;UserPageTracking _id: 568b7d307db99b9a30000011, created_at: 2016-01-04 16:00:00 UTC, updated_at: 2016-01-05 08:22:08 UTC, pathname: "/activities", daily_total_count: 1, user_id: BSON::ObjectId('568b28e67db99b1ae8000003')&gt;,
+</span><span class='line'> #&lt;UserPageTracking _id: 568b28e67db99b1ae8000005, created_at: 2016-01-04 16:00:00 UTC, updated_at: 2016-01-05 02:22:30 UTC, pathname: "/", daily_total_count: 3, user_id: BSON::ObjectId('568b28e67db99b1ae8000003')&gt;,
+</span><span class='line'> #&lt;UserPageTracking _id: 568b28ad7db99b1ae8000002, created_at: 2016-01-04 16:00:00 UTC, updated_at: 2016-01-05 02:21:33 UTC, pathname: "/", daily_total_count: 1, user_id: BSON::ObjectId('568b28ad7db99b1ae8000000')&gt;,
+</span><span class='line'> #&lt;UserPageTracking _id: 568a1ef77db99bc968000002, created_at: 2016-01-03 16:00:00 UTC, updated_at: 2016-01-04 07:27:51 UTC, pathname: "/", daily_total_count: 2, user_id: BSON::ObjectId('568a1ef77db99bc968000000')&gt;]</span></code></pre></td></tr></table></div></figure>
+
+
+<p>If I watch &#8216;/activities&#8217; again, and run MapReduce again.</p>
+
+<p>yay, I can see /activities in system log.</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>2016-01-07T14:42:23.349+0800 I -        [conn3] =====================
+</span><span class='line'>2016-01-07T14:42:23.349+0800 I -        [conn3] Key is:/
+</span><span class='line'>2016-01-07T14:42:23.350+0800 I -        [conn3] Value is:[{"total":1},{"total":1},{"total":1}]
+</span><span class='line'>2016-01-07T14:42:23.350+0800 I -        [conn3] =====================
+</span><span class='line'>2016-01-07T14:42:23.350+0800 I -        [conn3] Key is:/activities
+</span><span class='line'>2016-01-07T14:42:23.350+0800 I -        [conn3] Value is:[{"total":1},{"total":1}]</span></code></pre></td></tr></table></div></figure>
+
+
+<h2>Calculate Non-Unique Pageviews</h2>
+
+<p>In this example, I don&#8217;t care a user watched same page in the same day. I want all pageviews. (eg. If I watch path &#8216;/&#8217; 3 times a day, the pageview should be 3). So, I call it non-unique pageviews.</p>
+
+<p>The only thing I have to update is map function. Change <strong>total: 1</strong> to <strong>total: this.daily_total_count</strong></p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>total_map = %q{ 
+</span><span class='line'>              function() {
+</span><span class='line'>                emit(
+</span><span class='line'>                  this.pathname,
+</span><span class='line'>                  {
+</span><span class='line'>                    total: this.daily_total_count
+</span><span class='line'>                  } 
+</span><span class='line'>                );
+</span><span class='line'>              } 
+</span><span class='line'>          }
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>yay!</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>[{"_id"=&gt;"/", "value"=&gt;{"total"=&gt;6.0}},
+</span><span class='line'> {"_id"=&gt;"/activities", "value"=&gt;{"total"=&gt;2.0}},
+</span><span class='line'> {"_id"=&gt;"/activities/hadalabo01", "value"=&gt;{"total"=&gt;1.0}},
+</span><span class='line'> {"_id"=&gt;"/beautybuzz", "value"=&gt;{"total"=&gt;1.0}},
+</span><span class='line'> {"_id"=&gt;"/beautynews", "value"=&gt;{"total"=&gt;1.0}}]</span></code></pre></td></tr></table></div></figure>
+
+
+<h2>Calculate Pageviews and Get Who Watch The Page</h2>
+
+<p>In this example, beside calculate pageviews, I want to get user who watch the page as well.</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+<span class='line-number'>32</span>
+<span class='line-number'>33</span>
+<span class='line-number'>34</span>
+<span class='line-number'>35</span>
+<span class='line-number'>36</span>
+<span class='line-number'>37</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>map_with_user = %q{ 
+</span><span class='line'>              function() {
+</span><span class='line'>                var key = {
+</span><span class='line'>                  pathname: this.pathname
+</span><span class='line'>                };
+</span><span class='line'>                emit(
+</span><span class='line'>                  key,
+</span><span class='line'>                  {
+</span><span class='line'>                    total:  this.daily_total_count,
+</span><span class='line'>                    user_id:   this.user_id
+</span><span class='line'>                  } 
+</span><span class='line'>                );
+</span><span class='line'>              } 
+</span><span class='line'>          }
+</span><span class='line'>
+</span><span class='line'>reduce_with_user = %q{
+</span><span class='line'>              function(key, values){
+</span><span class='line'>                print("=====================");
+</span><span class='line'>                print("Key is:" + JSON.stringify(key));
+</span><span class='line'>                print("Value is:" +  JSON.stringify(values));
+</span><span class='line'>                var r = { 
+</span><span class='line'>                    total: 0,
+</span><span class='line'>                    users: []
+</span><span class='line'>                };
+</span><span class='line'>                for (var idx  = 0; idx &lt; values.length; idx++) {
+</span><span class='line'>                    r.total += values[idx].total;
+</span><span class='line'>                    r.users.push(values[idx].user_id);
+</span><span class='line'>                }
+</span><span class='line'>                return r;
+</span><span class='line'>              }
+</span><span class='line'>            }
+</span><span class='line'>
+</span><span class='line'>PageTracking.where(:created_at.gte =&gt; Time.parse('2016-01-01').beginning_of_day , 
+</span><span class='line'>:created_at.lte =&gt; Time.parse('2016-01-07').end_of_day)
+</span><span class='line'>.order_by(:created_at =&gt; 'desc')
+</span><span class='line'>.map_reduce(map_with_user,reduce_with_user)
+</span><span class='line'>.out(inline: true).to_a
+</span></code></pre></td></tr></table></div></figure>
+
+
+<blockquote><p>Tips: key can also be a hash.</p></blockquote>
+
+<p>Since we want to get all users so I add <strong>users: []</strong>, then I just push user_id in it.</p>
+
+<p>The result is&#8230;</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+<span class='line-number'>32</span>
+<span class='line-number'>33</span>
+<span class='line-number'>34</span>
+<span class='line-number'>35</span>
+<span class='line-number'>36</span>
+<span class='line-number'>37</span>
+<span class='line-number'>38</span>
+<span class='line-number'>39</span>
+<span class='line-number'>40</span>
+<span class='line-number'>41</span>
+<span class='line-number'>42</span>
+<span class='line-number'>43</span>
+<span class='line-number'>44</span>
+<span class='line-number'>45</span>
+<span class='line-number'>46</span>
+<span class='line-number'>47</span>
+<span class='line-number'>48</span>
+<span class='line-number'>49</span>
+<span class='line-number'>50</span>
+<span class='line-number'>51</span>
+<span class='line-number'>52</span>
+<span class='line-number'>53</span>
+<span class='line-number'>54</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>[
+</span><span class='line'>{  
+</span><span class='line'>  "_id"  =&gt;  {  
+</span><span class='line'>    "pathname"    =&gt;"/"
+</span><span class='line'>  },
+</span><span class='line'>  "value"  =&gt;  {  
+</span><span class='line'>    "total"    =&gt;6.0,
+</span><span class='line'>    "users"    =&gt;    [  
+</span><span class='line'>      BSON::ObjectId('568b28e67db99b1ae8000003'),
+</span><span class='line'>      BSON::ObjectId('568b28ad7db99b1ae8000000'),
+</span><span class='line'>      BSON::ObjectId('568a1ef77db99bc968000000')
+</span><span class='line'>    ]
+</span><span class='line'>  }
+</span><span class='line'>},
+</span><span class='line'>{  
+</span><span class='line'>  "_id"  =&gt;  {  
+</span><span class='line'>    "pathname"    =&gt;"/activities"
+</span><span class='line'>  },
+</span><span class='line'>  "value"  =&gt;  {  
+</span><span class='line'>    "total"    =&gt;3.0,
+</span><span class='line'>    "users"    =&gt;    [  
+</span><span class='line'>      BSON::ObjectId('568e08937db99b12c1000000'),
+</span><span class='line'>      BSON::ObjectId('568b28e67db99b1ae8000003')
+</span><span class='line'>    ]
+</span><span class='line'>  }
+</span><span class='line'>},
+</span><span class='line'>{  
+</span><span class='line'>  "_id"  =&gt;  {  
+</span><span class='line'>    "pathname"    =&gt;"/activities/hadalabo01"
+</span><span class='line'>  },
+</span><span class='line'>  "value"  =&gt;  {  
+</span><span class='line'>    "total"    =&gt;1.0,
+</span><span class='line'>    "user_id"    =&gt;BSON::ObjectId('568b28e67db99b1ae8000003')
+</span><span class='line'>  }
+</span><span class='line'>},
+</span><span class='line'>{  
+</span><span class='line'>  "_id"  =&gt;  {  
+</span><span class='line'>    "pathname"    =&gt;"/beautybuzz"
+</span><span class='line'>  },
+</span><span class='line'>  "value"  =&gt;  {  
+</span><span class='line'>    "total"    =&gt;1.0,
+</span><span class='line'>    "user_id"    =&gt;BSON::ObjectId('568b28e67db99b1ae8000003')
+</span><span class='line'>  }
+</span><span class='line'>},
+</span><span class='line'>{  
+</span><span class='line'>  "_id"  =&gt;  {  
+</span><span class='line'>    "pathname"    =&gt;"/beautynews"
+</span><span class='line'>  },
+</span><span class='line'>  "value"  =&gt;  {  
+</span><span class='line'>    "total"    =&gt;1.0,
+</span><span class='line'>    "user_id"    =&gt;BSON::ObjectId('568b28e67db99b1ae8000003')
+</span><span class='line'>  }
+</span><span class='line'>}
+</span><span class='line'>]</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Take a look of system log, to see what&#8217;s key and values pass to reduce function.</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>2016-01-07T15:43:24.520+0800 I -        [conn3] =====================
+</span><span class='line'>2016-01-07T15:43:24.520+0800 I -        [conn3] Key is:{"pathname":"/"}
+</span><span class='line'>2016-01-07T15:43:24.521+0800 I -        [conn3] Value is:[{"total":3,"user_id":{"str":"568b28e67db99b1ae8000003"}},{"total":1,"user_id":{"str":"568b28ad7db99b1ae8000000"}},{"total":2,"user_id":{"str":"568a1ef77db99bc968000000"}}]
+</span><span class='line'>2016-01-07T15:43:24.521+0800 I -        [conn3] =====================
+</span><span class='line'>2016-01-07T15:43:24.521+0800 I -        [conn3] Key is:{"pathname":"/activities"}
+</span><span class='line'>2016-01-07T15:43:24.521+0800 I -        [conn3] Value is:[{"total":2,"user_id":{"str":"568e08937db99b12c1000000"}},{"total":1,"user_id":{"str":"568b28e67db99b1ae8000003"}}]</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Here, you will notice that there are some values has <strong>user_id</strong> and some has <strong>users</strong>. Again, since some keys only has single value, it will not be processed by reduce function.</p>
+
+<h2>Use &#8220;finalize&#8221; function to beautify the result</h2>
+
+<p>It&#8217;s annoying, if data format is not consistent. So, I use finalize function to solve this problem.</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>finalize = %q{
+</span><span class='line'>  function(key, reducedValue){
+</span><span class='line'>    print("=====================");
+</span><span class='line'>    print("Key is:" + JSON.stringify(key));
+</span><span class='line'>    print("reducedValue is:" + JSON.stringify(reducedValue));
+</span><span class='line'>    var result = {
+</span><span class='line'>      user_data: []
+</span><span class='line'>    }
+</span><span class='line'>    if(reducedValue.users){
+</span><span class='line'>      reducedValue.users.forEach(function(u){
+</span><span class='line'>        result.user_data.push(u);
+</span><span class='line'>       });
+</span><span class='line'>    } else {
+</span><span class='line'>      result.user_data.push(reducedValue.user_id);
+</span><span class='line'>    }
+</span><span class='line'>    return result
+</span><span class='line'>  }
+</span><span class='line'>}
+</span><span class='line'>
+</span><span class='line'>PageTracking.where(:created_at.gte =&gt; Time.parse('2016-01-01').beginning_of_day , 
+</span><span class='line'>:created_at.lte =&gt; Time.parse('2016-01-07').end_of_day)
+</span><span class='line'>.order_by(:created_at =&gt; 'desc')
+</span><span class='line'>.map_reduce(map_with_user,reduce_with_user)
+</span><span class='line'>.finalize(finalize)
+</span><span class='line'>.out(inline: true).to_a</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Yay, every results looks same~~</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+<span class='line-number'>32</span>
+<span class='line-number'>33</span>
+<span class='line-number'>34</span>
+<span class='line-number'>35</span>
+<span class='line-number'>36</span>
+<span class='line-number'>37</span>
+<span class='line-number'>38</span>
+<span class='line-number'>39</span>
+<span class='line-number'>40</span>
+<span class='line-number'>41</span>
+<span class='line-number'>42</span>
+<span class='line-number'>43</span>
+<span class='line-number'>44</span>
+<span class='line-number'>45</span>
+<span class='line-number'>46</span>
+<span class='line-number'>47</span>
+<span class='line-number'>48</span>
+<span class='line-number'>49</span>
+<span class='line-number'>50</span>
+<span class='line-number'>51</span>
+<span class='line-number'>52</span>
+<span class='line-number'>53</span>
+<span class='line-number'>54</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>[
+</span><span class='line'>{  
+</span><span class='line'>  "_id"  =&gt;  {  
+</span><span class='line'>    "pathname"    =&gt;"/"
+</span><span class='line'>  },
+</span><span class='line'>  "value"  =&gt;  {  
+</span><span class='line'>    "user_data"    =&gt;    [  
+</span><span class='line'>      BSON::ObjectId('568b28e67db99b1ae8000003'),
+</span><span class='line'>      BSON::ObjectId('568b28ad7db99b1ae8000000'),
+</span><span class='line'>      BSON::ObjectId('568a1ef77db99bc968000000')
+</span><span class='line'>    ]
+</span><span class='line'>  }
+</span><span class='line'>},
+</span><span class='line'>{  
+</span><span class='line'>  "_id"  =&gt;  {  
+</span><span class='line'>    "pathname"    =&gt;"/activities"
+</span><span class='line'>  },
+</span><span class='line'>  "value"  =&gt;  {  
+</span><span class='line'>    "user_data"    =&gt;    [  
+</span><span class='line'>      BSON::ObjectId('568e08937db99b12c1000000'),
+</span><span class='line'>      BSON::ObjectId('568b28e67db99b1ae8000003')
+</span><span class='line'>    ]
+</span><span class='line'>  }
+</span><span class='line'>},
+</span><span class='line'>{  
+</span><span class='line'>  "_id"  =&gt;  {  
+</span><span class='line'>    "pathname"    =&gt;"/activities/hadalabo01"
+</span><span class='line'>  },
+</span><span class='line'>  "value"  =&gt;  {  
+</span><span class='line'>    "user_data"    =&gt;    [  
+</span><span class='line'>      BSON::ObjectId('568b28e67db99b1ae8000003')
+</span><span class='line'>    ]
+</span><span class='line'>  }
+</span><span class='line'>},
+</span><span class='line'>{  
+</span><span class='line'>  "_id"  =&gt;  {  
+</span><span class='line'>    "pathname"    =&gt;"/beautybuzz"
+</span><span class='line'>  },
+</span><span class='line'>  "value"  =&gt;  {  
+</span><span class='line'>    "user_data"    =&gt;    [  
+</span><span class='line'>      BSON::ObjectId('568b28e67db99b1ae8000003')
+</span><span class='line'>    ]
+</span><span class='line'>  }
+</span><span class='line'>},
+</span><span class='line'>{  
+</span><span class='line'>  "_id"  =&gt;  {  
+</span><span class='line'>    "pathname"    =&gt;"/beautynews"
+</span><span class='line'>  },
+</span><span class='line'>  "value"  =&gt;  {  
+</span><span class='line'>    "user_data"    =&gt;    [  
+</span><span class='line'>      BSON::ObjectId('568b28e67db99b1ae8000003')
+</span><span class='line'>    ]
+</span><span class='line'>  }
+</span><span class='line'>}]</span></code></pre></td></tr></table></div></figure>
+
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[Ruby on Rails Development Using Mongoid 5.0.0 - 2. How to use Aggregation to get pageview data]]></title>
@@ -4396,364 +5092,6 @@ xlab="Hour") # X-axis label.
 
 
 <p>  你的Data範圍是90天。</p>
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[[HOWTO]- 在Ruby on Rails 實作Ckeditor上傳圖片到各個獨立的資料夾]]></title>
-    <link href="http://ccaloha.cc/blog/2014/12/10/howto-setup-ckeditor-upload-picture-to-a-special-folder-in-ruby-on-rails/"/>
-    <updated>2014-12-10T08:04:05+08:00</updated>
-    <id>http://ccaloha.cc/blog/2014/12/10/howto-setup-ckeditor-upload-picture-to-a-special-folder-in-ruby-on-rails</id>
-    <content type="html"><![CDATA[<p>首先，要先感謝 <strong><em>Ayaya</em></strong>，主要是參考他的code而改編出來的功能！</p>
-
-<p>一樣講一下需求</p>
-
-<p>我希望使用者上傳檔案到不同特定的資料夾，譬如：A新聞的照片，只會被上傳到A新聞的資料夾</p>
-
-<p><img src="https://dl.dropboxusercontent.com/u/22307926/Blog%20Image/%5BHOWTO%5D-%20%E5%9C%A8Ruby%20on%20Rails%20%E5%AF%A6%E4%BD%9CCkeditor%E4%B8%8A%E5%82%B3%E5%9C%96%E7%89%87%E5%88%B0%E5%90%84%E5%80%8B%E7%8D%A8%E7%AB%8B%E7%9A%84%E8%B3%87%E6%96%99%E5%A4%BE/Ckeditor_upload_image_to_specific_folder.png" alt='ckeditor 上傳圖片到特定資料夾'></p>
-
-<p>之後你還可以實作 照片只能被特定使用者看到，這篇文章就不在這邊琢磨</p>
-
-<!--more-->
-
-
-<p>另外這篇文章，我不會提到 <strong>Ckedior</strong> 的基本安裝的東西，有興趣的話，請看 <strong><a href="https://github.com/galetahub/ckeditor">Github</a></strong></p>
-
-<p>上傳的部分我是使用 <strong><a href="https://github.com/galetahub/ckeditor#activerecord--carrierwave">ActiveRecord + Carrierwave</a></strong></p>
-
-<h2>Step1. Migration</h2>
-
-<p>首先，我們先從model開始，當你跑完</p>
-
-<pre><code>rails generate ckeditor:install --orm=active_record --backend=carrierwave
-</code></pre>
-
-<p>會幫你建立model，以我的case來說，會建立<strong><em>db/migrate/20141204171531_create_ckeditor_assets.rb</em></strong></p>
-
-<p>在這邊，我要先另外加入</p>
-
-<pre><code>  t.integer :owner_id 
-  t.string  :owner_type, :limit =&gt; 30  
-</code></pre>
-
-<p>其中<strong>owner_type</strong>是要記錄哪個model</p>
-
-<p><strong>owner_id</strong>是要記錄model的ID</p>
-
-<p>舉例來說，如果你的建立產品上稿，會被記錄到 model 的就是：<strong>Product</strong>，另外ID可能是：<strong>999</strong></p>
-
-<p>所以記錄到 owner_type 就會是 &#8220;Product&#8221; ，另外owner_id 就是：&#8221;999&#8221;</p>
-
-<p>最後別忘記，</p>
-
-<pre><code>rake db:migrate
-</code></pre>
-
-<h2>Step2. [Important] Controller</h2>
-
-<p>接下來步驟，會有點麻煩</p>
-
-<p>因為我不想要用ckeditor 預設的 <strong>pictures_controller.rb</strong> 來處理上傳的動作，所以&#8230;.</p>
-
-<p>來看一下，麻煩點在於</p>
-
-<p>我們是後台需要實作 ckeditor，所以controller要放在 <strong>/cooladmin/</strong> 裡面</p>
-
-<p>這個&#8230;搞了我超久，不過也是因為這樣，讓我比較了解這個機制</p>
-
-<p>好吧！ 那就開始吧！！！</p>
-
-<pre><code>rails g controller cooladmin/ckeditor_pictures
-</code></pre>
-
-<h3>首先這個controller 必需繼承 <strong>Ckeditor::PicturesController</strong></h3>
-
-<p>所以&#8230;</p>
-
-<pre><code>class Cooladmin::CkeditorPicturesController &lt; Ckeditor::PicturesController
-</code></pre>
-
-<p>那這個<strong><a href="https://github.com/galetahub/ckeditor/blob/master/app/controllers/ckeditor/pictures_controller.rb">Ckeditor::PicturesController</a></strong>原本怎麼寫，就請看他們官網</p>
-
-<p>由於我們不希望使用ckeditor 的before_action，所以，我們這邊都把它skip掉</p>
-
-<pre><code>skip_before_filter :find_asset
-skip_before_filter :ckeditor_authorize!
-skip_before_filter :authorize_resource
-</code></pre>
-
-<h3>第一個action : <strong>index</strong></h3>
-
-<p>這個是給當使用者點選&#8221;瀏覽伺服器&#8221;時呼叫的</p>
-
-<p><img src='https://dl.dropboxusercontent.com/u/22307926/Blog%20Image/%5BHOWTO%5D-%20%E5%9C%A8Ruby%20on%20Rails%20%E5%AF%A6%E4%BD%9CCkeditor%E4%B8%8A%E5%82%B3%E5%9C%96%E7%89%87%E5%88%B0%E5%90%84%E5%80%8B%E7%8D%A8%E7%AB%8B%E7%9A%84%E8%B3%87%E6%96%99%E5%A4%BE/ckeditor_controller_index_target_1.png'></p>
-
-<p>我的寫法是：</p>
-
-<pre><code>def index
-  @pictures = Ckeditor::Paginatable.new(pictures).page(params[:page])
-  respond_with(@pictures,layout: @pictures.first_page?)
-end 
-</code></pre>
-
-<p>那 <strong>pictures</strong> 這個從那裡來？</p>
-
-<pre><code>private
-
-  def pictures
-    @pictures ||= if owner
-                Ckeditor::CkeditorPicture.by_owner(owner)
-                    else
-                    Ckeditor::CkeditorPicture.orphan
-                    end
-  end
-
-  def owner
-    @owner ||=  case 
-                when params[:owner_type].present? &amp;&amp; params[:owner_id].present? 
-                  params[:owner_type].singularize.classify.constantize.find(params[:owner_id])
-                else
-                  nil
-                end
-  end
-</code></pre>
-
-<p>ps. <strong>Ckeditor::CkeditorPicture.by_owner(owner)</strong> 這個model是我改裝model，下個章節會介紹，by_owner就是去拿到屬於這個owner的image，那owner怎麼來呢？</p>
-
-<p>主要透過 url 取得目前是在哪個model的哪個ID被啟動ckeditor，這樣的話，就只會去抓屬於這個modal和他所屬的id，以下面那個url為例，他會去找ckeditor_assets裡頭的屬於<strong>owner_type</strong>為<strong>Product</strong>以及<strong>owner_id</strong>為<strong>1</strong>的所有照片</p>
-
-<p><strong> https://XXX.XXX.XXX/cooladmin/ckeditor_pictures?owner_id=2&amp;owner_type=Product&amp;CKEditor=product_content&amp;CKEditorFuncNum=1&amp;langCode=zh </strong></p>
-
-<h3>第二個action : <strong>create</strong></h3>
-
-<p>照片上傳上來後，透過這個action去接</p>
-
-<pre><code>def create
-  if owner.present?
-    @picture = Ckeditor::CkeditorPicture.new(owner: @owner) 
-  else
-    @picture = Ckeditor::CkeditorPicture.new(owner_type: params[:owner_type]) 
-  end
-  respond_with_asset(@picture)
-end
-</code></pre>
-
-<p>判斷如果 有owner存在的話，就把這個照片new進去，並設定owner進去</p>
-
-<p>不然的話，就在建立照片時，就只設定<strong>owner_type</strong> (這邊有個問題，我還不知道怎麼解決，所以只好先丟個owner_type給他)</p>
-
-<h3>第三個action : <strong>destroy</strong></h3>
-
-<p>很明顯就是去刪除照片～但是&#8230;..基本上這個方法不會被呼叫到&#8230;.因為ckeditor會default去找</p>
-
-<p>因為我們儲存到 <strong>ckeditor_assets</strong> table時，有一個欄位是 <strong>type</strong>，因為我們在new還有create時用的是 <strong>Ckeditor::CkeditorPicture.new(owner: @owner)</strong> 所以他的type就會是&#8230;.<strong>Ckeditor::CkeditorPicture</strong>，所以在刪除的時候，
-他default會去找有沒有這個controller => <strong>app/controllers/ckeditor_pictures_controller.rb</strong></p>
-
-<p>這樣當然是沒有，因為我們是寫在 /cooladmin/底下啊～～～</p>
-
-<p>所以&#8230;小弟我很弱，還不知道怎麼解&#8230;.所以只好copy一份出來&#8230;.</p>
-
-<pre><code>def destroy
-  @picture ||= Ckeditor::CkeditorPicture.find(params[:id])
-  @picture.destroy
-  respond_with(@picture,location: pictures_path)
-end
-</code></pre>
-
-<p>完整版：<strong>app/controllers/cooladmin/ckeditor_pictures_controller.rb</strong></p>
-
-<p>基本上這個contoller，我是直接copy一份到<strong>app/controllers/ckeditor_pictures_controller.rb</strong></p>
-
-<pre><code>class Cooladmin::CkeditorPicturesController &lt; Ckeditor::PicturesController
-  skip_before_filter :find_asset
-  skip_before_filter :ckeditor_authorize!
-  skip_before_filter :authorize_resource
-
-  def index
-    @pictures = Ckeditor::Paginatable.new(pictures).page(params[:page])
-    respond_with(@pictures,layout: @pictures.first_page?)
-  end
-
-  def create
-    if owner.present?
-      @picture = Ckeditor::CkeditorPicture.new(owner: @owner) 
-    else
-      @picture = Ckeditor::CkeditorPicture.new(owner_type: params[:owner_type]) 
-    end
-    respond_with_asset(@picture)
-  end
-
-  def destroy
-    @picture ||= Ckeditor::CkeditorPicture.find(params[:id])
-    @picture.destroy
-    respond_with(@picture,location: pictures_path)
-  end
-
-  private
-
-  def pictures
-    @pictures ||= if owner
-                    Ckeditor::CkeditorPicture.by_owner(owner)
-                  else
-                    Ckeditor::CkeditorPicture.myupload_orphan(current_employee)
-                  end
-  end
-
-
-  def owner
-    @owner ||=  case 
-                when params[:owner_type].present? &amp;&amp; params[:owner_id].present? 
-                  params[:owner_type].singularize.classify.constantize.find(params[:owner_id])
-                else
-                  nil
-                end
-  end
-
-end
-</code></pre>
-
-<h2>Step3. [Important] Model</h2>
-
-<p>這邊我是直接改ckeditor幫我產生的model <strong>models/ckeditor/picture.rb</strong></p>
-
-<p>我把它改成 <strong>models/ckeditor/ckeditor_picture.rb</strong></p>
-
-<pre><code>mv models/ckeditor/picture.rb models/ckeditor/ckeditor_picture.rb
-</code></pre>
-
-<p>幾個重點：</p>
-
-<ul>
-<li>因為這個picture基本上會隸屬於不同的model 然後他們之間都是透過 owner來做type</li>
-</ul>
-
-
-<p>所以</p>
-
-<pre><code>belongs_to :owner, polymorphic: true
-</code></pre>
-
-<ul>
-<li>幾個簡單scope</li>
-</ul>
-
-
-<p>在看這個scope我們來看一下，db裡面存的主要欄位內容</p>
-
-<table>
-<thead>
-<tr>
-<th></th>
-<th> assetable_id </th>
-<th> assetable_type </th>
-<th> type                      </th>
-<th> owner_id </th>
-<th> owner_type </th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td></td>
-<td> 1            </td>
-<td> Employee       </td>
-<td> Ckeditor::CkeditorPicture </td>
-<td> 2        </td>
-<td> Product    |</td>
-</tr>
-</tbody>
-</table>
-
-
-<p>assetable_type => 這個資料的上傳者class</p>
-
-<p>type      => 這張照片是哪個model new進來的</p>
-
-<p>owner_type    => 這張照片被用在哪個class下</p>
-
-<p>看完表格就知道我的scope在幹嘛了～</p>
-
-<pre><code>scope :myupload_orphan, -&gt; (employee_id) {where(assetable_id: employee_id, owner_id: nil)}
-scope :by_owner_type, -&gt; (owner,employee_id) {where(owner_type: owner.class.name, owner_id: nil, assetable_id: employee_id)}
-scope :by_owner, -&gt; (owner) { where(owner_id: owner.id)}
-</code></pre>
-
-<p>完整程式：</p>
-
-<pre><code>class Ckeditor::CkeditorPicture &lt; Ckeditor::Asset
-  belongs_to :owner, polymorphic: true
-  mount_uploader :data, CkeditorPictureUploader, :mount_on =&gt; :data_file_name
-
-  scope :myupload_orphan, -&gt; (employee_id) {where(assetable_id: employee_id, owner_id: nil)}
-  scope :by_owner_type, -&gt; (owner,employee_id) {where(owner_type: owner.class.name, owner_id: nil, assetable_id: employee_id)}
-  scope :by_owner, -&gt; (owner) { where(owner_id: owner.id)}
-
-  def url_content
-    url(:content)
-  end
-end
-</code></pre>
-
-<h2>Step4. 修改ckeitor 設定</h2>
-
-<p>我是使用coffeescript</p>
-
-<pre><code>$(document).on 'ready page:load', -&gt;
-  $('[data-content-editor]').each -&gt;
-    $this = $(this)
-    CKEDITOR.replace(
-      this
-      allowedContent: true
-
-  # 設定要處理image處理
-      filebrowserImageBrowseUrl: $this.data('upload-url')
-
-      filebrowserImageUploadUrl: $this.data('upload-url')
-    )
-</code></pre>
-
-<h2>Step5. 修改用到ckeditor的View</h2>
-
-<p>我是使用simple_form</p>
-
-<pre><code>= f.input :content, label: '內容', input_html: { class: 'form-control', data: {content_editor: true, upload_url: upload_url_for(@product)} } 
-</code></pre>
-
-<p>upload_url_for請看下面</p>
-
-<h2>Step6. helper</h2>
-
-<p>寫這個helper的原因是因為我希望不同的model都可以使用</p>
-
-<p><strong>app/helpers/cooladmin/admin_helper.rb</strong></p>
-
-<pre><code>module Cooladmin::AdminHelper
-  def upload_url_for(resource)
-    if resource.new_record?
-      cooladmin_ckeditor_pictures_path(:owner_type =&gt; resource.class.name)
-    else
-      cooladmin_ckeditor_pictures_path(:owner_type =&gt; resource.class.name, :owner_id =&gt; resource.id)
-    end
-  end
-end
-</code></pre>
-
-<h2>Step7. Route</h2>
-
-<pre><code>Rails.application.routes.draw do
-  # mount Ckeditor::Engine =&gt; '/uradmin/ckeditor'
-
-  resources :ckeditor_pictures, only: [:index, :create, :destroy]
-
-  namespace :cooladmin do
-    # ....略
-    # ckeditor使用
-    resources :ckeditor_pictures, only: [:index, :create, :destroy]
-  end
-
-end
-</code></pre>
-
-<h2>完成！！！！！！！！！！！</h2>
 ]]></content>
   </entry>
   

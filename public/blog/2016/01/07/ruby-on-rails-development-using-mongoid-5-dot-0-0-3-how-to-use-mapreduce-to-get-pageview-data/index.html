@@ -1,0 +1,902 @@
+
+<!DOCTYPE HTML>
+<html>
+<head>
+	<script data-cfasync="false" type="text/javascript" src="//use.typekit.net/axj3cfp.js"></script>
+	<script data-cfasync="false" type="text/javascript">try{Typekit.load();}catch(e){}</script>
+	<meta charset="utf-8">
+	<title>Ruby on Rails Development Using Mongoid 5.0.0 - 3. How to use MapReduce to get pageview data  | AlohaCC</title>
+
+<meta name="author" content="Aloha"> 
+
+<meta name="description" content="this article show you how to use MapReduce with Mongoid 5.0.0 in Ruby on Rails such as map, reduce and finalize operations."> <meta name="keywords" content="MapReduce, Mongoid 5.0.0, MongoDB, Ruby on Rails,map, reduce, finialize, out">
+
+	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+	<link href="http://feeds.feedburner.com/Alohacc" rel="alternate" title="AlohaCC" type="application/atom+xml">
+	<link rel="canonical" href="">
+	<link href="/favicon.png" rel="shortcut icon">
+	<link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+	<!--[if lt IE 9]><script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
+	<script src="//ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
+	<script type="text/javascript" src="/javascripts/jquery.fancybox.pack.js"></script>
+
+<script language="Javascript" type="text/javascript">
+$(document).ready(
+  function() {
+    (function($) {
+      $(".fancybox[data-content-id]").each(function() {
+        this.href = $(this).data('content-id');
+      });
+      $(".fancybox").fancybox({
+        beforeLoad: function() {
+          var el, 
+              id = $(this.element).data('title-id');
+
+          if (id) {
+            el = $('#' + id);
+
+            if (el.length) {
+              this.title = el.html();
+            }
+          }
+          if ($(this).data('content')) {
+            this.content = $(this).data('content');
+          }
+        },
+        helpers: {
+          title: {
+            type: 'inside'
+          }
+        }
+      });
+    })(jQuery);
+  }
+);
+</script>
+
+	
+</head>
+
+
+
+<body>
+	<header id="header" class="inner"><h1><a href="/">AlohaCC</a></h1>
+<h4>Stay Hungry. Stay Foolish.</h4>
+<nav id="main-nav"><ul>
+	<li><a href="/">Blog</a></li>
+	<li><a href="/About">About</a></li>
+  <li><a href="/Portfolio">Portfolio</a></li>
+	<li><a href="/Presentation">Presentation</a></li>
+  <li><a href="/blog/categories/ruby-on-rails">Ruby on Rails</a></li>
+  <li><a href="/blog/categories/google-analytics">Google Analytics</a></li>
+	<li><a href="/archives">Archive</a></li>
+</ul>
+</nav>
+<nav id="mobile-nav">
+	<div class="alignleft menu">
+		<a class="button">Menu</a>
+		<div class="container"><ul>
+	<li><a href="/">Blog</a></li>
+	<li><a href="/About">About</a></li>
+  <li><a href="/Portfolio">Portfolio</a></li>
+	<li><a href="/Presentation">Presentation</a></li>
+  <li><a href="/blog/categories/ruby-on-rails">Ruby on Rails</a></li>
+  <li><a href="/blog/categories/google-analytics">Google Analytics</a></li>
+	<li><a href="/archives">Archive</a></li>
+</ul>
+</div>
+	</div>
+	<div class="alignright search">
+		<a class="button"></a>
+		<div class="container">
+			<form action="http://google.com/search" method="get">
+				<input type="text" name="q" results="0">
+				<input type="hidden" name="q" value="site:ccaloha.cc">
+			</form>
+		</div>
+	</div>
+</nav>
+
+
+</header>
+
+	<div id="content" class="inner"><article class="post">
+	<h2 class="title">Ruby on Rails Development Using Mongoid 5.0.0 - 3. How to Use MapReduce to Get Pageview Data</h2>
+	<div class="entry-content"><p>What is MapReduce?</p>
+
+<blockquote><p>Map-reduce is a data processing paradigm for condensing large volumes of data into useful aggregated results.</p></blockquote>
+
+<p><strong>MapReduce</strong> is a popular big data term in recent years proposed by Google. It is a method for manipulate large data sets parallelly and distributedly on   many machines. In my words, I usually said that Map-Reduce, &#8220;Map&#8221; is to assign match function to many machines for cutting a huge data into small data sets(group matched data), and then use &#8220;Reduce&#8221; to aggregate these calculated data.</p>
+
+<blockquote><p>In this map-reduce operation, MongoDB applies the map phase to each input document (i.e. the documents in the collection that match the query condition). The map function emits key-value pairs. For those keys that have multiple values, MongoDB applies the reduce phase, which collects and condenses the aggregated data. MongoDB then stores the results in a collection. Optionally, the output of the reduce function may pass through a finalize function to further condense or process the results of the aggregation.</p></blockquote>
+
+<p><img src='https://dl.dropboxusercontent.com/u/22307926/Blog%20Image/Ruby%20on%20Rails%20Development%20Using%20Mongoid%205.0.0%20-%203.%20How%20to%20use%20MapReduce%20to%20get%20pageview%20data/%E8%9E%A2%E5%B9%95%E5%BF%AB%E7%85%A7%202016-01-06%2016.12.54.png' alt='MongoDB MapReduce'></p>
+
+<p>if you want more details, please check <a href="https://docs.mongodb.org/manual/core/map-reduce/">official documents</a></p>
+
+<p>Let&#8217;s go check how to use <strong>map reduce</strong> in Mongoid.</p>
+
+<!--more-->
+
+
+<p>I also write an article for aggregation method. Please check: <a href="http://ccaloha.cc/blog/2016/01/06/ruby-on-rails-development-using-mongoid-5-dot-0-0-2-how-to-use-aggregation-to-get-pageview-data/">Ruby on Rails Development Using Mongoid 5.0.0 - 2. How to Use Aggregation to Get Pageview Data</a></p>
+
+<p>Again, Here are my models,</p>
+
+<p><img src='https://dl.dropboxusercontent.com/u/22307926/Blog%20Image/Ruby%20on%20Rails%20Development%20Using%20Mongoid%20-%202%20How%20to%20use%20Aggregation%20to%20get%20pageview%20data/model.png' alt='Mongoid map-reduce model example'></p>
+
+<h2>Calculate Unique Pageviews from 2016/1/1 to 2016/1/5</h2>
+
+<p>First, MongoDB use custom Javascript functions to do map and reduce operations. So, we need to write JS code as a string and pass to MongoDB.</p>
+
+<p>In this example, I hope that the same page a user watched in the same day should be calculated just one time(eg. If I watch path &#8216;/&#8217; 3 times a day, the pageview should be 1 not 3). So, I call it unique pageviews.</p>
+
+<h3>Let&#8217;s Check Map Function</h3>
+
+<p>I use &#8220;pathname&#8221; as an identifier(key) and use {&#8220;total&#8221;: 1} as a value. In my opinion, value is the result that you want to obtain.</p>
+
+<blockquote><p>In the map function, reference the current document as <strong>this</strong> within the function.</p></blockquote>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>map = %q{ 
+</span><span class='line'>              function() {
+</span><span class='line'>                emit(
+</span><span class='line'>                  this.pathname,
+</span><span class='line'>                  {
+</span><span class='line'>                    total: 1
+</span><span class='line'>                  } 
+</span><span class='line'>                );
+</span><span class='line'>              } 
+</span><span class='line'>          }
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h3>How About Reduce Function?</h3>
+
+<p>Reduce function will get the key and value from map function.</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>reduce = %q{
+</span><span class='line'>              function(key, values){
+</span><span class='line'>                print("=====================");
+</span><span class='line'>                print("Key is:" + key);
+</span><span class='line'>                print("Value is:" + JSON.stringify(values));
+</span><span class='line'>                var r = { total: 0};
+</span><span class='line'>                for (var idx  = 0; idx &lt; values.length; idx++) {
+</span><span class='line'>                  var tt = values[idx].total;
+</span><span class='line'>                  r.total += tt
+</span><span class='line'>                }
+</span><span class='line'>                return r;
+</span><span class='line'>              }
+</span><span class='line'>            }</span></code></pre></td></tr></table></div></figure>
+
+
+<blockquote><p>Tips: we can use &#8220;print&#8221; for debugging.</p></blockquote>
+
+<h3>Using MapReduce in Mongoid</h3>
+
+<p>Now, we can put map and reduce function together.</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>res = PageTracking.where(:created_at.gte =&gt; Time.parse('2016-01-01').beginning_of_day , 
+</span><span class='line'>:created_at.lte =&gt; Time.parse('2016-01-05').end_of_day)
+</span><span class='line'>.order_by(:created_at =&gt; 'desc')
+</span><span class='line'>.map_reduce(map,reduce)
+</span><span class='line'>.out(inline: true)</span></code></pre></td></tr></table></div></figure>
+
+
+<p>console will show like below</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>=&gt; #&lt;Mongoid::Contextual::MapReduce
+</span><span class='line'>  selector: {"created_at"=&gt;{"$gte"=&gt;2015-12-31 16:00:00 UTC, "$lte"=&gt;2016-01-05 15:59:59 UTC}}
+</span><span class='line'>  class:    PageTracking
+</span><span class='line'>  map:
+</span><span class='line'>              function() {
+</span><span class='line'>                emit(
+</span><span class='line'>                  this.pathname,
+</span><span class='line'>                  {
+</span><span class='line'>                    total: 1
+</span><span class='line'>                  }
+</span><span class='line'>);
+</span><span class='line'>}
+</span><span class='line'>
+</span><span class='line'>  reduce:
+</span><span class='line'>              function(key, values){
+</span><span class='line'>                print("=====================");
+</span><span class='line'>                print("Key is:" + key);
+</span><span class='line'>                print("Value is:" + JSON.stringify(values));
+</span><span class='line'>                var r = { total: 0};
+</span><span class='line'>                for (var idx  = 0; idx &lt; values.length; idx++) {
+</span><span class='line'>                  var tt = values[idx].total;
+</span><span class='line'>                  r.total += tt
+</span><span class='line'>                }
+</span><span class='line'>return r;
+</span><span class='line'>}
+</span><span class='line'>
+</span><span class='line'>  finalize:
+</span><span class='line'>  out:      {:inline=&gt;true}&gt;
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Let&#8217;s get all results.</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>res.to_a</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Here is my result.</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>[{"_id"=&gt;"/", "value"=&gt;{"total"=&gt;3.0}},
+</span><span class='line'> {"_id"=&gt;"/activities", "value"=&gt;{"total"=&gt;1.0}},
+</span><span class='line'> {"_id"=&gt;"/activities/hadalabo01", "value"=&gt;{"total"=&gt;1.0}},
+</span><span class='line'> {"_id"=&gt;"/beautybuzz", "value"=&gt;{"total"=&gt;1.0}},
+</span><span class='line'> {"_id"=&gt;"/beautynews", "value"=&gt;{"total"=&gt;1.0}}]</span></code></pre></td></tr></table></div></figure>
+
+
+<p>ps. If you want to check the debugging message, you can</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'># check the location of MongoDB system log
+</span><span class='line'>cat /usr/local/etc/mongod.conf
+</span><span class='line'>
+</span><span class='line'># In my case, it will be located in /usr/local/var/log/mongodb/mongo.log
+</span><span class='line'>tail -1000f /usr/local/var/log/mongodb/mongo.log</span></code></pre></td></tr></table></div></figure>
+
+
+<p></p>
+
+<p>And I see</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>2016-01-07T11:49:24.460+0800 I -        [conn3] =====================
+</span><span class='line'>2016-01-07T11:49:24.460+0800 I -        [conn3] Key is:/
+</span><span class='line'>2016-01-07T11:49:24.460+0800 I -        [conn3] Value is:[{"total":1},{"total":1},{"total":1}]</span></code></pre></td></tr></table></div></figure>
+
+
+<p>It&#8217;s weird, in result, I have many different &#8220;_id&#8221; such as &#8216;/&#8217;, &#8216;/activities&#8217;, &#8216;/beautybuzz&#8217;. But, in MongoDB system log, I just see &#8216;/&#8217;. Why?</p>
+
+<p>According to <a href="https://docs.mongodb.org/manual/reference/command/mapReduce/#requirements-for-the-reduce-function">Requirements for the reduce Function</a>.</p>
+
+<blockquote><p>MongoDB will not call the reduce function for a key that has only a single value. The values argument is an array whose elements are the value objects that are “mapped” to the key.</p></blockquote>
+
+<p>Let&#8217;s check the data in my MongoDB,</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>PageTracking.where(:created_at.gte =&gt; Time.parse('2016-01-01').beginning_of_day , :created_at.lte =&gt; Time.parse('2016-01-05').end_of_day).order_by(:created_at =&gt; 'desc').to_a</span></code></pre></td></tr></table></div></figure>
+
+
+<p>As you can see, pathname except &#8216;/&#8217; are just have one record. So, it will not be handled by reduce function.</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>[#&lt;UserPageTracking _id: 568b78c07db99b9a30000001, created_at: 2016-01-04 16:00:00 UTC, updated_at: 2016-01-05 08:03:12 UTC, pathname: "/beautynews", daily_total_count: 1, user_id: BSON::ObjectId('568b28e67db99b1ae8000003')&gt;,
+</span><span class='line'> #&lt;UserPageTracking _id: 568b7e5e7db99b9a30000017, created_at: 2016-01-04 16:00:00 UTC, updated_at: 2016-01-05 08:27:10 UTC, pathname: "/beautybuzz", daily_total_count: 1, user_id: BSON::ObjectId('568b28e67db99b1ae8000003')&gt;,
+</span><span class='line'> #&lt;UserPageTracking _id: 568b7d8e7db99b9a30000013, created_at: 2016-01-04 16:00:00 UTC, updated_at: 2016-01-05 08:23:42 UTC, pathname: "/activities/hadalabo01", daily_total_count: 1, user_id: BSON::ObjectId('568b28e67db99b1ae8000003')&gt;,
+</span><span class='line'> #&lt;UserPageTracking _id: 568b7d307db99b9a30000011, created_at: 2016-01-04 16:00:00 UTC, updated_at: 2016-01-05 08:22:08 UTC, pathname: "/activities", daily_total_count: 1, user_id: BSON::ObjectId('568b28e67db99b1ae8000003')&gt;,
+</span><span class='line'> #&lt;UserPageTracking _id: 568b28e67db99b1ae8000005, created_at: 2016-01-04 16:00:00 UTC, updated_at: 2016-01-05 02:22:30 UTC, pathname: "/", daily_total_count: 3, user_id: BSON::ObjectId('568b28e67db99b1ae8000003')&gt;,
+</span><span class='line'> #&lt;UserPageTracking _id: 568b28ad7db99b1ae8000002, created_at: 2016-01-04 16:00:00 UTC, updated_at: 2016-01-05 02:21:33 UTC, pathname: "/", daily_total_count: 1, user_id: BSON::ObjectId('568b28ad7db99b1ae8000000')&gt;,
+</span><span class='line'> #&lt;UserPageTracking _id: 568a1ef77db99bc968000002, created_at: 2016-01-03 16:00:00 UTC, updated_at: 2016-01-04 07:27:51 UTC, pathname: "/", daily_total_count: 2, user_id: BSON::ObjectId('568a1ef77db99bc968000000')&gt;]</span></code></pre></td></tr></table></div></figure>
+
+
+<p>If I watch &#8216;/activities&#8217; again, and run MapReduce again.</p>
+
+<p>yay, I can see /activities in system log.</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>2016-01-07T14:42:23.349+0800 I -        [conn3] =====================
+</span><span class='line'>2016-01-07T14:42:23.349+0800 I -        [conn3] Key is:/
+</span><span class='line'>2016-01-07T14:42:23.350+0800 I -        [conn3] Value is:[{"total":1},{"total":1},{"total":1}]
+</span><span class='line'>2016-01-07T14:42:23.350+0800 I -        [conn3] =====================
+</span><span class='line'>2016-01-07T14:42:23.350+0800 I -        [conn3] Key is:/activities
+</span><span class='line'>2016-01-07T14:42:23.350+0800 I -        [conn3] Value is:[{"total":1},{"total":1}]</span></code></pre></td></tr></table></div></figure>
+
+
+<h2>Calculate Non-Unique Pageviews</h2>
+
+<p>In this example, I don&#8217;t care a user watched same page in the same day. I want all pageviews. (eg. If I watch path &#8216;/&#8217; 3 times a day, the pageview should be 3). So, I call it non-unique pageviews.</p>
+
+<p>The only thing I have to update is map function. Change <strong>total: 1</strong> to <strong>total: this.daily_total_count</strong></p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>total_map = %q{ 
+</span><span class='line'>              function() {
+</span><span class='line'>                emit(
+</span><span class='line'>                  this.pathname,
+</span><span class='line'>                  {
+</span><span class='line'>                    total: this.daily_total_count
+</span><span class='line'>                  } 
+</span><span class='line'>                );
+</span><span class='line'>              } 
+</span><span class='line'>          }
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>yay!</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>[{"_id"=&gt;"/", "value"=&gt;{"total"=&gt;6.0}},
+</span><span class='line'> {"_id"=&gt;"/activities", "value"=&gt;{"total"=&gt;2.0}},
+</span><span class='line'> {"_id"=&gt;"/activities/hadalabo01", "value"=&gt;{"total"=&gt;1.0}},
+</span><span class='line'> {"_id"=&gt;"/beautybuzz", "value"=&gt;{"total"=&gt;1.0}},
+</span><span class='line'> {"_id"=&gt;"/beautynews", "value"=&gt;{"total"=&gt;1.0}}]</span></code></pre></td></tr></table></div></figure>
+
+
+<h2>Calculate Pageviews and Get Who Watch The Page</h2>
+
+<p>In this example, beside calculate pageviews, I want to get user who watch the page as well.</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+<span class='line-number'>32</span>
+<span class='line-number'>33</span>
+<span class='line-number'>34</span>
+<span class='line-number'>35</span>
+<span class='line-number'>36</span>
+<span class='line-number'>37</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>map_with_user = %q{ 
+</span><span class='line'>              function() {
+</span><span class='line'>                var key = {
+</span><span class='line'>                  pathname: this.pathname
+</span><span class='line'>                };
+</span><span class='line'>                emit(
+</span><span class='line'>                  key,
+</span><span class='line'>                  {
+</span><span class='line'>                    total:  this.daily_total_count,
+</span><span class='line'>                    user_id:   this.user_id
+</span><span class='line'>                  } 
+</span><span class='line'>                );
+</span><span class='line'>              } 
+</span><span class='line'>          }
+</span><span class='line'>
+</span><span class='line'>reduce_with_user = %q{
+</span><span class='line'>              function(key, values){
+</span><span class='line'>                print("=====================");
+</span><span class='line'>                print("Key is:" + JSON.stringify(key));
+</span><span class='line'>                print("Value is:" +  JSON.stringify(values));
+</span><span class='line'>                var r = { 
+</span><span class='line'>                    total: 0,
+</span><span class='line'>                    users: []
+</span><span class='line'>                };
+</span><span class='line'>                for (var idx  = 0; idx &lt; values.length; idx++) {
+</span><span class='line'>                    r.total += values[idx].total;
+</span><span class='line'>                    r.users.push(values[idx].user_id);
+</span><span class='line'>                }
+</span><span class='line'>                return r;
+</span><span class='line'>              }
+</span><span class='line'>            }
+</span><span class='line'>
+</span><span class='line'>PageTracking.where(:created_at.gte =&gt; Time.parse('2016-01-01').beginning_of_day , 
+</span><span class='line'>:created_at.lte =&gt; Time.parse('2016-01-07').end_of_day)
+</span><span class='line'>.order_by(:created_at =&gt; 'desc')
+</span><span class='line'>.map_reduce(map_with_user,reduce_with_user)
+</span><span class='line'>.out(inline: true).to_a
+</span></code></pre></td></tr></table></div></figure>
+
+
+<blockquote><p>Tips: key can also be a hash.</p></blockquote>
+
+<p>Since we want to get all users so I add <strong>users: []</strong>, then I just push user_id in it.</p>
+
+<p>The result is&#8230;</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+<span class='line-number'>32</span>
+<span class='line-number'>33</span>
+<span class='line-number'>34</span>
+<span class='line-number'>35</span>
+<span class='line-number'>36</span>
+<span class='line-number'>37</span>
+<span class='line-number'>38</span>
+<span class='line-number'>39</span>
+<span class='line-number'>40</span>
+<span class='line-number'>41</span>
+<span class='line-number'>42</span>
+<span class='line-number'>43</span>
+<span class='line-number'>44</span>
+<span class='line-number'>45</span>
+<span class='line-number'>46</span>
+<span class='line-number'>47</span>
+<span class='line-number'>48</span>
+<span class='line-number'>49</span>
+<span class='line-number'>50</span>
+<span class='line-number'>51</span>
+<span class='line-number'>52</span>
+<span class='line-number'>53</span>
+<span class='line-number'>54</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>[
+</span><span class='line'>{  
+</span><span class='line'>  "_id"  =&gt;  {  
+</span><span class='line'>    "pathname"    =&gt;"/"
+</span><span class='line'>  },
+</span><span class='line'>  "value"  =&gt;  {  
+</span><span class='line'>    "total"    =&gt;6.0,
+</span><span class='line'>    "users"    =&gt;    [  
+</span><span class='line'>      BSON::ObjectId('568b28e67db99b1ae8000003'),
+</span><span class='line'>      BSON::ObjectId('568b28ad7db99b1ae8000000'),
+</span><span class='line'>      BSON::ObjectId('568a1ef77db99bc968000000')
+</span><span class='line'>    ]
+</span><span class='line'>  }
+</span><span class='line'>},
+</span><span class='line'>{  
+</span><span class='line'>  "_id"  =&gt;  {  
+</span><span class='line'>    "pathname"    =&gt;"/activities"
+</span><span class='line'>  },
+</span><span class='line'>  "value"  =&gt;  {  
+</span><span class='line'>    "total"    =&gt;3.0,
+</span><span class='line'>    "users"    =&gt;    [  
+</span><span class='line'>      BSON::ObjectId('568e08937db99b12c1000000'),
+</span><span class='line'>      BSON::ObjectId('568b28e67db99b1ae8000003')
+</span><span class='line'>    ]
+</span><span class='line'>  }
+</span><span class='line'>},
+</span><span class='line'>{  
+</span><span class='line'>  "_id"  =&gt;  {  
+</span><span class='line'>    "pathname"    =&gt;"/activities/hadalabo01"
+</span><span class='line'>  },
+</span><span class='line'>  "value"  =&gt;  {  
+</span><span class='line'>    "total"    =&gt;1.0,
+</span><span class='line'>    "user_id"    =&gt;BSON::ObjectId('568b28e67db99b1ae8000003')
+</span><span class='line'>  }
+</span><span class='line'>},
+</span><span class='line'>{  
+</span><span class='line'>  "_id"  =&gt;  {  
+</span><span class='line'>    "pathname"    =&gt;"/beautybuzz"
+</span><span class='line'>  },
+</span><span class='line'>  "value"  =&gt;  {  
+</span><span class='line'>    "total"    =&gt;1.0,
+</span><span class='line'>    "user_id"    =&gt;BSON::ObjectId('568b28e67db99b1ae8000003')
+</span><span class='line'>  }
+</span><span class='line'>},
+</span><span class='line'>{  
+</span><span class='line'>  "_id"  =&gt;  {  
+</span><span class='line'>    "pathname"    =&gt;"/beautynews"
+</span><span class='line'>  },
+</span><span class='line'>  "value"  =&gt;  {  
+</span><span class='line'>    "total"    =&gt;1.0,
+</span><span class='line'>    "user_id"    =&gt;BSON::ObjectId('568b28e67db99b1ae8000003')
+</span><span class='line'>  }
+</span><span class='line'>}
+</span><span class='line'>]</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Take a look of system log, to see what&#8217;s key and values pass to reduce function.</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>2016-01-07T15:43:24.520+0800 I -        [conn3] =====================
+</span><span class='line'>2016-01-07T15:43:24.520+0800 I -        [conn3] Key is:{"pathname":"/"}
+</span><span class='line'>2016-01-07T15:43:24.521+0800 I -        [conn3] Value is:[{"total":3,"user_id":{"str":"568b28e67db99b1ae8000003"}},{"total":1,"user_id":{"str":"568b28ad7db99b1ae8000000"}},{"total":2,"user_id":{"str":"568a1ef77db99bc968000000"}}]
+</span><span class='line'>2016-01-07T15:43:24.521+0800 I -        [conn3] =====================
+</span><span class='line'>2016-01-07T15:43:24.521+0800 I -        [conn3] Key is:{"pathname":"/activities"}
+</span><span class='line'>2016-01-07T15:43:24.521+0800 I -        [conn3] Value is:[{"total":2,"user_id":{"str":"568e08937db99b12c1000000"}},{"total":1,"user_id":{"str":"568b28e67db99b1ae8000003"}}]</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Here, you will notice that there are some values has <strong>user_id</strong> and some has <strong>users</strong>. Again, since some keys only has single value, it will not be processed by reduce function.</p>
+
+<h2>Use &#8220;finalize&#8221; function to beautify the result</h2>
+
+<p>It&#8217;s annoying, if data format is not consistent. So, I use finalize function to solve this problem.</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>finalize = %q{
+</span><span class='line'>  function(key, reducedValue){
+</span><span class='line'>    print("=====================");
+</span><span class='line'>    print("Key is:" + JSON.stringify(key));
+</span><span class='line'>    print("reducedValue is:" + JSON.stringify(reducedValue));
+</span><span class='line'>    var result = {
+</span><span class='line'>      user_data: []
+</span><span class='line'>    }
+</span><span class='line'>    if(reducedValue.users){
+</span><span class='line'>      reducedValue.users.forEach(function(u){
+</span><span class='line'>        result.user_data.push(u);
+</span><span class='line'>       });
+</span><span class='line'>    } else {
+</span><span class='line'>      result.user_data.push(reducedValue.user_id);
+</span><span class='line'>    }
+</span><span class='line'>    return result
+</span><span class='line'>  }
+</span><span class='line'>}
+</span><span class='line'>
+</span><span class='line'>PageTracking.where(:created_at.gte =&gt; Time.parse('2016-01-01').beginning_of_day , 
+</span><span class='line'>:created_at.lte =&gt; Time.parse('2016-01-07').end_of_day)
+</span><span class='line'>.order_by(:created_at =&gt; 'desc')
+</span><span class='line'>.map_reduce(map_with_user,reduce_with_user)
+</span><span class='line'>.finalize(finalize)
+</span><span class='line'>.out(inline: true).to_a</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Yay, every results looks same~~</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+<span class='line-number'>32</span>
+<span class='line-number'>33</span>
+<span class='line-number'>34</span>
+<span class='line-number'>35</span>
+<span class='line-number'>36</span>
+<span class='line-number'>37</span>
+<span class='line-number'>38</span>
+<span class='line-number'>39</span>
+<span class='line-number'>40</span>
+<span class='line-number'>41</span>
+<span class='line-number'>42</span>
+<span class='line-number'>43</span>
+<span class='line-number'>44</span>
+<span class='line-number'>45</span>
+<span class='line-number'>46</span>
+<span class='line-number'>47</span>
+<span class='line-number'>48</span>
+<span class='line-number'>49</span>
+<span class='line-number'>50</span>
+<span class='line-number'>51</span>
+<span class='line-number'>52</span>
+<span class='line-number'>53</span>
+<span class='line-number'>54</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>[
+</span><span class='line'>{  
+</span><span class='line'>  "_id"  =&gt;  {  
+</span><span class='line'>    "pathname"    =&gt;"/"
+</span><span class='line'>  },
+</span><span class='line'>  "value"  =&gt;  {  
+</span><span class='line'>    "user_data"    =&gt;    [  
+</span><span class='line'>      BSON::ObjectId('568b28e67db99b1ae8000003'),
+</span><span class='line'>      BSON::ObjectId('568b28ad7db99b1ae8000000'),
+</span><span class='line'>      BSON::ObjectId('568a1ef77db99bc968000000')
+</span><span class='line'>    ]
+</span><span class='line'>  }
+</span><span class='line'>},
+</span><span class='line'>{  
+</span><span class='line'>  "_id"  =&gt;  {  
+</span><span class='line'>    "pathname"    =&gt;"/activities"
+</span><span class='line'>  },
+</span><span class='line'>  "value"  =&gt;  {  
+</span><span class='line'>    "user_data"    =&gt;    [  
+</span><span class='line'>      BSON::ObjectId('568e08937db99b12c1000000'),
+</span><span class='line'>      BSON::ObjectId('568b28e67db99b1ae8000003')
+</span><span class='line'>    ]
+</span><span class='line'>  }
+</span><span class='line'>},
+</span><span class='line'>{  
+</span><span class='line'>  "_id"  =&gt;  {  
+</span><span class='line'>    "pathname"    =&gt;"/activities/hadalabo01"
+</span><span class='line'>  },
+</span><span class='line'>  "value"  =&gt;  {  
+</span><span class='line'>    "user_data"    =&gt;    [  
+</span><span class='line'>      BSON::ObjectId('568b28e67db99b1ae8000003')
+</span><span class='line'>    ]
+</span><span class='line'>  }
+</span><span class='line'>},
+</span><span class='line'>{  
+</span><span class='line'>  "_id"  =&gt;  {  
+</span><span class='line'>    "pathname"    =&gt;"/beautybuzz"
+</span><span class='line'>  },
+</span><span class='line'>  "value"  =&gt;  {  
+</span><span class='line'>    "user_data"    =&gt;    [  
+</span><span class='line'>      BSON::ObjectId('568b28e67db99b1ae8000003')
+</span><span class='line'>    ]
+</span><span class='line'>  }
+</span><span class='line'>},
+</span><span class='line'>{  
+</span><span class='line'>  "_id"  =&gt;  {  
+</span><span class='line'>    "pathname"    =&gt;"/beautynews"
+</span><span class='line'>  },
+</span><span class='line'>  "value"  =&gt;  {  
+</span><span class='line'>    "user_data"    =&gt;    [  
+</span><span class='line'>      BSON::ObjectId('568b28e67db99b1ae8000003')
+</span><span class='line'>    ]
+</span><span class='line'>  }
+</span><span class='line'>}]</span></code></pre></td></tr></table></div></figure>
+
+</div>
+
+
+<div class="meta">
+	<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2016-01-07T16:38:55+08:00" pubdate data-updated="true">Jan 7<span>th</span>, 2016</time></div>
+	
+
+<div class="tags">
+
+	<a class='category' href='/blog/categories/mongoid/'>Mongoid</a>, <a class='category' href='/blog/categories/ruby-on-rails/'>Ruby on Rails</a>
+
+</div>
+
+
+	
+		<span class="comments"><a href="/blog/2016/01/07/ruby-on-rails-development-using-mongoid-5-dot-0-0-3-how-to-use-mapreduce-to-get-pageview-data/#disqus_thread">Comments</a></span>
+	
+</div></article>
+
+	<div class="share">
+	<div class="addthis_toolbox addthis_default_style ">
+	
+	<a class="addthis_button_facebook_like" fb:like:layout="button_count"></a>
+	
+	
+	<a class="addthis_button_tweet"></a>
+	
+	
+	<a class="addthis_button_google_plusone" g:plusone:size="medium"></a>
+	
+<!---	<a class="addthis_counter addthis_pill_style"></a> --->
+	</div>
+  <script type="text/javascript" src="http://s7.addthis.com/js/250/addthis_widget.js#pubid="></script>
+</div>
+
+
+
+<section id="comment">
+    <h2 class="title">Comments</h2>
+    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+</section>
+</div>
+	<footer id="footer" class="inner">Copyright &copy; 2016
+
+    Aloha
+
+<br>
+Powered by Octopress.
+</footer>
+	<script src="/javascripts/slash.js"></script>
+<script src="/javascripts/jquery.fancybox.pack.js"></script>
+<script type="text/javascript">
+(function($){
+	$('.fancybox').fancybox();
+})(jQuery);
+</script> <!-- Delete or comment this line to disable Fancybox -->
+
+
+<script type="text/javascript">
+      var disqus_shortname = 'ccaloha';
+      
+        
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://ccaloha.cc/blog/2016/01/07/ruby-on-rails-development-using-mongoid-5-dot-0-0-3-how-to-use-mapreduce-to-get-pageview-data/';
+        var disqus_url = 'http://ccaloha.cc/blog/2016/01/07/ruby-on-rails-development-using-mongoid-5-dot-0-0-3-how-to-use-mapreduce-to-get-pageview-data/';
+        var disqus_script = 'embed.js';
+      
+    (function () {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/' + disqus_script;
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script>
+
+
+
+	<script type="text/javascript">
+		var _gaq = _gaq || [];
+		_gaq.push(['_setAccount', 'UA-29608372-1']);
+		_gaq.push(['_trackPageview']);
+
+		(function() {
+			var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+			ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+			var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+		})();
+	</script>
+
+
+<a title="Google Analytics Alternative" href="http://clicky.com/100753071"><img alt="Google Analytics Alternative" src="//static.getclicky.com/media/links/badge.gif" border="0" /></a>
+<script src="//static.getclicky.com/js" type="text/javascript"></script>
+<script type="text/javascript">try{ clicky.init(100753071); }catch(e){}</script>
+<noscript><p><img alt="Clicky" width="1" height="1" src="//in.getclicky.com/100753071ns.gif" /></p></noscript>
+
+</body>
+</html>
