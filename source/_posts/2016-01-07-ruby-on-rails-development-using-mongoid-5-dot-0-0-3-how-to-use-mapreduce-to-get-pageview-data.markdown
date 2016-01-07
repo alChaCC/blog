@@ -173,13 +173,13 @@ PageTracking.where(:created_at.gte => Time.parse('2016-01-01').beginning_of_day 
 As you can see, pathname except '/' are just have one record. So, it will not be handled by reduce function. 
 
 ```
-[#<UserPageTracking _id: 568b78c07db99b9a30000001, created_at: 2016-01-04 16:00:00 UTC, updated_at: 2016-01-05 08:03:12 UTC, pathname: "/beautynews", daily_total_count: 1, user_id: BSON::ObjectId('568b28e67db99b1ae8000003')>,
- #<UserPageTracking _id: 568b7e5e7db99b9a30000017, created_at: 2016-01-04 16:00:00 UTC, updated_at: 2016-01-05 08:27:10 UTC, pathname: "/beautybuzz", daily_total_count: 1, user_id: BSON::ObjectId('568b28e67db99b1ae8000003')>,
- #<UserPageTracking _id: 568b7d8e7db99b9a30000013, created_at: 2016-01-04 16:00:00 UTC, updated_at: 2016-01-05 08:23:42 UTC, pathname: "/activities/hadalabo01", daily_total_count: 1, user_id: BSON::ObjectId('568b28e67db99b1ae8000003')>,
- #<UserPageTracking _id: 568b7d307db99b9a30000011, created_at: 2016-01-04 16:00:00 UTC, updated_at: 2016-01-05 08:22:08 UTC, pathname: "/activities", daily_total_count: 1, user_id: BSON::ObjectId('568b28e67db99b1ae8000003')>,
- #<UserPageTracking _id: 568b28e67db99b1ae8000005, created_at: 2016-01-04 16:00:00 UTC, updated_at: 2016-01-05 02:22:30 UTC, pathname: "/", daily_total_count: 3, user_id: BSON::ObjectId('568b28e67db99b1ae8000003')>,
- #<UserPageTracking _id: 568b28ad7db99b1ae8000002, created_at: 2016-01-04 16:00:00 UTC, updated_at: 2016-01-05 02:21:33 UTC, pathname: "/", daily_total_count: 1, user_id: BSON::ObjectId('568b28ad7db99b1ae8000000')>,
- #<UserPageTracking _id: 568a1ef77db99bc968000002, created_at: 2016-01-03 16:00:00 UTC, updated_at: 2016-01-04 07:27:51 UTC, pathname: "/", daily_total_count: 2, user_id: BSON::ObjectId('568a1ef77db99bc968000000')>]
+[#<PageTracking _id: 568b78c07db99b9a30000001, created_at: 2016-01-04 16:00:00 UTC, updated_at: 2016-01-05 08:03:12 UTC, pathname: "/beautynews", daily_total_count: 1, user_id: BSON::ObjectId('568b28e67db99b1ae8000003')>,
+ #<PageTracking _id: 568b7e5e7db99b9a30000017, created_at: 2016-01-04 16:00:00 UTC, updated_at: 2016-01-05 08:27:10 UTC, pathname: "/beautybuzz", daily_total_count: 1, user_id: BSON::ObjectId('568b28e67db99b1ae8000003')>,
+ #<PageTracking _id: 568b7d8e7db99b9a30000013, created_at: 2016-01-04 16:00:00 UTC, updated_at: 2016-01-05 08:23:42 UTC, pathname: "/activities/hadalabo01", daily_total_count: 1, user_id: BSON::ObjectId('568b28e67db99b1ae8000003')>,
+ #<PageTracking _id: 568b7d307db99b9a30000011, created_at: 2016-01-04 16:00:00 UTC, updated_at: 2016-01-05 08:22:08 UTC, pathname: "/activities", daily_total_count: 1, user_id: BSON::ObjectId('568b28e67db99b1ae8000003')>,
+ #<PageTracking _id: 568b28e67db99b1ae8000005, created_at: 2016-01-04 16:00:00 UTC, updated_at: 2016-01-05 02:22:30 UTC, pathname: "/", daily_total_count: 3, user_id: BSON::ObjectId('568b28e67db99b1ae8000003')>,
+ #<PageTracking _id: 568b28ad7db99b1ae8000002, created_at: 2016-01-04 16:00:00 UTC, updated_at: 2016-01-05 02:21:33 UTC, pathname: "/", daily_total_count: 1, user_id: BSON::ObjectId('568b28ad7db99b1ae8000000')>,
+ #<PageTracking _id: 568a1ef77db99bc968000002, created_at: 2016-01-03 16:00:00 UTC, updated_at: 2016-01-04 07:27:51 UTC, pathname: "/", daily_total_count: 2, user_id: BSON::ObjectId('568a1ef77db99bc968000000')>]
 ```
 
 If I watch '/activities' again, and run MapReduce again.
