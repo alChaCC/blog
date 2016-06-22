@@ -1,0 +1,178 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: Preloader.io | AlohaCC]]></title>
+  <link href="http://ccaloha.cc/blog/categories/preloader-dot-io/atom.xml" rel="self"/>
+  <link href="http://ccaloha.cc/"/>
+  <updated>2016-06-22T18:02:33+08:00</updated>
+  <id>http://ccaloha.cc/</id>
+  <author>
+    <name><![CDATA[Aloha]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[How to install Preloader.io service in Ubuntu 14.04]]></title>
+    <link href="http://ccaloha.cc/blog/2016/06/22/how-to-install-preloader-dot-io-service-in-ubuntu-14-dot-04/"/>
+    <updated>2016-06-22T17:58:14+08:00</updated>
+    <id>http://ccaloha.cc/blog/2016/06/22/how-to-install-preloader-dot-io-service-in-ubuntu-14-dot-04</id>
+    <content type="html"><![CDATA[<p>If you're finding a solution for SEO especially for AngularJS, BackboneJS, EmberJS and other javascript frameworks. <code>Preloader</code> will be one of your options.</p>
+
+<blockquote><p><code>Preloader</code> is a node server that uses phantomjs to create static HTML out of a javascript page.</p></blockquote>
+
+<p>you are able to use their <a href="https://prerender.io/">solutions</a> instead of installing in your own machine.</p>
+
+<p>But, what if you just like me, want to try their service first and want to customize your own Preloader?</p>
+
+<p>here are flows that show how I install Preloader in Ubuntu 14.04.</p>
+
+<!--more-->
+
+
+<h2>1. Create an instance in Amazon Web Service</h2>
+
+<p>hmmm, just go to AWS and create an instance using Ubuntu 14.04 image.</p>
+
+<p>make sure you allow port <code>3000</code> can be access</p>
+
+<h2>2. Create a user</h2>
+
+<p><code>
+sudo adduser deploy
+sudo adduser deploy sudo
+su deploy
+</code></p>
+
+<h2>3. Make sure you can login using new user without pem key</h2>
+
+<p><code>
+cd ~
+mkdir .ssh
+cd .ssh
+vim authorized_keys
+</code>
+then put the content in <code>~/.ssh/id_rsa.pub</code> in your <strong>local machine</strong> into it.</p>
+
+<h2>4. Install all services</h2>
+
+<p>```
+sudo locale-gen UTF-8
+sudo apt-get update</p>
+
+<h1>Install git</h1>
+
+<p>sudo apt-get install git</p>
+
+<h1>Install phantomjs</h1>
+
+<p>sudo apt-get install phantomjs</p>
+
+<h1>Install Node.js v6</h1>
+
+<p>curl -sL https://deb.nodesource.com/setup_6.x | sudo -E bash -
+sudo apt-get install -y nodejs</p>
+
+<h1>Clone the project</h1>
+
+<p>git clone https://github.com/prerender/prerender.git
+cd prerender
+npm install</p>
+
+<h1>Fix: Fontconfig warning: ignoring UTF-8: not a valid region tag</h1>
+
+<p>export LANGUAGE=en_US.UTF-8
+export LANG=en_US.UTF-8
+export LC_ALL=en_US.UTF-8
+locale-gen en_US.UTF-8</p>
+
+<h1>Run Node server</h1>
+
+<p>node server.js
+```</p>
+
+<h2>5. Now you can try in browser</h2>
+
+<p>http://your.ip:3000/https://www.google.com</p>
+
+<h2>6. Run your Preloader service after restart Machine</h2>
+
+<p><code>
+cd ~/prerender
+vim startup.sh
+</code></p>
+
+<p>Put these lines to the file</p>
+
+<p>```</p>
+
+<h1>!/usr/bin/env bash</h1>
+
+<p>node /home/deploy/prerender/server.js
+```</p>
+
+<p>Allow the script can be excuted</p>
+
+<p><code>
+chmod +x startup.sh
+</code></p>
+
+<p>Setup <code>/etc/init/prerender.conf</code></p>
+
+<p><code>
+sudo vim /etc/init/prerender.conf
+</code></p>
+
+<p>Put these lines to the file</p>
+
+<p>```</p>
+
+<h1>!upstart</h1>
+
+<p>description "A job that runs the prerender service"
+author "Deploy"</p>
+
+<p>start on filesystem or runlevel [2345]
+script</p>
+
+<pre><code>export HOME="/home/deploy/prerender"
+cd /home/deploy/prerender
+exec su -c ' /home/deploy/prerender/startup.sh'
+</code></pre>
+
+<p>end script</p>
+
+<p>pre-start script</p>
+
+<pre><code>echo "['date'] Prerender Service Starting" &gt;&gt; /var/log/prerender/prerender.log
+</code></pre>
+
+<p>end script</p>
+
+<p>pre-stop script</p>
+
+<pre><code>echo "['date'] Prerender Service Stopping" &gt;&gt; /var/log/prerender/prerender.log
+</code></pre>
+
+<p>end script</p>
+
+<p>respawn
+respawn limit 10 90
+```</p>
+
+<p>Before start you need to create this folder</p>
+
+<p><code>
+sudo mkdir /var/log/prerender
+</code></p>
+
+<p>Now you can</p>
+
+<p><code>
+sudo service prerender start
+</code></p>
+]]></content>
+  </entry>
+  
+</feed>

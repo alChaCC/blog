@@ -585,8 +585,20 @@
         <lastmod>2016-01-07T16:46:00+08:00</lastmod>
     </url>
     <url>
+        <loc>
+            http://ccaloha.cc/blog/2016/06/16/how-to-setup-standalone-faye-websocket-server-using-ssl-and-ruby/
+        </loc>
+        <lastmod>2016-06-16T15:29:01+08:00</lastmod>
+    </url>
+    <url>
+        <loc>
+            http://ccaloha.cc/blog/2016/06/22/how-to-install-preloader-dot-io-service-in-ubuntu-14-dot-04/
+        </loc>
+        <lastmod>2016-06-22T18:02:13+08:00</lastmod>
+    </url>
+    <url>
         <loc>http://ccaloha.cc/About/</loc>
-        <lastmod>2015-11-15T23:09:38+08:00</lastmod>
+        <lastmod>2015-11-15T22:54:12+08:00</lastmod>
     </url>
     <url>
         <loc>http://ccaloha.cc/ActionScript/</loc>
@@ -598,15 +610,15 @@
     </url>
     <url>
         <loc>http://ccaloha.cc/archives/</loc>
-        <lastmod>2016-01-07T16:46:00+08:00</lastmod>
+        <lastmod>2016-06-22T18:02:13+08:00</lastmod>
     </url>
     <url>
         <loc>http://ccaloha.cc/blog/archives/</loc>
-        <lastmod>2016-01-07T16:46:00+08:00</lastmod>
+        <lastmod>2016-06-22T18:02:13+08:00</lastmod>
     </url>
     <url>
         <loc>http://ccaloha.cc/blog/</loc>
-        <lastmod>2016-01-07T16:46:00+08:00</lastmod>
+        <lastmod>2016-06-22T18:02:13+08:00</lastmod>
     </url>
     <url>
         <loc>http://ccaloha.cc/DesignPattern/</loc>
@@ -618,7 +630,7 @@
     </url>
     <url>
         <loc>http://ccaloha.cc/</loc>
-        <lastmod>2016-01-07T16:46:00+08:00</lastmod>
+        <lastmod>2016-06-22T18:02:13+08:00</lastmod>
     </url>
     <url>
         <loc>http://ccaloha.cc/Linux/</loc>

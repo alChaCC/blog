@@ -107,6 +107,182 @@ $(document).ready(
     <article class="post">
 	<h2 class="title">
 		
+		<a href="/blog/2016/06/22/how-to-install-preloader-dot-io-service-in-ubuntu-14-dot-04/">
+		
+			How to Install Preloader.io Service in Ubuntu 14.04</a>
+	</h2>
+	<div class="entry-content">
+		<p>If you&#8217;re finding a solution for SEO especially for AngularJS, BackboneJS, EmberJS and other javascript frameworks. <code>Preloader</code> will be one of your options.</p>
+
+<blockquote><p><code>Preloader</code> is a node server that uses phantomjs to create static HTML out of a javascript page.</p></blockquote>
+
+<p>you are able to use their <a href="https://prerender.io/">solutions</a> instead of installing in your own machine.</p>
+
+<p>But, what if you just like me, want to try their service first and want to customize your own Preloader?</p>
+
+<p>here are flows that show how I install Preloader in Ubuntu 14.04.</p>
+
+
+		
+		<a href="/blog/2016/06/22/how-to-install-preloader-dot-io-service-in-ubuntu-14-dot-04/" class="more-link">Read on &rarr;</a>
+	</div>
+
+
+<div class="meta">
+	<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2016-06-22T17:58:14+08:00" pubdate data-updated="true">Jun 22<span>nd</span>, 2016</time></div>
+	
+
+<div class="tags">
+
+	<a class='category' href='/blog/categories/preloader-dot-io/'>Preloader.io</a>, <a class='category' href='/blog/categories/server/'>Server</a>
+
+</div>
+
+
+	
+		<span class="comments"><a href="/blog/2016/06/22/how-to-install-preloader-dot-io-service-in-ubuntu-14-dot-04//index.html#disqus_thread">Comments</a></span>
+	
+</div></article>
+
+
+    <article class="post">
+	<h2 class="title">
+		
+		<a href="/blog/2016/06/16/how-to-setup-standalone-faye-websocket-server-using-ssl-and-ruby/">
+		
+			How to Setup a Simple Standalone Faye Websocket Server Using SSL and Ruby</a>
+	</h2>
+	<div class="entry-content">
+		<p><img src='https://dl.dropboxusercontent.com/u/22307926/Blog%20Image/websocket/How%20to%20setup%20a%20simple%20standalone%20faye%20websocket%20server%20using%20SSL%20and%20Ruby.png' alt='Demo faye websocket server using Ruby'></p>
+
+<p>References:</p>
+
+<p><a href="https://www.driftingruby.com/episodes/faye-websockets-part-1">faye-websockets-part-1</a></p>
+
+<p><a href="https://www.driftingruby.com/episodes/faye-websockets-part-2">faye-websockets-part-2</a></p>
+
+<p><a href="http://code.tutsplus.com/tutorials/how-to-use-faye-as-a-real-time-push-server-in-rails--net-22600">How to Use Faye as a Real-Time Push Server in Rails</a></p>
+
+<p><strong>====================================================</strong></p>
+
+<p><strong>In your remote Ubuntu server</strong></p>
+
+<p><strong>====================================================</strong></p>
+
+<h2>Step1. Install Ruby environment in Ubuntu</h2>
+
+<p>Reference: <a href="https://gorails.com/deploy/ubuntu/14.04">https://gorails.com/deploy/ubuntu/14.04</a></p>
+
+<h3>Add user</h3>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>sudo adduser deploy
+</span><span class='line'>sudo adduser deploy sudo
+</span><span class='line'>su deploy</span></code></pre></td></tr></table></div></figure>
+
+
+<h3>Make sure you can login using new user</h3>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>cd ~
+</span><span class='line'>mkdir .ssh
+</span><span class='line'>cd .ssh
+</span><span class='line'>vim authorized_keys</span></code></pre></td></tr></table></div></figure>
+
+
+<p>then put the content in <code>~/.ssh/id_rsa.pub</code> in your <em>local machine</em> into it.</p>
+
+<h3>Install Ruby and RVM</h3>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>sudo apt-get update
+</span><span class='line'>
+</span><span class='line'>sudo apt-get install git-core curl zlib1g-dev build-essential libssl-dev libreadline-dev libyaml-dev libsqlite3-dev sqlite3 libxml2-dev libxslt1-dev libcurl4-openssl-dev python-software-properties libffi-dev
+</span><span class='line'>
+</span><span class='line'>sudo apt-get install libgdbm-dev libncurses5-dev automake libtool bison libffi-dev
+</span><span class='line'>
+</span><span class='line'>gpg --keyserver hkp://keys.gnupg.net --recv-keys 409B6B1796C275462A1703113804BB82D39DC0E3
+</span><span class='line'>
+</span><span class='line'>curl -L https://get.rvm.io | bash -s stable
+</span><span class='line'>
+</span><span class='line'>source ~/.rvm/scripts/rvm
+</span><span class='line'>
+</span><span class='line'>rvm install 2.2.3
+</span><span class='line'>
+</span><span class='line'>gem install bundler</span></code></pre></td></tr></table></div></figure>
+
+
+
+
+
+		
+		<a href="/blog/2016/06/16/how-to-setup-standalone-faye-websocket-server-using-ssl-and-ruby/" class="more-link">Read on &rarr;</a>
+	</div>
+
+
+<div class="meta">
+	<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2016-06-16T12:08:11+08:00" pubdate data-updated="true">Jun 16<span>th</span>, 2016</time></div>
+	
+
+<div class="tags">
+
+	<a class='category' href='/blog/categories/ruby/'>Ruby</a>, <a class='category' href='/blog/categories/websocket/'>Websocket</a>
+
+</div>
+
+
+	
+		<span class="comments"><a href="/blog/2016/06/16/how-to-setup-standalone-faye-websocket-server-using-ssl-and-ruby//index.html#disqus_thread">Comments</a></span>
+	
+</div></article>
+
+
+    <article class="post">
+	<h2 class="title">
+		
 		<a href="/blog/2016/01/07/ruby-on-rails-development-using-mongoid-5-dot-0-0-3-how-to-use-mapreduce-to-get-pageview-data/">
 		
 			Ruby on Rails Development Using Mongoid 5.0.0 - 3. How to Use MapReduce to Get Pageview Data</a>
@@ -323,238 +499,6 @@ $(document).ready(
 
 	
 		<span class="comments"><a href="/blog/2015/10/03/ruby-on-rails-using-mongoid-5-dot-0-0-setup-mongodb//index.html#disqus_thread">Comments</a></span>
-	
-</div></article>
-
-
-    <article class="post">
-	<h2 class="title">
-		
-		<a href="/blog/2015/08/27/tips-limit-some-class-only-be-used-in-development-environment/">
-		
-			[Tips] Limit Class Only Be Used in Development Environment</a>
-	</h2>
-	<div class="entry-content">
-		<p>In my project, I have to dump data from Mysql to MongoDB. And, this feature only used in development. However, Rails will load any classes under folder &#8220;app/&#8221; automatically . So, how can I avoid &#8220;Development-Only Class&#8221; loading in production environment?</p>
-
-<p>let&#8217;s check it out~</p>
-
-<p>If you have a class named: <strong>DumpDataFromOldServer</strong> and it located at  folder <strong>&#8216;/app/development_only&#8217;</strong>. like this:</p>
-
-<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-</pre></td><td class='code'><pre><code class=''><span class='line'># app/development_only/dump_data_from_old_server.rb
-</span><span class='line'>
-</span><span class='line'>class DumpDataFromOldServer &lt; ActiveRecord::Base
-</span><span class='line'>    ....
-</span><span class='line'>end</span></code></pre></td></tr></table></div></figure>
-
-
-<h2>Step1. Application.rb</h2>
-
-<p>you still need to let Rails know which folders should be loaded by using <strong>config.eager_load_paths</strong>.</p>
-
-<p>ps. what&#8217;s difference between eager_load and auto_load?</p>
-
-<p>please check this <a href="http://stackoverflow.com/questions/19773266/confusing-about-autoload-paths-vs-eager-load-paths-in-rails-4">http://stackoverflow.com/questions/19773266/confusing-about-autoload-paths-vs-eager-load-paths-in-rails-4</a></p>
-
-<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-</pre></td><td class='code'><pre><code class=''><span class='line'> config.eager_load_paths += %W(#{Rails.root}/app/development_only)</span></code></pre></td></tr></table></div></figure>
-
-
-<p>It will be:</p>
-
-<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-<span class='line-number'>14</span>
-<span class='line-number'>15</span>
-</pre></td><td class='code'><pre><code class=''><span class='line'># config/application.rb
-</span><span class='line'>
-</span><span class='line'>require File.expand_path('../boot', __FILE__)
-</span><span class='line'>
-</span><span class='line'>Bundler.require(*Rails.groups)
-</span><span class='line'>
-</span><span class='line'>module MyAwesomeProject
-</span><span class='line'>  class Application &lt; Rails::Application
-</span><span class='line'>   ...
-</span><span class='line'>   
-</span><span class='line'>   config.eager_load_paths += %W(#{Rails.root}/app/development_only)
-</span><span class='line'>   
-</span><span class='line'>   ...
-</span><span class='line'>   end 
-</span><span class='line'>end
-</span></code></pre></td></tr></table></div></figure>
-
-
-<h2>Step2. Update your environment file</h2>
-
-<p>ref: <a href="http://stackoverflow.com/questions/13756986/how-to-blacklist-directory-loading-in-rails">http://stackoverflow.com/questions/13756986/how-to-blacklist-directory-loading-in-rails</a></p>
-
-<p>Add these lines</p>
-
-<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-</pre></td><td class='code'><pre><code class=''><span class='line'>  path_rejector = lambda { |s| s.include?("app/development_only") }
-</span><span class='line'>
-</span><span class='line'>  # Remove the path from being loaded when Rails starts:
-</span><span class='line'>  config.eager_load_paths = config.eager_load_paths.reject(&path_rejector)
-</span><span class='line'>
-</span><span class='line'>  # Remove the path from being lazily loaded
-</span><span class='line'>  ActiveSupport::Dependencies.autoload_paths.reject!(&path_rejector)</span></code></pre></td></tr></table></div></figure>
-
-
-<p>It will be:</p>
-
-<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-</pre></td><td class='code'><pre><code class=''><span class='line'># config/environments/production.rb
-</span><span class='line'>Rails.application.configure do
-</span><span class='line'>  
-</span><span class='line'>  ...
-</span><span class='line'>
-</span><span class='line'>  path_rejector = lambda { |s| s.include?("app/development_only") }
-</span><span class='line'>
-</span><span class='line'>  config.eager_load_paths = config.eager_load_paths.reject(&path_rejector)
-</span><span class='line'>
-</span><span class='line'>  ActiveSupport::Dependencies.autoload_paths.reject!(&path_rejector)
-</span><span class='line'>end
-</span></code></pre></td></tr></table></div></figure>
-
-
-<h2>Step3. Test</h2>
-
-<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-</pre></td><td class='code'><pre><code class=''><span class='line'># In Development console: rails c 
-</span><span class='line'>
-</span><span class='line'>&gt; DumpDataFromOldServer.all.first 
-</span><span class='line'>
-</span><span class='line'>DumpDataFromOldServer Load (0.6ms)  SELECT  `dump_data_from_old_server`.* FROM `dump_data_from_old_server `  LIMIT 1
-</span><span class='line'>=&gt; #&lt;DumpDataFromOldServer id: 1, created_at: "2014-05-09 16:59:55"&gt;
-</span><span class='line'>
-</span><span class='line'>
-</span><span class='line'># In Production console: rails c -e production
-</span><span class='line'>&gt; DumpDataFromOldServer.all.first
-</span><span class='line'>NameError: uninitialized constant DumpDataFromOldServer
-</span></code></pre></td></tr></table></div></figure>
-
-
-		
-		
-	</div>
-
-
-<div class="meta">
-	<div class="date">
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2015-08-27T17:22:50+08:00" pubdate data-updated="true">Aug 27<span>th</span>, 2015</time></div>
-	
-
-<div class="tags">
-
-	<a class='category' href='/blog/categories/ruby-on-rails/'>Ruby on Rails</a>
-
-</div>
-
-
-	
-		<span class="comments"><a href="/blog/2015/08/27/tips-limit-some-class-only-be-used-in-development-environment//index.html#disqus_thread">Comments</a></span>
-	
-</div></article>
-
-
-    <article class="post">
-	<h2 class="title">
-		
-		<a href="/blog/2015/08/23/build-up-a-homemade-server-to-server-interactions-with-google-api-using-ruby-take-google-analytics-as-an-example/">
-		
-			Build Up a Homemade Server-to-server Interactions With Google API Using Ruby - Take Google Analytics as an Example</a>
-	</h2>
-	<div class="entry-content">
-		<p>Since &#8216;google-api-ruby-client&#8217; make a big change from <a href="https://github.com/google/google-api-ruby-client/blob/master/MIGRATING.md">0.8 to 0.9</a> when my project is running out of time, and also I met this <a href="https://github.com/google/google-api-ruby-client/issues/253">issue</a>, So, I make this decision, let&#8217;s build a API client by myself.</p>
-
-<p>This implementation refer to Google <a href="https://developers.google.com/identity/protocols/OAuth2ServiceAccount">guideline</a></p>
-
-<p><img src="https://dl.dropboxusercontent.com/u/22307926/Blog%20Image/build%20up%20server-to-server%20interactions%20with%20Google%20API/Google%20API%20server-to-server.png"></p>
-
-
-		
-		<a href="/blog/2015/08/23/build-up-a-homemade-server-to-server-interactions-with-google-api-using-ruby-take-google-analytics-as-an-example/" class="more-link">Read on &rarr;</a>
-	</div>
-
-
-<div class="meta">
-	<div class="date">
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2015-08-23T15:10:37+08:00" pubdate data-updated="true">Aug 23<span>rd</span>, 2015</time></div>
-	
-
-<div class="tags">
-
-	<a class='category' href='/blog/categories/google-analytics/'>Google Analytics</a>, <a class='category' href='/blog/categories/ruby-on-rails/'>Ruby on Rails</a>
-
-</div>
-
-
-	
-		<span class="comments"><a href="/blog/2015/08/23/build-up-a-homemade-server-to-server-interactions-with-google-api-using-ruby-take-google-analytics-as-an-example//index.html#disqus_thread">Comments</a></span>
 	
 </div></article>
 

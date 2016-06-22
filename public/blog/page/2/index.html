@@ -107,6 +107,238 @@ $(document).ready(
     <article class="post">
 	<h2 class="title">
 		
+		<a href="/blog/2015/08/27/tips-limit-some-class-only-be-used-in-development-environment/">
+		
+			[Tips] Limit Class Only Be Used in Development Environment</a>
+	</h2>
+	<div class="entry-content">
+		<p>In my project, I have to dump data from Mysql to MongoDB. And, this feature only used in development. However, Rails will load any classes under folder &#8220;app/&#8221; automatically . So, how can I avoid &#8220;Development-Only Class&#8221; loading in production environment?</p>
+
+<p>let&#8217;s check it out~</p>
+
+<p>If you have a class named: <strong>DumpDataFromOldServer</strong> and it located at  folder <strong>&#8216;/app/development_only&#8217;</strong>. like this:</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'># app/development_only/dump_data_from_old_server.rb
+</span><span class='line'>
+</span><span class='line'>class DumpDataFromOldServer &lt; ActiveRecord::Base
+</span><span class='line'>    ....
+</span><span class='line'>end</span></code></pre></td></tr></table></div></figure>
+
+
+<h2>Step1. Application.rb</h2>
+
+<p>you still need to let Rails know which folders should be loaded by using <strong>config.eager_load_paths</strong>.</p>
+
+<p>ps. what&#8217;s difference between eager_load and auto_load?</p>
+
+<p>please check this <a href="http://stackoverflow.com/questions/19773266/confusing-about-autoload-paths-vs-eager-load-paths-in-rails-4">http://stackoverflow.com/questions/19773266/confusing-about-autoload-paths-vs-eager-load-paths-in-rails-4</a></p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'> config.eager_load_paths += %W(#{Rails.root}/app/development_only)</span></code></pre></td></tr></table></div></figure>
+
+
+<p>It will be:</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'># config/application.rb
+</span><span class='line'>
+</span><span class='line'>require File.expand_path('../boot', __FILE__)
+</span><span class='line'>
+</span><span class='line'>Bundler.require(*Rails.groups)
+</span><span class='line'>
+</span><span class='line'>module MyAwesomeProject
+</span><span class='line'>  class Application &lt; Rails::Application
+</span><span class='line'>   ...
+</span><span class='line'>   
+</span><span class='line'>   config.eager_load_paths += %W(#{Rails.root}/app/development_only)
+</span><span class='line'>   
+</span><span class='line'>   ...
+</span><span class='line'>   end 
+</span><span class='line'>end
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h2>Step2. Update your environment file</h2>
+
+<p>ref: <a href="http://stackoverflow.com/questions/13756986/how-to-blacklist-directory-loading-in-rails">http://stackoverflow.com/questions/13756986/how-to-blacklist-directory-loading-in-rails</a></p>
+
+<p>Add these lines</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>  path_rejector = lambda { |s| s.include?("app/development_only") }
+</span><span class='line'>
+</span><span class='line'>  # Remove the path from being loaded when Rails starts:
+</span><span class='line'>  config.eager_load_paths = config.eager_load_paths.reject(&path_rejector)
+</span><span class='line'>
+</span><span class='line'>  # Remove the path from being lazily loaded
+</span><span class='line'>  ActiveSupport::Dependencies.autoload_paths.reject!(&path_rejector)</span></code></pre></td></tr></table></div></figure>
+
+
+<p>It will be:</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'># config/environments/production.rb
+</span><span class='line'>Rails.application.configure do
+</span><span class='line'>  
+</span><span class='line'>  ...
+</span><span class='line'>
+</span><span class='line'>  path_rejector = lambda { |s| s.include?("app/development_only") }
+</span><span class='line'>
+</span><span class='line'>  config.eager_load_paths = config.eager_load_paths.reject(&path_rejector)
+</span><span class='line'>
+</span><span class='line'>  ActiveSupport::Dependencies.autoload_paths.reject!(&path_rejector)
+</span><span class='line'>end
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h2>Step3. Test</h2>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'># In Development console: rails c 
+</span><span class='line'>
+</span><span class='line'>&gt; DumpDataFromOldServer.all.first 
+</span><span class='line'>
+</span><span class='line'>DumpDataFromOldServer Load (0.6ms)  SELECT  `dump_data_from_old_server`.* FROM `dump_data_from_old_server `  LIMIT 1
+</span><span class='line'>=&gt; #&lt;DumpDataFromOldServer id: 1, created_at: "2014-05-09 16:59:55"&gt;
+</span><span class='line'>
+</span><span class='line'>
+</span><span class='line'># In Production console: rails c -e production
+</span><span class='line'>&gt; DumpDataFromOldServer.all.first
+</span><span class='line'>NameError: uninitialized constant DumpDataFromOldServer
+</span></code></pre></td></tr></table></div></figure>
+
+
+		
+		
+	</div>
+
+
+<div class="meta">
+	<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2015-08-27T17:22:50+08:00" pubdate data-updated="true">Aug 27<span>th</span>, 2015</time></div>
+	
+
+<div class="tags">
+
+	<a class='category' href='/blog/categories/ruby-on-rails/'>Ruby on Rails</a>
+
+</div>
+
+
+	
+		<span class="comments"><a href="/blog/2015/08/27/tips-limit-some-class-only-be-used-in-development-environment//blog/page/2/index.html#disqus_thread">Comments</a></span>
+	
+</div></article>
+
+
+    <article class="post">
+	<h2 class="title">
+		
+		<a href="/blog/2015/08/23/build-up-a-homemade-server-to-server-interactions-with-google-api-using-ruby-take-google-analytics-as-an-example/">
+		
+			Build Up a Homemade Server-to-server Interactions With Google API Using Ruby - Take Google Analytics as an Example</a>
+	</h2>
+	<div class="entry-content">
+		<p>Since &#8216;google-api-ruby-client&#8217; make a big change from <a href="https://github.com/google/google-api-ruby-client/blob/master/MIGRATING.md">0.8 to 0.9</a> when my project is running out of time, and also I met this <a href="https://github.com/google/google-api-ruby-client/issues/253">issue</a>, So, I make this decision, let&#8217;s build a API client by myself.</p>
+
+<p>This implementation refer to Google <a href="https://developers.google.com/identity/protocols/OAuth2ServiceAccount">guideline</a></p>
+
+<p><img src="https://dl.dropboxusercontent.com/u/22307926/Blog%20Image/build%20up%20server-to-server%20interactions%20with%20Google%20API/Google%20API%20server-to-server.png"></p>
+
+
+		
+		<a href="/blog/2015/08/23/build-up-a-homemade-server-to-server-interactions-with-google-api-using-ruby-take-google-analytics-as-an-example/" class="more-link">Read on &rarr;</a>
+	</div>
+
+
+<div class="meta">
+	<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2015-08-23T15:10:37+08:00" pubdate data-updated="true">Aug 23<span>rd</span>, 2015</time></div>
+	
+
+<div class="tags">
+
+	<a class='category' href='/blog/categories/google-analytics/'>Google Analytics</a>, <a class='category' href='/blog/categories/ruby-on-rails/'>Ruby on Rails</a>
+
+</div>
+
+
+	
+		<span class="comments"><a href="/blog/2015/08/23/build-up-a-homemade-server-to-server-interactions-with-google-api-using-ruby-take-google-analytics-as-an-example//blog/page/2/index.html#disqus_thread">Comments</a></span>
+	
+</div></article>
+
+
+    <article class="post">
+	<h2 class="title">
+		
 		<a href="/blog/2015/07/22/for-dummies-stress-test-using-jmeter-in-rails-4-plus-ruby-2-dot-2/">
 		
 			For Dummies Stress Test Using JMeter in Rails 4 + Ruby 2.2</a>
@@ -335,134 +567,6 @@ $(document).ready(
 
 	
 		<span class="comments"><a href="/blog/2015/06/10/string-handling-between-javacript-and-ruby//blog/page/2/index.html#disqus_thread">Comments</a></span>
-	
-</div></article>
-
-
-    <article class="post">
-	<h2 class="title">
-		
-		<a href="/blog/2015/05/18/monitoring-your-ubuntu-machine-for-dummies/">
-		
-			機器監控不求人 - 猴子都會用的 Monit(Monitoring Your Ubuntu Machine for Dummies)</a>
-	</h2>
-	<div class="entry-content">
-		<p>你是個前端工程師，但是，老闆賦予你<strong>MIS</strong>的神聖任務</p>
-
-<p>還是，你是個後端工程師，無時無刻，要去看一下<strong>mysql</strong>是否還活著，<strong>apache2</strong>是否快掛了</p>
-
-<p>還有，你是個<strong>全端工程師</strong>，雖然你已經強的跟神一樣，但是你就是不想要寫的script自動去重啟的service</p>
-
-<p>這時候，你需要的是<strong><a href="https://mmonit.com/monit/">Monit</a></strong></p>
-
-<p>他可以幫你監控你的daemon processes、檔案系統、Network、Space</p>
-
-<p>如果想要看完整的設定文件請點 <strong><a href="https://mmonit.com/monit/documentation/monit.html">Monit Documentation</a></strong></p>
-
-<p>整理一下，我的使用的感覺</p>
-
-<ol>
-<li>使用DSL，所以用起來很直覺</li>
-<li>使用 # 當作註解</li>
-<li><a href="https://mmonit.com/monit/documentation/monit.html#ACTION">不同的監控，可以有不同的動作(ex: alert, restart, stop, UNMONITOR)</a></li>
-<li><a href="https://mmonit.com/monit/documentation/monit.html#SERVICE-POLL-TIME">彈性設定時間來監控</a></li>
-<li><a href="https://mmonit.com/monit/documentation/monit.html#SERVICE-RESTART-LIMIT">彈性設定幾次重啟後，就不要再重啟了</a></li>
-<li><a href="https://mmonit.com/monit/documentation/monit.html#GENERAL-SYNTAX">可以用if, else &#8230;等來做動作判斷！</a></li>
-<li>提供網頁GUI，讓你很好的操作或是看伺服器狀態！</li>
-<li>簡單來說，超多客製化應用！網路上也滿多資源可以參考！</li>
-</ol>
-
-
-<p>但是，如果你跟我一樣是個懶人，這時候，你就需要看這篇文章</p>
-
-
-		
-		<a href="/blog/2015/05/18/monitoring-your-ubuntu-machine-for-dummies/" class="more-link">Read on &rarr;</a>
-	</div>
-
-
-<div class="meta">
-	<div class="date">
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2015-05-18T18:21:20+08:00" pubdate data-updated="true">May 18<span>th</span>, 2015</time></div>
-	
-
-<div class="tags">
-
-	<a class='category' href='/blog/categories/mis/'>MIS</a>
-
-</div>
-
-
-	
-		<span class="comments"><a href="/blog/2015/05/18/monitoring-your-ubuntu-machine-for-dummies//blog/page/2/index.html#disqus_thread">Comments</a></span>
-	
-</div></article>
-
-
-    <article class="post">
-	<h2 class="title">
-		
-		<a href="/blog/2015/04/28/send-limited-mail-on-staging-environment/">
-		
-			[Ruby on Rails] Send Limited Mail on Staging Environment</a>
-	</h2>
-	<div class="entry-content">
-		<p>For simulating production environment, we will build up a stage machine.</p>
-
-<p>Plus, we usually use the copy of production database in stage server.</p>
-
-<p>In some applications, we will send email to users for some purposes such as confirmation mail after user</p>
-
-<p>register, reset password mail&#8230;etc.</p>
-
-<p>And, in staging environment, we have to avoid our operators accidentally send email to real users.</p>
-
-<p>Therefore, we have to implement some codes for filtering.</p>
-
-<p>Let&#8217;s go</p>
-
-
-		
-		<a href="/blog/2015/04/28/send-limited-mail-on-staging-environment/" class="more-link">Read on &rarr;</a>
-	</div>
-
-
-<div class="meta">
-	<div class="date">
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2015-04-28T17:16:33+08:00" pubdate data-updated="true">Apr 28<span>th</span>, 2015</time></div>
-	
-
-<div class="tags">
-
-	<a class='category' href='/blog/categories/ruby-on-rails/'>Ruby on Rails</a>
-
-</div>
-
-
-	
-		<span class="comments"><a href="/blog/2015/04/28/send-limited-mail-on-staging-environment//blog/page/2/index.html#disqus_thread">Comments</a></span>
 	
 </div></article>
 

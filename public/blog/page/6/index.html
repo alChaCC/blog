@@ -107,6 +107,143 @@ $(document).ready(
     <article class="post">
 	<h2 class="title">
 		
+		<a href="/blog/2014/07/11/reading-note-23-plus-1-design-pattern-part3-factory-method/">
+		
+			[閱讀筆記系列] 23 + 1 設計模式 - Part4. 工廠方法(Factory Method)</a>
+	</h2>
+	<div class="entry-content">
+		<p>重點在於</p>
+
+<blockquote><p>將建立物件的程式碼集中在一個物件或行為中，可避免程式碼重複，方便以後修改</p></blockquote>
+
+<p>你是否常需要建立某個object，但是這個object內容卻時常需要變化，但是又很類似</p>
+
+<p>之前的閱讀筆記(懶惰版)</p>
+
+<iframe id="xmindshare_embedviewer" src="http://www.xmind.net/embed/w4XW?size=medium" width="750px" height="450px" frameborder="0" scrolling="no"></iframe>
+
+
+
+
+		
+		
+	</div>
+
+
+<div class="meta">
+	<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2014-07-11T22:57:34+08:00" pubdate data-updated="true">Jul 11<span>th</span>, 2014</time></div>
+	
+
+<div class="tags">
+
+	<a class='category' href='/blog/categories/designpattern/'>DesignPattern</a>
+
+</div>
+
+
+	
+		<span class="comments"><a href="/blog/2014/07/11/reading-note-23-plus-1-design-pattern-part3-factory-method//blog/page/6/index.html#disqus_thread">Comments</a></span>
+	
+</div></article>
+
+
+    <article class="post">
+	<h2 class="title">
+		
+		<a href="/blog/2014/06/30/dynamic-roles-and-permissions-management-using-cancan/">
+		
+			如何動態管理權限-使用cancan</a>
+	</h2>
+	<div class="entry-content">
+		<p>這篇是參考自<a href="http://blog.joshsoftware.com/2012/10/23/dynamic-roles-and-permissions-using-cancan/">Dynamic roles and permissions using cancan</a></p>
+
+<p>大概分成幾個流程：</p>
+
+<ol>
+<li>建立Gemfile</li>
+<li>建立需要的Model</li>
+<li>寫rake爬controller的action(懶惰專用，不想要資料庫一個一個建權限)</li>
+<li>設定Ability => 這邊是關鍵，他會去抓user的role底下的權限</li>
+<li>設定Controller => 用來擋權限,設定權限</li>
+<li>設定route</li>
+<li>建立View</li>
+</ol>
+
+
+<h1>前言</h1>
+
+<p>網站後台往往可能有多個員工進去作業，但是有些功能並不希望開放給低層級的員工使用，</p>
+
+<p>所以後台也需要做權限管理～</p>
+
+<p>但是人員進進出出，陞遷、轉職相對應的職務也會調整，總不能每次都要去改hard code吧～～</p>
+
+<p>所以才有動態權限設定的需求！</p>
+
+<h1>Step 1. Gemfile</h1>
+
+<p>因為我們要使用Railscast網站開發者兼Boss Ryanb寫的<a href="https://github.com/ryanb/cancan">cancan</a>，提供權限管理的服務</p>
+
+<p><strong>[手做]</strong> 所以，要在Gemfile寫入</p>
+
+<pre><code>gem 'cancan'
+</code></pre>
+
+<p><strong>[手做]</strong> 在terminal執行</p>
+
+<pre><code>bundle install
+</code></pre>
+
+
+		
+		<a href="/blog/2014/06/30/dynamic-roles-and-permissions-management-using-cancan/" class="more-link">Read on &rarr;</a>
+	</div>
+
+
+<div class="meta">
+	<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2014-06-30T15:27:55+08:00" pubdate data-updated="true">Jun 30<span>th</span>, 2014</time></div>
+	
+
+<div class="tags">
+
+	<a class='category' href='/blog/categories/ruby-on-rails/'>Ruby on Rails</a>, <a class='category' href='/blog/categories/cancan/'>cancan</a>
+
+</div>
+
+
+	
+		<span class="comments"><a href="/blog/2014/06/30/dynamic-roles-and-permissions-management-using-cancan//blog/page/6/index.html#disqus_thread">Comments</a></span>
+	
+</div></article>
+
+
+    <article class="post">
+	<h2 class="title">
+		
 		<a href="/blog/2014/05/14/fight-invalid-utf-8-bytes-when-csv-importing/">
 		
 			CSV匯入中文編碼問題</a>
@@ -450,138 +587,6 @@ Net::SSH::Disconnect, connection closed by remote host&#8221;</strong></p>
 
 	
 		<span class="comments"><a href="/blog/2014/03/27/howto-transfer-capistrano-2-to-capistrano-3-using-ruby-on-rails//blog/page/6/index.html#disqus_thread">Comments</a></span>
-	
-</div></article>
-
-
-    <article class="post">
-	<h2 class="title">
-		
-		<a href="/blog/2014/03/07/howto-seo-for-octopress/">
-		
-			HOWTO- 公司需要CEO, Blog也需要SEO！- Using Octopress</a>
-	</h2>
-	<div class="entry-content">
-		<p>這篇其實是學習(翻譯)自
-<a href="http://xit0.org/2013/05/seo-for-octopress-websites">http://xit0.org/2013/05/seo-for-octopress-websites</a></p>
-
-<h2>第一步- 文章SEO: 更改你Octopress產生文章引擎的 Rakefile</h2>
-
-<pre><code>desc "Begin a new post in #{source_dir}/#{posts_dir}"
-task :new_post, :title do |t, args|
-  if args.title
-    title = args.title
-  else
-    title = get_stdin("Enter a title for your post: ")
-  end
-  raise "### You haven't set anything up yet. First run `rake install` to set up an Octopress theme." unless File.directory?(source_dir)
-  mkdir_p "#{source_dir}/#{posts_dir}"
-  filename = "#{source_dir}/#{posts_dir}/#{Time.now.strftime('%Y-%m-%d')}-#{title.to_url}.#{new_post_ext}"
-  if File.exist?(filename)
-    abort("rake aborted!") if ask("#{filename} already exists. Do you want to overwrite?", ['y', 'n']) == 'n'
-  end
-  puts "Creating new post: #{filename}"
-  open(filename, 'w') do |post|
-    post.puts "---"
-    post.puts "layout: post"
-    post.puts "title: \"#{title.gsub(/&amp;/,'&amp;amp;')}\""
-    post.puts "date: #{Time.now.strftime('%Y-%m-%d %H:%M')}"
-    post.puts "comments: true"
-    post.puts "categories: "
-    post.puts "keywords: "      # 加在這邊
-    post.puts "description: "   # 加在這邊
-    post.puts "---"
-  end
-end
-</code></pre>
-
-
-		
-		<a href="/blog/2014/03/07/howto-seo-for-octopress/" class="more-link">Read on &rarr;</a>
-	</div>
-
-
-<div class="meta">
-	<div class="date">
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2014-03-07T10:32:20+08:00" pubdate data-updated="true">Mar 7<span>th</span>, 2014</time></div>
-	
-
-<div class="tags">
-
-	<a class='category' href='/blog/categories/seo/'>SEO</a>
-
-</div>
-
-
-	
-		<span class="comments"><a href="/blog/2014/03/07/howto-seo-for-octopress//blog/page/6/index.html#disqus_thread">Comments</a></span>
-	
-</div></article>
-
-
-    <article class="post">
-	<h2 class="title">
-		
-		<a href="/blog/2014/03/06/howto-build-step-by-step-introduction-javascript-using-crumble-instead-of-intro-dot-js/">
-		
-			[HOWTO]- Build a Step-By-Step Website Introduction Using crumble.js Instead of intro.js</a>
-	</h2>
-	<div class="entry-content">
-		<h2>Intro</h2>
-
-<p>Crumble.js is a interactive step-by-step tour based on grumble.js</p>
-
-<p>you might want to check the demo site.</p>
-
-<p>Please check this out => <a href="http://blog.tommoor.com/crumble">http://blog.tommoor.com/crumble</a></p>
-
-<p>You can learn from this tutorial how to use crumble.js in your Ruby on
-Rails project.</p>
-
-<p>In advance, I will show you how to deploy to AWS EC2 without pain~~~</p>
-
-
-		
-		<a href="/blog/2014/03/06/howto-build-step-by-step-introduction-javascript-using-crumble-instead-of-intro-dot-js/" class="more-link">Read on &rarr;</a>
-	</div>
-
-
-<div class="meta">
-	<div class="date">
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2014-03-06T22:16:01+08:00" pubdate data-updated="true">Mar 6<span>th</span>, 2014</time></div>
-	
-
-<div class="tags">
-
-	<a class='category' href='/blog/categories/ruby-on-rails/'>Ruby on Rails</a>, <a class='category' href='/blog/categories/crumble-dot-js/'>crumble.js</a>, <a class='category' href='/blog/categories/grumble-dot-js/'>grumble.js</a>
-
-</div>
-
-
-	
-		<span class="comments"><a href="/blog/2014/03/06/howto-build-step-by-step-introduction-javascript-using-crumble-instead-of-intro-dot-js//blog/page/6/index.html#disqus_thread">Comments</a></span>
 	
 </div></article>
 
