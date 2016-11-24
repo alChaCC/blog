@@ -107,6 +107,71 @@ $(document).ready(
     <article class="post">
 	<h2 class="title">
 		
+		<a href="/blog/2011/11/14/ftp-mount-file-rundown/">
+		
+			[超簡單]FTP 掛NTFS硬碟檔給別人抓-CentOS</a>
+	</h2>
+	<div class="entry-content">
+		<p>這有兩個issue</p>
+
+<p>一個是NTFS格式如何掛到CentOS</p>
+
+<p>一個是把掛上去的資料夾，可以讓FTP抓到</p>
+
+<h1>NTFS格式如何掛到CentOS</h1>
+
+<ol type="a">
+<li><p>先<a href="http://www.tuxera.com/community/ntfs-3g-download/">安裝ntfs-3g</a></p></li>
+<li><p>先fdisk -l 找到你剛剛放上去的硬碟</p></li>
+<li><p>把那個硬碟掛上去吧</p></li>
+</ol>
+
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="n">mount</span> <span class="o">-</span><span class="n">t</span> <span class="n">ntfs</span><span class="o">-</span><span class="mi">3</span><span class="n">g</span><span class="sr"> /dev/</span><span class="no">XXX</span><span class="sr"> /aloha/</span><span class="n">coolfolder</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+
+
+
+		
+		<a href="/blog/2011/11/14/ftp-mount-file-rundown/" class="more-link">Read on &rarr;</a>
+	</div>
+
+
+<div class="meta">
+	<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2011-11-14T00:46:00+08:00" pubdate data-updated="true">Nov 14<span>th</span>, 2011</time></div>
+	
+
+<div class="tags">
+
+	<a class='category' href='/blog/categories/linux/'>Linux</a>
+
+</div>
+
+
+	
+		<span class="comments"><a href="/blog/2011/11/14/ftp-mount-file-rundown//blog/page/17/index.html#disqus_thread">Comments</a></span>
+	
+</div></article>
+
+
+    <article class="post">
+	<h2 class="title">
+		
 		<a href="/blog/2011/11/13/my-learning-ror-project-day-2/">
 		
 			我的RoR學習專案-Day 2</a>
@@ -373,68 +438,6 @@ $(document).ready(
 
 	
 		<span class="comments"><a href="/blog/2011/11/08/my-learning-ror-project-preparetion//blog/page/17/index.html#disqus_thread">Comments</a></span>
-	
-</div></article>
-
-
-    <article class="post">
-	<h2 class="title">
-		
-		<a href="/blog/2011/11/08/my-learning-ror-project-introduction/">
-		
-			我的RoR學習專案-起步</a>
-	</h2>
-	<div class="entry-content">
-		<p>我想學習最快的方式就是</p>
-
-<blockquote><p>Do Something by myself !</p></blockquote>
-
-
-<p>所以我想，不然就來做個人網站！</p>
-
-<p>開始之前，必須先規劃一下</p>
-
-<p>我的需求是：</p>
-
-<p>我的首頁有三個連結分別是：關於我，部落格，專案</p>
-
-<p>關於我 -> 先有一些簡單的連結就好</p>
-
-<p>部落格 -> 利用 octopress 架設到本機端，用超連結連過去</p>
-
-<p>專案   -> 放AS3小遊戲, github, Ruby on Rails論壇,C/C++-MonteCarlo程式, Linux</p>
-
-
-		
-		<a href="/blog/2011/11/08/my-learning-ror-project-introduction/" class="more-link">Read on &rarr;</a>
-	</div>
-
-
-<div class="meta">
-	<div class="date">
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2011-11-08T08:14:00+08:00" pubdate data-updated="true">Nov 8<span>th</span>, 2011</time></div>
-	
-
-<div class="tags">
-
-	<a class='category' href='/blog/categories/ruby-on-rails/'>Ruby on Rails</a>
-
-</div>
-
-
-	
-		<span class="comments"><a href="/blog/2011/11/08/my-learning-ror-project-introduction//blog/page/17/index.html#disqus_thread">Comments</a></span>
 	
 </div></article>
 

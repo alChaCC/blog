@@ -4,7 +4,7 @@
   <title><![CDATA[AlohaCC]]></title>
   <link href="http://ccaloha.cc/atom.xml" rel="self"/>
   <link href="http://ccaloha.cc/"/>
-  <updated>2016-06-27T14:39:28+08:00</updated>
+  <updated>2016-11-24T12:57:01+08:00</updated>
   <id>http://ccaloha.cc/</id>
   <author>
     <name><![CDATA[Aloha]]></name>
@@ -12,6 +12,441 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[API Request Limitation Using Rack-Throttle and Doorkeeper]]></title>
+    <link href="http://ccaloha.cc/blog/2016/11/24/api-request-limitation-using-rack-throttle-and-doorkeeper/"/>
+    <updated>2016-11-24T12:52:06+08:00</updated>
+    <id>http://ccaloha.cc/blog/2016/11/24/api-request-limitation-using-rack-throttle-and-doorkeeper</id>
+    <content type="html"><![CDATA[<p>When it comes to open API to external users, we need to consider the number of requests we allowed. Most of API-as-a-service platforms have different payment plans. Due to different levels of payment, it turns out that the service resource can be used fairly - advanced plan users can make more requests than normal users.</p>
+
+<p>In order to achieve this goal, we need to find a way recording the number of requests. Intuitively, we can creata a <code>request_record</code> table, before controller process the request, by comparing the number in database and client&#8217;s request limitation, we can either allow or deny the requests.</p>
+
+<p>Thanks to Ruby gems, you are able to find some libraries can do the trick. In this article,
+I choose <code>rack-throttle</code> to help me count the requests. The reasons I prefer
+<code>rack-throttle</code> are:</p>
+
+<ol>
+<li>To limit by defining a maximum number of allowed HTTP requests per a given time period</li>
+<li>Compatible with any Rack application and any Rack-based framework.</li>
+<li>Compatible with the memcached, memcache-client, memcache and redis gems.</li>
+<li>Well documented and the most important thing is that codes are easy to read!</li>
+</ol>
+
+
+<p>Different from recording, we still need to identify which client makes this request for deciding to allow or not. Here I use <code>Doorkeeper</code> to tell me which user is.</p>
+
+<p>In this article, I will not show you how to setup <code>Doorkeeper</code>, but you are about to see how to customize your own limiter.</p>
+
+<p>So, That&#8217;s go!</p>
+
+<h2>Requirements</h2>
+
+<p>My targets show as below:</p>
+
+<ol>
+<li>Different clients has its limitation.</li>
+<li>Should limit by second, minute, hour, day and month.</li>
+<li>Support whitelist</li>
+</ol>
+
+
+<h2>Gemfile</h2>
+
+<p>At first, we need to add libraries, the most important gem is <code>rack-throttle</code>. Depend on which places you want to store your counting data, you might need to add other gems. For me, I prefer <code>redis</code>. So, I added as below.</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'># Api limit
+</span><span class='line'>gem 'rack-throttle'
+</span><span class='line'>gem 'redis'</span></code></pre></td></tr></table></div></figure>
+
+
+<h2>Customize your throttler</h2>
+
+<p>Wait wait, before we start implementing, we should understand some mechnisms and terms.</p>
+
+<h3>First, <code>rack</code>!</h3>
+
+<p>you might notice that the gem we use called <code>rack-throttle</code>. Yes! this lib is built as a <code>Rack middleware</code> that provides logic for rate-limiting incoming HTTP requests to Rack applications.</p>
+
+<p>Ok, so what&#8217;s <code>Rack</code> ?</p>
+
+<p>according to <a href="http://rack.github.io/">rack official website</a>,</p>
+
+<blockquote><p>Rack provides a minimal interface between webservers that support Ruby and Ruby frameworks.</p>
+
+<p>To use Rack, provide an <code>app</code>: an object that responds to the <code>call</code> method, taking the environment hash as a parameter, and returning an Array with three elements:</p>
+
+<p>The HTTP response code</p>
+
+<p>A Hash of headers</p>
+
+<p>The response body, which must respond to each</p></blockquote>
+
+<p>So, <code>Rack</code> can help you handle the HTTP request. And due to <code>Rack</code> take <code>the environment hash</code> and also can &#8220;return&#8221; fix format: <code>array with code, headers and body</code>. It&#8217;s very easy for you to add <code>middleware</code> which can help you do cacheing, authencation, &#8230;etc. In our case, gem <code>rack-throttle</code> will help you adding middleware easily.</p>
+
+<p>After we briefly understand how <code>Rack</code> works, now let&#8217;s take a look how <code>rack-throttle</code>&#8217;s core class: <a href="https://github.com/dryruby/rack-throttle/blob/master/lib/rack/throttle/limiter.rb"><code>limiter</code></a>.</p>
+
+<p>Why it work as <code>Rack middilewate</code>?</p>
+
+<p>The key point is:</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>def initialize(app, options = {})
+</span><span class='line'>  @app, @options = app, options
+</span><span class='line'>end
+</span><span class='line'>
+</span><span class='line'>def call(env)
+</span><span class='line'>  request = Rack::Request.new(env)
+</span><span class='line'>  allowed?(request) ? app.call(env) : rate_limit_exceeded(request)
+</span><span class='line'>end</span></code></pre></td></tr></table></div></figure>
+
+
+<p>So, after we add this middleware into our Rack, every time we receive the requests it will be invoked by <code>call</code> method. Then we check is allowed or not, if is allowed, we pass to next Rack middleware, otherwise we stop in this middleware.</p>
+
+<h3>Since I need to customize the throttler, I can inherit from <code>Rack::Throttle::Limiter</code>.</h3>
+
+<p>Let&#8217;s check the final code first.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+<span class='line-number'>32</span>
+<span class='line-number'>33</span>
+<span class='line-number'>34</span>
+<span class='line-number'>35</span>
+<span class='line-number'>36</span>
+<span class='line-number'>37</span>
+<span class='line-number'>38</span>
+<span class='line-number'>39</span>
+<span class='line-number'>40</span>
+<span class='line-number'>41</span>
+<span class='line-number'>42</span>
+<span class='line-number'>43</span>
+<span class='line-number'>44</span>
+<span class='line-number'>45</span>
+<span class='line-number'>46</span>
+<span class='line-number'>47</span>
+<span class='line-number'>48</span>
+<span class='line-number'>49</span>
+<span class='line-number'>50</span>
+<span class='line-number'>51</span>
+<span class='line-number'>52</span>
+<span class='line-number'>53</span>
+<span class='line-number'>54</span>
+<span class='line-number'>55</span>
+<span class='line-number'>56</span>
+<span class='line-number'>57</span>
+<span class='line-number'>58</span>
+<span class='line-number'>59</span>
+<span class='line-number'>60</span>
+<span class='line-number'>61</span>
+<span class='line-number'>62</span>
+<span class='line-number'>63</span>
+<span class='line-number'>64</span>
+<span class='line-number'>65</span>
+<span class='line-number'>66</span>
+<span class='line-number'>67</span>
+<span class='line-number'>68</span>
+<span class='line-number'>69</span>
+<span class='line-number'>70</span>
+<span class='line-number'>71</span>
+<span class='line-number'>72</span>
+<span class='line-number'>73</span>
+<span class='line-number'>74</span>
+<span class='line-number'>75</span>
+<span class='line-number'>76</span>
+<span class='line-number'>77</span>
+<span class='line-number'>78</span>
+<span class='line-number'>79</span>
+<span class='line-number'>80</span>
+<span class='line-number'>81</span>
+<span class='line-number'>82</span>
+<span class='line-number'>83</span>
+<span class='line-number'>84</span>
+<span class='line-number'>85</span>
+<span class='line-number'>86</span>
+<span class='line-number'>87</span>
+<span class='line-number'>88</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="c1"># lib/api_limitation/application_throttler.rb</span>
+</span><span class='line'>
+</span><span class='line'><span class="nb">require</span> <span class="s1">&#39;rack/throttle&#39;</span>
+</span><span class='line'><span class="k">module</span> <span class="nn">ApiLimitation</span>
+</span><span class='line'>  <span class="k">class</span> <span class="nc">ApplicationThrottler</span> <span class="o">&lt;</span> <span class="ss">Rack</span><span class="p">:</span><span class="ss">:Throttle</span><span class="o">::</span><span class="no">Limiter</span>
+</span><span class='line'>    <span class="kp">attr_accessor</span> <span class="ss">:client</span><span class="p">,</span> <span class="ss">:ip</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="k">def</span> <span class="nf">initialize</span><span class="p">(</span><span class="n">app</span><span class="p">,</span> <span class="n">options</span> <span class="o">=</span> <span class="p">{})</span>
+</span><span class='line'>      <span class="k">super</span>
+</span><span class='line'>    <span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="k">def</span> <span class="nf">client_identifier</span><span class="p">(</span><span class="n">request</span><span class="p">)</span>
+</span><span class='line'>      <span class="k">if</span> <span class="n">request</span><span class="o">.</span><span class="n">env</span><span class="o">[</span><span class="s1">&#39;HTTP_AUTHORIZATION&#39;</span><span class="o">]</span> <span class="o">||</span> <span class="n">request</span><span class="o">.</span><span class="n">params</span><span class="o">[</span><span class="s1">&#39;access_token&#39;</span><span class="o">]</span>
+</span><span class='line'>        <span class="n">token</span>        <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">env</span><span class="o">[</span><span class="s1">&#39;HTTP_AUTHORIZATION&#39;</span><span class="o">].</span><span class="n">present?</span> <span class="p">?</span> <span class="n">request</span><span class="o">.</span><span class="n">env</span><span class="o">[</span><span class="s1">&#39;HTTP_AUTHORIZATION&#39;</span><span class="o">].</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39; &#39;</span><span class="p">)</span><span class="o">[-</span><span class="mi">1</span><span class="o">]</span> <span class="p">:</span> <span class="n">request</span><span class="o">.</span><span class="n">params</span><span class="o">[</span><span class="s1">&#39;access_token&#39;</span><span class="o">]</span>
+</span><span class='line'>        <span class="n">access_token</span> <span class="o">=</span> <span class="ss">Doorkeeper</span><span class="p">:</span><span class="ss">:AccessToken</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="ss">token</span><span class="p">:</span> <span class="n">token</span><span class="p">)</span><span class="o">.</span><span class="n">first</span>
+</span><span class='line'>        <span class="vi">@client</span> <span class="o">=</span> <span class="n">access_token</span> <span class="p">?</span> <span class="no">User</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="n">access_token</span><span class="o">.</span><span class="n">resource_owner_id</span><span class="p">)</span> <span class="p">:</span> <span class="kp">nil</span>
+</span><span class='line'>      <span class="k">end</span>
+</span><span class='line'>      <span class="vi">@ip</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">ip</span><span class="o">.</span><span class="n">to_s</span>
+</span><span class='line'>    <span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="k">def</span> <span class="nf">max_per_second</span>
+</span><span class='line'>      <span class="vi">@client</span><span class="o">.</span><span class="n">try</span><span class="p">(</span><span class="ss">:limitation</span><span class="p">)</span><span class="o">.</span><span class="n">try</span><span class="p">(</span><span class="ss">:second</span><span class="p">)</span> <span class="o">||</span> <span class="mi">1</span>
+</span><span class='line'>    <span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="k">def</span> <span class="nf">max_per_minute</span>
+</span><span class='line'>      <span class="vi">@client</span><span class="o">.</span><span class="n">try</span><span class="p">(</span><span class="ss">:limitation</span><span class="p">)</span><span class="o">.</span><span class="n">try</span><span class="p">(</span><span class="ss">:minute</span><span class="p">)</span> <span class="o">||</span> <span class="mi">60</span>
+</span><span class='line'>    <span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="k">def</span> <span class="nf">max_per_hourly</span>
+</span><span class='line'>      <span class="vi">@client</span><span class="o">.</span><span class="n">try</span><span class="p">(</span><span class="ss">:limitation</span><span class="p">)</span><span class="o">.</span><span class="n">try</span><span class="p">(</span><span class="ss">:hourly</span><span class="p">)</span> <span class="o">||</span> <span class="mi">3_600</span>
+</span><span class='line'>    <span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="k">def</span> <span class="nf">max_per_daily</span>
+</span><span class='line'>      <span class="vi">@client</span><span class="o">.</span><span class="n">try</span><span class="p">(</span><span class="ss">:limitation</span><span class="p">)</span><span class="o">.</span><span class="n">try</span><span class="p">(</span><span class="ss">:daily</span><span class="p">)</span> <span class="o">||</span> <span class="mi">86_400</span>
+</span><span class='line'>    <span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="k">def</span> <span class="nf">max_per_monthly</span>
+</span><span class='line'>      <span class="vi">@client</span><span class="o">.</span><span class="n">try</span><span class="p">(</span><span class="ss">:limitation</span><span class="p">)</span><span class="o">.</span><span class="n">try</span><span class="p">(</span><span class="ss">:monthly</span><span class="p">)</span> <span class="o">||</span> <span class="mi">2_592_000</span>
+</span><span class='line'>    <span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="k">def</span> <span class="nf">allowed?</span><span class="p">(</span><span class="n">request</span><span class="p">)</span>
+</span><span class='line'>      <span class="n">client_identifier</span><span class="p">(</span><span class="n">request</span><span class="p">)</span>
+</span><span class='line'>      <span class="k">return</span> <span class="kp">true</span> <span class="k">if</span> <span class="n">whitelisted?</span><span class="p">(</span><span class="n">request</span><span class="p">)</span>
+</span><span class='line'>
+</span><span class='line'>      <span class="o">[</span><span class="s1">&#39;second&#39;</span><span class="p">,</span> <span class="s1">&#39;minute&#39;</span><span class="p">,</span> <span class="s1">&#39;hourly&#39;</span><span class="p">,</span> <span class="s1">&#39;daily&#39;</span><span class="p">,</span> <span class="s1">&#39;monthly&#39;</span><span class="o">].</span><span class="n">all?</span> <span class="p">{</span> <span class="o">|</span><span class="n">timeslot</span><span class="o">|</span> <span class="nb">send</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">#{</span><span class="n">timeslot</span><span class="si">}</span><span class="s2">_check&quot;</span><span class="o">.</span><span class="n">to_sym</span><span class="p">)</span> <span class="p">}</span>
+</span><span class='line'>    <span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="k">def</span> <span class="nf">whitelisted?</span><span class="p">(</span><span class="n">request</span><span class="p">)</span>
+</span><span class='line'>      <span class="vi">@client</span><span class="o">.</span><span class="n">try</span><span class="p">(</span><span class="ss">:email</span><span class="p">)</span><span class="o">.</span><span class="n">in?</span> <span class="o">[</span><span class="s1">&#39;YOUR_WHITE_LIST&#39;</span><span class="o">]</span>
+</span><span class='line'>    <span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="kp">protected</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="o">[</span><span class="s1">&#39;second&#39;</span><span class="p">,</span> <span class="s1">&#39;minute&#39;</span><span class="p">,</span> <span class="s1">&#39;hourly&#39;</span><span class="p">,</span> <span class="s1">&#39;daily&#39;</span><span class="p">,</span> <span class="s1">&#39;monthly&#39;</span><span class="o">].</span><span class="n">each</span> <span class="k">do</span> <span class="o">|</span><span class="n">timeslot</span><span class="o">|</span>
+</span><span class='line'>      <span class="n">define_method</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">#{</span><span class="n">timeslot</span><span class="si">}</span><span class="s2">_check&quot;</span><span class="o">.</span><span class="n">to_sym</span><span class="p">)</span> <span class="k">do</span>
+</span><span class='line'>        <span class="n">count</span> <span class="o">=</span> <span class="n">cache_get</span><span class="p">(</span><span class="n">key</span> <span class="o">=</span> <span class="nb">send</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">#{</span><span class="n">timeslot</span><span class="si">}</span><span class="s2">_cache_key&quot;</span><span class="o">.</span><span class="n">to_sym</span><span class="p">))</span><span class="o">.</span><span class="n">to_i</span> <span class="o">+</span> <span class="mi">1</span> <span class="k">rescue</span> <span class="mi">1</span>
+</span><span class='line'>        <span class="n">allowed</span> <span class="o">=</span> <span class="n">count</span> <span class="o">&lt;=</span> <span class="nb">send</span><span class="p">(</span><span class="s2">&quot;max_per_</span><span class="si">#{</span><span class="n">timeslot</span><span class="si">}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">to_sym</span><span class="p">)</span><span class="o">.</span><span class="n">to_i</span>
+</span><span class='line'>        <span class="k">begin</span>
+</span><span class='line'>          <span class="n">cache_set</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">count</span><span class="p">)</span>
+</span><span class='line'>          <span class="n">allowed</span>
+</span><span class='line'>        <span class="k">rescue</span> <span class="o">=&gt;</span> <span class="n">e</span>
+</span><span class='line'>          <span class="n">allowed</span> <span class="o">=</span> <span class="kp">true</span>
+</span><span class='line'>        <span class="k">end</span>
+</span><span class='line'>      <span class="k">end</span>
+</span><span class='line'>    <span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="k">def</span> <span class="nf">second_cache_key</span>
+</span><span class='line'>      <span class="o">[</span><span class="vi">@client</span><span class="o">.</span><span class="n">try</span><span class="p">(</span><span class="ss">:id</span><span class="p">)</span> <span class="o">||</span> <span class="vi">@ip</span><span class="p">,</span> <span class="no">Time</span><span class="o">.</span><span class="n">now</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s1">&#39;%Y-%m-%dT%H:%M:%S&#39;</span><span class="p">)</span><span class="o">].</span><span class="n">join</span><span class="p">(</span><span class="s1">&#39;:&#39;</span><span class="p">)</span>
+</span><span class='line'>    <span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="k">def</span> <span class="nf">minute_cache_key</span>
+</span><span class='line'>      <span class="o">[</span><span class="vi">@client</span><span class="o">.</span><span class="n">try</span><span class="p">(</span><span class="ss">:id</span><span class="p">)</span> <span class="o">||</span> <span class="vi">@ip</span><span class="p">,</span> <span class="no">Time</span><span class="o">.</span><span class="n">now</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s1">&#39;%Y-%m-%dT%H:%M&#39;</span><span class="p">)</span><span class="o">].</span><span class="n">join</span><span class="p">(</span><span class="s1">&#39;:&#39;</span><span class="p">)</span>
+</span><span class='line'>    <span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="k">def</span> <span class="nf">hourly_cache_key</span>
+</span><span class='line'>      <span class="o">[</span><span class="vi">@client</span><span class="o">.</span><span class="n">try</span><span class="p">(</span><span class="ss">:id</span><span class="p">)</span> <span class="o">||</span> <span class="vi">@ip</span><span class="p">,</span> <span class="no">Time</span><span class="o">.</span><span class="n">now</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s1">&#39;%Y-%m-%dT%H&#39;</span><span class="p">)</span><span class="o">].</span><span class="n">join</span><span class="p">(</span><span class="s1">&#39;:&#39;</span><span class="p">)</span>
+</span><span class='line'>    <span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="k">def</span> <span class="nf">daily_cache_key</span>
+</span><span class='line'>      <span class="o">[</span><span class="vi">@client</span><span class="o">.</span><span class="n">try</span><span class="p">(</span><span class="ss">:id</span><span class="p">)</span> <span class="o">||</span> <span class="vi">@ip</span><span class="p">,</span> <span class="no">Time</span><span class="o">.</span><span class="n">now</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s1">&#39;%Y-%m-%d&#39;</span><span class="p">)</span><span class="o">].</span><span class="n">join</span><span class="p">(</span><span class="s1">&#39;:&#39;</span><span class="p">)</span>
+</span><span class='line'>    <span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="k">def</span> <span class="nf">monthly_cache_key</span>
+</span><span class='line'>      <span class="o">[</span><span class="vi">@client</span><span class="o">.</span><span class="n">try</span><span class="p">(</span><span class="ss">:id</span><span class="p">)</span> <span class="o">||</span> <span class="vi">@ip</span><span class="p">,</span> <span class="no">Time</span><span class="o">.</span><span class="n">now</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s1">&#39;%Y-%m&#39;</span><span class="p">)</span><span class="o">].</span><span class="n">join</span><span class="p">(</span><span class="s1">&#39;:&#39;</span><span class="p">)</span>
+</span><span class='line'>    <span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>The most important function is <code>allowed?(request)</code>.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">def</span> <span class="nf">allowed?</span><span class="p">(</span><span class="n">request</span><span class="p">)</span>
+</span><span class='line'>    <span class="n">client_identifier</span><span class="p">(</span><span class="n">request</span><span class="p">)</span>
+</span><span class='line'>    <span class="k">return</span> <span class="kp">true</span> <span class="k">if</span> <span class="n">whitelisted?</span><span class="p">(</span><span class="n">request</span><span class="p">)</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="o">[</span><span class="s1">&#39;second&#39;</span><span class="p">,</span> <span class="s1">&#39;minute&#39;</span><span class="p">,</span> <span class="s1">&#39;hourly&#39;</span><span class="p">,</span> <span class="s1">&#39;daily&#39;</span><span class="p">,</span> <span class="s1">&#39;monthly&#39;</span><span class="o">].</span><span class="n">all?</span> <span class="p">{</span> <span class="o">|</span><span class="n">timeslot</span><span class="o">|</span> <span class="nb">send</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">#{</span><span class="n">timeslot</span><span class="si">}</span><span class="s2">_check&quot;</span><span class="o">.</span><span class="n">to_sym</span><span class="p">)</span> <span class="p">}</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Let&#8217;s check each functions.</p>
+
+<h4>First, <code>client_identifier(request)</code>.</h4>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">def</span> <span class="nf">client_identifier</span><span class="p">(</span><span class="n">request</span><span class="p">)</span>
+</span><span class='line'>    <span class="k">if</span> <span class="n">request</span><span class="o">.</span><span class="n">env</span><span class="o">[</span><span class="s1">&#39;HTTP_AUTHORIZATION&#39;</span><span class="o">]</span> <span class="o">||</span> <span class="n">request</span><span class="o">.</span><span class="n">params</span><span class="o">[</span><span class="s1">&#39;access_token&#39;</span><span class="o">]</span>
+</span><span class='line'>   <span class="n">token</span>        <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">env</span><span class="o">[</span><span class="s1">&#39;HTTP_AUTHORIZATION&#39;</span><span class="o">].</span><span class="n">present?</span> <span class="p">?</span> <span class="n">request</span><span class="o">.</span><span class="n">env</span><span class="o">[</span><span class="s1">&#39;HTTP_AUTHORIZATION&#39;</span><span class="o">].</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39; &#39;</span><span class="p">)</span><span class="o">[-</span><span class="mi">1</span><span class="o">]</span> <span class="p">:</span> <span class="n">request</span><span class="o">.</span><span class="n">params</span><span class="o">[</span><span class="s1">&#39;access_token&#39;</span><span class="o">]</span>
+</span><span class='line'>   <span class="n">access_token</span> <span class="o">=</span> <span class="ss">Doorkeeper</span><span class="p">:</span><span class="ss">:AccessToken</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="ss">token</span><span class="p">:</span> <span class="n">token</span><span class="p">)</span><span class="o">.</span><span class="n">first</span>
+</span><span class='line'>   <span class="vi">@client</span> <span class="o">=</span> <span class="n">access_token</span> <span class="p">?</span> <span class="no">User</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="n">access_token</span><span class="o">.</span><span class="n">resource_owner_id</span><span class="p">)</span> <span class="p">:</span> <span class="kp">nil</span>
+</span><span class='line'>      <span class="k">end</span>
+</span><span class='line'>   <span class="vi">@ip</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">ip</span><span class="o">.</span><span class="n">to_s</span>
+</span><span class='line'> <span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>We used <code>doorkeeper</code> for Oauth2 authentication.</p>
+
+<p>So, each requests might have <code>HTTP_AUTHORIZATION</code> in header or <code>access_token</code> in url. Then we need to use the <code>access_token</code> to find who he is.</p>
+
+<h4>Second, <code>whitelisted?(request)</code></h4>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">def</span> <span class="nf">whitelisted?</span><span class="p">(</span><span class="n">request</span><span class="p">)</span>
+</span><span class='line'>  <span class="vi">@client</span><span class="o">.</span><span class="n">try</span><span class="p">(</span><span class="ss">:email</span><span class="p">)</span><span class="o">.</span><span class="n">in?</span> <span class="o">[</span><span class="s1">&#39;YOUR_WHITE_LIST&#39;</span><span class="o">]</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Simple! Right?, because we already have @client from <code>client_identifier(request)</code>. I just try to find its email in list or not.</p>
+
+<h4>Finall part, <code>['second', 'minute', 'hourly', 'daily', 'monthly'].all? { |timeslot| send("#{timeslot}_check".to_sym) }</code></h4>
+
+<p>here I use <a href="https://www.toptal.com/ruby/ruby-metaprogramming-cooler-than-it-sounds"><code>metaprogramming</code></a> to avoid writing too many duplicate codes which call these functions: <code>second_check</code>, <code>minute_check</code>, &#8230;etc.</p>
+
+<p>And you can&#8217;t find these functions in codes, which is because I also use metaprogramming method to implement class&#8217;s instance methods.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="o">[</span><span class="s1">&#39;second&#39;</span><span class="p">,</span> <span class="s1">&#39;minute&#39;</span><span class="p">,</span> <span class="s1">&#39;hourly&#39;</span><span class="p">,</span> <span class="s1">&#39;daily&#39;</span><span class="p">,</span> <span class="s1">&#39;monthly&#39;</span><span class="o">].</span><span class="n">each</span> <span class="k">do</span> <span class="o">|</span><span class="n">timeslot</span><span class="o">|</span>
+</span><span class='line'>  <span class="n">define_method</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">#{</span><span class="n">timeslot</span><span class="si">}</span><span class="s2">_check&quot;</span><span class="o">.</span><span class="n">to_sym</span><span class="p">)</span> <span class="k">do</span>
+</span><span class='line'>    <span class="n">count</span> <span class="o">=</span> <span class="n">cache_get</span><span class="p">(</span><span class="n">key</span> <span class="o">=</span> <span class="nb">send</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">#{</span><span class="n">timeslot</span><span class="si">}</span><span class="s2">_cache_key&quot;</span><span class="o">.</span><span class="n">to_sym</span><span class="p">))</span><span class="o">.</span><span class="n">to_i</span> <span class="o">+</span> <span class="mi">1</span> <span class="k">rescue</span> <span class="mi">1</span>
+</span><span class='line'>    <span class="n">allowed</span> <span class="o">=</span> <span class="n">count</span> <span class="o">&lt;=</span> <span class="nb">send</span><span class="p">(</span><span class="s2">&quot;max_per_</span><span class="si">#{</span><span class="n">timeslot</span><span class="si">}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">to_sym</span><span class="p">)</span><span class="o">.</span><span class="n">to_i</span>
+</span><span class='line'>    <span class="k">begin</span>
+</span><span class='line'>      <span class="n">cache_set</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">count</span><span class="p">)</span>
+</span><span class='line'>      <span class="n">allowed</span>
+</span><span class='line'>    <span class="k">rescue</span> <span class="o">=&gt;</span> <span class="n">e</span>
+</span><span class='line'>      <span class="n">allowed</span> <span class="o">=</span> <span class="kp">true</span>
+</span><span class='line'>    <span class="k">end</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Ok, so here I try to get count number from cache(for me, I used Redis) by <code>cache_get</code> which is in base class: <code>Rack::Throttle::Limiter</code>. And the cache keys are either client&#8217;s id or ip with timestamp. for example: <code>12345:2016-11-24</code> or <code>127.0.0.1:2016-11-24</code>.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">def</span> <span class="nf">second_cache_key</span>
+</span><span class='line'>  <span class="o">[</span><span class="vi">@client</span><span class="o">.</span><span class="n">try</span><span class="p">(</span><span class="ss">:id</span><span class="p">)</span> <span class="o">||</span> <span class="vi">@ip</span><span class="p">,</span> <span class="no">Time</span><span class="o">.</span><span class="n">now</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s1">&#39;%Y-%m-%dT%H:%M:%S&#39;</span><span class="p">)</span><span class="o">].</span><span class="n">join</span><span class="p">(</span><span class="s1">&#39;:&#39;</span><span class="p">)</span>
+</span><span class='line'><span class="k">end</span>
+</span><span class='line'><span class="o">.</span><span class="n">.</span><span class="o">.</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>After we get the number of count we can compare it  to client&#8217;s limitation and add counting number as well.</p>
+
+<p>And how do we get client&#8217;s limitation?</p>
+
+<p>In our database design, user has one <code>limitation</code> which include these columns: <code>second</code>, <code>minute</code>&#8230;etc.
+So, I can easily get it by <code>@client.limitation.XXX</code></p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">def</span> <span class="nf">max_per_second</span>
+</span><span class='line'>  <span class="vi">@client</span><span class="o">.</span><span class="n">try</span><span class="p">(</span><span class="ss">:limitation</span><span class="p">)</span><span class="o">.</span><span class="n">try</span><span class="p">(</span><span class="ss">:second</span><span class="p">)</span> <span class="o">||</span> <span class="mi">1</span>
+</span><span class='line'><span class="k">end</span>
+</span><span class='line'><span class="o">.</span><span class="n">.</span><span class="o">.</span><span class="n">.</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>That&#8217;s it. it&#8217;s not too hard right?</p>
+
+<h2>Add your throttler into Rack.</h2>
+
+<p>This part is super easy, just follow <a href="https://github.com/dryruby/rack-throttle"><code>rack-throttle</code>&#8217;s README</a>.</p>
+
+<p>because I built it for Rails application.</p>
+
+<p>I need to add this line into <code>config/application.rb</code></p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">module</span> <span class="nn">YOUR_AWESOME_APPLICATION</span>
+</span><span class='line'>  <span class="k">class</span> <span class="nc">Application</span> <span class="o">&lt;</span> <span class="ss">Rails</span><span class="p">:</span><span class="ss">:Application</span>
+</span><span class='line'>   <span class="o">.</span><span class="n">.</span><span class="o">.</span>
+</span><span class='line'>    <span class="n">config</span><span class="o">.</span><span class="n">middleware</span><span class="o">.</span><span class="n">use</span> <span class="o">::</span><span class="ss">ApiLimitation</span><span class="p">:</span><span class="ss">:ApplicationThrottler</span><span class="p">,</span> <span class="ss">cache</span><span class="p">:</span> <span class="no">Redis</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="ss">host</span><span class="p">:</span> <span class="no">YOUR_REDIS_HOST</span><span class="p">),</span> <span class="n">key_prefix</span><span class="p">:</span> <span class="ss">:awesome_throttle</span><span class="p">,</span> <span class="ss">message</span><span class="p">:</span> <span class="s1">&#39;Rate Limit Exceeded, please upgrade your plan to get more requests&#39;</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Do you remember that I mentioned I use <code>Redis</code> for caching count? Here is the magic.</p>
+
+<p>I initialize <code>@cache</code> in here. So that it can be accessed in class.</p>
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[Split Single Lossless Audio(.ape, .flac) Files into mp3 in MacOSX]]></title>
@@ -5027,239 +5462,6 @@ end
 
 <pre><code>PaperTrail::Version.delete_all ["created_at &lt; ?", 1.year.ago]
 </code></pre>
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[[HowTo] Get Google Analytics Engagement Using R]]></title>
-    <link href="http://ccaloha.cc/blog/2014/12/26/howto-get-google-analytics-engagement-using-r/"/>
-    <updated>2014-12-26T08:17:04+08:00</updated>
-    <id>http://ccaloha.cc/blog/2014/12/26/howto-get-google-analytics-engagement-using-r</id>
-    <content type="html"><![CDATA[<p><img src="https://dl.dropboxusercontent.com/u/22307926/Blog%20Image/get%20google%20analytics%20engagement%20using%20R/2014%E5%B9%B4engagement-pageviews%E5%9C%96.png" alt="every months google analytic engagement(pageviews X session Duration) in 2014 using R"></p>
-
-<p><strong>使用者在網站上的參與程度</strong>，是我一直滿好奇的指標！</p>
-
-<p>在GA裡，網站參與度，如下圖</p>
-
-<p><img src="https://dl.dropboxusercontent.com/u/22307926/Blog%20Image/get%20google%20analytics%20engagement%20using%20R/%E8%9E%A2%E5%B9%95%E5%BF%AB%E7%85%A7%202014-12-22%20%E4%B8%8A%E5%8D%883.13.48.png" alt=“google analytics engagement”></p>
-
-<p>這系列的文章，我的target是 我想知道今年(2014)整體使用者參與度的變化與趨勢</p>
-
-<p>此篇文章是focus 在如何透過R抓取資料並分析成和 GA view一樣的資料！</p>
-
-<p>之後，再看看可以看到什麼樣比較有意義的資料～</p>
-
-<p>let&#8217;s go !</p>
-
-<!-- more -->
-
-
-<h2>Google Analytic API 申請</h2>
-
-<p>在做GA之前，別忘記要申請<strong><a href="http://ccaloha.herokuapp.com/blog/2014/12/24/howto-get-google-analytics-using-r-rgoogleanalytics-using-users-pageviews-time-as-an-example/">GA API權限</a></strong></p>
-
-<h2>Google Query Explorer <a href="https://ga-dev-tools.appspot.com/explorer/">link</a></h2>
-
-<p>Google 提供的工具，我覺得還滿好用的！</p>
-
-<p>在使用API之前，使用 explorer 可以讓你先有Fu大概知道會拿到什麼樣的資料！</p>
-
-<p>大概看一下怎麼用吧</p>
-
-<h3>Step1. 先登入Google Analytics的帳號</h3>
-
-<h3>Step2. 回到Google Query Explorer，重新refresh</h3>
-
-<p>點選認證</p>
-
-<p><img src="https://dl.dropboxusercontent.com/u/22307926/Blog%20Image/get%20google%20analytics%20engagement%20using%20R/%E8%9E%A2%E5%B9%95%E5%BF%AB%E7%85%A7%202014-12-25%20%E4%B8%8A%E5%8D%888.16.31.png" alt="點選 Click Here to authorize"></p>
-
-<p>你就可以看到</p>
-
-<p><img src="https://dl.dropboxusercontent.com/u/22307926/Blog%20Image/get%20google%20analytics%20engagement%20using%20R/%E8%9E%A2%E5%B9%95%E5%BF%AB%E7%85%A7%202014-12-25%20%E4%B8%8A%E5%8D%888.20.28.png" alt="Google Query Explorer 取得GA權限後頁面"></p>
-
-<p>其中，<strong>account</strong> /  <strong>Property</strong> / <strong>View(Profile)</strong> 就是</p>
-
-<p><img src="https://dl.dropboxusercontent.com/u/22307926/Blog%20Image/get%20google%20analytics%20engagement%20using%20R/%E8%9E%A2%E5%B9%95%E5%BF%AB%E7%85%A7%202014-12-25%20%E4%B8%8A%E5%8D%888.24.24.png" alt="對應GA"></p>
-
-<h3>Step3. 看一下哪些GA View 對應到API的名稱</h3>
-
-<p>請到 <a href="https://developers.google.com/analytics/devguides/reporting/core/dimsmets">Google Analytics Dimensions &amp; Metrics Reference</a></p>
-
-<p>我們要找的就是</p>
-
-<p><img src="https://dl.dropboxusercontent.com/u/22307926/Blog%20Image/get%20google%20analytics%20engagement%20using%20R/%E8%9E%A2%E5%B9%95%E5%BF%AB%E7%85%A7%202014-12-26%20%E4%B8%8A%E5%8D%887.46.24.png" alt="Sessions"></p>
-
-<p>點進去<strong>&#8220;ga:sessionDurationBucket&#8221;</strong></p>
-
-<p>你會看到 <strong>“web view name: Session Duration”</strong> 沒錯！ 那個就是對應到GA View的名稱！</p>
-
-<p>耶～～找到了～～</p>
-
-<p><img src="https://dl.dropboxusercontent.com/u/22307926/Blog%20Image/get%20google%20analytics%20engagement%20using%20R/%E8%9E%A2%E5%B9%95%E5%BF%AB%E7%85%A7%202014-12-26%20%E4%B8%8A%E5%8D%887.48.45.png" alt="ga:sessionDurationBucket definition"></p>
-
-<h3>Step4. 找到之後，趕緊來Google Query Explorer試試抓數據的感覺</h3>
-
-<p><img src="https://dl.dropboxusercontent.com/u/22307926/Blog%20Image/get%20google%20analytics%20engagement%20using%20R/%E8%9E%A2%E5%B9%95%E5%BF%AB%E7%85%A7%202014-12-22%20%E4%B8%8A%E5%8D%883.20.14.png" alt="fetch data from google query explorer"></p>
-
-<p>ya~~~拿到資料了！</p>
-
-<p><img src="https://dl.dropboxusercontent.com/u/22307926/Blog%20Image/get%20google%20analytics%20engagement%20using%20R/%E8%9E%A2%E5%B9%95%E5%BF%AB%E7%85%A7%202014-12-26%20%E4%B8%8A%E5%8D%887.54.52.png" alt="get ga:sessionDurationBucket , ga:sessions and ga:sessionDuration from Google Query Explorer"></p>
-
-<p>咦！那個<strong>ga:sessionDurationBucket</strong>好像有點怪怪的～</p>
-
-<p>各位人客，請不要緊張～</p>
-
-<p>那是因為他吐回來的資料是<strong>String</strong>，所以他的排序才是這樣～</p>
-
-<h3>Step5. R</h3>
-
-<p>說明都寫在裡面！</p>
-
-<p>ps. 由於小弟我還是R新手，寫的鳥鳥的地方，還請見諒，如果可以的話，可以留言告訴我，哪裡怎麼寫會比較好～ 感謝！</p>
-
-<p><a href="https://gist.github.com/alChaCC/4fee2a25a422dceb40f5">點我看比較漂亮的gist</a></p>
-
-<pre><code>setwd("r-playground/R/ga_engagement") #設定你要的操作順序
-list.of.packages &lt;- c("rjson", "RCurl","RGoogleAnalytics")
-new.packages &lt;- list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]
-if(length(new.packages)) install.packages(new.packages)
-require(rjson)
-require(RCurl)
-require(RGoogleAnalytics)
-require(ggplot2)
-token &lt;- Auth('YOUR API USER ID','YOUR API USER PASSWORD')
-save(token,file="./token_file")
-profile &lt;- GetProfiles(token) # show all your profile 
-#          id                               name
-#    XXXXXX                      HELLO (All)
-#  YYYYYYYY                      COOL
-#   ....
-
-# Your profile number (not the GA ID number)
-my_profile    &lt;- profile[profile$name == 'HELLO (All)',1] 
-
-time_start_seq &lt;- as.Date(ISOdate(2014,seq(1,12),1))
-#[1] "2014-01-01" "2014-02-01" "2014-03-01" "2014-04-01" "2014-05-01" "2014-06-01"
-#[7] "2014-07-01" "2014-08-01" "2014-09-01" "2014-10-01" "2014-11-01" "2014-12-01"
-time_end_seq &lt;- seq(as.Date("2014-02-01"), length=12, by="1 month") - 1
-# [1] "2014-01-31" "2014-02-28" "2014-03-31" "2014-04-30" "2014-05-31" "2014-06-30"
-# [7] "2014-07-31" "2014-08-31" "2014-09-30" "2014-10-31" "2014-11-30" "2014-12-31"
-
-# 為了做資料紀錄
-every_month_2014 &lt;- list()
-all_data &lt;- data.frame()
-
-for ( i in 1:length(time_start_seq)) {
-
-  query.list &lt;- Init(start.date = as.character(time_start_seq[i]),
-                     end.date = as.character(time_end_seq[i]),
-                     dimensions = "ga:sessionDurationBucket",
-                     metrics = "ga:sessions,ga:pageviews",
-                     sort = "ga:sessionDurationBucket",
-                     max.results = 10000,
-                     table.id = paste("ga:",my_profile,sep="",collapse=",")
-                     )
-
-  # 建立一個query等一下就是透過這個query與token拿資料！
-  ga.query &lt;- QueryBuilder(query.list)
-
-  # 向GA抓取資料，存成data frame
-  ga.data &lt;- GetReportData(ga.query, token) 
-  # ga.data &lt;- GetReportData(ga.query, token,split_daywise = T,paginate_query = TRUE)  另外一種拿法也work
-
-
-  # 資料處理部分，由於抓回來的 “data$sessionDurationBucket” 是個string，所要把它轉成 數字
-  less_than_10_seconds &lt;- ga.data[as.numeric(ga.data$sessionDurationBucket) &lt;= 10,]
-  between_11_to_30     &lt;- ga.data[as.numeric(ga.data$sessionDurationBucket) &gt; 10 &amp; as.numeric(ga.data$sessionDurationBucket) &lt;= 30,]
-  between_31_to_60     &lt;- ga.data[as.numeric(ga.data$sessionDurationBucket) &gt; 30 &amp; as.numeric(ga.data$sessionDurationBucket) &lt;= 60,]
-  between_61_to_180    &lt;- ga.data[as.numeric(ga.data$sessionDurationBucket) &gt; 60 &amp; as.numeric(ga.data$sessionDurationBucket) &lt;= 180,]
-  between_181_to_600   &lt;- ga.data[as.numeric(ga.data$sessionDurationBucket) &gt; 180 &amp; as.numeric(ga.data$sessionDurationBucket) &lt;= 600,]
-  between_601_to_1800  &lt;- ga.data[as.numeric(ga.data$sessionDurationBucket) &gt; 600 &amp; as.numeric(ga.data$sessionDurationBucket) &lt;= 1800,]
-  more_than_1801       &lt;- ga.data[as.numeric(ga.data$sessionDurationBucket) &gt; 1800,]
-
-  # 處理後資料長這樣
-  #     sessionDurationBucket sessions pageviews
-  #                        0   342840    341561
-  #                        1     1445      1906
-  #                       10     2567      4392
-  #                        2     2210      2704
-  #                        3     2283      2934
-  #                        4     2309      3133
-  #                        5     2368      3384
-
-
-  # 資料整併
-  every_month_2014[[i]] &lt;- rbind(colSums(less_than_10_seconds[,-1]),colSums(between_11_to_30[,-1]),
-                                 colSums(between_31_to_60[,-1]),colSums(between_61_to_180[,-1]),
-                                 colSums(between_181_to_600[,-1]),colSums(between_601_to_1800[,-1]),
-                                 colSums(more_than_1801[,-1]))
-  #       sessions pageviews
-  #[1,]   365814    375361
-  #[2,]    44857     92466
-  #[3,]    48003    133645
-  #[4,]    96890    423865
-  #[5,]   107373    872529
-  #[6,]    78404   1057353
-  #[7,]    28183    812783
-
-
-  # 補上一欄時間區間
-  month_all_data &lt;- cbind(c(as.character(i)),c("&lt; 10s","11 ~ 30","31~60","61~180","181~600","601~1800","&gt;1801"),every_month_2014[[i]])
-  #                     sessions pageviews
-  #[1,] "12" "&lt; 10s"    "365814" "375361" 
-  #[2,] "12" "11 ~ 30"  "44857"  "92466"  
-  #[3,] "12" "31~60"    "48003"  "133645" 
-  #[4,] "12" "61~180"   "96890"  "423865" 
-  #[5,] "12" "181~600"  "107373" "872529" 
-  #[6,] "12" "601~1800" "78404"  "1057353"
-  #[7,] "12" "&gt;1801"    "28183"  "812783" 
-
-  # 將每一年的統整資料放在一起，作圖需要
-  all_data &lt;- rbind(all_data,month_all_data)
-}
-
-
-# 補上欄位名稱
-colnames(all_data) &lt;- c("month","time_interval","sessions","pageviews")
-
-
-# 先畫pageviews
-# 將資料的型態改正，因為上面建立的時候，會將每個欄位的屬性變成"factor"，這會對畫圖趙成莫大影響！
-all_data &lt;- transform(all_data, 
-    time_interval = factor(time_interval, levels = 
-        c('&lt; 10s','11 ~ 30','31~60', '61~180','181~600', '601~1800','&gt;1801')),
-    pageviews = as.numeric(as.character(pageviews)))
-
-# 作圖
-plot &lt;- ggplot(data = all_data, aes(x = month, y = pageviews, fill = time_interval)) +  
-    geom_bar(stat = "identity", position = "dodge", colour = "black")
-
-# 將圖存出
-ggsave(plot,file=paste("2014年engagement-pageviews圖.png",sep=""),width=15, height=10)
-
-
-# 再畫sessions
-all_data &lt;- transform(all_data, 
-    time_interval = factor(time_interval, levels = 
-        c('&lt; 10s','11 ~ 30','31~60', '61~180','181~600', '601~1800','&gt;1801')),
-    sessions = as.numeric(as.character(sessions)))
-
-plot &lt;- ggplot(data = all_data, aes(x = month, y = sessions, fill = time_interval)) +  
-    geom_bar(stat = "identity", position = "dodge", colour = "black")
-
-ggsave(plot,file=paste("2014年engagement-sessions圖.png",sep=""),width=15, height=10)
-</code></pre>
-
-<h3>Done</h3>
-
-<p>先來看 2014年每月 pageview 與 使用者平均在線時間 的 bar chart</p>
-
-<p><img src="https://dl.dropboxusercontent.com/u/22307926/Blog%20Image/get%20google%20analytics%20engagement%20using%20R/2014%E5%B9%B4engagement-pageviews%E5%9C%96.png" alt="every months google analytic engagement(pageviews X session Duration) in 2014 using R"></p>
-
-<p>再來看 2014年每月 sessions 與 使用者平均在線時間 的 bar chart</p>
-
-<p><img src="https://dl.dropboxusercontent.com/u/22307926/Blog%20Image/get%20google%20analytics%20engagement%20using%20R/2014%E5%B9%B4engagement-sessions%E5%9C%96.png" alt="every months google analytic engagement(sessions X session Duration) in 2014 using R"></p>
 ]]></content>
   </entry>
   

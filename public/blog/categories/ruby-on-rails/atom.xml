@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Ruby on Rails | AlohaCC]]></title>
   <link href="http://ccaloha.cc/blog/categories/ruby-on-rails/atom.xml" rel="self"/>
   <link href="http://ccaloha.cc/"/>
-  <updated>2016-06-27T14:39:28+08:00</updated>
+  <updated>2016-11-24T12:57:01+08:00</updated>
   <id>http://ccaloha.cc/</id>
   <author>
     <name><![CDATA[Aloha]]></name>
@@ -12,6 +12,321 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[API Request Limitation Using Rack-Throttle and Doorkeeper]]></title>
+    <link href="http://ccaloha.cc/blog/2016/11/24/api-request-limitation-using-rack-throttle-and-doorkeeper/"/>
+    <updated>2016-11-24T12:52:06+08:00</updated>
+    <id>http://ccaloha.cc/blog/2016/11/24/api-request-limitation-using-rack-throttle-and-doorkeeper</id>
+    <content type="html"><![CDATA[<p>When it comes to open API to external users, we need to consider the number of requests we allowed. Most of API-as-a-service platforms have different payment plans. Due to different levels of payment, it turns out that the service resource can be used fairly - advanced plan users can make more requests than normal users.</p>
+
+<p>In order to achieve this goal, we need to find a way recording the number of requests. Intuitively, we can creata a <code>request_record</code> table, before controller process the request, by comparing the number in database and client's request limitation, we can either allow or deny the requests.</p>
+
+<p>Thanks to Ruby gems, you are able to find some libraries can do the trick. In this article,
+I choose <code>rack-throttle</code> to help me count the requests. The reasons I prefer
+<code>rack-throttle</code> are:</p>
+
+<ol>
+<li>To limit by defining a maximum number of allowed HTTP requests per a given time period</li>
+<li>Compatible with any Rack application and any Rack-based framework.</li>
+<li>Compatible with the memcached, memcache-client, memcache and redis gems.</li>
+<li>Well documented and the most important thing is that codes are easy to read!</li>
+</ol>
+
+
+<p>Different from recording, we still need to identify which client makes this request for deciding to allow or not. Here I use <code>Doorkeeper</code> to tell me which user is.</p>
+
+<p>In this article, I will not show you how to setup <code>Doorkeeper</code>, but you are about to see how to customize your own limiter.</p>
+
+<p>So, That's go!</p>
+
+<h2>Requirements</h2>
+
+<p>My targets show as below:</p>
+
+<ol>
+<li>Different clients has its limitation.</li>
+<li>Should limit by second, minute, hour, day and month.</li>
+<li>Support whitelist</li>
+</ol>
+
+
+<h2>Gemfile</h2>
+
+<p>At first, we need to add libraries, the most important gem is <code>rack-throttle</code>. Depend on which places you want to store your counting data, you might need to add other gems. For me, I prefer <code>redis</code>. So, I added as below.</p>
+
+<p>```</p>
+
+<h1>Api limit</h1>
+
+<p>gem 'rack-throttle'
+gem 'redis'
+```</p>
+
+<h2>Customize your throttler</h2>
+
+<p>Wait wait, before we start implementing, we should understand some mechnisms and terms.</p>
+
+<h3>First, <code>rack</code>!</h3>
+
+<p>you might notice that the gem we use called <code>rack-throttle</code>. Yes! this lib is built as a <code>Rack middleware</code> that provides logic for rate-limiting incoming HTTP requests to Rack applications.</p>
+
+<p>Ok, so what's <code>Rack</code> ?</p>
+
+<p>according to <a href="http://rack.github.io/">rack official website</a>,</p>
+
+<blockquote><p>Rack provides a minimal interface between webservers that support Ruby and Ruby frameworks.</p>
+
+<p>To use Rack, provide an <code>app</code>: an object that responds to the <code>call</code> method, taking the environment hash as a parameter, and returning an Array with three elements:</p>
+
+<p>The HTTP response code</p>
+
+<p>A Hash of headers</p>
+
+<p>The response body, which must respond to each</p></blockquote>
+
+<p>So, <code>Rack</code> can help you handle the HTTP request. And due to <code>Rack</code> take <code>the environment hash</code> and also can "return" fix format: <code>array with code, headers and body</code>. It's very easy for you to add <code>middleware</code> which can help you do cacheing, authencation, ...etc. In our case, gem <code>rack-throttle</code> will help you adding middleware easily.</p>
+
+<p>After we briefly understand how <code>Rack</code> works, now let's take a look how <code>rack-throttle</code>'s core class: <a href="https://github.com/dryruby/rack-throttle/blob/master/lib/rack/throttle/limiter.rb"><code>limiter</code></a>.</p>
+
+<p>Why it work as <code>Rack middilewate</code>?</p>
+
+<p>The key point is:</p>
+
+<p>```
+def initialize(app, options = {})
+  @app, @options = app, options
+end</p>
+
+<p>def call(env)
+  request = Rack::Request.new(env)
+  allowed?(request) ? app.call(env) : rate_limit_exceeded(request)
+end
+```</p>
+
+<p>So, after we add this middleware into our Rack, every time we receive the requests it will be invoked by <code>call</code> method. Then we check is allowed or not, if is allowed, we pass to next Rack middleware, otherwise we stop in this middleware.</p>
+
+<h3>Since I need to customize the throttler, I can inherit from <code>Rack::Throttle::Limiter</code>.</h3>
+
+<p>Let's check the final code first.</p>
+
+<p>```ruby</p>
+
+<h1>lib/api_limitation/application_throttler.rb</h1>
+
+<p>require 'rack/throttle'
+module ApiLimitation
+  class ApplicationThrottler &lt; Rack::Throttle::Limiter</p>
+
+<pre><code>attr_accessor :client, :ip
+
+def initialize(app, options = {})
+  super
+end
+
+def client_identifier(request)
+  if request.env['HTTP_AUTHORIZATION'] || request.params['access_token']
+    token        = request.env['HTTP_AUTHORIZATION'].present? ? request.env['HTTP_AUTHORIZATION'].split(' ')[-1] : request.params['access_token']
+    access_token = Doorkeeper::AccessToken.where(token: token).first
+    @client = access_token ? User.find(access_token.resource_owner_id) : nil
+  end
+  @ip = request.ip.to_s
+end
+
+def max_per_second
+  @client.try(:limitation).try(:second) || 1
+end
+
+def max_per_minute
+  @client.try(:limitation).try(:minute) || 60
+end
+
+def max_per_hourly
+  @client.try(:limitation).try(:hourly) || 3_600
+end
+
+def max_per_daily
+  @client.try(:limitation).try(:daily) || 86_400
+end
+
+def max_per_monthly
+  @client.try(:limitation).try(:monthly) || 2_592_000
+end
+
+def allowed?(request)
+  client_identifier(request)
+  return true if whitelisted?(request)
+
+  ['second', 'minute', 'hourly', 'daily', 'monthly'].all? { |timeslot| send("#{timeslot}_check".to_sym) }
+end
+
+def whitelisted?(request)
+  @client.try(:email).in? ['YOUR_WHITE_LIST']
+end
+
+protected
+
+['second', 'minute', 'hourly', 'daily', 'monthly'].each do |timeslot|
+  define_method("#{timeslot}_check".to_sym) do
+    count = cache_get(key = send("#{timeslot}_cache_key".to_sym)).to_i + 1 rescue 1
+    allowed = count &lt;= send("max_per_#{timeslot}".to_sym).to_i
+    begin
+      cache_set(key, count)
+      allowed
+    rescue =&gt; e
+      allowed = true
+    end
+  end
+end
+
+def second_cache_key
+  [@client.try(:id) || @ip, Time.now.strftime('%Y-%m-%dT%H:%M:%S')].join(':')
+end
+
+def minute_cache_key
+  [@client.try(:id) || @ip, Time.now.strftime('%Y-%m-%dT%H:%M')].join(':')
+end
+
+def hourly_cache_key
+  [@client.try(:id) || @ip, Time.now.strftime('%Y-%m-%dT%H')].join(':')
+end
+
+def daily_cache_key
+  [@client.try(:id) || @ip, Time.now.strftime('%Y-%m-%d')].join(':')
+end
+
+def monthly_cache_key
+  [@client.try(:id) || @ip, Time.now.strftime('%Y-%m')].join(':')
+end
+</code></pre>
+
+<p>  end
+end</p>
+
+<p>```</p>
+
+<p>The most important function is <code>allowed?(request)</code>.</p>
+
+<p>```ruby
+def allowed?(request)</p>
+
+<pre><code>client_identifier(request)
+return true if whitelisted?(request)
+
+['second', 'minute', 'hourly', 'daily', 'monthly'].all? { |timeslot| send("#{timeslot}_check".to_sym) }
+</code></pre>
+
+<p>end
+```
+Let's check each functions.</p>
+
+<h4>First, <code>client_identifier(request)</code>.</h4>
+
+<p>```ruby
+def client_identifier(request)</p>
+
+<pre><code>if request.env['HTTP_AUTHORIZATION'] || request.params['access_token']
+</code></pre>
+
+<p>   token        = request.env['HTTP_AUTHORIZATION'].present? ? request.env['HTTP_AUTHORIZATION'].split(' ')[-1] : request.params['access_token']
+   access_token = Doorkeeper::AccessToken.where(token: token).first
+   @client = access_token ? User.find(access_token.resource_owner_id) : nil</p>
+
+<pre><code>  end
+</code></pre>
+
+<p>   @ip = request.ip.to_s
+ end
+```</p>
+
+<p>We used <code>doorkeeper</code> for Oauth2 authentication.</p>
+
+<p>So, each requests might have <code>HTTP_AUTHORIZATION</code> in header or <code>access_token</code> in url. Then we need to use the <code>access_token</code> to find who he is.</p>
+
+<h4>Second, <code>whitelisted?(request)</code></h4>
+
+<p><code>ruby
+def whitelisted?(request)
+  @client.try(:email).in? ['YOUR_WHITE_LIST']
+end
+</code></p>
+
+<p>Simple! Right?, because we already have @client from <code>client_identifier(request)</code>. I just try to find its email in list or not.</p>
+
+<h4>Finall part, <code>['second', 'minute', 'hourly', 'daily', 'monthly'].all? { |timeslot| send("#{timeslot}_check".to_sym) }</code></h4>
+
+<p>here I use <a href="https://www.toptal.com/ruby/ruby-metaprogramming-cooler-than-it-sounds"><code>metaprogramming</code></a> to avoid writing too many duplicate codes which call these functions: <code>second_check</code>, <code>minute_check</code>, ...etc.</p>
+
+<p>And you can't find these functions in codes, which is because I also use metaprogramming method to implement class's instance methods.</p>
+
+<p>```ruby
+['second', 'minute', 'hourly', 'daily', 'monthly'].each do |timeslot|
+  define_method("#{timeslot}_check".to_sym) do</p>
+
+<pre><code>count = cache_get(key = send("#{timeslot}_cache_key".to_sym)).to_i + 1 rescue 1
+allowed = count &lt;= send("max_per_#{timeslot}".to_sym).to_i
+begin
+  cache_set(key, count)
+  allowed
+rescue =&gt; e
+  allowed = true
+end
+</code></pre>
+
+<p>  end
+end
+```</p>
+
+<p>Ok, so here I try to get count number from cache(for me, I used Redis) by <code>cache_get</code> which is in base class: <code>Rack::Throttle::Limiter</code>. And the cache keys are either client's id or ip with timestamp. for example: <code>12345:2016-11-24</code> or <code>127.0.0.1:2016-11-24</code>.</p>
+
+<p><code>ruby
+def second_cache_key
+  [@client.try(:id) || @ip, Time.now.strftime('%Y-%m-%dT%H:%M:%S')].join(':')
+end
+...
+</code></p>
+
+<p>After we get the number of count we can compare it  to client's limitation and add counting number as well.</p>
+
+<p>And how do we get client's limitation?</p>
+
+<p>In our database design, user has one <code>limitation</code> which include these columns: <code>second</code>, <code>minute</code>...etc.
+So, I can easily get it by <code>@client.limitation.XXX</code></p>
+
+<p><code>
+def max_per_second
+  @client.try(:limitation).try(:second) || 1
+end
+....
+</code></p>
+
+<p>That's it. it's not too hard right?</p>
+
+<h2>Add your throttler into Rack.</h2>
+
+<p>This part is super easy, just follow <a href="https://github.com/dryruby/rack-throttle"><code>rack-throttle</code>'s README</a>.</p>
+
+<p>because I built it for Rails application.</p>
+
+<p>I need to add this line into <code>config/application.rb</code></p>
+
+<p>```ruby
+module YOUR_AWESOME_APPLICATION
+  class Application &lt; Rails::Application
+   ...</p>
+
+<pre><code>config.middleware.use ::ApiLimitation::ApplicationThrottler, cache: Redis.new(host: YOUR_REDIS_HOST), key_prefix: :awesome_throttle, message: 'Rate Limit Exceeded, please upgrade your plan to get more requests'
+</code></pre>
+
+<p>  end
+end
+```</p>
+
+<p>Do you remember that I mentioned I use <code>Redis</code> for caching count? Here is the magic.</p>
+
+<p>I initialize <code>@cache</code> in here. So that it can be accessed in class.</p>
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[Ruby on Rails Development Using Mongoid 5.0.0 - 3. How to use MapReduce to get pageview data]]></title>
@@ -1189,326 +1504,6 @@ end</p>
 NameError: uninitialized constant DumpDataFromOldServer</p></blockquote>
 
 <p>```</p>
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[Build up a homemade server-to-server interactions with Google API using Ruby - Take Google Analytics As An Example]]></title>
-    <link href="http://ccaloha.cc/blog/2015/08/23/build-up-a-homemade-server-to-server-interactions-with-google-api-using-ruby-take-google-analytics-as-an-example/"/>
-    <updated>2015-08-23T15:10:37+08:00</updated>
-    <id>http://ccaloha.cc/blog/2015/08/23/build-up-a-homemade-server-to-server-interactions-with-google-api-using-ruby-take-google-analytics-as-an-example</id>
-    <content type="html"><![CDATA[<p>Since 'google-api-ruby-client' make a big change from <a href="https://github.com/google/google-api-ruby-client/blob/master/MIGRATING.md">0.8 to 0.9</a> when my project is running out of time, and also I met this <a href="https://github.com/google/google-api-ruby-client/issues/253">issue</a>, So, I make this decision, let's build a API client by myself.</p>
-
-<p>This implementation refer to Google <a href="https://developers.google.com/identity/protocols/OAuth2ServiceAccount">guideline</a></p>
-
-<p><img src="https://dl.dropboxusercontent.com/u/22307926/Blog%20Image/build%20up%20server-to-server%20interactions%20with%20Google%20API/Google%20API%20server-to-server.png"></p>
-
-<!--more-->
-
-
-<h2>Step1. Preparation</h2>
-
-<h3>1. Create a Service Account</h3>
-
-<p><img src="https://dl.dropboxusercontent.com/u/22307926/Blog%20Image/build%20up%20server-to-server%20interactions%20with%20Google%20API/Add%20Credentials.png" alt="add credential"></p>
-
-<h3>2. Download JSON file</h3>
-
-<p><img src="https://dl.dropboxusercontent.com/u/22307926/Blog%20Image/build%20up%20server-to-server%20interactions%20with%20Google%20API/Download%20JSON.png" alt="Download JSON File"></p>
-
-<p>And I put JSON file into <strong>config</strong> folder.</p>
-
-<h3>3. Copy a Email and Add to Google Analytics</h3>
-
-<p><img src="https://dl.dropboxusercontent.com/u/22307926/Blog%20Image/build%20up%20server-to-server%20interactions%20with%20Google%20API/Remember%20your%20Email%20.png"></p>
-
-<p><img src="https://dl.dropboxusercontent.com/u/22307926/Blog%20Image/build%20up%20server-to-server%20interactions%20with%20Google%20API/Add%20email%20to%20Google%20Analytics%20by%20User%20Management.png" alt="Add generated email to Google analytics user"></p>
-
-<h2>Step2. Get Access Token</h2>
-
-<p>Add to <strong>Gemfile</strong></p>
-
-<p><code>
-gem "typhoeus"
-gem 'jwt'
-</code></p>
-
-<p>Create a file named <strong>lib/google_anallytics.rb</strong></p>
-
-<p>Again, this implementation refer to Google <a href="https://developers.google.com/identity/protocols/OAuth2ServiceAccount">guideline</a>. Please, check this guideline first. Then you will understand how I write fuction get_token.</p>
-
-<p>```
-require 'typhoeus'
-require "jwt"
-require 'date'
-module GoogleAnalytic</p>
-
-<p>  def get_token</p>
-
-<pre><code>json_file = File.join("#{Rails.root}/config", 'YOUR-JSON-FILE-NAME.json')
-file = File.read(json_file)
-key_hash = JSON.parse(file)
-aud     = "https://www.googleapis.com/oauth2/v3/token"
-now     = Time.new
-iat     = (now - 60).to_i
-@exp    = (now + 50.minutes).to_i
-scopes  = 'https://www.googleapis.com/auth/analytics.readonly'
-sub     = key_hash["client_email"]
-iss     = key_hash["client_email"]
-jwt_claim_set    = {
-  'iss' =&gt; iss, 
-  'sub' =&gt; sub, 
-  'scope' =&gt; scopes,
-  'aud' =&gt; aud, 
-  'exp' =&gt; @exp,
-  'iat' =&gt; iat
-  }
-token            = JWT.encode(jwt_claim_set,  OpenSSL::PKey::RSA.new(key_hash["private_key"]), 'RS256')
-
-res = Typhoeus::Request.post('https://www.googleapis.com/oauth2/v3/token', 
-  body: 
-    { 
-      grant_type: "urn:ietf:params:oauth:grant-type:jwt-bearer",
-      assertion: token
-    }
-)
-
-res_hash = MultiJson.load(res.body)
-
-token = res_hash["access_token"]
-return token
-</code></pre>
-
-<p>  end
-end
-```</p>
-
-<h2>Step3. Fetch Data</h2>
-
-<p>In my case, I create a model for saving Google Analytics data. So, I'll show you how I fetch data.</p>
-
-<p>```
-class GoogleAnalyticEvent
-  include GoogleAnalytic
-  include Mongoid::Document
-  include Mongoid::Timestamps
-  field :category, type: String      <br/>
-  field :label, type: String      <br/>
-  field :action, type: String
-  field :total_events, type: Integer     <br/>
-  field :unique_events, type: Integer
-  field :data_date, type: Date
-  index({category: 1, label: 1, data_date: 1, action:1 })</p>
-
-<p>  def get_event_from_ga_api(params={})</p>
-
-<pre><code>@data_date = Date.today - 1
-@parameters = {
-    'ids'         =&gt; "ga:12345678",
-    'start-date'  =&gt; @data_date.strftime("%Y-%m-%d"),
-    'end-date'    =&gt; @data_date.strftime("%Y-%m-%d"),
-    'metrics'     =&gt; "ga:totalEvents,ga:uniqueEvents",
-    'dimensions'  =&gt; "ga:eventCategory,ga:eventLabel,ga:eventAction",
-    'max-results' =&gt; "10000"
-  }
-query_paginate(@parameters)
-</code></pre>
-
-<p>  end</p>
-
-<p>  def query_paginate(parameters)</p>
-
-<pre><code>parameters['access_token'] = get_token
-count = 0
-loop do
-    if Time.new.to_i &gt; @exp
-      parameters['access_token'] = get_token
-    end
-   res = Typhoeus::Request.get('https://www.googleapis.com/analytics/v3/data/ga', 
-    params: parameters
-   )
-  result = MultiJson.load(res.body)
-  if result["error"].nil?
-    sync_to_db(result)  if result["totalResults"] &gt; 0
-    max_count = result["totalResults"] / parameters["max-results"].to_i
-  end
-  break if count == max_count || result["error"].present?
-  count += 1
-  parameters["start-index"] = parameters["max-results"].to_i * count + 1
-end
-</code></pre>
-
-<p>  end</p>
-
-<p>  def sync_to_db(result)</p>
-
-<pre><code>result["columnHeaders"].each_with_index do |h,i|
-  case h["name"].to_s
-  when "ga:eventCategory"
-    @category= i 
-  when "ga:eventLabel"
-    @label   = i
-  when "ga:eventAction"
-    @action  = i
-  when "ga:totalEvents" 
-    @total_events  = i
-  when "ga:uniqueEvents"
-    @unique_events = i
-  end
-end 
-result["rows"].each do |array_data|
-    GoogleAnalyticEvent.create(category:      array_data[@category], 
-                                label:        array_data[@label], 
-                                action:       array_data[@action],
-                                total_events:       array_data[@total_events],
-                                unique_events:      array_data[@unique_events],
-                                data_date:          @data_date)
-end
-</code></pre>
-
-<p>  end
-end
-```</p>
-
-<p>Let's me explain each code snapshots.</p>
-
-<h3>3-1: First of all, I initialize query parameters such as ids, start-date, ...etc in instance variable @parameters.</h3>
-
-<p>PS. you can easily understand which parameters you need by using <a href="https://ga-dev-tools.appspot.com/query-explorer/">Google Analytics Query Explorer</a>. Once, you find out which parameters you need, just copy to here like I do.</p>
-
-<p>```
-def get_event_from_ga_api(params={})</p>
-
-<pre><code>@data_date = Date.today - 1
-@parameters = {
-    'ids'         =&gt; "ga:12345678",
-    'start-date'  =&gt; @data_date.strftime("%Y-%m-%d"),
-    'end-date'    =&gt; @data_date.strftime("%Y-%m-%d"),
-    'metrics'     =&gt; "ga:totalEvents,ga:uniqueEvents",
-    'dimensions'  =&gt; "ga:eventCategory,ga:eventLabel,ga:eventAction",
-    'max-results' =&gt; "10000"
-  }
-query_paginate(@parameters)
-</code></pre>
-
-<p>  end
-```</p>
-
-<h3>3-2: Second, let's see sync_to_db first.</h3>
-
-<p>After I got Google API's response, I will save to database.</p>
-
-<p>let's see what do we get from google analytics first.</p>
-
-<p><img src="https://dl.dropboxusercontent.com/u/22307926/Blog%20Image/build%20up%20server-to-server%20interactions%20with%20Google%20API/Google%20Analytics%20Return%20Result.png" alt="Google Analytics Return Data"></p>
-
-<p>Google show you the return data's column header name by "columnHeaders". And "rows" data is given as an array. And each array's elements refer to "columnHeaders" respectively. For exameple, in above picture, you can see "ga:eventCategory" is in first of columnHeaders. So, in rows, each array's first element is value of "ga:eventCategory". Then I save data to model GoogleAnalyticEvent.</p>
-
-<p>That's all fuction "sync_to_db" do.</p>
-
-<p>```
-def sync_to_db(result)</p>
-
-<pre><code>result["columnHeaders"].each_with_index do |h,i|
-  case h["name"].to_s
-  when "ga:eventCategory"
-    @category= i 
-  when "ga:eventLabel"
-    @label   = i
-  when "ga:eventAction"
-    @action  = i
-  when "ga:totalEvents" 
-    @total_events  = i
-  when "ga:uniqueEvents"
-    @unique_events = i
-  end
-end 
-result["rows"].each do |array_data|
-    GoogleAnalyticEvent.create(category:      array_data[@category], 
-                                label:        array_data[@label], 
-                                action:       array_data[@action],
-                                total_events:       array_data[@total_events],
-                                unique_events:      array_data[@unique_events],
-                                data_date:          @data_date)
-end
-</code></pre>
-
-<p>  end
-```</p>
-
-<h3>3-3: Finally, let's see function query_paginate.</h3>
-
-<p>```
-def query_paginate(parameters)</p>
-
-<pre><code>parameters['access_token'] = get_token
-count = 0
-loop do
-    if Time.new.to_i &gt; @exp
-      parameters['access_token'] = get_token
-    end
-   res = Typhoeus::Request.get('https://www.googleapis.com/analytics/v3/data/ga', 
-    params: parameters
-   )
-  result = MultiJson.load(res.body)
-  if result["error"].nil?
-    sync_to_db(result)  if result["totalResults"] &gt; 0
-    max_count = result["totalResults"] / parameters["max-results"].to_i
-  end
-  break if count == max_count || result["error"].present?
-  count += 1
-  parameters["start-index"] = parameters["max-results"].to_i * count + 1
-end
-</code></pre>
-
-<p>  end
-```
-I have to get access token by "get_token", And this function also assign expire time to @exp.</p>
-
-<p>```
-parameters['access_token'] = get_token</p>
-
-<p>```</p>
-
-<p>Then I write a loop for pagination. At first, I check token is expired or not, if is expired, I have to get token again.</p>
-
-<p>```
-if Time.new.to_i > @exp
-  parameters['access_token'] = get_token
-end</p>
-
-<p>```</p>
-
-<p>Now, I use Typhoeus::Request.get method with params fetching data from Google Analytics.</p>
-
-<p>```
-res = Typhoeus::Request.get('https://www.googleapis.com/analytics/v3/data/ga',</p>
-
-<pre><code>    params: parameters
-   )
-</code></pre>
-
-<p>result = MultiJson.load(res.body)
-```</p>
-
-<p>And if there are no any errors, I will save data to database.</p>
-
-<p><code>
-if result["error"].nil?
-  sync_to_db(result)  if result["totalResults"] &gt; 0
-  max_count = result["totalResults"] / parameters["max-results"].to_i
-end
-</code></p>
-
-<p>Finally, break or continue to get next batch data.</p>
-
-<p><code>
-break if count == max_count || result["error"].present?
-count += 1
-parameters["start-index"] = parameters["max-results"].to_i * count + 1
-</code></p>
-
-<h2>That's it.</h2>
 ]]></content>
   </entry>
   

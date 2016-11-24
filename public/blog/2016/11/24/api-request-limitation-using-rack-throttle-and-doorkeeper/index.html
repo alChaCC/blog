@@ -5,11 +5,11 @@
 	<script data-cfasync="false" type="text/javascript" src="//use.typekit.net/axj3cfp.js"></script>
 	<script data-cfasync="false" type="text/javascript">try{Typekit.load();}catch(e){}</script>
 	<meta charset="utf-8">
-	<title>Stay Hungry. Stay Foolish.  | AlohaCC</title>
+	<title>API Request Limitation Using Rack-Throttle and Doorkeeper  | AlohaCC</title>
 
 <meta name="author" content="Aloha"> 
 
-<meta name="description" content="Share Ruby on Rail and all about 'Chun Yu, Chen AlohaCC'"> <meta name="keywords" content="Aloha, Ruby on Rails, 中文, Blog, Full Stack web developer, Taiwan, Chun-Yu Chen, data scientist">
+<meta name="description" content="The article show you how to implement API request limitation in Rack application."> <meta name="keywords" content="rack-throttle, doorkeeper, rack, ruby, request, limitation">
 
 	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 
@@ -101,18 +101,9 @@ $(document).ready(
 
 </header>
 
-	<div id="content" class="inner">
-
-
-    <article class="post">
-	<h2 class="title">
-		
-		<a href="/blog/2016/11/24/api-request-limitation-using-rack-throttle-and-doorkeeper/">
-		
-			API Request Limitation Using Rack-Throttle and Doorkeeper</a>
-	</h2>
-	<div class="entry-content">
-		<p>When it comes to open API to external users, we need to consider the number of requests we allowed. Most of API-as-a-service platforms have different payment plans. Due to different levels of payment, it turns out that the service resource can be used fairly - advanced plan users can make more requests than normal users.</p>
+	<div id="content" class="inner"><article class="post">
+	<h2 class="title">API Request Limitation Using Rack-Throttle and Doorkeeper</h2>
+	<div class="entry-content"><p>When it comes to open API to external users, we need to consider the number of requests we allowed. Most of API-as-a-service platforms have different payment plans. Due to different levels of payment, it turns out that the service resource can be used fairly - advanced plan users can make more requests than normal users.</p>
 
 <p>In order to achieve this goal, we need to find a way recording the number of requests. Intuitively, we can creata a <code>request_record</code> table, before controller process the request, by comparing the number in database and client&#8217;s request limitation, we can either allow or deny the requests.</p>
 
@@ -539,10 +530,7 @@ So, I can easily get it by <code>@client.limitation.XXX</code></p>
 <p>Do you remember that I mentioned I use <code>Redis</code> for caching count? Here is the magic.</p>
 
 <p>I initialize <code>@cache</code> in here. So that it can be accessed in class.</p>
-
-		
-		
-	</div>
+</div>
 
 
 <div class="meta">
@@ -569,411 +557,34 @@ So, I can easily get it by <code>@client.limitation.XXX</code></p>
 
 
 	
-		<span class="comments"><a href="/blog/2016/11/24/api-request-limitation-using-rack-throttle-and-doorkeeper//blog/index.html#disqus_thread">Comments</a></span>
+		<span class="comments"><a href="/blog/2016/11/24/api-request-limitation-using-rack-throttle-and-doorkeeper/#disqus_thread">Comments</a></span>
 	
 </div></article>
 
-
-    <article class="post">
-	<h2 class="title">
-		
-		<a href="/blog/2016/06/25/split-single-lossless-audio-dot-ape/">
-		
-			Split Single Lossless Audio(.ape, .flac) Files Into Mp3 in MacOSX</a>
-	</h2>
-	<div class="entry-content">
-		<p>I got a lossless audio from my friend which included Taiwan famous folk songs in 1970~1979.</p>
-
-<p>So, I want to split this audio into seperate mp3. Spending few hours, I found this library!</p>
-
-<p>I have to thank @ftrvxmtrx - the author of <a href="https://github.com/ftrvxmtrx/split2flac">https://github.com/ftrvxmtrx/split2flac</a>.</p>
-
-<p>In this post, I just show to how to setup the environment to use ftrvxmtrx&#8217;s libarary in MacOSX.</p>
-
-<h2>1. Make sure you have homebrew</h2>
-
-<h2>2. Install required/optional libs</h2>
-
-<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-</pre></td><td class='code'><pre><code class=''><span class='line'>brew install cuetools
-</span><span class='line'>brew install shntool
-</span><span class='line'>brew install id3lib
-</span><span class='line'>brew install flac
-</span><span class='line'>brew install homebrew/dupes/libiconv
-</span><span class='line'>brew install enca
-</span><span class='line'># for install mac to split APE
-</span><span class='line'>brew tap fernandotcl/homebrew-fernandotcl
-</span><span class='line'>brew install monkeys-audio</span></code></pre></td></tr></table></div></figure>
-
-
-<h2>3. Clone project</h2>
-
-<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-</pre></td><td class='code'><pre><code class=''><span class='line'>git clone https://github.com/ftrvxmtrx/split2flac.git</span></code></pre></td></tr></table></div></figure>
-
-
-<h2>4. Convert files</h2>
-
-<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-</pre></td><td class='code'><pre><code class=''><span class='line'>cd split2flac</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Check commands</p>
-
-<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-</pre></td><td class='code'><pre><code class=''><span class='line'>./split2flac -h</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Convert the file</p>
-
-<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-</pre></td><td class='code'><pre><code class=''><span class='line'>./split2flac -f mp3 -o ~/Desktop/ -cue path/to/your/cue-file.cue path/to/your/ape-file.ape</span></code></pre></td></tr></table></div></figure>
-
-
-<p><strong>-f</strong>: using mp3 as output format</p>
-
-<p><strong>-o</strong>: where to put the output files</p>
-
-<p><strong>cue</strong>: file location to your .cue</p>
-
-<p>yay!</p>
-
-<p><img src='https://dl.dropboxusercontent.com/u/22307926/Blog%20Image/split_lossless_audio/demo-%20split%20ape%20file%20into%20mp3.png' alt='demo: split ape file into mp3'></p>
-
-		
-		
-	</div>
-
-
-<div class="meta">
-	<div class="date">
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2016-06-25T17:33:14+08:00" pubdate data-updated="true">Jun 25<span>th</span>, 2016</time></div>
+	<div class="share">
+	<div class="addthis_toolbox addthis_default_style ">
 	
-
-<div class="tags">
-
-	<a class='category' href='/blog/categories/others/'>Others</a>
-
+	<a class="addthis_button_facebook_like" fb:like:layout="button_count"></a>
+	
+	
+	<a class="addthis_button_tweet"></a>
+	
+	
+	<a class="addthis_button_google_plusone" g:plusone:size="medium"></a>
+	
+<!---	<a class="addthis_counter addthis_pill_style"></a> --->
+	</div>
+  <script type="text/javascript" src="http://s7.addthis.com/js/250/addthis_widget.js#pubid="></script>
 </div>
 
 
-	
-		<span class="comments"><a href="/blog/2016/06/25/split-single-lossless-audio-dot-ape//blog/index.html#disqus_thread">Comments</a></span>
-	
-</div></article>
 
-
-    <article class="post">
-	<h2 class="title">
-		
-		<a href="/blog/2016/06/22/how-to-install-preloader-dot-io-service-in-ubuntu-14-dot-04/">
-		
-			How to Install Preloader.io Service in Ubuntu 14.04</a>
-	</h2>
-	<div class="entry-content">
-		<p>If you&#8217;re finding a solution for SEO especially for AngularJS, BackboneJS, EmberJS and other javascript frameworks. <code>Preloader</code> will be one of your options.</p>
-
-<blockquote><p><code>Preloader</code> is a node server that uses phantomjs to create static HTML out of a javascript page.</p></blockquote>
-
-<p>you are able to use their <a href="https://prerender.io/">solutions</a> instead of installing in your own machine.</p>
-
-<p>But, what if you just like me, want to try their service first and want to customize your own Preloader?</p>
-
-<p>here are flows that show how I install Preloader in Ubuntu 14.04.</p>
-
-
-		
-		<a href="/blog/2016/06/22/how-to-install-preloader-dot-io-service-in-ubuntu-14-dot-04/" class="more-link">Read on &rarr;</a>
-	</div>
-
-
-<div class="meta">
-	<div class="date">
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2016-06-22T17:58:14+08:00" pubdate data-updated="true">Jun 22<span>nd</span>, 2016</time></div>
-	
-
-<div class="tags">
-
-	<a class='category' href='/blog/categories/preloader-dot-io/'>Preloader.io</a>, <a class='category' href='/blog/categories/server/'>Server</a>
-
+<section id="comment">
+    <h2 class="title">Comments</h2>
+    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
 </div>
-
-
-	
-		<span class="comments"><a href="/blog/2016/06/22/how-to-install-preloader-dot-io-service-in-ubuntu-14-dot-04//blog/index.html#disqus_thread">Comments</a></span>
-	
-</div></article>
-
-
-    <article class="post">
-	<h2 class="title">
-		
-		<a href="/blog/2016/06/16/how-to-setup-standalone-faye-websocket-server-using-ssl-and-ruby/">
-		
-			How to Setup a Simple Standalone Faye Websocket Server Using SSL and Ruby</a>
-	</h2>
-	<div class="entry-content">
-		<p><img src='https://dl.dropboxusercontent.com/u/22307926/Blog%20Image/websocket/How%20to%20setup%20a%20simple%20standalone%20faye%20websocket%20server%20using%20SSL%20and%20Ruby.png' alt='Demo faye websocket server using Ruby'></p>
-
-<p>References:</p>
-
-<p><a href="https://www.driftingruby.com/episodes/faye-websockets-part-1">faye-websockets-part-1</a></p>
-
-<p><a href="https://www.driftingruby.com/episodes/faye-websockets-part-2">faye-websockets-part-2</a></p>
-
-<p><a href="http://code.tutsplus.com/tutorials/how-to-use-faye-as-a-real-time-push-server-in-rails--net-22600">How to Use Faye as a Real-Time Push Server in Rails</a></p>
-
-<p><strong>====================================================</strong></p>
-
-<p><strong>In your remote Ubuntu server</strong></p>
-
-<p><strong>====================================================</strong></p>
-
-<h2>Step1. Install Ruby environment in Ubuntu</h2>
-
-<p>Reference: <a href="https://gorails.com/deploy/ubuntu/14.04">https://gorails.com/deploy/ubuntu/14.04</a></p>
-
-<h3>Add user</h3>
-
-<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-</pre></td><td class='code'><pre><code class=''><span class='line'>sudo adduser deploy
-</span><span class='line'>sudo adduser deploy sudo
-</span><span class='line'>su deploy</span></code></pre></td></tr></table></div></figure>
-
-
-<h3>Make sure you can login using new user</h3>
-
-<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-</pre></td><td class='code'><pre><code class=''><span class='line'>cd ~
-</span><span class='line'>mkdir .ssh
-</span><span class='line'>cd .ssh
-</span><span class='line'>vim authorized_keys</span></code></pre></td></tr></table></div></figure>
-
-
-<p>then put the content in <code>~/.ssh/id_rsa.pub</code> in your <em>local machine</em> into it.</p>
-
-<h3>Install Ruby and RVM</h3>
-
-<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-<span class='line-number'>14</span>
-<span class='line-number'>15</span>
-</pre></td><td class='code'><pre><code class=''><span class='line'>sudo apt-get update
-</span><span class='line'>
-</span><span class='line'>sudo apt-get install git-core curl zlib1g-dev build-essential libssl-dev libreadline-dev libyaml-dev libsqlite3-dev sqlite3 libxml2-dev libxslt1-dev libcurl4-openssl-dev python-software-properties libffi-dev
-</span><span class='line'>
-</span><span class='line'>sudo apt-get install libgdbm-dev libncurses5-dev automake libtool bison libffi-dev
-</span><span class='line'>
-</span><span class='line'>gpg --keyserver hkp://keys.gnupg.net --recv-keys 409B6B1796C275462A1703113804BB82D39DC0E3
-</span><span class='line'>
-</span><span class='line'>curl -L https://get.rvm.io | bash -s stable
-</span><span class='line'>
-</span><span class='line'>source ~/.rvm/scripts/rvm
-</span><span class='line'>
-</span><span class='line'>rvm install 2.2.3
-</span><span class='line'>
-</span><span class='line'>gem install bundler</span></code></pre></td></tr></table></div></figure>
-
-
-
-
-
-		
-		<a href="/blog/2016/06/16/how-to-setup-standalone-faye-websocket-server-using-ssl-and-ruby/" class="more-link">Read on &rarr;</a>
-	</div>
-
-
-<div class="meta">
-	<div class="date">
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2016-06-16T12:08:11+08:00" pubdate data-updated="true">Jun 16<span>th</span>, 2016</time></div>
-	
-
-<div class="tags">
-
-	<a class='category' href='/blog/categories/ruby/'>Ruby</a>, <a class='category' href='/blog/categories/websocket/'>Websocket</a>
-
+</section>
 </div>
-
-
-	
-		<span class="comments"><a href="/blog/2016/06/16/how-to-setup-standalone-faye-websocket-server-using-ssl-and-ruby//blog/index.html#disqus_thread">Comments</a></span>
-	
-</div></article>
-
-
-    <article class="post">
-	<h2 class="title">
-		
-		<a href="/blog/2016/01/07/ruby-on-rails-development-using-mongoid-5-dot-0-0-3-how-to-use-mapreduce-to-get-pageview-data/">
-		
-			Ruby on Rails Development Using Mongoid 5.0.0 - 3. How to Use MapReduce to Get Pageview Data</a>
-	</h2>
-	<div class="entry-content">
-		<p>What is MapReduce?</p>
-
-<blockquote><p>Map-reduce is a data processing paradigm for condensing large volumes of data into useful aggregated results.</p></blockquote>
-
-<p><strong>MapReduce</strong> is a popular big data term in recent years proposed by Google. It is a method for manipulate large data sets parallelly and distributedly on   many machines. In my words, I usually said that Map-Reduce, &#8220;Map&#8221; is to assign match function to many machines for cutting a huge data into small data sets(group matched data), and then use &#8220;Reduce&#8221; to aggregate these calculated data.</p>
-
-<blockquote><p>In this map-reduce operation, MongoDB applies the map phase to each input document (i.e. the documents in the collection that match the query condition). The map function emits key-value pairs. For those keys that have multiple values, MongoDB applies the reduce phase, which collects and condenses the aggregated data. MongoDB then stores the results in a collection. Optionally, the output of the reduce function may pass through a finalize function to further condense or process the results of the aggregation.</p></blockquote>
-
-<p><img src='https://dl.dropboxusercontent.com/u/22307926/Blog%20Image/Ruby%20on%20Rails%20Development%20Using%20Mongoid%205.0.0%20-%203.%20How%20to%20use%20MapReduce%20to%20get%20pageview%20data/%E8%9E%A2%E5%B9%95%E5%BF%AB%E7%85%A7%202016-01-06%2016.12.54.png' alt='MongoDB MapReduce'></p>
-
-<p>if you want more details, please check <a href="https://docs.mongodb.org/manual/core/map-reduce/">official documents</a></p>
-
-<p>Let&#8217;s go check how to use <strong>map reduce</strong> in Mongoid.</p>
-
-
-		
-		<a href="/blog/2016/01/07/ruby-on-rails-development-using-mongoid-5-dot-0-0-3-how-to-use-mapreduce-to-get-pageview-data/" class="more-link">Read on &rarr;</a>
-	</div>
-
-
-<div class="meta">
-	<div class="date">
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2016-01-07T16:38:55+08:00" pubdate data-updated="true">Jan 7<span>th</span>, 2016</time></div>
-	
-
-<div class="tags">
-
-	<a class='category' href='/blog/categories/mongoid/'>Mongoid</a>, <a class='category' href='/blog/categories/ruby-on-rails/'>Ruby on Rails</a>
-
-</div>
-
-
-	
-		<span class="comments"><a href="/blog/2016/01/07/ruby-on-rails-development-using-mongoid-5-dot-0-0-3-how-to-use-mapreduce-to-get-pageview-data//blog/index.html#disqus_thread">Comments</a></span>
-	
-</div></article>
-
-
-    <article class="post">
-	<h2 class="title">
-		
-		<a href="/blog/2016/01/06/ruby-on-rails-development-using-mongoid-5-dot-0-0-2-how-to-use-aggregation-to-get-pageview-data/">
-		
-			Ruby on Rails Development Using Mongoid 5.0.0 - 2. How to Use Aggregation to Get Pageview Data</a>
-	</h2>
-	<div class="entry-content">
-		<p>What is Aggregation ?</p>
-
-<blockquote><p>Aggregations are operations that process data records and return computed results.</p></blockquote>
-
-<p>In my opinion, it just like queries but it can do some operations step by step when processing the query just like a pipeline.</p>
-
-<p><img src='https://dl.dropboxusercontent.com/u/22307926/Blog%20Image/Ruby%20on%20Rails%20Development%20Using%20Mongoid%20-%202%20How%20to%20use%20Aggregation%20to%20get%20pageview%20data/%E8%9E%A2%E5%B9%95%E5%BF%AB%E7%85%A7%202016-01-05%2017.31.06.png' alt='MongoDB Aggregation'></p>
-
-<p>if you want more details, please check <a href="https://docs.mongodb.org/manual/core/aggregation-introduction/">official documents</a></p>
-
-
-		
-		<a href="/blog/2016/01/06/ruby-on-rails-development-using-mongoid-5-dot-0-0-2-how-to-use-aggregation-to-get-pageview-data/" class="more-link">Read on &rarr;</a>
-	</div>
-
-
-<div class="meta">
-	<div class="date">
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2016-01-06T13:57:37+08:00" pubdate data-updated="true">Jan 6<span>th</span>, 2016</time></div>
-	
-
-<div class="tags">
-
-	<a class='category' href='/blog/categories/mongoid/'>Mongoid</a>, <a class='category' href='/blog/categories/ruby-on-rails/'>Ruby on Rails</a>
-
-</div>
-
-
-	
-		<span class="comments"><a href="/blog/2016/01/06/ruby-on-rails-development-using-mongoid-5-dot-0-0-2-how-to-use-aggregation-to-get-pageview-data//blog/index.html#disqus_thread">Comments</a></span>
-	
-</div></article>
-
-<nav id="pagenavi">
-    
-    
-        <a href="/blog/page/2/" class="next">Next</a>
-    
-    <div class="center"><a href="/blog/archives">Blog Archives</a></div>
-</nav></div>
 	<footer id="footer" class="inner">Copyright &copy; 2016
 
     Aloha
@@ -994,7 +605,10 @@ Powered by Octopress.
       var disqus_shortname = 'ccaloha';
       
         
-        var disqus_script = 'count.js';
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://ccaloha.cc/blog/2016/11/24/api-request-limitation-using-rack-throttle-and-doorkeeper/';
+        var disqus_url = 'http://ccaloha.cc/blog/2016/11/24/api-request-limitation-using-rack-throttle-and-doorkeeper/';
+        var disqus_script = 'embed.js';
       
     (function () {
       var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
