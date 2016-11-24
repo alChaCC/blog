@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Ruby on Rails | AlohaCC]]></title>
   <link href="http://ccaloha.cc/blog/categories/ruby-on-rails/atom.xml" rel="self"/>
   <link href="http://ccaloha.cc/"/>
-  <updated>2016-11-24T12:57:01+08:00</updated>
+  <updated>2016-11-24T17:48:02+08:00</updated>
   <id>http://ccaloha.cc/</id>
   <author>
     <name><![CDATA[Aloha]]></name>
@@ -18,9 +18,10 @@
     <link href="http://ccaloha.cc/blog/2016/11/24/api-request-limitation-using-rack-throttle-and-doorkeeper/"/>
     <updated>2016-11-24T12:52:06+08:00</updated>
     <id>http://ccaloha.cc/blog/2016/11/24/api-request-limitation-using-rack-throttle-and-doorkeeper</id>
-    <content type="html"><![CDATA[<p>When it comes to open API to external users, we need to consider the number of requests we allowed. Most of API-as-a-service platforms have different payment plans. Due to different levels of payment, it turns out that the service resource can be used fairly - advanced plan users can make more requests than normal users.</p>
+    <content type="html"><![CDATA[<p>When it comes to open API to external users, we need to consider the number of requests we allowed. Most of API-as-a-service platforms have different payment plans. Due to different levels of payment, it can make sure that our service resource can be used fairly - advanced plan users can make more requests than normal users.</p>
 
-<p>In order to achieve this goal, we need to find a way recording the number of requests. Intuitively, we can creata a <code>request_record</code> table, before controller process the request, by comparing the number in database and client's request limitation, we can either allow or deny the requests.</p>
+<p>In order to achieve this goal, we need to find a way recording the number of requests. Intuitively, we can creata a <code>request_record</code> table, before controller process the request, by comparing the number in database and client's request limitation, we can either allow or deny the requests. <br/>
+However, we don't need to build like this way.</p>
 
 <p>Thanks to Ruby gems, you are able to find some libraries can do the trick. In this article,
 I choose <code>rack-throttle</code> to help me count the requests. The reasons I prefer
@@ -32,6 +33,9 @@ I choose <code>rack-throttle</code> to help me count the requests. The reasons I
 <li>Compatible with the memcached, memcache-client, memcache and redis gems.</li>
 <li>Well documented and the most important thing is that codes are easy to read!</li>
 </ol>
+
+
+<!--more-->
 
 
 <p>Different from recording, we still need to identify which client makes this request for deciding to allow or not. Here I use <code>Doorkeeper</code> to tell me which user is.</p>
@@ -110,7 +114,7 @@ end
 
 <p>Let's check the final code first.</p>
 
-<p>```ruby</p>
+<p>```</p>
 
 <h1>lib/api_limitation/application_throttler.rb</h1>
 
@@ -207,7 +211,7 @@ end</p>
 
 <p>The most important function is <code>allowed?(request)</code>.</p>
 
-<p>```ruby
+<p>```
 def allowed?(request)</p>
 
 <pre><code>client_identifier(request)
@@ -222,7 +226,7 @@ Let's check each functions.</p>
 
 <h4>First, <code>client_identifier(request)</code>.</h4>
 
-<p>```ruby
+<p>```
 def client_identifier(request)</p>
 
 <pre><code>if request.env['HTTP_AUTHORIZATION'] || request.params['access_token']
@@ -245,7 +249,7 @@ def client_identifier(request)</p>
 
 <h4>Second, <code>whitelisted?(request)</code></h4>
 
-<p><code>ruby
+<p><code>
 def whitelisted?(request)
   @client.try(:email).in? ['YOUR_WHITE_LIST']
 end
@@ -259,7 +263,7 @@ end
 
 <p>And you can't find these functions in codes, which is because I also use metaprogramming method to implement class's instance methods.</p>
 
-<p>```ruby
+<p>```
 ['second', 'minute', 'hourly', 'daily', 'monthly'].each do |timeslot|
   define_method("#{timeslot}_check".to_sym) do</p>
 
@@ -279,7 +283,7 @@ end
 
 <p>Ok, so here I try to get count number from cache(for me, I used Redis) by <code>cache_get</code> which is in base class: <code>Rack::Throttle::Limiter</code>. And the cache keys are either client's id or ip with timestamp. for example: <code>12345:2016-11-24</code> or <code>127.0.0.1:2016-11-24</code>.</p>
 
-<p><code>ruby
+<p><code>
 def second_cache_key
   [@client.try(:id) || @ip, Time.now.strftime('%Y-%m-%dT%H:%M:%S')].join(':')
 end
@@ -310,7 +314,7 @@ end
 
 <p>I need to add this line into <code>config/application.rb</code></p>
 
-<p>```ruby
+<p>```
 module YOUR_AWESOME_APPLICATION
   class Application &lt; Rails::Application
    ...</p>

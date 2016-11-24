@@ -8,9 +8,10 @@ keywords: "rack-throttle, doorkeeper, rack, ruby, request, limitation"
 description: 'The article show you how to implement API request limitation in Rack application.'
 ---
 
-When it comes to open API to external users, we need to consider the number of requests we allowed. Most of API-as-a-service platforms have different payment plans. Due to different levels of payment, it turns out that the service resource can be used fairly - advanced plan users can make more requests than normal users. 
+When it comes to open API to external users, we need to consider the number of requests we allowed. Most of API-as-a-service platforms have different payment plans. Due to different levels of payment, it can make sure that our service resource can be used fairly - advanced plan users can make more requests than normal users. 
 
 In order to achieve this goal, we need to find a way recording the number of requests. Intuitively, we can creata a `request_record` table, before controller process the request, by comparing the number in database and client's request limitation, we can either allow or deny the requests.   
+However, we don't need to build like this way.
 
 Thanks to Ruby gems, you are able to find some libraries can do the trick. In this article, 
 I choose `rack-throttle` to help me count the requests. The reasons I prefer 
@@ -20,6 +21,8 @@ I choose `rack-throttle` to help me count the requests. The reasons I prefer
 2. Compatible with any Rack application and any Rack-based framework.
 3. Compatible with the memcached, memcache-client, memcache and redis gems.
 4. Well documented and the most important thing is that codes are easy to read!
+
+<!--more-->
 
 Different from recording, we still need to identify which client makes this request for deciding to allow or not. Here I use `Doorkeeper` to tell me which user is.     
  
@@ -92,7 +95,7 @@ So, after we add this middleware into our Rack, every time we receive the reques
 
 Let's check the final code first. 
 
-```ruby
+```
 # lib/api_limitation/application_throttler.rb
 
 require 'rack/throttle'
@@ -186,7 +189,7 @@ end
 
 The most important function is `allowed?(request)`.
 
-```ruby
+```
 def allowed?(request)
     client_identifier(request)
     return true if whitelisted?(request)
@@ -198,7 +201,7 @@ Let's check each functions.
 
 #### First, `client_identifier(request)`.
 
-```ruby
+```
 def client_identifier(request)
     if request.env['HTTP_AUTHORIZATION'] || request.params['access_token']
    token        = request.env['HTTP_AUTHORIZATION'].present? ? request.env['HTTP_AUTHORIZATION'].split(' ')[-1] : request.params['access_token']
@@ -215,7 +218,7 @@ So, each requests might have `HTTP_AUTHORIZATION` in header or `access_token` in
 
 #### Second, `whitelisted?(request)`
 
-```ruby
+```
 def whitelisted?(request)
   @client.try(:email).in? ['YOUR_WHITE_LIST']
 end
@@ -229,7 +232,7 @@ here I use [`metaprogramming`](https://www.toptal.com/ruby/ruby-metaprogramming-
 
 And you can't find these functions in codes, which is because I also use metaprogramming method to implement class's instance methods.
 
-```ruby
+```
 ['second', 'minute', 'hourly', 'daily', 'monthly'].each do |timeslot|
   define_method("#{timeslot}_check".to_sym) do
     count = cache_get(key = send("#{timeslot}_cache_key".to_sym)).to_i + 1 rescue 1
@@ -246,7 +249,7 @@ end
 
 Ok, so here I try to get count number from cache(for me, I used Redis) by `cache_get` which is in base class: `Rack::Throttle::Limiter`. And the cache keys are either client's id or ip with timestamp. for example: `12345:2016-11-24` or `127.0.0.1:2016-11-24`. 
 
-```ruby
+```
 def second_cache_key
   [@client.try(:id) || @ip, Time.now.strftime('%Y-%m-%dT%H:%M:%S')].join(':')
 end
@@ -277,7 +280,7 @@ because I built it for Rails application.
 
 I need to add this line into `config/application.rb`
 
-```ruby
+```
 module YOUR_AWESOME_APPLICATION
   class Application < Rails::Application
    ...

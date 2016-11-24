@@ -4,7 +4,7 @@
   <title><![CDATA[AlohaCC]]></title>
   <link href="http://ccaloha.cc/atom.xml" rel="self"/>
   <link href="http://ccaloha.cc/"/>
-  <updated>2016-11-24T12:57:01+08:00</updated>
+  <updated>2016-11-24T17:48:02+08:00</updated>
   <id>http://ccaloha.cc/</id>
   <author>
     <name><![CDATA[Aloha]]></name>
@@ -18,9 +18,10 @@
     <link href="http://ccaloha.cc/blog/2016/11/24/api-request-limitation-using-rack-throttle-and-doorkeeper/"/>
     <updated>2016-11-24T12:52:06+08:00</updated>
     <id>http://ccaloha.cc/blog/2016/11/24/api-request-limitation-using-rack-throttle-and-doorkeeper</id>
-    <content type="html"><![CDATA[<p>When it comes to open API to external users, we need to consider the number of requests we allowed. Most of API-as-a-service platforms have different payment plans. Due to different levels of payment, it turns out that the service resource can be used fairly - advanced plan users can make more requests than normal users.</p>
+    <content type="html"><![CDATA[<p>When it comes to open API to external users, we need to consider the number of requests we allowed. Most of API-as-a-service platforms have different payment plans. Due to different levels of payment, it can make sure that our service resource can be used fairly - advanced plan users can make more requests than normal users.</p>
 
-<p>In order to achieve this goal, we need to find a way recording the number of requests. Intuitively, we can creata a <code>request_record</code> table, before controller process the request, by comparing the number in database and client&#8217;s request limitation, we can either allow or deny the requests.</p>
+<p>In order to achieve this goal, we need to find a way recording the number of requests. Intuitively, we can creata a <code>request_record</code> table, before controller process the request, by comparing the number in database and client&#8217;s request limitation, we can either allow or deny the requests. <br/>
+However, we don&#8217;t need to build like this way.</p>
 
 <p>Thanks to Ruby gems, you are able to find some libraries can do the trick. In this article,
 I choose <code>rack-throttle</code> to help me count the requests. The reasons I prefer
@@ -32,6 +33,9 @@ I choose <code>rack-throttle</code> to help me count the requests. The reasons I
 <li>Compatible with the memcached, memcache-client, memcache and redis gems.</li>
 <li>Well documented and the most important thing is that codes are easy to read!</li>
 </ol>
+
+
+<!--more-->
 
 
 <p>Different from recording, we still need to identify which client makes this request for deciding to allow or not. Here I use <code>Doorkeeper</code> to tell me which user is.</p>
@@ -117,7 +121,7 @@ I choose <code>rack-throttle</code> to help me count the requests. The reasons I
 
 <p>Let&#8217;s check the final code first.</p>
 
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
 <span class='line-number'>2</span>
 <span class='line-number'>3</span>
 <span class='line-number'>4</span>
@@ -205,119 +209,118 @@ I choose <code>rack-throttle</code> to help me count the requests. The reasons I
 <span class='line-number'>86</span>
 <span class='line-number'>87</span>
 <span class='line-number'>88</span>
-</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="c1"># lib/api_limitation/application_throttler.rb</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'># lib/api_limitation/application_throttler.rb
 </span><span class='line'>
-</span><span class='line'><span class="nb">require</span> <span class="s1">&#39;rack/throttle&#39;</span>
-</span><span class='line'><span class="k">module</span> <span class="nn">ApiLimitation</span>
-</span><span class='line'>  <span class="k">class</span> <span class="nc">ApplicationThrottler</span> <span class="o">&lt;</span> <span class="ss">Rack</span><span class="p">:</span><span class="ss">:Throttle</span><span class="o">::</span><span class="no">Limiter</span>
-</span><span class='line'>    <span class="kp">attr_accessor</span> <span class="ss">:client</span><span class="p">,</span> <span class="ss">:ip</span>
+</span><span class='line'>require 'rack/throttle'
+</span><span class='line'>module ApiLimitation
+</span><span class='line'>  class ApplicationThrottler &lt; Rack::Throttle::Limiter
+</span><span class='line'>    attr_accessor :client, :ip
 </span><span class='line'>
-</span><span class='line'>    <span class="k">def</span> <span class="nf">initialize</span><span class="p">(</span><span class="n">app</span><span class="p">,</span> <span class="n">options</span> <span class="o">=</span> <span class="p">{})</span>
-</span><span class='line'>      <span class="k">super</span>
-</span><span class='line'>    <span class="k">end</span>
+</span><span class='line'>    def initialize(app, options = {})
+</span><span class='line'>      super
+</span><span class='line'>    end
 </span><span class='line'>
-</span><span class='line'>    <span class="k">def</span> <span class="nf">client_identifier</span><span class="p">(</span><span class="n">request</span><span class="p">)</span>
-</span><span class='line'>      <span class="k">if</span> <span class="n">request</span><span class="o">.</span><span class="n">env</span><span class="o">[</span><span class="s1">&#39;HTTP_AUTHORIZATION&#39;</span><span class="o">]</span> <span class="o">||</span> <span class="n">request</span><span class="o">.</span><span class="n">params</span><span class="o">[</span><span class="s1">&#39;access_token&#39;</span><span class="o">]</span>
-</span><span class='line'>        <span class="n">token</span>        <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">env</span><span class="o">[</span><span class="s1">&#39;HTTP_AUTHORIZATION&#39;</span><span class="o">].</span><span class="n">present?</span> <span class="p">?</span> <span class="n">request</span><span class="o">.</span><span class="n">env</span><span class="o">[</span><span class="s1">&#39;HTTP_AUTHORIZATION&#39;</span><span class="o">].</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39; &#39;</span><span class="p">)</span><span class="o">[-</span><span class="mi">1</span><span class="o">]</span> <span class="p">:</span> <span class="n">request</span><span class="o">.</span><span class="n">params</span><span class="o">[</span><span class="s1">&#39;access_token&#39;</span><span class="o">]</span>
-</span><span class='line'>        <span class="n">access_token</span> <span class="o">=</span> <span class="ss">Doorkeeper</span><span class="p">:</span><span class="ss">:AccessToken</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="ss">token</span><span class="p">:</span> <span class="n">token</span><span class="p">)</span><span class="o">.</span><span class="n">first</span>
-</span><span class='line'>        <span class="vi">@client</span> <span class="o">=</span> <span class="n">access_token</span> <span class="p">?</span> <span class="no">User</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="n">access_token</span><span class="o">.</span><span class="n">resource_owner_id</span><span class="p">)</span> <span class="p">:</span> <span class="kp">nil</span>
-</span><span class='line'>      <span class="k">end</span>
-</span><span class='line'>      <span class="vi">@ip</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">ip</span><span class="o">.</span><span class="n">to_s</span>
-</span><span class='line'>    <span class="k">end</span>
+</span><span class='line'>    def client_identifier(request)
+</span><span class='line'>      if request.env['HTTP_AUTHORIZATION'] || request.params['access_token']
+</span><span class='line'>        token        = request.env['HTTP_AUTHORIZATION'].present? ? request.env['HTTP_AUTHORIZATION'].split(' ')[-1] : request.params['access_token']
+</span><span class='line'>        access_token = Doorkeeper::AccessToken.where(token: token).first
+</span><span class='line'>        @client = access_token ? User.find(access_token.resource_owner_id) : nil
+</span><span class='line'>      end
+</span><span class='line'>      @ip = request.ip.to_s
+</span><span class='line'>    end
 </span><span class='line'>
-</span><span class='line'>    <span class="k">def</span> <span class="nf">max_per_second</span>
-</span><span class='line'>      <span class="vi">@client</span><span class="o">.</span><span class="n">try</span><span class="p">(</span><span class="ss">:limitation</span><span class="p">)</span><span class="o">.</span><span class="n">try</span><span class="p">(</span><span class="ss">:second</span><span class="p">)</span> <span class="o">||</span> <span class="mi">1</span>
-</span><span class='line'>    <span class="k">end</span>
+</span><span class='line'>    def max_per_second
+</span><span class='line'>      @client.try(:limitation).try(:second) || 1
+</span><span class='line'>    end
 </span><span class='line'>
-</span><span class='line'>    <span class="k">def</span> <span class="nf">max_per_minute</span>
-</span><span class='line'>      <span class="vi">@client</span><span class="o">.</span><span class="n">try</span><span class="p">(</span><span class="ss">:limitation</span><span class="p">)</span><span class="o">.</span><span class="n">try</span><span class="p">(</span><span class="ss">:minute</span><span class="p">)</span> <span class="o">||</span> <span class="mi">60</span>
-</span><span class='line'>    <span class="k">end</span>
+</span><span class='line'>    def max_per_minute
+</span><span class='line'>      @client.try(:limitation).try(:minute) || 60
+</span><span class='line'>    end
 </span><span class='line'>
-</span><span class='line'>    <span class="k">def</span> <span class="nf">max_per_hourly</span>
-</span><span class='line'>      <span class="vi">@client</span><span class="o">.</span><span class="n">try</span><span class="p">(</span><span class="ss">:limitation</span><span class="p">)</span><span class="o">.</span><span class="n">try</span><span class="p">(</span><span class="ss">:hourly</span><span class="p">)</span> <span class="o">||</span> <span class="mi">3_600</span>
-</span><span class='line'>    <span class="k">end</span>
+</span><span class='line'>    def max_per_hourly
+</span><span class='line'>      @client.try(:limitation).try(:hourly) || 3_600
+</span><span class='line'>    end
 </span><span class='line'>
-</span><span class='line'>    <span class="k">def</span> <span class="nf">max_per_daily</span>
-</span><span class='line'>      <span class="vi">@client</span><span class="o">.</span><span class="n">try</span><span class="p">(</span><span class="ss">:limitation</span><span class="p">)</span><span class="o">.</span><span class="n">try</span><span class="p">(</span><span class="ss">:daily</span><span class="p">)</span> <span class="o">||</span> <span class="mi">86_400</span>
-</span><span class='line'>    <span class="k">end</span>
+</span><span class='line'>    def max_per_daily
+</span><span class='line'>      @client.try(:limitation).try(:daily) || 86_400
+</span><span class='line'>    end
 </span><span class='line'>
-</span><span class='line'>    <span class="k">def</span> <span class="nf">max_per_monthly</span>
-</span><span class='line'>      <span class="vi">@client</span><span class="o">.</span><span class="n">try</span><span class="p">(</span><span class="ss">:limitation</span><span class="p">)</span><span class="o">.</span><span class="n">try</span><span class="p">(</span><span class="ss">:monthly</span><span class="p">)</span> <span class="o">||</span> <span class="mi">2_592_000</span>
-</span><span class='line'>    <span class="k">end</span>
+</span><span class='line'>    def max_per_monthly
+</span><span class='line'>      @client.try(:limitation).try(:monthly) || 2_592_000
+</span><span class='line'>    end
 </span><span class='line'>
-</span><span class='line'>    <span class="k">def</span> <span class="nf">allowed?</span><span class="p">(</span><span class="n">request</span><span class="p">)</span>
-</span><span class='line'>      <span class="n">client_identifier</span><span class="p">(</span><span class="n">request</span><span class="p">)</span>
-</span><span class='line'>      <span class="k">return</span> <span class="kp">true</span> <span class="k">if</span> <span class="n">whitelisted?</span><span class="p">(</span><span class="n">request</span><span class="p">)</span>
+</span><span class='line'>    def allowed?(request)
+</span><span class='line'>      client_identifier(request)
+</span><span class='line'>      return true if whitelisted?(request)
 </span><span class='line'>
-</span><span class='line'>      <span class="o">[</span><span class="s1">&#39;second&#39;</span><span class="p">,</span> <span class="s1">&#39;minute&#39;</span><span class="p">,</span> <span class="s1">&#39;hourly&#39;</span><span class="p">,</span> <span class="s1">&#39;daily&#39;</span><span class="p">,</span> <span class="s1">&#39;monthly&#39;</span><span class="o">].</span><span class="n">all?</span> <span class="p">{</span> <span class="o">|</span><span class="n">timeslot</span><span class="o">|</span> <span class="nb">send</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">#{</span><span class="n">timeslot</span><span class="si">}</span><span class="s2">_check&quot;</span><span class="o">.</span><span class="n">to_sym</span><span class="p">)</span> <span class="p">}</span>
-</span><span class='line'>    <span class="k">end</span>
+</span><span class='line'>      ['second', 'minute', 'hourly', 'daily', 'monthly'].all? { |timeslot| send("#{timeslot}_check".to_sym) }
+</span><span class='line'>    end
 </span><span class='line'>
-</span><span class='line'>    <span class="k">def</span> <span class="nf">whitelisted?</span><span class="p">(</span><span class="n">request</span><span class="p">)</span>
-</span><span class='line'>      <span class="vi">@client</span><span class="o">.</span><span class="n">try</span><span class="p">(</span><span class="ss">:email</span><span class="p">)</span><span class="o">.</span><span class="n">in?</span> <span class="o">[</span><span class="s1">&#39;YOUR_WHITE_LIST&#39;</span><span class="o">]</span>
-</span><span class='line'>    <span class="k">end</span>
+</span><span class='line'>    def whitelisted?(request)
+</span><span class='line'>      @client.try(:email).in? ['YOUR_WHITE_LIST']
+</span><span class='line'>    end
 </span><span class='line'>
-</span><span class='line'>    <span class="kp">protected</span>
+</span><span class='line'>    protected
 </span><span class='line'>
-</span><span class='line'>    <span class="o">[</span><span class="s1">&#39;second&#39;</span><span class="p">,</span> <span class="s1">&#39;minute&#39;</span><span class="p">,</span> <span class="s1">&#39;hourly&#39;</span><span class="p">,</span> <span class="s1">&#39;daily&#39;</span><span class="p">,</span> <span class="s1">&#39;monthly&#39;</span><span class="o">].</span><span class="n">each</span> <span class="k">do</span> <span class="o">|</span><span class="n">timeslot</span><span class="o">|</span>
-</span><span class='line'>      <span class="n">define_method</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">#{</span><span class="n">timeslot</span><span class="si">}</span><span class="s2">_check&quot;</span><span class="o">.</span><span class="n">to_sym</span><span class="p">)</span> <span class="k">do</span>
-</span><span class='line'>        <span class="n">count</span> <span class="o">=</span> <span class="n">cache_get</span><span class="p">(</span><span class="n">key</span> <span class="o">=</span> <span class="nb">send</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">#{</span><span class="n">timeslot</span><span class="si">}</span><span class="s2">_cache_key&quot;</span><span class="o">.</span><span class="n">to_sym</span><span class="p">))</span><span class="o">.</span><span class="n">to_i</span> <span class="o">+</span> <span class="mi">1</span> <span class="k">rescue</span> <span class="mi">1</span>
-</span><span class='line'>        <span class="n">allowed</span> <span class="o">=</span> <span class="n">count</span> <span class="o">&lt;=</span> <span class="nb">send</span><span class="p">(</span><span class="s2">&quot;max_per_</span><span class="si">#{</span><span class="n">timeslot</span><span class="si">}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">to_sym</span><span class="p">)</span><span class="o">.</span><span class="n">to_i</span>
-</span><span class='line'>        <span class="k">begin</span>
-</span><span class='line'>          <span class="n">cache_set</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">count</span><span class="p">)</span>
-</span><span class='line'>          <span class="n">allowed</span>
-</span><span class='line'>        <span class="k">rescue</span> <span class="o">=&gt;</span> <span class="n">e</span>
-</span><span class='line'>          <span class="n">allowed</span> <span class="o">=</span> <span class="kp">true</span>
-</span><span class='line'>        <span class="k">end</span>
-</span><span class='line'>      <span class="k">end</span>
-</span><span class='line'>    <span class="k">end</span>
+</span><span class='line'>    ['second', 'minute', 'hourly', 'daily', 'monthly'].each do |timeslot|
+</span><span class='line'>      define_method("#{timeslot}_check".to_sym) do
+</span><span class='line'>        count = cache_get(key = send("#{timeslot}_cache_key".to_sym)).to_i + 1 rescue 1
+</span><span class='line'>        allowed = count &lt;= send("max_per_#{timeslot}".to_sym).to_i
+</span><span class='line'>        begin
+</span><span class='line'>          cache_set(key, count)
+</span><span class='line'>          allowed
+</span><span class='line'>        rescue =&gt; e
+</span><span class='line'>          allowed = true
+</span><span class='line'>        end
+</span><span class='line'>      end
+</span><span class='line'>    end
 </span><span class='line'>
-</span><span class='line'>    <span class="k">def</span> <span class="nf">second_cache_key</span>
-</span><span class='line'>      <span class="o">[</span><span class="vi">@client</span><span class="o">.</span><span class="n">try</span><span class="p">(</span><span class="ss">:id</span><span class="p">)</span> <span class="o">||</span> <span class="vi">@ip</span><span class="p">,</span> <span class="no">Time</span><span class="o">.</span><span class="n">now</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s1">&#39;%Y-%m-%dT%H:%M:%S&#39;</span><span class="p">)</span><span class="o">].</span><span class="n">join</span><span class="p">(</span><span class="s1">&#39;:&#39;</span><span class="p">)</span>
-</span><span class='line'>    <span class="k">end</span>
+</span><span class='line'>    def second_cache_key
+</span><span class='line'>      [@client.try(:id) || @ip, Time.now.strftime('%Y-%m-%dT%H:%M:%S')].join(':')
+</span><span class='line'>    end
 </span><span class='line'>
-</span><span class='line'>    <span class="k">def</span> <span class="nf">minute_cache_key</span>
-</span><span class='line'>      <span class="o">[</span><span class="vi">@client</span><span class="o">.</span><span class="n">try</span><span class="p">(</span><span class="ss">:id</span><span class="p">)</span> <span class="o">||</span> <span class="vi">@ip</span><span class="p">,</span> <span class="no">Time</span><span class="o">.</span><span class="n">now</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s1">&#39;%Y-%m-%dT%H:%M&#39;</span><span class="p">)</span><span class="o">].</span><span class="n">join</span><span class="p">(</span><span class="s1">&#39;:&#39;</span><span class="p">)</span>
-</span><span class='line'>    <span class="k">end</span>
+</span><span class='line'>    def minute_cache_key
+</span><span class='line'>      [@client.try(:id) || @ip, Time.now.strftime('%Y-%m-%dT%H:%M')].join(':')
+</span><span class='line'>    end
 </span><span class='line'>
-</span><span class='line'>    <span class="k">def</span> <span class="nf">hourly_cache_key</span>
-</span><span class='line'>      <span class="o">[</span><span class="vi">@client</span><span class="o">.</span><span class="n">try</span><span class="p">(</span><span class="ss">:id</span><span class="p">)</span> <span class="o">||</span> <span class="vi">@ip</span><span class="p">,</span> <span class="no">Time</span><span class="o">.</span><span class="n">now</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s1">&#39;%Y-%m-%dT%H&#39;</span><span class="p">)</span><span class="o">].</span><span class="n">join</span><span class="p">(</span><span class="s1">&#39;:&#39;</span><span class="p">)</span>
-</span><span class='line'>    <span class="k">end</span>
+</span><span class='line'>    def hourly_cache_key
+</span><span class='line'>      [@client.try(:id) || @ip, Time.now.strftime('%Y-%m-%dT%H')].join(':')
+</span><span class='line'>    end
 </span><span class='line'>
-</span><span class='line'>    <span class="k">def</span> <span class="nf">daily_cache_key</span>
-</span><span class='line'>      <span class="o">[</span><span class="vi">@client</span><span class="o">.</span><span class="n">try</span><span class="p">(</span><span class="ss">:id</span><span class="p">)</span> <span class="o">||</span> <span class="vi">@ip</span><span class="p">,</span> <span class="no">Time</span><span class="o">.</span><span class="n">now</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s1">&#39;%Y-%m-%d&#39;</span><span class="p">)</span><span class="o">].</span><span class="n">join</span><span class="p">(</span><span class="s1">&#39;:&#39;</span><span class="p">)</span>
-</span><span class='line'>    <span class="k">end</span>
+</span><span class='line'>    def daily_cache_key
+</span><span class='line'>      [@client.try(:id) || @ip, Time.now.strftime('%Y-%m-%d')].join(':')
+</span><span class='line'>    end
 </span><span class='line'>
-</span><span class='line'>    <span class="k">def</span> <span class="nf">monthly_cache_key</span>
-</span><span class='line'>      <span class="o">[</span><span class="vi">@client</span><span class="o">.</span><span class="n">try</span><span class="p">(</span><span class="ss">:id</span><span class="p">)</span> <span class="o">||</span> <span class="vi">@ip</span><span class="p">,</span> <span class="no">Time</span><span class="o">.</span><span class="n">now</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s1">&#39;%Y-%m&#39;</span><span class="p">)</span><span class="o">].</span><span class="n">join</span><span class="p">(</span><span class="s1">&#39;:&#39;</span><span class="p">)</span>
-</span><span class='line'>    <span class="k">end</span>
+</span><span class='line'>    def monthly_cache_key
+</span><span class='line'>      [@client.try(:id) || @ip, Time.now.strftime('%Y-%m')].join(':')
+</span><span class='line'>    end
 </span><span class='line'>
-</span><span class='line'>  <span class="k">end</span>
-</span><span class='line'><span class="k">end</span>
+</span><span class='line'>  end
+</span><span class='line'>end
 </span></code></pre></td></tr></table></div></figure>
 
 
 <p>The most important function is <code>allowed?(request)</code>.</p>
 
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
 <span class='line-number'>2</span>
 <span class='line-number'>3</span>
 <span class='line-number'>4</span>
 <span class='line-number'>5</span>
 <span class='line-number'>6</span>
-</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">def</span> <span class="nf">allowed?</span><span class="p">(</span><span class="n">request</span><span class="p">)</span>
-</span><span class='line'>    <span class="n">client_identifier</span><span class="p">(</span><span class="n">request</span><span class="p">)</span>
-</span><span class='line'>    <span class="k">return</span> <span class="kp">true</span> <span class="k">if</span> <span class="n">whitelisted?</span><span class="p">(</span><span class="n">request</span><span class="p">)</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>def allowed?(request)
+</span><span class='line'>    client_identifier(request)
+</span><span class='line'>    return true if whitelisted?(request)
 </span><span class='line'>
-</span><span class='line'>    <span class="o">[</span><span class="s1">&#39;second&#39;</span><span class="p">,</span> <span class="s1">&#39;minute&#39;</span><span class="p">,</span> <span class="s1">&#39;hourly&#39;</span><span class="p">,</span> <span class="s1">&#39;daily&#39;</span><span class="p">,</span> <span class="s1">&#39;monthly&#39;</span><span class="o">].</span><span class="n">all?</span> <span class="p">{</span> <span class="o">|</span><span class="n">timeslot</span><span class="o">|</span> <span class="nb">send</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">#{</span><span class="n">timeslot</span><span class="si">}</span><span class="s2">_check&quot;</span><span class="o">.</span><span class="n">to_sym</span><span class="p">)</span> <span class="p">}</span>
-</span><span class='line'><span class="k">end</span>
-</span></code></pre></td></tr></table></div></figure>
+</span><span class='line'>    ['second', 'minute', 'hourly', 'daily', 'monthly'].all? { |timeslot| send("#{timeslot}_check".to_sym) }
+</span><span class='line'>end</span></code></pre></td></tr></table></div></figure>
 
 
 <p>Let&#8217;s check each functions.</p>
 
 <h4>First, <code>client_identifier(request)</code>.</h4>
 
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
 <span class='line-number'>2</span>
 <span class='line-number'>3</span>
 <span class='line-number'>4</span>
@@ -325,15 +328,14 @@ I choose <code>rack-throttle</code> to help me count the requests. The reasons I
 <span class='line-number'>6</span>
 <span class='line-number'>7</span>
 <span class='line-number'>8</span>
-</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">def</span> <span class="nf">client_identifier</span><span class="p">(</span><span class="n">request</span><span class="p">)</span>
-</span><span class='line'>    <span class="k">if</span> <span class="n">request</span><span class="o">.</span><span class="n">env</span><span class="o">[</span><span class="s1">&#39;HTTP_AUTHORIZATION&#39;</span><span class="o">]</span> <span class="o">||</span> <span class="n">request</span><span class="o">.</span><span class="n">params</span><span class="o">[</span><span class="s1">&#39;access_token&#39;</span><span class="o">]</span>
-</span><span class='line'>   <span class="n">token</span>        <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">env</span><span class="o">[</span><span class="s1">&#39;HTTP_AUTHORIZATION&#39;</span><span class="o">].</span><span class="n">present?</span> <span class="p">?</span> <span class="n">request</span><span class="o">.</span><span class="n">env</span><span class="o">[</span><span class="s1">&#39;HTTP_AUTHORIZATION&#39;</span><span class="o">].</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39; &#39;</span><span class="p">)</span><span class="o">[-</span><span class="mi">1</span><span class="o">]</span> <span class="p">:</span> <span class="n">request</span><span class="o">.</span><span class="n">params</span><span class="o">[</span><span class="s1">&#39;access_token&#39;</span><span class="o">]</span>
-</span><span class='line'>   <span class="n">access_token</span> <span class="o">=</span> <span class="ss">Doorkeeper</span><span class="p">:</span><span class="ss">:AccessToken</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="ss">token</span><span class="p">:</span> <span class="n">token</span><span class="p">)</span><span class="o">.</span><span class="n">first</span>
-</span><span class='line'>   <span class="vi">@client</span> <span class="o">=</span> <span class="n">access_token</span> <span class="p">?</span> <span class="no">User</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="n">access_token</span><span class="o">.</span><span class="n">resource_owner_id</span><span class="p">)</span> <span class="p">:</span> <span class="kp">nil</span>
-</span><span class='line'>      <span class="k">end</span>
-</span><span class='line'>   <span class="vi">@ip</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">ip</span><span class="o">.</span><span class="n">to_s</span>
-</span><span class='line'> <span class="k">end</span>
-</span></code></pre></td></tr></table></div></figure>
+</pre></td><td class='code'><pre><code class=''><span class='line'>def client_identifier(request)
+</span><span class='line'>    if request.env['HTTP_AUTHORIZATION'] || request.params['access_token']
+</span><span class='line'>   token        = request.env['HTTP_AUTHORIZATION'].present? ? request.env['HTTP_AUTHORIZATION'].split(' ')[-1] : request.params['access_token']
+</span><span class='line'>   access_token = Doorkeeper::AccessToken.where(token: token).first
+</span><span class='line'>   @client = access_token ? User.find(access_token.resource_owner_id) : nil
+</span><span class='line'>      end
+</span><span class='line'>   @ip = request.ip.to_s
+</span><span class='line'> end</span></code></pre></td></tr></table></div></figure>
 
 
 <p>We used <code>doorkeeper</code> for Oauth2 authentication.</p>
@@ -342,13 +344,12 @@ I choose <code>rack-throttle</code> to help me count the requests. The reasons I
 
 <h4>Second, <code>whitelisted?(request)</code></h4>
 
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
 <span class='line-number'>2</span>
 <span class='line-number'>3</span>
-</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">def</span> <span class="nf">whitelisted?</span><span class="p">(</span><span class="n">request</span><span class="p">)</span>
-</span><span class='line'>  <span class="vi">@client</span><span class="o">.</span><span class="n">try</span><span class="p">(</span><span class="ss">:email</span><span class="p">)</span><span class="o">.</span><span class="n">in?</span> <span class="o">[</span><span class="s1">&#39;YOUR_WHITE_LIST&#39;</span><span class="o">]</span>
-</span><span class='line'><span class="k">end</span>
-</span></code></pre></td></tr></table></div></figure>
+</pre></td><td class='code'><pre><code class=''><span class='line'>def whitelisted?(request)
+</span><span class='line'>  @client.try(:email).in? ['YOUR_WHITE_LIST']
+</span><span class='line'>end</span></code></pre></td></tr></table></div></figure>
 
 
 <p>Simple! Right?, because we already have @client from <code>client_identifier(request)</code>. I just try to find its email in list or not.</p>
@@ -359,7 +360,7 @@ I choose <code>rack-throttle</code> to help me count the requests. The reasons I
 
 <p>And you can&#8217;t find these functions in codes, which is because I also use metaprogramming method to implement class&#8217;s instance methods.</p>
 
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
 <span class='line-number'>2</span>
 <span class='line-number'>3</span>
 <span class='line-number'>4</span>
@@ -371,32 +372,30 @@ I choose <code>rack-throttle</code> to help me count the requests. The reasons I
 <span class='line-number'>10</span>
 <span class='line-number'>11</span>
 <span class='line-number'>12</span>
-</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="o">[</span><span class="s1">&#39;second&#39;</span><span class="p">,</span> <span class="s1">&#39;minute&#39;</span><span class="p">,</span> <span class="s1">&#39;hourly&#39;</span><span class="p">,</span> <span class="s1">&#39;daily&#39;</span><span class="p">,</span> <span class="s1">&#39;monthly&#39;</span><span class="o">].</span><span class="n">each</span> <span class="k">do</span> <span class="o">|</span><span class="n">timeslot</span><span class="o">|</span>
-</span><span class='line'>  <span class="n">define_method</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">#{</span><span class="n">timeslot</span><span class="si">}</span><span class="s2">_check&quot;</span><span class="o">.</span><span class="n">to_sym</span><span class="p">)</span> <span class="k">do</span>
-</span><span class='line'>    <span class="n">count</span> <span class="o">=</span> <span class="n">cache_get</span><span class="p">(</span><span class="n">key</span> <span class="o">=</span> <span class="nb">send</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">#{</span><span class="n">timeslot</span><span class="si">}</span><span class="s2">_cache_key&quot;</span><span class="o">.</span><span class="n">to_sym</span><span class="p">))</span><span class="o">.</span><span class="n">to_i</span> <span class="o">+</span> <span class="mi">1</span> <span class="k">rescue</span> <span class="mi">1</span>
-</span><span class='line'>    <span class="n">allowed</span> <span class="o">=</span> <span class="n">count</span> <span class="o">&lt;=</span> <span class="nb">send</span><span class="p">(</span><span class="s2">&quot;max_per_</span><span class="si">#{</span><span class="n">timeslot</span><span class="si">}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">to_sym</span><span class="p">)</span><span class="o">.</span><span class="n">to_i</span>
-</span><span class='line'>    <span class="k">begin</span>
-</span><span class='line'>      <span class="n">cache_set</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">count</span><span class="p">)</span>
-</span><span class='line'>      <span class="n">allowed</span>
-</span><span class='line'>    <span class="k">rescue</span> <span class="o">=&gt;</span> <span class="n">e</span>
-</span><span class='line'>      <span class="n">allowed</span> <span class="o">=</span> <span class="kp">true</span>
-</span><span class='line'>    <span class="k">end</span>
-</span><span class='line'>  <span class="k">end</span>
-</span><span class='line'><span class="k">end</span>
-</span></code></pre></td></tr></table></div></figure>
+</pre></td><td class='code'><pre><code class=''><span class='line'>['second', 'minute', 'hourly', 'daily', 'monthly'].each do |timeslot|
+</span><span class='line'>  define_method("#{timeslot}_check".to_sym) do
+</span><span class='line'>    count = cache_get(key = send("#{timeslot}_cache_key".to_sym)).to_i + 1 rescue 1
+</span><span class='line'>    allowed = count &lt;= send("max_per_#{timeslot}".to_sym).to_i
+</span><span class='line'>    begin
+</span><span class='line'>      cache_set(key, count)
+</span><span class='line'>      allowed
+</span><span class='line'>    rescue =&gt; e
+</span><span class='line'>      allowed = true
+</span><span class='line'>    end
+</span><span class='line'>  end
+</span><span class='line'>end</span></code></pre></td></tr></table></div></figure>
 
 
 <p>Ok, so here I try to get count number from cache(for me, I used Redis) by <code>cache_get</code> which is in base class: <code>Rack::Throttle::Limiter</code>. And the cache keys are either client&#8217;s id or ip with timestamp. for example: <code>12345:2016-11-24</code> or <code>127.0.0.1:2016-11-24</code>.</p>
 
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
 <span class='line-number'>2</span>
 <span class='line-number'>3</span>
 <span class='line-number'>4</span>
-</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">def</span> <span class="nf">second_cache_key</span>
-</span><span class='line'>  <span class="o">[</span><span class="vi">@client</span><span class="o">.</span><span class="n">try</span><span class="p">(</span><span class="ss">:id</span><span class="p">)</span> <span class="o">||</span> <span class="vi">@ip</span><span class="p">,</span> <span class="no">Time</span><span class="o">.</span><span class="n">now</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s1">&#39;%Y-%m-%dT%H:%M:%S&#39;</span><span class="p">)</span><span class="o">].</span><span class="n">join</span><span class="p">(</span><span class="s1">&#39;:&#39;</span><span class="p">)</span>
-</span><span class='line'><span class="k">end</span>
-</span><span class='line'><span class="o">.</span><span class="n">.</span><span class="o">.</span>
-</span></code></pre></td></tr></table></div></figure>
+</pre></td><td class='code'><pre><code class=''><span class='line'>def second_cache_key
+</span><span class='line'>  [@client.try(:id) || @ip, Time.now.strftime('%Y-%m-%dT%H:%M:%S')].join(':')
+</span><span class='line'>end
+</span><span class='line'>...</span></code></pre></td></tr></table></div></figure>
 
 
 <p>After we get the number of count we can compare it  to client&#8217;s limitation and add counting number as well.</p>
@@ -406,15 +405,14 @@ I choose <code>rack-throttle</code> to help me count the requests. The reasons I
 <p>In our database design, user has one <code>limitation</code> which include these columns: <code>second</code>, <code>minute</code>&#8230;etc.
 So, I can easily get it by <code>@client.limitation.XXX</code></p>
 
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
 <span class='line-number'>2</span>
 <span class='line-number'>3</span>
 <span class='line-number'>4</span>
-</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">def</span> <span class="nf">max_per_second</span>
-</span><span class='line'>  <span class="vi">@client</span><span class="o">.</span><span class="n">try</span><span class="p">(</span><span class="ss">:limitation</span><span class="p">)</span><span class="o">.</span><span class="n">try</span><span class="p">(</span><span class="ss">:second</span><span class="p">)</span> <span class="o">||</span> <span class="mi">1</span>
-</span><span class='line'><span class="k">end</span>
-</span><span class='line'><span class="o">.</span><span class="n">.</span><span class="o">.</span><span class="n">.</span>
-</span></code></pre></td></tr></table></div></figure>
+</pre></td><td class='code'><pre><code class=''><span class='line'>def max_per_second
+</span><span class='line'>  @client.try(:limitation).try(:second) || 1
+</span><span class='line'>end
+</span><span class='line'>....</span></code></pre></td></tr></table></div></figure>
 
 
 <p>That&#8217;s it. it&#8217;s not too hard right?</p>
@@ -427,19 +425,18 @@ So, I can easily get it by <code>@client.limitation.XXX</code></p>
 
 <p>I need to add this line into <code>config/application.rb</code></p>
 
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
 <span class='line-number'>2</span>
 <span class='line-number'>3</span>
 <span class='line-number'>4</span>
 <span class='line-number'>5</span>
 <span class='line-number'>6</span>
-</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">module</span> <span class="nn">YOUR_AWESOME_APPLICATION</span>
-</span><span class='line'>  <span class="k">class</span> <span class="nc">Application</span> <span class="o">&lt;</span> <span class="ss">Rails</span><span class="p">:</span><span class="ss">:Application</span>
-</span><span class='line'>   <span class="o">.</span><span class="n">.</span><span class="o">.</span>
-</span><span class='line'>    <span class="n">config</span><span class="o">.</span><span class="n">middleware</span><span class="o">.</span><span class="n">use</span> <span class="o">::</span><span class="ss">ApiLimitation</span><span class="p">:</span><span class="ss">:ApplicationThrottler</span><span class="p">,</span> <span class="ss">cache</span><span class="p">:</span> <span class="no">Redis</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="ss">host</span><span class="p">:</span> <span class="no">YOUR_REDIS_HOST</span><span class="p">),</span> <span class="n">key_prefix</span><span class="p">:</span> <span class="ss">:awesome_throttle</span><span class="p">,</span> <span class="ss">message</span><span class="p">:</span> <span class="s1">&#39;Rate Limit Exceeded, please upgrade your plan to get more requests&#39;</span>
-</span><span class='line'>  <span class="k">end</span>
-</span><span class='line'><span class="k">end</span>
-</span></code></pre></td></tr></table></div></figure>
+</pre></td><td class='code'><pre><code class=''><span class='line'>module YOUR_AWESOME_APPLICATION
+</span><span class='line'>  class Application &lt; Rails::Application
+</span><span class='line'>   ...
+</span><span class='line'>    config.middleware.use ::ApiLimitation::ApplicationThrottler, cache: Redis.new(host: YOUR_REDIS_HOST), key_prefix: :awesome_throttle, message: 'Rate Limit Exceeded, please upgrade your plan to get more requests'
+</span><span class='line'>  end
+</span><span class='line'>end</span></code></pre></td></tr></table></div></figure>
 
 
 <p>Do you remember that I mentioned I use <code>Redis</code> for caching count? Here is the magic.</p>
