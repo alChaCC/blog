@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Preloader.io | AlohaCC]]></title>
   <link href="http://ccaloha.cc/blog/categories/preloader-dot-io/atom.xml" rel="self"/>
   <link href="http://ccaloha.cc/"/>
-  <updated>2016-06-22T18:02:33+08:00</updated>
+  <updated>2016-06-27T14:39:28+08:00</updated>
   <id>http://ccaloha.cc/</id>
   <author>
     <name><![CDATA[Aloha]]></name>
@@ -109,7 +109,10 @@ vim startup.sh
 
 <h1>!/usr/bin/env bash</h1>
 
-<p>node /home/deploy/prerender/server.js
+<p>export LANGUAGE=en_US.UTF-8
+export LANG=en_US.UTF-8
+export LC_ALL=en_US.UTF-8
+node /home/deploy/prerender/server.js
 ```</p>
 
 <p>Allow the script can be excuted</p>

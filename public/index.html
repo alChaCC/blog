@@ -107,6 +107,114 @@ $(document).ready(
     <article class="post">
 	<h2 class="title">
 		
+		<a href="/blog/2016/06/25/split-single-lossless-audio-dot-ape/">
+		
+			Split Single Lossless Audio(.ape, .flac) Files Into Mp3 in MacOSX</a>
+	</h2>
+	<div class="entry-content">
+		<p>I got a lossless audio from my friend which included Taiwan famous folk songs in 1970~1979.</p>
+
+<p>So, I want to split this audio into seperate mp3. Spending few hours, I found this library!</p>
+
+<p>I have to thank @ftrvxmtrx - the author of <a href="https://github.com/ftrvxmtrx/split2flac">https://github.com/ftrvxmtrx/split2flac</a>.</p>
+
+<p>In this post, I just show to how to setup the environment to use ftrvxmtrx&#8217;s libarary in MacOSX.</p>
+
+<h2>1. Make sure you have homebrew</h2>
+
+<h2>2. Install required/optional libs</h2>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>brew install cuetools
+</span><span class='line'>brew install shntool
+</span><span class='line'>brew install id3lib
+</span><span class='line'>brew install flac
+</span><span class='line'>brew install homebrew/dupes/libiconv
+</span><span class='line'>brew install enca
+</span><span class='line'># for install mac to split APE
+</span><span class='line'>brew tap fernandotcl/homebrew-fernandotcl
+</span><span class='line'>brew install monkeys-audio</span></code></pre></td></tr></table></div></figure>
+
+
+<h2>3. Clone project</h2>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>git clone https://github.com/ftrvxmtrx/split2flac.git</span></code></pre></td></tr></table></div></figure>
+
+
+<h2>4. Convert files</h2>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>cd split2flac</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Check commands</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>./split2flac -h</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Convert the file</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>./split2flac -f mp3 -o ~/Desktop/ -cue path/to/your/cue-file.cue path/to/your/ape-file.ape</span></code></pre></td></tr></table></div></figure>
+
+
+<p><strong>-f</strong>: using mp3 as output format</p>
+
+<p><strong>-o</strong>: where to put the output files</p>
+
+<p><strong>cue</strong>: file location to your .cue</p>
+
+<p>yay!</p>
+
+<p><img src='https://dl.dropboxusercontent.com/u/22307926/Blog%20Image/split_lossless_audio/demo-%20split%20ape%20file%20into%20mp3.png' alt='demo: split ape file into mp3'></p>
+
+		
+		
+	</div>
+
+
+<div class="meta">
+	<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2016-06-25T17:33:14+08:00" pubdate data-updated="true">Jun 25<span>th</span>, 2016</time></div>
+	
+
+<div class="tags">
+
+	<a class='category' href='/blog/categories/others/'>Others</a>
+
+</div>
+
+
+	
+		<span class="comments"><a href="/blog/2016/06/25/split-single-lossless-audio-dot-ape//index.html#disqus_thread">Comments</a></span>
+	
+</div></article>
+
+
+    <article class="post">
+	<h2 class="title">
+		
 		<a href="/blog/2016/06/22/how-to-install-preloader-dot-io-service-in-ubuntu-14-dot-04/">
 		
 			How to Install Preloader.io Service in Ubuntu 14.04</a>
@@ -431,74 +539,6 @@ $(document).ready(
 
 	
 		<span class="comments"><a href="/blog/2015/12/04/howto-integrate-google-analytics-and-google-adwords-for-customize-ads-retargeting//index.html#disqus_thread">Comments</a></span>
-	
-</div></article>
-
-
-    <article class="post">
-	<h2 class="title">
-		
-		<a href="/blog/2015/10/03/ruby-on-rails-using-mongoid-5-dot-0-0-setup-mongodb/">
-		
-			Ruby on Rails Development Using Mongoid 5.0.0 - 1. Setup MongoDB</a>
-	</h2>
-	<div class="entry-content">
-		<p><img src="https://dl.dropboxusercontent.com/u/22307926/Blog%20Image/Ruby%20on%20Rails%20Development%20using%20Mongoid%205.0.0%20-%20Setup%20MongoDB/MongoDB-Logo.png" alt="MongoDB"></p>
-
-<p>This tutorial series will help you start your Rails project with MongoDB.</p>
-
-<p>And I use Mongoid 5.0.0 as an example.</p>
-
-<p>In this tutorial, you will be able to see how to</p>
-
-<ol>
-<li><p>Install MongoDB in Mac OSX</p></li>
-<li><p>Create Some Database Users in MongoDB</p></li>
-<li><p>Setup Rails Projects</p></li>
-</ol>
-
-
-<p>(Tips)</p>
-
-<ol>
-<li><p>Dump Data</p></li>
-<li><p>Restore Data</p></li>
-</ol>
-
-
-<p>Let&#8217;s go !</p>
-
-
-		
-		<a href="/blog/2015/10/03/ruby-on-rails-using-mongoid-5-dot-0-0-setup-mongodb/" class="more-link">Read on &rarr;</a>
-	</div>
-
-
-<div class="meta">
-	<div class="date">
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2015-10-03T22:33:34+08:00" pubdate data-updated="true">Oct 3<span>rd</span>, 2015</time></div>
-	
-
-<div class="tags">
-
-	<a class='category' href='/blog/categories/mongoid/'>Mongoid</a>, <a class='category' href='/blog/categories/ruby-on-rails/'>Ruby on Rails</a>
-
-</div>
-
-
-	
-		<span class="comments"><a href="/blog/2015/10/03/ruby-on-rails-using-mongoid-5-dot-0-0-setup-mongodb//index.html#disqus_thread">Comments</a></span>
 	
 </div></article>
 

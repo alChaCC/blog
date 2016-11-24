@@ -594,7 +594,11 @@
         <loc>
             http://ccaloha.cc/blog/2016/06/22/how-to-install-preloader-dot-io-service-in-ubuntu-14-dot-04/
         </loc>
-        <lastmod>2016-06-22T18:02:13+08:00</lastmod>
+        <lastmod>2016-06-27T14:39:05+08:00</lastmod>
+    </url>
+    <url>
+        <loc>http://ccaloha.cc/blog/2016/06/25/split-single-lossless-audio-dot-ape/</loc>
+        <lastmod>2016-06-25T18:51:57+08:00</lastmod>
     </url>
     <url>
         <loc>http://ccaloha.cc/About/</loc>
@@ -610,15 +614,15 @@
     </url>
     <url>
         <loc>http://ccaloha.cc/archives/</loc>
-        <lastmod>2016-06-22T18:02:13+08:00</lastmod>
+        <lastmod>2016-06-27T14:39:05+08:00</lastmod>
     </url>
     <url>
         <loc>http://ccaloha.cc/blog/archives/</loc>
-        <lastmod>2016-06-22T18:02:13+08:00</lastmod>
+        <lastmod>2016-06-27T14:39:05+08:00</lastmod>
     </url>
     <url>
         <loc>http://ccaloha.cc/blog/</loc>
-        <lastmod>2016-06-22T18:02:13+08:00</lastmod>
+        <lastmod>2016-06-27T14:39:05+08:00</lastmod>
     </url>
     <url>
         <loc>http://ccaloha.cc/DesignPattern/</loc>
@@ -630,7 +634,7 @@
     </url>
     <url>
         <loc>http://ccaloha.cc/</loc>
-        <lastmod>2016-06-22T18:02:13+08:00</lastmod>
+        <lastmod>2016-06-27T14:39:05+08:00</lastmod>
     </url>
     <url>
         <loc>http://ccaloha.cc/Linux/</loc>

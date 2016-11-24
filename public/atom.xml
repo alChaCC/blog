@@ -4,7 +4,7 @@
   <title><![CDATA[AlohaCC]]></title>
   <link href="http://ccaloha.cc/atom.xml" rel="self"/>
   <link href="http://ccaloha.cc/"/>
-  <updated>2016-06-22T18:02:33+08:00</updated>
+  <updated>2016-06-27T14:39:28+08:00</updated>
   <id>http://ccaloha.cc/</id>
   <author>
     <name><![CDATA[Aloha]]></name>
@@ -12,6 +12,79 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[Split Single Lossless Audio(.ape, .flac) Files into mp3 in MacOSX]]></title>
+    <link href="http://ccaloha.cc/blog/2016/06/25/split-single-lossless-audio-dot-ape/"/>
+    <updated>2016-06-25T17:33:14+08:00</updated>
+    <id>http://ccaloha.cc/blog/2016/06/25/split-single-lossless-audio-dot-ape</id>
+    <content type="html"><![CDATA[<p>I got a lossless audio from my friend which included Taiwan famous folk songs in 1970~1979.</p>
+
+<p>So, I want to split this audio into seperate mp3. Spending few hours, I found this library!</p>
+
+<p>I have to thank @ftrvxmtrx - the author of <a href="https://github.com/ftrvxmtrx/split2flac">https://github.com/ftrvxmtrx/split2flac</a>.</p>
+
+<p>In this post, I just show to how to setup the environment to use ftrvxmtrx&#8217;s libarary in MacOSX.</p>
+
+<h2>1. Make sure you have homebrew</h2>
+
+<h2>2. Install required/optional libs</h2>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>brew install cuetools
+</span><span class='line'>brew install shntool
+</span><span class='line'>brew install id3lib
+</span><span class='line'>brew install flac
+</span><span class='line'>brew install homebrew/dupes/libiconv
+</span><span class='line'>brew install enca
+</span><span class='line'># for install mac to split APE
+</span><span class='line'>brew tap fernandotcl/homebrew-fernandotcl
+</span><span class='line'>brew install monkeys-audio</span></code></pre></td></tr></table></div></figure>
+
+
+<h2>3. Clone project</h2>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>git clone https://github.com/ftrvxmtrx/split2flac.git</span></code></pre></td></tr></table></div></figure>
+
+
+<h2>4. Convert files</h2>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>cd split2flac</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Check commands</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>./split2flac -h</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Convert the file</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>./split2flac -f mp3 -o ~/Desktop/ -cue path/to/your/cue-file.cue path/to/your/ape-file.ape</span></code></pre></td></tr></table></div></figure>
+
+
+<p><strong>-f</strong>: using mp3 as output format</p>
+
+<p><strong>-o</strong>: where to put the output files</p>
+
+<p><strong>cue</strong>: file location to your .cue</p>
+
+<p>yay!</p>
+
+<p><img src='https://dl.dropboxusercontent.com/u/22307926/Blog%20Image/split_lossless_audio/demo-%20split%20ape%20file%20into%20mp3.png' alt='demo: split ape file into mp3'></p>
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[How to install Preloader.io service in Ubuntu 14.04]]></title>
@@ -133,7 +206,13 @@
 
 <figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
 <span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
 </pre></td><td class='code'><pre><code class=''><span class='line'>#!/usr/bin/env bash
+</span><span class='line'>export LANGUAGE=en_US.UTF-8
+</span><span class='line'>export LANG=en_US.UTF-8
+</span><span class='line'>export LC_ALL=en_US.UTF-8
 </span><span class='line'>node /home/deploy/prerender/server.js</span></code></pre></td></tr></table></div></figure>
 
 
@@ -5181,178 +5260,6 @@ ggsave(plot,file=paste("2014年engagement-sessions圖.png",sep=""),width=15, hei
 <p>再來看 2014年每月 sessions 與 使用者平均在線時間 的 bar chart</p>
 
 <p><img src="https://dl.dropboxusercontent.com/u/22307926/Blog%20Image/get%20google%20analytics%20engagement%20using%20R/2014%E5%B9%B4engagement-sessions%E5%9C%96.png" alt="every months google analytic engagement(sessions X session Duration) in 2014 using R"></p>
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[[HOWTO]- 立馬拋棄Excel！利用R，取得Google Analytics的資料 -以使用者流量的時間畫heatmap為example]]></title>
-    <link href="http://ccaloha.cc/blog/2014/12/24/howto-get-google-analytics-using-r-rgoogleanalytics-using-users-pageviews-time-as-an-example/"/>
-    <updated>2014-12-24T10:24:04+08:00</updated>
-    <id>http://ccaloha.cc/blog/2014/12/24/howto-get-google-analytics-using-r-rgoogleanalytics-using-users-pageviews-time-as-an-example</id>
-    <content type="html"><![CDATA[<blockquote><p>學習一個東西，最快的方式，就是&#8230;.</p>
-
-<blockquote><p>just do it !</p></blockquote></blockquote>
-
-<p>由於我想要成為一個酷炫的資料科學家！</p>
-
-<p>不學習R這樣對嗎～</p>
-
-<p>既然要學習R，那從每週的<strong>Google Analytics</strong>開始著手！</p>
-
-<p><img src="https://dl.dropboxusercontent.com/u/22307926/Blog%20Image/HowTo-%20get%20google%20analytics%20using%20R%28RGoogleAnalytics%29%20using%20user%27s%20pageviews%20time%20as%20an%20example/Rplot.png" alt="traffic heatmap using R (RGoogleAnalytics)"></p>
-
-<!-- more -->
-
-
-<p>首先，在開始之前，為了要有個map !</p>
-
-<p>所以，當然是先看人家怎麼做</p>
-
-<p>瞭解一下機制和 那個Fu~~</p>
-
-<p>我主要是參考這篇：<a href="http://viget.com/inspire/how-to-build-a-traffic-heatmap-using-google-analytics-and-r">Building a Traffic Heatmap with Google Analytics and R</a></p>
-
-<p>但是由於他使用的 RGoogleAnalytics 是舊版的，而且，google 現在的API都需要使用 OAuth 2.0</p>
-
-<p>所以&#8230;.做法上還是有點不同，不過完成整個設定後，擷取資料與分析，就跟他的內容大同小異了！</p>
-
-<p>廢話不多說，那就開始吧！</p>
-
-<h2>Step 1. 申請API使用權限</h2>
-
-<h3>1. 登入到 <a href="http://cloud.google.com/console">Google Developer Console</a></h3>
-
-<p><img src="https://dl.dropboxusercontent.com/u/22307926/Blog%20Image/HowTo-%20get%20google%20analytics%20using%20R%28RGoogleAnalytics%29%20using%20user%27s%20pageviews%20time%20as%20an%20example/%E8%9E%A2%E5%B9%95%E5%BF%AB%E7%85%A7%202014-12-24%20%E4%B8%8B%E5%8D%8811.16.19.png" alt="建立專案"></p>
-
-<h3>2. 選擇啟用API</h3>
-
-<p><img src="https://dl.dropboxusercontent.com/u/22307926/Blog%20Image/HowTo-%20get%20google%20analytics%20using%20R%28RGoogleAnalytics%29%20using%20user%27s%20pageviews%20time%20as%20an%20example/%E8%9E%A2%E5%B9%95%E5%BF%AB%E7%85%A7%202014-12-24%20%E4%B8%8B%E5%8D%8811.16.31.png" alt="設定啟用API"></p>
-
-<h3>3. 選擇要啟用的API 為 google analytics</h3>
-
-<p><img src="https://dl.dropboxusercontent.com/u/22307926/Blog%20Image/HowTo-%20get%20google%20analytics%20using%20R%28RGoogleAnalytics%29%20using%20user%27s%20pageviews%20time%20as%20an%20example/%E8%9E%A2%E5%B9%95%E5%BF%AB%E7%85%A7%202014-12-24%20%E4%B8%8B%E5%8D%8811.16.35.png" alt="選擇要請用的API為 Analytics API"></p>
-
-<h3>4. 新增API存取所需的憑證</h3>
-
-<p><img src="https://dl.dropboxusercontent.com/u/22307926/Blog%20Image/HowTo-%20get%20google%20analytics%20using%20R%28RGoogleAnalytics%29%20using%20user%27s%20pageviews%20time%20as%20an%20example/%E8%9E%A2%E5%B9%95%E5%BF%AB%E7%85%A7%202014-12-24%20%E4%B8%8B%E5%8D%8811.16.45.png" alt="建立API憑證"></p>
-
-<h3>5. 輸入相關資訊</h3>
-
-<p><img src="https://dl.dropboxusercontent.com/u/22307926/Blog%20Image/HowTo-%20get%20google%20analytics%20using%20R%28RGoogleAnalytics%29%20using%20user%27s%20pageviews%20time%20as%20an%20example/%E8%9E%A2%E5%B9%95%E5%BF%AB%E7%85%A7%202014-12-24%20%E4%B8%8B%E5%8D%8811.16.52.png" alt="輸入這個憑證的相關訊息"></p>
-
-<h3>6. 記錄下來你的用戶ID與用戶密碼</h3>
-
-<p><img src="https://dl.dropboxusercontent.com/u/22307926/Blog%20Image/HowTo-%20get%20google%20analytics%20using%20R%28RGoogleAnalytics%29%20using%20user%27s%20pageviews%20time%20as%20an%20example/%E8%9E%A2%E5%B9%95%E5%BF%AB%E7%85%A7%202014-12-24%20%E4%B8%8B%E5%8D%8811.17.02.png" alt="記錄下來吧！"></p>
-
-<h2>Step2. 寫R</h2>
-
-<p>請看我裡面的註解吧</p>
-
-<pre><code># 安裝套件
-install.packages('rjson')
-install.packages('RCurl')
-install.packages('RColorBrewer')
-install.packages('RGoogleAnalytics')
-require(rjson)
-require(RCurl)
-require(RColorBrewer)
-require(RGoogleAnalytics)
-
-# 由於 google api 現在規定使用oauth2.0 來存取
-# R語言使用 "&lt;-" 當作變數指派
-token &lt;- Auth('用戶端ID','用戶端密碼')
-
-# 找到目前有哪些views
-profile &lt;- GetProfiles(token)
-
-## 上面那一行你會看到這樣的結果，使用data.frame格式儲存，data frame是R語言裡頭很常見的資料型態，你就把它想成是excel裡面的tab
-## id name
-## 85712839 所有網站資料
-
-# 編寫要搜尋的參數，這邊是關鍵！
-# R： 取得data frame 列(row)裡頭一個變數
-my_profile &lt;- profile[profile$name == '所有網站資料',1]
-query.list &lt;- Init(start.date = "2014-10-01",
-          end.date = "2014-12-14",
-          dimensions = "ga:dayOfWeek, ga:hour",
-          metrics = "ga:pageviews",
-          max.results = 10000,
-          table.id = paste("ga:",my_profile,sep="",collapse=",")
-)
-
-# 建立一個query等一下就是透過這個query與token拿資料！
-ga.query &lt;- QueryBuilder(query.list)
-
-# 向GA抓取資料，存成data frame
-ga.data &lt;- GetReportData(ga.query, token)
-
-# 看一下ga.data長什麼樣子
-## dayOfWeek hour pageviews
-## 0 00 19734
-## 0 01 11244
-## 0 02 6286
-## 0 03 3528
-## 0 04 1830
-## 0 05 1316
-## 0 06 910
-## 0 07 2168
-## 0 08 4547
-## ....
-
-
-# 把ga.data裡頭dayOfWeek的 0 轉換成 sunday, 1轉成 Monday..and so on..
-ga.data$dayOfWeek &lt;- as.character(ga.data$dayOfWeek)
-ga.data$dayOfWeek[ga.data$dayOfWeek == "0"] &lt;- "Sunday"
-ga.data$dayOfWeek[ga.data$dayOfWeek == "1"] &lt;- "Monday"
-ga.data$dayOfWeek[ga.data$dayOfWeek == "2"] &lt;- "Tuesday"
-ga.data$dayOfWeek[ga.data$dayOfWeek == "3"] &lt;- "Wednesday"
-ga.data$dayOfWeek[ga.data$dayOfWeek == "4"] &lt;- "Thursday"
-ga.data$dayOfWeek[ga.data$dayOfWeek == "5"] &lt;- "Friday"
-ga.data$dayOfWeek[ga.data$dayOfWeek == "6"] &lt;- "Saturday"
-
-# 資料排序調整(y軸)，寫了這個factor後，他會以 sunday, monday....等方式排序呈現資料
-ga.data$dayOfWeek &lt;- factor(ga.data$dayOfWeek, levels = c("Sunday",
-              "Monday",
-              "Tuesday",
-              "Wednesday",
-              "Thursday",
-              "Friday",
-              "Saturday"))
-ga.data[order(ga.data$dayOfWeek),]
-
-# 將 data frame 轉成 xtab.
-heatmap_data &lt;- xtabs(pageviews ~ dayOfWeek + hour, data=ga.data)
-
-# heatmap_data長這樣
-# hour
-#dayOfWeek 00 01 02 03 04 05 06 07 08 09 10 11 12
-# Sunday 19734 11244 6286 3528 1830 1316 910 2168 4547 5991 10653 11380 13414
-# Monday 15170 9317 5120 2252 578 536 860 1605 3127 6175 10248 12287 12654
-# Tuesday 11958 7445 3438 1582 893 784 904 1566 3268 6106 7925 7577 9336
-# Wednesday 11178 7898 3529 1338 1177 536 844 1250 2575 6104 8051 8910 8732
-# Thursday 28735 19955 9645 5246 2498 2072 3379 6070 9987 17166 22617 22780 23911
-# Friday 31564 16496 8220 3603 2209 1626 2028 3015 6750 12871 17537 18307 18358
-# Saturday 19325 12335 6011 2808 1253 1416 1090 1981 4114 7257 9239 10438 11733
-
-
-# 畫圖 ---------------------------------------------------------------------
-heatmap(heatmap_data,
-col=colorRampPalette(brewer.pal(9,"Reds"))(100), # Use ColorBrewer's nicer color palettes.
-revC=TRUE, # Start the week at the top of the Y axis.
-scale="none", # Map color density to entire week, not a day or hour slice.
-Rowv=NA, Colv=NA, # Don't use a dendogram.
-main="Pageviews by Day and Hour", # Title.
-xlab="Hour") # X-axis label. 
-</code></pre>
-
-<h2>Done</h2>
-
-<p>執行指令，</p>
-
-<pre><code>source('r_ga_heatmap.R')
-</code></pre>
-
-<p><img src="https://dl.dropboxusercontent.com/u/22307926/Blog%20Image/HowTo-%20get%20google%20analytics%20using%20R%28RGoogleAnalytics%29%20using%20user%27s%20pageviews%20time%20as%20an%20example/Rplot.png" alt="traffic heatmap using R (RGoogleAnalytics)"></p>
 ]]></content>
   </entry>
   

@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: Others | AlohaCC]]></title>
+  <link href="http://ccaloha.cc/blog/categories/others/atom.xml" rel="self"/>
+  <link href="http://ccaloha.cc/"/>
+  <updated>2016-06-27T14:39:28+08:00</updated>
+  <id>http://ccaloha.cc/</id>
+  <author>
+    <name><![CDATA[Aloha]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[Split Single Lossless Audio(.ape, .flac) Files into mp3 in MacOSX]]></title>
+    <link href="http://ccaloha.cc/blog/2016/06/25/split-single-lossless-audio-dot-ape/"/>
+    <updated>2016-06-25T17:33:14+08:00</updated>
+    <id>http://ccaloha.cc/blog/2016/06/25/split-single-lossless-audio-dot-ape</id>
+    <content type="html"><![CDATA[<p>I got a lossless audio from my friend which included Taiwan famous folk songs in 1970~1979.</p>
+
+<p>So, I want to split this audio into seperate mp3. Spending few hours, I found this library!</p>
+
+<p>I have to thank @ftrvxmtrx - the author of <a href="https://github.com/ftrvxmtrx/split2flac">https://github.com/ftrvxmtrx/split2flac</a>.</p>
+
+<p>In this post, I just show to how to setup the environment to use ftrvxmtrx's libarary in MacOSX.</p>
+
+<h2>1. Make sure you have homebrew</h2>
+
+<h2>2. Install required/optional libs</h2>
+
+<p>```
+brew install cuetools
+brew install shntool
+brew install id3lib
+brew install flac
+brew install homebrew/dupes/libiconv
+brew install enca</p>
+
+<h1>for install mac to split APE</h1>
+
+<p>brew tap fernandotcl/homebrew-fernandotcl
+brew install monkeys-audio
+```</p>
+
+<h2>3. Clone project</h2>
+
+<p><code>
+git clone https://github.com/ftrvxmtrx/split2flac.git
+</code></p>
+
+<h2>4. Convert files</h2>
+
+<p><code>
+cd split2flac
+</code></p>
+
+<p>Check commands</p>
+
+<p><code>
+./split2flac -h
+</code></p>
+
+<p>Convert the file</p>
+
+<p><code>
+./split2flac -f mp3 -o ~/Desktop/ -cue path/to/your/cue-file.cue path/to/your/ape-file.ape
+</code></p>
+
+<p><strong>-f</strong>: using mp3 as output format</p>
+
+<p><strong>-o</strong>: where to put the output files</p>
+
+<p><strong>cue</strong>: file location to your .cue</p>
+
+<p>yay!</p>
+
+<p><img src='https://dl.dropboxusercontent.com/u/22307926/Blog%20Image/split_lossless_audio/demo-%20split%20ape%20file%20into%20mp3.png' alt='demo: split ape file into mp3'></p>
+]]></content>
+  </entry>
+  
+</feed>

@@ -90,6 +90,9 @@ Put these lines to the file
 
 ```
 #!/usr/bin/env bash
+export LANGUAGE=en_US.UTF-8
+export LANG=en_US.UTF-8
+export LC_ALL=en_US.UTF-8
 node /home/deploy/prerender/server.js
 ```
 
