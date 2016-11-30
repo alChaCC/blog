@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Test | AlohaCC]]></title>
   <link href="http://ccaloha.cc/blog/categories/test/atom.xml" rel="self"/>
   <link href="http://ccaloha.cc/"/>
-  <updated>2016-11-24T17:48:02+08:00</updated>
+  <updated>2016-11-30T15:51:36+08:00</updated>
   <id>http://ccaloha.cc/</id>
   <author>
     <name><![CDATA[Aloha]]></name>
@@ -12,6 +12,185 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[Stress Test Using JMeter in Ruby - Part 2]]></title>
+    <link href="http://ccaloha.cc/blog/2016/11/30/stress-test-using-jmeter-in-ruby-part-2/"/>
+    <updated>2016-11-30T15:46:46+08:00</updated>
+    <id>http://ccaloha.cc/blog/2016/11/30/stress-test-using-jmeter-in-ruby-part-2</id>
+    <content type="html"><![CDATA[<p><img src="https://dl.dropboxusercontent.com/u/22307926/Blog%20Image/jmeter/intro.png" alt="JMeter" /></p>
+
+<blockquote><p>Due to update-to-date JMeter 3.0 require jave 7, but for current offical java support in Mac OSX is 6. So, before running new JMeter you might need to upgrade your java. Please check my <a href="https://gist.github.com/alChaCC/ddb11542c9e6b6683bad80d9ca858bc5">gist</a> for installation java 7.</p></blockquote>
+
+<p>This article just show you code example of how to use loop number and thread number in gem <code>'ruby-jmeter'</code>.</p>
+
+<!--more-->
+
+
+<p>Currently, we need to do stress test on your API service.</p>
+
+<p>That's see how to write codes in different scenarios.</p>
+
+<p>Reference: <a href="http://jmeter.apache.org/usermanual/functions.html">http://jmeter.apache.org/usermanual/functions.html</a></p>
+
+<h2>[Scenario 1] You want to change request data based on <code>thread number</code> </h2>
+
+<p>```
+test do
+  defaults domain: 'YOUR.API.ENDPOINT', portocal: 'https' , port: '443'</p>
+
+<p>  header [</p>
+
+<pre><code>{ name: 'Authorization', value: "Bearer 123456789" },
+{ name: 'Content-Type', value: 'application/json' }
+</code></pre>
+
+<p>  ]</p>
+
+<p>  post_body = {</p>
+
+<pre><code>"order_number": "thread-${__threadNum}"
+</code></pre>
+
+<p>  }</p>
+
+<p>  threads count: 1000, rampup: 1 ,loops: 10, scheduler: false do</p>
+
+<pre><code>  transaction "Shipments" do
+    post name: 'Create',
+         url: 'https://YOUR.API.ENDPOINT/v1/orders',
+         raw_body: post_body.to_json do
+           with_xhr
+    end
+  end
+view_results_tree
+</code></pre>
+
+<p>  end</p>
+
+<p>  view_results_in_table
+  graph_results
+  aggregate_graph
+  view_results_tree
+  summary_report
+end.run(
+  gui: true,
+  file: 'jmeter-order-api.jmx',
+  log:  'jmeter-order-api.log',
+  jtl:  'results-order-api.jtl'
+)
+```</p>
+
+<h2>[Scenario 2] You want to change request data based on <code>thread number</code> and <code>iteration number</code> </h2>
+
+<p>```
+test do
+  ...</p>
+
+<p>  post_body = {</p>
+
+<pre><code>"order_number": "thread-${__threadNum}-loop-${__BeanShell(vars.getIteration();,)}"
+</code></pre>
+
+<p>  }</p>
+
+<p>  ...
+```</p>
+
+<h2>[Scenario 3] You already have data array and you want to use the array element as request data and use <code>iteration number</code> as index to get data</h2>
+
+<blockquote><p>use <code>variables</code> to set variable array</p>
+
+<p>variables accept <code>[{name: XXX, value: XXX}, {name: XXX, value: XXX}...]</code></p></blockquote>
+
+<p>```
+require 'pg'</p>
+
+<p>test do
+  ...</p>
+
+<p>  conn = PG.connect(dbname:   'DATABASE_STAGING_DBNAME',</p>
+
+<pre><code>                host:     'DATABASE_STAGING_HOST',
+                user:     'DATABASE_STAGING_USER',
+                password: 'DATABASE_STAGING_PWD'
+               )
+</code></pre>
+
+<p>  orders = []
+  conn.exec( "SELECT * FROM orders where order_state = 'ready'" ) do |result|</p>
+
+<pre><code>result.each do |row|
+  orders &lt;&lt; row
+end
+</code></pre>
+
+<p>  end</p>
+
+<p>  order_index = 0
+  post_body_array = orders.inject([]) do |arr, order|</p>
+
+<pre><code>arr &lt;&lt; {
+  name: order_index.to_s,
+  value: {
+    orders: [
+      {
+        id: order['id'],
+        order_state: 'shipped'
+      }
+    ]
+  }.to_json
+}
+order_index += 1
+arr
+</code></pre>
+
+<p>  end</p>
+
+<p>  variables post_body_array</p>
+
+<p>  threads count: 1, rampup: 1, loops: order_index do</p>
+
+<pre><code>transaction "Update Order" do
+    post name: 'Update',
+         url: 'https://YOUR.API.ENDPOINT/v1/orders/update_url',
+         raw_body: '${__BeanShell(vars.get("${__BeanShell(vars.getIteration();,)}"))}' do
+           with_xhr
+         end
+end
+view_results_tree
+debug_sampler
+</code></pre>
+
+<p>  end</p>
+
+<p>  ...
+```</p>
+
+<h2>[Scenario 4] You already have data array and you want to use the array element as request data and use <code>thread number</code> as index to get data</h2>
+
+<p>```
+...</p>
+
+<p>  threads count: order_index, rampup: 1 ,loops: 1 do</p>
+
+<pre><code>transaction "Update Order" do
+    post name: 'Update',
+         url: 'https://YOUR.API.ENDPOINT/v1/orders/update_url',
+         raw_body: '${__BeanShell(vars.get("${__threadNum}"))}' do
+           with_xhr
+         end
+end
+view_results_tree
+debug_sampler
+</code></pre>
+
+<p>  end</p>
+
+<p>  ...
+```</p>
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[For Dummies Stress Test Using JMeter in Rails 4 + Ruby 2.2]]></title>

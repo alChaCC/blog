@@ -4,7 +4,7 @@
   <title><![CDATA[AlohaCC]]></title>
   <link href="http://ccaloha.cc/atom.xml" rel="self"/>
   <link href="http://ccaloha.cc/"/>
-  <updated>2016-11-24T17:48:02+08:00</updated>
+  <updated>2016-11-30T15:51:36+08:00</updated>
   <id>http://ccaloha.cc/</id>
   <author>
     <name><![CDATA[Aloha]]></name>
@@ -12,6 +12,260 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[Stress Test Using JMeter in Ruby - Part 2]]></title>
+    <link href="http://ccaloha.cc/blog/2016/11/30/stress-test-using-jmeter-in-ruby-part-2/"/>
+    <updated>2016-11-30T15:46:46+08:00</updated>
+    <id>http://ccaloha.cc/blog/2016/11/30/stress-test-using-jmeter-in-ruby-part-2</id>
+    <content type="html"><![CDATA[<p><img src="https://dl.dropboxusercontent.com/u/22307926/Blog%20Image/jmeter/intro.png" alt="JMeter" /></p>
+
+<blockquote><p>Due to update-to-date JMeter 3.0 require jave 7, but for current offical java support in Mac OSX is 6. So, before running new JMeter you might need to upgrade your java. Please check my <a href="https://gist.github.com/alChaCC/ddb11542c9e6b6683bad80d9ca858bc5">gist</a> for installation java 7.</p></blockquote>
+
+<p>This article just show you code example of how to use loop number and thread number in gem <code>'ruby-jmeter'</code>.</p>
+
+<!--more-->
+
+
+<p>Currently, we need to do stress test on your API service.</p>
+
+<p>That&#8217;s see how to write codes in different scenarios.</p>
+
+<p>Reference: <a href="http://jmeter.apache.org/usermanual/functions.html">http://jmeter.apache.org/usermanual/functions.html</a></p>
+
+<h2>[Scenario 1] You want to change request data based on <code>thread number</code> </h2>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+<span class='line-number'>32</span>
+<span class='line-number'>33</span>
+<span class='line-number'>34</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>test do
+</span><span class='line'>  defaults domain: 'YOUR.API.ENDPOINT', portocal: 'https' , port: '443'
+</span><span class='line'>  
+</span><span class='line'>  header [
+</span><span class='line'>    { name: 'Authorization', value: "Bearer 123456789" },
+</span><span class='line'>    { name: 'Content-Type', value: 'application/json' }
+</span><span class='line'>  ]
+</span><span class='line'>
+</span><span class='line'>  post_body = {
+</span><span class='line'>    "order_number": "thread-${__threadNum}"
+</span><span class='line'>  }
+</span><span class='line'> 
+</span><span class='line'>  threads count: 1000, rampup: 1 ,loops: 10, scheduler: false do
+</span><span class='line'>      transaction "Shipments" do
+</span><span class='line'>        post name: 'Create',
+</span><span class='line'>             url: 'https://YOUR.API.ENDPOINT/v1/orders',
+</span><span class='line'>             raw_body: post_body.to_json do
+</span><span class='line'>               with_xhr
+</span><span class='line'>        end
+</span><span class='line'>      end
+</span><span class='line'>    view_results_tree
+</span><span class='line'>  end
+</span><span class='line'>
+</span><span class='line'>  view_results_in_table
+</span><span class='line'>  graph_results
+</span><span class='line'>  aggregate_graph
+</span><span class='line'>  view_results_tree
+</span><span class='line'>  summary_report
+</span><span class='line'>end.run(
+</span><span class='line'>  gui: true,
+</span><span class='line'>  file: 'jmeter-order-api.jmx',
+</span><span class='line'>  log:  'jmeter-order-api.log',
+</span><span class='line'>  jtl:  'results-order-api.jtl'
+</span><span class='line'>)</span></code></pre></td></tr></table></div></figure>
+
+
+<h2>[Scenario 2] You want to change request data based on <code>thread number</code> and <code>iteration number</code> </h2>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>test do
+</span><span class='line'>  ...
+</span><span class='line'>  
+</span><span class='line'>  post_body = {
+</span><span class='line'>    "order_number": "thread-${__threadNum}-loop-${__BeanShell(vars.getIteration();,)}"
+</span><span class='line'>  }
+</span><span class='line'>  
+</span><span class='line'>  ...</span></code></pre></td></tr></table></div></figure>
+
+
+<h2>[Scenario 3] You already have data array and you want to use the array element as request data and use <code>iteration number</code> as index to get data</h2>
+
+<blockquote><p>use <code>variables</code> to set variable array</p>
+
+<p>variables accept <code>[{name: XXX, value: XXX}, {name: XXX, value: XXX}...]</code></p></blockquote>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+<span class='line-number'>32</span>
+<span class='line-number'>33</span>
+<span class='line-number'>34</span>
+<span class='line-number'>35</span>
+<span class='line-number'>36</span>
+<span class='line-number'>37</span>
+<span class='line-number'>38</span>
+<span class='line-number'>39</span>
+<span class='line-number'>40</span>
+<span class='line-number'>41</span>
+<span class='line-number'>42</span>
+<span class='line-number'>43</span>
+<span class='line-number'>44</span>
+<span class='line-number'>45</span>
+<span class='line-number'>46</span>
+<span class='line-number'>47</span>
+<span class='line-number'>48</span>
+<span class='line-number'>49</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>require 'pg'
+</span><span class='line'>
+</span><span class='line'>test do
+</span><span class='line'>  ...
+</span><span class='line'>  
+</span><span class='line'>  conn = PG.connect(dbname:   'DATABASE_STAGING_DBNAME',
+</span><span class='line'>                    host:     'DATABASE_STAGING_HOST',
+</span><span class='line'>                    user:     'DATABASE_STAGING_USER',
+</span><span class='line'>                    password: 'DATABASE_STAGING_PWD'
+</span><span class='line'>                   )
+</span><span class='line'>  orders = []
+</span><span class='line'>  conn.exec( "SELECT * FROM orders where order_state = 'ready'" ) do |result|
+</span><span class='line'>    result.each do |row|
+</span><span class='line'>      orders &lt;&lt; row
+</span><span class='line'>    end
+</span><span class='line'>  end
+</span><span class='line'>
+</span><span class='line'>  order_index = 0
+</span><span class='line'>  post_body_array = orders.inject([]) do |arr, order|
+</span><span class='line'>    arr &lt;&lt; {
+</span><span class='line'>      name: order_index.to_s,
+</span><span class='line'>      value: {
+</span><span class='line'>        orders: [
+</span><span class='line'>          {
+</span><span class='line'>            id: order['id'],
+</span><span class='line'>            order_state: 'shipped'
+</span><span class='line'>          }
+</span><span class='line'>        ]
+</span><span class='line'>      }.to_json
+</span><span class='line'>    }
+</span><span class='line'>    order_index += 1
+</span><span class='line'>    arr
+</span><span class='line'>  end
+</span><span class='line'>
+</span><span class='line'>  variables post_body_array
+</span><span class='line'>
+</span><span class='line'>  threads count: 1, rampup: 1, loops: order_index do
+</span><span class='line'>    transaction "Update Order" do
+</span><span class='line'>        post name: 'Update',
+</span><span class='line'>             url: 'https://YOUR.API.ENDPOINT/v1/orders/update_url',
+</span><span class='line'>             raw_body: '${__BeanShell(vars.get("${__BeanShell(vars.getIteration();,)}"))}' do
+</span><span class='line'>               with_xhr
+</span><span class='line'>             end
+</span><span class='line'>    end
+</span><span class='line'>    view_results_tree
+</span><span class='line'>    debug_sampler
+</span><span class='line'>  end
+</span><span class='line'>  
+</span><span class='line'>  ...</span></code></pre></td></tr></table></div></figure>
+
+
+<h2>[Scenario 4] You already have data array and you want to use the array element as request data and use <code>thread number</code> as index to get data</h2>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>...
+</span><span class='line'>
+</span><span class='line'>  threads count: order_index, rampup: 1 ,loops: 1 do
+</span><span class='line'>    transaction "Update Order" do
+</span><span class='line'>        post name: 'Update',
+</span><span class='line'>             url: 'https://YOUR.API.ENDPOINT/v1/orders/update_url',
+</span><span class='line'>             raw_body: '${__BeanShell(vars.get("${__threadNum}"))}' do
+</span><span class='line'>               with_xhr
+</span><span class='line'>             end
+</span><span class='line'>    end
+</span><span class='line'>    view_results_tree
+</span><span class='line'>    debug_sampler
+</span><span class='line'>  end
+</span><span class='line'>  
+</span><span class='line'>  ...</span></code></pre></td></tr></table></div></figure>
+
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[API Request Limitation Using Rack-Throttle and Doorkeeper]]></title>
@@ -5330,135 +5584,6 @@ end
 </code></pre>
 
 <h2>Done</h2>
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[[Ruby on Rails] Model Version control using papertrail]]></title>
-    <link href="http://ccaloha.cc/blog/2015/02/26/model-version-control-using-papertrail/"/>
-    <updated>2015-02-26T16:30:53+08:00</updated>
-    <id>http://ccaloha.cc/blog/2015/02/26/model-version-control-using-papertrail</id>
-    <content type="html"><![CDATA[<h2>Why use papertrail ?</h2>
-
-<p><img src="https://dl.dropboxusercontent.com/u/22307926/Blog%20Image/Rails%E5%8A%A0%E5%85%A5Model%E7%89%88%E6%9C%AC%E6%8E%A7%E5%88%B6/%E8%9E%A2%E5%B9%95%E5%BF%AB%E7%85%A7%202015-01-06%20%E4%B8%8A%E5%8D%8811.57.23.png" alt="ruby toolbox - active record versioning"></p>
-
-<h2>Step1. Add lib</h2>
-
-<p><strong>Gemfile</strong></p>
-
-<pre><code>gem 'paper_trail', '~&gt; 3.0.6'
-</code></pre>
-
-<h2>Step2. create a migration</h2>
-
-<p><strong>On Terminal</strong></p>
-
-<pre><code>bundle exec rails generate paper_trail:install
-</code></pre>
-
-<p>他會建立，一個叫做<strong>versions</strong>的表</p>
-
-<h2>Step3. migrate</h2>
-
-<pre><code>bundle exec rake db:migrate
-</code></pre>
-
-<h2>Step4. Done</h2>
-
-<p>把 <strong>has_paper_trail</strong> 加上你想要追蹤的model</p>
-
-<h2>應用部分</h2>
-
-<h3>若是想要不同model使用不同追蹤table?</h3>
-
-<p>假設我想要<strong>product</strong>有自己的versions表</p>
-
-<ul>
-<li><p>Step1.</p>
-
-<pre><code>  rails g model product_version 
-</code></pre></li>
-<li><p>貼上</p>
-
-<pre><code>  class CreateProductVersions &lt; ActiveRecord::Migration
-    def change
-      create_table :product_versions do |t|
-        t.string   :item_type, :null =&gt; false
-        t.integer  :item_id,   :null =&gt; false
-        t.string   :event,     :null =&gt; false
-        t.string   :whodunnit
-        t.text     :object
-        t.datetime :created_at
-        # t.string   :author_username 如果你需要自訂一些欄位讓他記錄，也可以在migration這邊加
-      end
-      add_index :product_versions, [:item_type, :item_id]
-      end
-    end
-  end
-</code></pre></li>
-</ul>
-
-
-<p>ps. 這就是他本身內建會產生的欄位，只是我們手動把它copy一份出來</p>
-
-<ul>
-<li><p>別忘了</p>
-
-<pre><code>  bundle exec rake db:migrate
-</code></pre></li>
-<li><p>改model <strong>ProductVersion</strong></p>
-
-<pre><code>  class ProductVersion &lt; PaperTrail::Version
-    self.table_name = :product_versions
-  end
-</code></pre></li>
-<li><p>改model <strong>Product</strong></p>
-
-<pre><code>  class Product &lt; ActiveRecord::Base
-      ...
-      has_paper_trail class_name: 'ProductVersion'
-      ...
-  end
-</code></pre></li>
-</ul>
-
-
-<h3>若是想要知道誰動了資料?</h3>
-
-<p> 假設你有使用<strong>devise</strong>，然後是寫在後台</p>
-
-<p>請加在 <strong>controller/admin/admin_controller.rb</strong></p>
-
-<pre><code>def user_for_paper_trail
-    admin_signed_in? ? current_admin.email : 'System'
-end
-</code></pre>
-
-<p>假使你在前台，你可能需要這樣寫</p>
-
-<pre><code>def user_for_paper_trail
-    user_signed_in? ? current_user.email : 'Public User'
-end
-</code></pre>
-
-<h3>若某個動作不想被追蹤</h3>
-
-<pre><code>@product.without_versioning do
-  @product.update_attributes :created_at =&gt; Time.now
-end
-</code></pre>
-
-<h3>若要刪除某個versions從哪天到某天</h3>
-
-<p>方法一：<strong>下SQL</strong></p>
-
-<pre><code>delete from versions where created_at &lt; 2014-01-01;
-</code></pre>
-
-<p>方法二：<strong>在rails c底下</strong></p>
-
-<pre><code>PaperTrail::Version.delete_all ["created_at &lt; ?", 1.year.ago]
-</code></pre>
 ]]></content>
   </entry>
   
